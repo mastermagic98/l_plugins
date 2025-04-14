@@ -51,63 +51,35 @@
         }
     }
     
-    // Функція для запуску MutationObserver
-    function startObserver() {
-        // Очистити попередні observer, якщо вони є
-        if (window.ratingsObserver) {
-            window.ratingsObserver.disconnect();
-        }
-        
-        // Запуск одразу
+    // Функція для запуску колоризації після завантаження сторінки
+    function initPlugin() {
         colorizeRatings();
-        
-        // Налаштування спостерігача мутацій для постійного моніторингу
-        window.ratingsObserver = new MutationObserver(function() {
-            colorizeRatings();
-        });
-        
-        // Початок спостереження за документом з налаштованими параметрами
-        window.ratingsObserver.observe(document.body, {
-            childList: true,
-            subtree: true
-        });
-    }
-    
-    // Перевірка наявності об'єкта Lampa
-    function checkLampaReady() {
-        if (typeof Lampa !== 'undefined') {
-            // Перевірка на Lampa.Platform.tv() з вашого прикладу
-            if (typeof Lampa.Platform !== 'undefined' && typeof Lampa.Platform.tv === 'function') {
-                Lampa.Platform.tv();
-            }
-            
-            // Спроба ініціалізації як тільки Lampa завантажиться
-            if (typeof Lampa.Listener !== 'undefined') {
-                Lampa.Listener.follow('app', function(event) {
-                    if (event.type === 'ready') {
-                        setTimeout(startObserver, 500);
-                    }
-                });
-            }
-            
-            // Якщо додаток вже готовий, запустимо відразу
-            if (window.appready) {
-                setTimeout(startObserver, 500);
-            }
-        } else {
-            // Якщо Lampa ще не доступна, чекаємо і перевіряємо знову
-            setTimeout(checkLampaReady, 100);
-        }
     }
     
     // Запуск по готовності DOM
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
-            checkLampaReady();
+            initPlugin();
         });
     } else {
         // DOM вже готовий
-        checkLampaReady();
+        initPlugin();
     }
     
+    // Коли додаток Lampa готовий
+    if (window.appready) {
+        initPlugin();
+    } else {
+        Lampa.Listener.follow('appready', function(event) {
+            if (event.type == 'ready') {
+                initPlugin();
+            }
+        });
+    }
+    
+    Lampa.Listener.follow('app', function(event) {
+        if (event.type == 'ready') {
+            initPlugin();
+        }
+    });
 })();
