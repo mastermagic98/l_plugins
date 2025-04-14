@@ -48,14 +48,11 @@
     }
     
     function setupPageChangeListener() {
-        var lastUrl = location.href;
-        new MutationObserver(function() {
-            var currentUrl = location.href;
-            if (currentUrl !== lastUrl) {
-                lastUrl = currentUrl;
+        Lampa.Listener.follow('page', function(event) {
+            if (event.type === 'start') {
                 initPlugin();
             }
-        }).observe(document, {subtree: true, childList: true});
+        });
     }
     
     if (document.readyState === 'loading') {
