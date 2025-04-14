@@ -33,11 +33,11 @@
                 cardElement.style.color = '#e74c3c';
             } else if (cardRating > 3 && cardRating <= 5) {
                 cardElement.style.color = '#e67e22';
-            } else if (cardRating > 5 і cardRating <= 6.5) {
+            } else if (cardRating > 5 && cardRating <= 6.5) {
                 cardElement.style.color = '#f1c40f';
-            } else if (cardRating > 6.5 і cardRating < 8) {
+            } else if (cardRating > 6.5 && cardRating < 8) {
                 cardElement.style.color = '#3498db';
-            } else if (cardRating >= 8 і cardRating <= 10) {
+            } else if (cardRating >= 8 && cardRating <= 10) {
                 cardElement.style.color = '#2ecc71';
             }
         }
