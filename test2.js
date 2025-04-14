@@ -1,13 +1,10 @@
 (function() {
     'use strict';
     
-    // Встановлюємо режим TV платформи
-    Lampa.Platform.tv();
-    
     /**
      * Головна функція для колоризації рейтингів в інтерфейсі Lampa
      */
-
+    function colorizeRatings() {
         // Обробляємо елементи full-start rate та info rate
         var rateElements = document.querySelectorAll('.full-start__rate > div, .info__rate > span');
         
@@ -54,27 +51,50 @@
         }
     }
     
-    // Запускаємо при завантаженні документа з невеликою затримкою
-    document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(colorizeRatings, 500);
-    });
-    
-    // Налаштовуємо спостерігач мутацій для відстеження змін у DOM
-    var observer = new MutationObserver(colorizeRatings);
-    observer.observe(document.body, {
-        'childList': true,
-        'subtree': true
-    });
-    
-    // Запускаємо, коли додаток готовий, якщо window.appready вже true
-    // Інакше слухаємо подію appready
-    if (window.appready) {
+    // Make sure the plugin re-initializes properly after page refresh
+    function initPlugin() {
+        // Run immediately
         colorizeRatings();
+        
+        // Set up mutation observer for continuous monitoring
+        var observer = new MutationObserver(function(mutations) {
+            colorizeRatings();
+        });
+        
+        // Start observing the document with the configured parameters
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    }
+    
+    // Multiple initialization points to ensure the plugin runs
+    // After DOM is ready
+    if (document.readyState === "loading") {
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(initPlugin, 500);
+        });
+    } else {
+        // DOM already loaded
+        setTimeout(initPlugin, 500);
+    }
+    
+    // When Lampa app is ready
+    if (window.appready) {
+        initPlugin();
     } else {
         Lampa.Listener.follow('appready', function(event) {
             if (event.type == 'ready') {
-                colorizeRatings();
+                initPlugin();
             }
         });
     }
+    
+    // Additional initialization point for extra reliability
+    Lampa.Listener.follow('app', function(event) {
+        if (event.type == 'ready') {
+            initPlugin();
+        }
+    });
+    
 })();
