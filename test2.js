@@ -1,67 +1,79 @@
 (function() {
     'use strict';
-
+    
+    // Встановлюємо режим TV платформи
+    Lampa.Platform.tv();
+    
+    /**
+     * Головна функція для колоризації рейтингів в інтерфейсі Lampa
+     */
+    function colorizeRatings() {
+        // Перевіряємо чи ми на правильній платформі
+        if (Lampa.Manifest.origin !== 'bylampa') {
+            Lampa.Noty.show('Помилка доступу');
+            return;
+        }
         
-        // Handle full-start rate elements and info rate elements
+        // Обробляємо елементи full-start rate та info rate
         const rateElements = document.querySelectorAll('.full-start__rate > div, .info__rate > span');
         
         for (let i = 0; i < rateElements.length; i++) {
             const element = rateElements[i];
             const rating = parseFloat(element.textContent.trim());
             
-            // Set semi-transparent background
+            // Встановлюємо напівпрозорий фон
             element.style.background = 'rgba(0, 0, 0, 0.8)';
             
-            // Apply color based on rating value
+            // Застосовуємо колір в залежності від значення рейтингу
             if (rating >= 0 && rating <= 3) {
-                element.style.color = '#e74c3c'; // Red
+                element.style.color = '#e74c3c'; // Червоний
             } else if (rating > 3 && rating <= 5) {
-                element.style.color = '#e67e22'; // Orange
+                element.style.color = '#e67e22'; // Помаранчевий
             } else if (rating > 5 && rating <= 6.5) {
-                element.style.color = '#f1c40f'; // Yellow
+                element.style.color = '#f1c40f'; // Жовтий
             } else if (rating > 6.5 && rating < 8) {
-                element.style.color = '#3498db'; // Blue
+                element.style.color = '#3498db'; // Синій
             } else if (rating >= 8 && rating <= 10) {
-                element.style.color = '#2ecc71'; // Green
+                element.style.color = '#2ecc71'; // Зелений
             }
         }
         
-        // Handle card vote elements (separate set of rating elements)
+        // Обробляємо елементи card vote (окремий набір елементів рейтингу)
         const cardVoteElements = document.querySelectorAll('.card__vote');
         
         for (let i = 0; i < cardVoteElements.length; i++) {
             const element = cardVoteElements[i];
             const rating = parseFloat(element.textContent.trim());
             
-            // Apply color based on rating value
+            // Застосовуємо колір в залежності від значення рейтингу
             if (rating >= 0 && rating <= 3) {
-                element.style.color = '#e74c3c'; // Red
+                element.style.color = '#e74c3c'; // Червоний
             } else if (rating > 3 && rating <= 5) {
-                element.style.color = '#e67e22'; // Orange
+                element.style.color = '#e67e22'; // Помаранчевий
             } else if (rating > 5 && rating <= 6.5) {
-                element.style.color = '#f1c40f'; // Yellow
+                element.style.color = '#f1c40f'; // Жовтий
             } else if (rating > 6.5 && rating < 8) {
-                element.style.color = '#3498db'; // Blue
+                element.style.color = '#3498db'; // Синій
             } else if (rating >= 8 && rating <= 10) {
-                element.style.color = '#2ecc71'; // Green
+                element.style.color = '#2ecc71'; // Зелений
             }
         }
     }
     
-    // Run on document ready with slight delay
+    // Запускаємо при завантаженні документа з невеликою затримкою
     document.addEventListener('DOMContentLoaded', function() {
         setTimeout(colorizeRatings, 500);
     });
     
-    // Set up mutation observer to watch for DOM changes
+    // Налаштовуємо спостерігач мутацій для відстеження змін у DOM
     const observer = new MutationObserver(colorizeRatings);
     observer.observe(document.body, {
         'childList': true,
         'subtree': true
     });
     
-    // Run when app is ready if window.appready is already true
-    // Otherwise listen for the appready event
+    // Запускаємо, коли додаток готовий, якщо window.appready вже true
+    // Інакше слухаємо подію appready
     if (window.appready) {
         colorizeRatings();
     } else {
