@@ -47,32 +47,35 @@
         colorizeRatings();
     }
     
-    function setupPageChangeListener() {
-        Lampa.Listener.follow('page', function(event) {
-            if (event.type === 'start') {
-                initPlugin();
-            }
+    function setupMutationObserver() {
+        var observer = new MutationObserver(function() {
+            colorizeRatings();
+        });
+        
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
         });
     }
     
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
             initPlugin();
-            setupPageChangeListener();
+            setupMutationObserver();
         });
     } else {
         initPlugin();
-        setupPageChangeListener();
+        setupMutationObserver();
     }
     
     if (window.appready) {
         initPlugin();
-        setupPageChangeListener();
+        setupMutationObserver();
     } else {
         Lampa.Listener.follow('appready', function(event) {
             if (event.type == 'ready') {
                 initPlugin();
-                setupPageChangeListener();
+                setupMutationObserver();
             }
         });
     }
@@ -80,7 +83,7 @@
     Lampa.Listener.follow('app', function(event) {
         if (event.type == 'ready') {
             initPlugin();
-            setupPageChangeListener();
+            setupMutationObserver();
         }
     });
 })();
