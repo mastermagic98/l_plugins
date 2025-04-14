@@ -8,12 +8,7 @@
      * Головна функція для колоризації рейтингів в інтерфейсі Lampa
      */
     function colorizeRatings() {
-        // Перевіряємо чи ми на правильній платформі
-        if (Lampa.Manifest.origin !== 'bylampa') {
-            Lampa.Noty.show('Помилка доступу');
-            return;
-        }
-        
+       
         // Обробляємо елементи full-start rate та info rate
         const rateElements = document.querySelectorAll('.full-start__rate > div, .info__rate > span');
         
