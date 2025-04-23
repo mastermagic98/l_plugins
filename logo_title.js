@@ -1,97 +1,68 @@
-!function() {
+!function(){
     "use strict";
 
-    // Language-specific settings labels
-    var langSettings = {
-        uk: {
-            name: "Логотипи замість назв",
-            description: "Відображає логотипи фільмів замість тексту"
+    // Додаємо переклади
+    Lampa.Lang.add({
+        logoplugin_name: {
+            en: 'Logos instead of names',
+            uk: 'Логотипи замість назв',
+            ru: 'Логотипы вместо названий'
         },
-        ru: {
-            name: "Логотипы вместо названий",
-            description: "Отображает логотипы фильмов вместо текста"
+        logoplugin_description: {
+            en: 'Displays movie logos instead of text',
+            uk: 'Відображає логотипи фільмів замість тексту',
+            ru: 'Отображает логотипы фильмов вместо текста'
         },
-        en: {
-            name: "Logos instead of titles",
-            description: "Displays movie logos instead of text"
+        logoplugin_hide: {
+            en: 'Hide',
+            uk: 'Приховати',
+            ru: 'Скрыть'
+        },
+        logoplugin_show: {
+            en: 'Show',
+            uk: 'Відображати',
+            ru: 'Отображать'
         }
-    };
+    });
 
-    // Get current language, default to English
-    var currentLang = Lampa.Storage.get("language") || "en";
-    if (currentLang !== "uk" && currentLang !== "ru" && currentLang !== "en") {
-        currentLang = "en";
-    }
-
-    // Use language-specific settings
-    var settings = langSettings[currentLang];
-
-    // Add settings parameter for logo toggle
+    // Додаємо параметр у налаштування
     Lampa.SettingsApi.addParam({
         component: "interface",
         param: {
             name: "logo_glav",
             type: "select",
             values: {
-                "1": currentLang === "uk" ? "Приховати" : currentLang === "ru" ? "Скрыть" : "Hide",
-                "0": currentLang === "uk" ? "Відображати" : currentLang === "ru" ? "Отображать" : "Display"
+                1: Lampa.Lang.translate('logoplugin_hide'),
+                0: Lampa.Lang.translate('logoplugin_show')
             },
-            "default": "0"
+            default: "0"
         },
         field: {
-            name: settings.name,
-            description: settings.description
+            name: Lampa.Lang.translate('logoplugin_name'),
+            description: Lampa.Lang.translate('logoplugin_description')
         }
     });
 
-    // Initialize plugin only once
+    // Основна логіка плагіну
     if (!window.logoplugin) {
-        window.logoplugin = true;
-
-        // Listen for 'full' activity events
-        Lampa.Listener.follow("full", function(event) {
-            if (event.type === "complite" && Lampa.Storage.get("logo_glav") !== "1") {
-                var movie = event.data.movie;
-                var mediaType = movie.name ? "tv" : "movie";
-                var languages = [currentLang];
-                
-                // Define fallback languages
-                if (currentLang === "uk") {
-                    languages = ["uk", "ru", "en"];
-                } else if (currentLang === "ru") {
-                    languages = ["ru", "en"];
-                } else {
-                    languages = ["en"];
-                }
-
-                // Function to try fetching logo for a given language
-                function tryFetchLogo(langIndex) {
-                    if (langIndex >= languages.length) {
-                        return; // No logos found
-                    }
-                    var lang = languages[langIndex];
-                    var apiUrl = Lampa.TMDB.api(mediaType + "/" + movie.id + "/images?api_key=" + Lampa.TMDB.key() + "&language=" + lang);
-                    console.log("Fetching logos for language: " + lang, apiUrl);
-
-                    $.get(apiUrl, function(response) {
-                        if (response.logos && response.logos[0]) {
-                            var logoPath = response.logos[0].file_path;
-                            if (logoPath !== "") {
-                                // Render logo in place of title
-                                var imgSrc = Lampa.TMDB.image("/t/p/w300" + logoPath.replace(".svg", ".png"));
-                                event.object.activity.render().find(".full-start-new__title").html(
-                                    '<img style="margin-top: 5px; max-height: 125px;" src="' + imgSrc + '" />'
-                                );
-                            }
-                        } else {
-                            // Try next language
-                            tryFetchLogo(langIndex + 1);
+        window.logoplugin = !0;
+        Lampa.Listener.follow("full", function(a) {
+            if ("complite" == a.type && "1" != Lampa.Storage.get("logo_glav")) {
+                var e = a.data.movie;
+                var t = Lampa.TMDB.api(e.name ? "tv" : "movie/" + e.id + "/images?api_key=" + Lampa.TMDB.key() + "&language=" + Lampa.Storage.get("language"));
+                console.log(t);
+                $.get(t, function(e) {
+                    if (e.logos && e.logos[0]) {
+                        var t = e.logos[0].file_path;
+                        if ("" != t) {
+                            a.object.activity.render().find(".full-start-new__title").html(
+                                '<img style="margin-top: 5px;max-height: 125px;" src="' + 
+                                Lampa.TMDB.image("/t/p/w300" + t.replace(".svg", ".png")) + 
+                                '" />'
+                            );
                         }
-                    });
-                }
-
-                // Start fetching with the first language
-                tryFetchLogo(0);
+                    }
+                });
             }
         });
     }
