@@ -1,6 +1,6 @@
-(function(){
+(function () {
     'use strict';
-    
+
     var Subscribe = Lampa.Subscribe;
     var Platform = Lampa.Platform;
     var Lang = Lampa.Lang;
@@ -8,7 +8,7 @@
     var Network = Lampa.Reguest;
     var Storage = Lampa.Storage;
     var TAG = 'UkrYTTrailers';
-    
+
     // Додаємо переклади
     Lang.add({
         ua_youtube_trailer: {
@@ -57,90 +57,126 @@
             en: 'YouTube API key is required for the plugin to work'
         }
     });
-    
+
     // Очищення рядка пошуку
     function cleanString(str) {
         return str.replace(/[^a-zA-Z\dа-яА-ЯёЁїЇіІєЄґҐ]+/g, ' ').trim().toLowerCase();
     }
-    
+
     // Основний клас плагіна
     function UkrYouTubeTrailers() {
         var that = this;
-        
+
         // Налаштування плагіна
         this.settings = {
             title: Lang.translate('ua_youtube_trailers'),
             subtitle: Lang.translate('ua_youtube_new_trailers'),
             plugin_id: 'ukr_youtube_trailers',
-            version: '1.0.0',
+            version: '1.0.1',
             max_results: 30,
             API_KEY: Storage.get('ukr_youtube_trailers_api_key', ''),
             search_query: 'трейлер українською',
-            published_after: '', // Буде встановлено при ініціалізації
-            proxy: Storage.get('ukr_youtube_trailers_proxy', '')
+            published_after: '',
+            proxy: Storage.get('ukr_youtube_trailers_proxy', '') || 'https://youtube-proxy.example.com/'
         };
-        
+
         // Списки контенту
         this.categories = [
             {
                 title: Lang.translate('ua_youtube_new_trailers'),
-                url: '&relevanceLanguage=uk&q=трейлер+українською&order=date'
+                url: '&relevanceLanguage=uk&q=трейлер+українською&order=date&videoDuration=short'
             },
             {
                 title: Lang.translate('ua_youtube_movies'),
-                url: '&relevanceLanguage=uk&q=трейлер+українською+фільм&order=date'
+                url: '&relevanceLanguage=uk&q=трейлер+українською+фільм&order=date&videoDuration=short'
             },
             {
                 title: Lang.translate('ua_youtube_series'),
-                url: '&relevanceLanguage=uk&q=трейлер+українською+серіал&order=date'
+                url: '&relevanceLanguage=uk&q=трейлер+українською+серіал&order=date&videoDuration=short'
             },
             {
                 title: Lang.translate('ua_youtube_cartoons'),
-                url: '&relevanceLanguage=uk&q=трейлер+українською+мультфільм&order=date'
+                url: '&relevanceLanguage=uk&q=трейлер+українською+мультфільм&order=date&videoDuration=short'
             }
         ];
-        
+
+        // Оцінка релевантності
+        function getRate(item, query, cleanSearch, year) {
+            var title_lower = cleanString(item.snippet.title);
+            item._rate = -1;
+
+            if (item._rate === -1) {
+                item._rate = 0;
+                var queryWords = query.split(' ');
+                var titleWords = title_lower.split(' ');
+
+                var isTrailer = title_lower.indexOf('трейлер') >= 0 || title_lower.indexOf('trailer') >= 0 ||
+                                title_lower.indexOf('тизер') >= 0 || title_lower.indexOf('teaser') >= 0;
+                if (!isTrailer) item._rate -= 2000;
+
+                var searchIndex = title_lower.indexOf(cleanSearch);
+                if (searchIndex >= 0) {
+                    item._rate += 300;
+                    if (year) {
+                        var remainingWords = title_lower.substring(searchIndex + cleanSearch.length).trim().split(' ');
+                        if (remainingWords.length && remainingWords[0] !== year && /^\d+$/.test(remainingWords[0])) {
+                            item._rate -= 1000;
+                        }
+                        var yearWords = titleWords.filter(function(w) { return w === year; });
+                        if (yearWords.length) item._rate += 100;
+                    }
+                } else {
+                    item._rate -= 1000;
+                }
+
+                var matchedWords = titleWords.filter(function(w) { return queryWords.indexOf(w) >= 0; });
+                var wordDiff = titleWords.length - matchedWords.length;
+                item._rate += matchedWords.length * 100;
+                item._rate -= wordDiff * 200;
+            }
+
+            return item._rate;
+        }
+
         // Пошук трейлерів
         this.findTrailers = function(movie, success, error) {
             if (!that.settings.API_KEY) {
-                if (error) error({error: Lang.translate('ua_youtube_api_key_error')});
+                if (error) error({ error: Lang.translate('ua_youtube_api_key_error') });
                 return;
             }
-            
+
             var title = movie.title || movie.name || movie.original_title || movie.original_name || '';
             if (!title) {
-                if (error) error({error: 'No title'});
+                if (error) error({ error: 'No title' });
                 return;
             }
-            
+
             var year = (movie.release_date || movie.first_air_date || '').toString()
                 .replace(/\D+/g, '')
                 .substring(0, 4)
                 .replace(/^([03-9]\d|1[0-8]|2[1-9]|20[3-9])\d+$/, '');
-            
+
             var query = cleanString([title, year, 'трейлер українською'].join(' '));
+            var cleanSearch = cleanString(title);
             var url = that.settings.proxy + 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video' +
                 '&videoDefinition=high&videoDuration=short&maxResults=' + that.settings.max_results +
                 '&key=' + that.settings.API_KEY +
                 '&publishedAfter=' + that.settings.published_after +
                 '&regionCode=UA&relevanceLanguage=uk' +
                 '&q=' + encodeURIComponent(query);
-            
+
             var network = new Network();
             network.silent(url, function(json) {
                 if (json && json.items && json.items.length) {
-                    // Сортування результатів по релевантності
-                    var filtered = json.items.filter(function(item){
-                        var title_lower = item.snippet.title.toLowerCase();
-                        return title_lower.indexOf('трейлер') >= 0 || 
-                               title_lower.indexOf('trailer') >= 0 || 
-                               title_lower.indexOf('тизер') >= 0 || 
-                               title_lower.indexOf('teaser') >= 0;
+                    var filtered = json.items.filter(function(item) {
+                        return getRate(item, query, cleanSearch, year) > 400;
+                    }).sort(function(a, b) {
+                        return getRate(b, query, cleanSearch, year) - getRate(a, query, cleanSearch, year);
                     });
-                    
+
                     if (filtered.length === 0) filtered = json.items;
-                    
-                    var results = filtered.map(function(item){
+
+                    var results = filtered.map(function(item) {
                         return {
                             id: item.id.videoId,
                             title: item.snippet.title,
@@ -151,25 +187,30 @@
                             youtube: true
                         };
                     });
-                    
+
                     success(results);
                 } else {
-                    if (error) error({error: 'No results'});
+                    if (error) error({ error: 'No results' });
                 }
-                
+
                 network.clear();
             }, function(a, c) {
-                if (error) error({error: network.errorDecode(a, c)});
-                network.clear();
+                if (!that.settings.proxy && a.status === 0 && a.readyState === 0) {
+                    that.settings.proxy = 'https://youtube-proxy.example.com/';
+                    that.findTrailers(movie, success, error);
+                } else {
+                    if (error) error({ error: network.errorDecode(a, c) });
+                    network.clear();
+                }
             });
         };
-        
+
         // Кешування результатів пошуку
         this.cacheRequest = function(movie, isTv, success, fail) {
-            var id = (isTv ? 'tv' : '') + (movie.id || (Lampa.Utils.hash(movie.title || movie.name)*1).toString(36));
+            var id = (isTv ? 'tv' : '') + (movie.id || (Lampa.Utils.hash(movie.title || movie.name) * 1).toString(36));
             var key = 'UKR_YOUTUBE_trailer_' + id;
             var data = sessionStorage.getItem(key);
-            
+
             if (data) {
                 data = JSON.parse(data);
                 if (data[0]) typeof success === 'function' && success(data[1]);
@@ -184,7 +225,7 @@
                 });
             }
         };
-        
+
         // Обробка відео YouTube
         this.playYoutube = function(id) {
             var url = 'https://www.youtube.com/watch?v=' + id;
@@ -194,30 +235,27 @@
                 iptv: true
             });
         };
-        
+
         // Додавання плагіна в меню
         this.addMenu = function() {
             if (!that.settings.API_KEY) {
                 console.log(TAG, 'API key not set');
                 return;
             }
-            
-            // Встановлюємо дату для пошуку - 3 місяці тому
+
             var date = new Date();
-            date.setMonth(date.getMonth() - 3);
+            date.setMonth(date.getMonth() - 1);
             that.settings.published_after = date.toISOString();
-            
-            // Створення головної сторінки
+
             Lampa.Component.add('ukr_youtube_trailers', that.component);
-            
-            // Додаємо розділ в меню
+
             var menu_icon = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0C.488 3.45.029 5.804 0 12c.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0C23.512 20.55 23.971 18.196 24 12c-.029-6.185-.484-8.549-4.385-8.816zM9 16V8l8 3.993L9 16z" fill="currentColor"/></svg>';
-            
+
             var button = $('<li class="menu__item selector">\
                 <div class="menu__ico">' + menu_icon + '</div>\
                 <div class="menu__text">' + that.settings.title + '</div>\
             </li>');
-            
+
             button.on('hover:enter', function() {
                 Lampa.Activity.push({
                     url: '',
@@ -226,41 +264,36 @@
                     page: 1
                 });
             });
-            
+
             $('.menu .menu__list').eq(0).append(button);
         };
-        
+
         // Додавання кнопки на сторінку фільму/серіалу
         this.addButton = function() {
-            // Лого для кнопки
             var button_icon = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0C.488 3.45.029 5.804 0 12c.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0C23.512 20.55 23.971 18.196 24 12c-.029-6.185-.484-8.549-4.385-8.816zM9 16V8l8 3.993L9 16z" fill="currentColor"/></svg>';
-            
+
             var button = '<div class="full-start__button selector view--ua_youtube_trailer hide" data-subtitle="#{ua_youtube_found_on}">\
                 <div class="full-start__button-icon">' + button_icon + '</div>\
                 <div class="full-start__button-text">#{ua_youtube_trailer}</div>\
             </div>';
-            
+
             Lampa.Listener.follow('full', function(event) {
                 if (event.type === 'complite') {
-                    // Перевіряємо наявність API ключа
                     if (!that.settings.API_KEY) return;
-                    
+
                     var render = event.object.activity.render();
                     var btn = $(Lampa.Lang.translate(button));
-                    
-                    // Додаємо кнопку після стандартної кнопки трейлера або останньої кнопки
+
                     var trailer_btn = render.find('.view--trailer');
                     if (trailer_btn.length) {
                         trailer_btn.after(btn);
                     } else {
                         render.find('.full-start__button:last').after(btn);
                     }
-                    
-                    // Знаходимо трейлери для фільму/серіалу
+
                     var isTv = !!event.object && !!event.object.method && event.object.method === 'tv';
                     that.cacheRequest(event.data.movie, isTv, function(results) {
                         if (results && results.length) {
-                            // Створюємо плейлист для плеєра
                             var playlist = results.map(function(item) {
                                 return {
                                     title: item.title,
@@ -270,7 +303,7 @@
                                     iptv: true
                                 };
                             });
-                            
+
                             btn.on('hover:enter', function() {
                                 Lampa.Player.play(playlist[0]);
                                 Lampa.Player.playlist(playlist);
@@ -280,66 +313,65 @@
                 }
             });
         };
-        
+
         // Компонент плагіна для відображення каталогу трейлерів
         this.component = function(object) {
             var network = new Lampa.Reguest();
-            var scroll = new Lampa.Scroll({mask: true, over: true});
+            var scroll = new Lampa.Scroll({ mask: true, over: true });
             var items = [];
             var html = $('<div class="category-full"></div>');
             var body = $('<div class="category-full__body"></div>');
-            var info;
             var last;
             var waitload = false;
-            
+
             this.create = function() {
                 var _this = this;
-                
+
                 this.activity.loader(true);
-                
+
                 scroll.create();
                 html.append(scroll.render());
                 scroll.append(body);
-                
+
                 this.createFilterPanel();
                 this.loadCategory();
-                
+
                 this.activity.toggle();
             };
-            
+
             this.createFilterPanel = function() {
                 var _this = this;
                 var selector = $('<div class="category-full__scroll selector scroll" style="height:5em"></div>');
                 var filter = $('<div class="category-full__filter"></div>');
                 var items = [];
-                
+
                 that.categories.forEach(function(category, i) {
                     var item = $('<div class="selector" data-index="' + i + '">' + category.title + '</div>');
                     item.on('hover:enter', function() {
                         selector.find('.active').removeClass('active');
                         item.addClass('active');
-                        
+
                         object.url = category.url;
                         object.page = 1;
-                        
+
                         _this.clear();
                         _this.loadCategory();
                     });
-                    
+
                     if (i === 0) item.addClass('active');
                     items.push(item);
                 });
-                
+
                 filter.append(items);
                 selector.append(filter);
                 scroll.body.prepend(selector);
             };
-            
+
             this.loadCategory = function() {
                 var _this = this;
-                
+
                 this.activity.loader(true);
-                
+
                 if (!that.settings.API_KEY) {
                     var empty = $('<div class="empty-list selector"><div class="empty-list__container"><div class="empty-list__title">' + Lang.translate('ua_youtube_api_key_error') + '</div></div></div>');
                     body.append(empty);
@@ -347,26 +379,26 @@
                     _this.activity.toggle();
                     return;
                 }
-                
-                // Підготовка запиту до YouTube API
+
                 var publishedAfter = that.settings.published_after ? '&publishedAfter=' + that.settings.published_after : '';
                 var url = that.settings.proxy + 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=' + that.settings.max_results + '&key=' + that.settings.API_KEY + publishedAfter + object.url;
-                
+
                 if (object.page > 1 && object.pageToken) {
                     url += '&pageToken=' + object.pageToken;
                 }
-                
+
                 network.silent(url, function(json) {
                     if (json && json.items && json.items.length) {
                         _this.build(json.items);
-                        
-                        // Додаємо nextPageToken для пагінації
+
                         if (json.nextPageToken) {
                             object.pageToken = json.nextPageToken;
                             waitload = false;
                             _this.activity.loader(false);
                             _this.activity.toggle();
                         } else {
+                            var empty = $('<div class="empty-list selector"><div class="empty-list__container"><div class="empty-list__title">Нічого не знайдено</div></div></div>');
+                            body.append(empty);
                             _this.activity.loader(false);
                             _this.activity.toggle();
                         }
@@ -377,12 +409,17 @@
                         _this.activity.toggle();
                     }
                 }, function(a, c) {
-                    _this.empty('Помилка: ' + network.errorDecode(a, c));
-                    _this.activity.loader(false);
-                    _this.activity.toggle();
+                    if (!that.settings.proxy && a.status === 0 && a.readyState === 0) {
+                        that.settings.proxy = 'https://youtube-proxy.example.com/';
+                        _this.loadCategory();
+                    } else {
+                        _this.empty('Помилка: ' + network.errorDecode(a, c));
+                        _this.activity.loader(false);
+                        _this.activity.toggle();
+                    }
                 });
             };
-            
+
             this.clear = function() {
                 waitload = false;
                 object.page = 1;
@@ -391,18 +428,18 @@
                 body.empty();
                 scroll.reset();
             };
-            
+
             this.empty = function(text) {
                 var empty = $('<div class="empty-list selector"><div class="empty-list__container"><div class="empty-list__title">' + text + '</div></div></div>');
                 body.append(empty);
             };
-            
+
             this.build = function(data) {
                 var _this = this;
                 var item;
-                
+
                 var row = $('<div class="category-full__row"></div>');
-                
+
                 data.forEach(function(element) {
                     item = $('<div class="category-full__item selector">\
                         <div class="card card--collection card--wide">\
@@ -420,7 +457,7 @@
                             </div>\
                         </div>\
                     </div>');
-                    
+
                     item.on('hover:enter', function() {
                         var video = {
                             title: element.snippet.title,
@@ -429,61 +466,65 @@
                             youtube: true,
                             iptv: true
                         };
-                        
+
                         Lampa.Player.play(video);
                         Lampa.Player.playlist([video]);
                     });
-                    
+
                     row.append(item);
                     items.push(item);
                 });
-                
+
                 body.append(row);
-                
-                // Lazy load
+
                 Lampa.Controller.enable('content');
             };
-            
+
             this.nextPage = function() {
                 var _this = this;
-                
+
                 if (waitload) return;
-                
+
                 if (object.pageToken) {
                     waitload = true;
                     object.page++;
-                    
+
                     var publishedAfter = that.settings.published_after ? '&publishedAfter=' + that.settings.published_after : '';
                     var url = that.settings.proxy + 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=' + that.settings.max_results + '&key=' + that.settings.API_KEY + publishedAfter + object.url + '&pageToken=' + object.pageToken;
-                    
+
                     network.silent(url, function(json) {
                         if (json && json.items && json.items.length) {
                             _this.build(json.items);
-                            
+
                             object.pageToken = json.nextPageToken || '';
                             waitload = false;
                         }
                     }, function(a, c) {
-                        Lampa.Noty.show('Помилка завантаження: ' + network.errorDecode(a, c));
+                        if (!that.settings.proxy && a.status === 0 && a.readyState === 0) {
+                            that.settings.proxy = 'https://youtube-proxy.example.com/';
+                            _this.nextPage();
+                        } else {
+                            Lampa.Noty.show('Помилка завантаження: ' + network.errorDecode(a, c));
+                        }
                     });
                 }
             };
-            
+
             this.start = function() {
                 if (Lampa.Activity.active().activity !== this.activity) return;
-                
+
                 this.activity.loader(true);
                 this.activity.toggle();
             };
-            
+
             this.pause = function() {};
-            
+
             this.stop = function() {};
-            
+
             this.render = function() {
                 return html;
             };
-            
+
             this.destroy = function() {
                 network.clear();
                 scroll.destroy();
@@ -493,49 +534,48 @@
                 items = null;
                 html = null;
                 body = null;
-                info = null;
             };
         };
-        
+
         // Додавання налаштування в меню налаштувань
         this.addSettings = function() {
             Lampa.Settings.listener.follow('open', function(e) {
                 if (e.name === 'main') {
                     var field = $('<div class="settings-folder selector" data-component="plugin_ukr_youtube_trailers"></div>');
-                    
+
                     field.append('<div class="settings-folder__icon">' +
                         '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0C.488 3.45.029 5.804 0 12c.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0C23.512 20.55 23.971 18.196 24 12c-.029-6.185-.484-8.549-4.385-8.816zM9 16V8l8 3.993L9 16z" fill="currentColor"/></svg>' +
                     '</div>');
-                    
+
                     field.append('<div class="settings-folder__name">' + that.settings.title + '</div>');
-                    
+
                     $('.settings-body [data-component="more"]').after(field);
-                    
+
                     field.on('hover:enter', function() {
                         Lampa.Settings.create('plugin_ukr_youtube_trailers');
-                        
+
                         Lampa.Settings.main().render();
                     });
                 } else if (e.name === 'plugin_ukr_youtube_trailers') {
                     var ApiKey = Storage.get('ukr_youtube_trailers_api_key', '');
                     var Proxy = Storage.get('ukr_youtube_trailers_proxy', '');
-                    
+
                     var catalog = {
                         component: 'settings_ukr_youtube_trailers',
                         icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0C.488 3.45.029 5.804 0 12c.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0C23.512 20.55 23.971 18.196 24 12c-.029-6.185-.484-8.549-4.385-8.816zM9 16V8l8 3.993L9 16z" fill="currentColor"/></svg>',
                         name: Lang.translate('ua_youtube_trailers')
                     };
-                    
+
                     Lampa.Settings.main().render().find('[data-component="settings_ukr_youtube_trailers"]').remove();
                     Lampa.Settings.main().render().find('[data-component="settings"]').after(catalog);
-                    
+
                     catalog = Lampa.Settings.main().render().find('[data-component="settings_ukr_youtube_trailers"]');
                     catalog.on('hover:enter', function() {
                         Lampa.Settings.create('settings_ukr_youtube_trailers');
-                        
+
                         var item = $('<div class="settings-param selector" data-name="api_key"><div class="settings-param__name">API Key</div><div class="settings-param__value"></div></div>');
                         item.find('.settings-param__value').text(ApiKey ? '******' : Lang.translate('params_no_setting'));
-                        
+
                         item.on('hover:enter', function() {
                             Lampa.Input.edit({
                                 title: 'API Key',
@@ -551,10 +591,10 @@
                                 }
                             });
                         });
-                        
+
                         var item_proxy = $('<div class="settings-param selector" data-name="proxy"><div class="settings-param__name">Proxy URL</div><div class="settings-param__value"></div></div>');
                         item_proxy.find('.settings-param__value').text(Proxy || Lang.translate('params_no_setting'));
-                        
+
                         item_proxy.on('hover:enter', function() {
                             Lampa.Input.edit({
                                 title: 'Proxy URL',
@@ -570,30 +610,24 @@
                                 }
                             });
                         });
-                        
+
                         Lampa.Settings.following('settings_ukr_youtube_trailers', item);
                         Lampa.Settings.following('settings_ukr_youtube_trailers', item_proxy);
                     });
                 }
             });
         };
-        
+
         // Ініціалізація плагіна
         this.init = function() {
-            // Додаємо налаштування
             this.addSettings();
-            
-            // Додаємо розділ в меню
             this.addMenu();
-            
-            // Додаємо кнопку на сторінку фільму/серіалу
             this.addButton();
         };
     }
-    
+
     var ukrYouTubeTrailers = new UkrYouTubeTrailers();
-    
-    // Запуск при завантаженні Lampa
+
     Lampa.Listener.follow('app', function(e) {
         if (e.type === 'ready') {
             ukrYouTubeTrailers.init();
