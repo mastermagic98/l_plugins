@@ -34,7 +34,7 @@
     }
 
     function main(oncomplite, onerror) {
-        var status = new Lampa.Status(6); // Шість категорій
+        var status = new Lampa.Status(6);
 
         status.onComplite = function () {
             var fulldata = [];
@@ -93,8 +93,8 @@
             }, status.error.bind(status));
         }, false);
 
-        get(`/discover/tv?sort_by=popularity.desc`, 1, function (json) {
-            append(Lampa.Lang.translate('trailers_series'), 'series', '/discover/tv?sort_by=popularity.desc', json.results.length ? json : { results: [] });
+        get(`/discover/tv?sort_by=popularity.desc&first_air_date.gte=2020-01-01`, 1, function (json) {
+            append(Lampa.Lang.translate('trailers_series'), 'series', '/discover/tv?sort_by=popularity.desc&first_air_date.gte=2020-01-01', json.results.length ? json : { results: [] });
         }, status.error.bind(status), false);
     }
 
@@ -147,7 +147,11 @@
                 var create = ((data.release_date || data.first_air_date || '0000') + '').slice(0, 4);
                 this.card.find('.card__title').text(data.title || data.name);
                 this.card.find('.card__details').text(create + ' - ' + (data.original_title || data.original_name));
-                this.card.find('.card__view').append('<div class="card__lang"></div>'); // Місце для позначки мови
+                this.card.find('.card__view').append('<div class="card__lang"></div>');
+                // Встановлюємо мову трейлера, якщо вона є в data
+                if (data.trailer_lang) {
+                    this.setTrailerLanguage(data.trailer_lang);
+                }
             } else {
                 this.card.find('.card__title').text(data.name);
                 this.card.find('.card__details').remove();
@@ -200,6 +204,8 @@
             if (!this.is_youtube && lang) {
                 console.log('Setting trailer language:', lang);
                 this.card.find('.card__lang').text(lang.toUpperCase());
+            } else {
+                this.card.find('.card__lang').text('');
             }
         };
 
@@ -209,22 +215,24 @@
             this.card.on('hover:focus', function (e, is_mouse) {
                 Lampa.Background.change(_this2.cardImgBackground(data));
                 _this2.onFocus(e.target, data, is_mouse);
-                // Завантажуємо мову трейлера для відображення
-                if (!_this2.is_youtube) {
+                // Оновлюємо мову трейлера, якщо вона ще не встановлена
+                if (!_this2.is_youtube && !data.trailer_lang) {
                     Api.videos(data, function (videos) {
                         var userLang = Lampa.Storage.get('language', 'ru');
                         var trailers = videos.results.filter(function (v) {
                             return v.type === 'Trailer';
                         });
                         var video = trailers.find(function (v) {
-                            return v.iso_639_1 === userLang || v.iso_639_1 === 'ua';
+                            return v.iso_639_1 === userLang || (userLang === 'uk' && v.iso_639_1 === 'ua');
                         }) || trailers.find(function (v) {
                             return v.iso_639_1 === 'ru';
                         }) || trailers.find(function (v) {
                             return v.iso_639_1 === 'en';
                         }) || trailers[0];
-                        _this2.setTrailerLanguage(video ? video.iso_639_1 : '');
+                        data.trailer_lang = video ? video.iso_639_1 : '';
+                        _this2.setTrailerLanguage(data.trailer_lang);
                     }, function () {
+                        data.trailer_lang = '';
                         _this2.setTrailerLanguage('');
                     });
                 }
@@ -238,7 +246,7 @@
                             return v.type === 'Trailer';
                         });
                         var video = trailers.find(function (v) {
-                            return v.iso_639_1 === userLang || v.iso_639_1 === 'ua';
+                            return v.iso_639_1 === userLang || (userLang === 'uk' && v.iso_639_1 === 'ua');
                         }) || trailers.find(function (v) {
                             return v.iso_639_1 === 'ru';
                         }) || trailers.find(function (v) {
@@ -246,12 +254,14 @@
                         }) || trailers[0];
 
                         if (video && video.key) {
+                            console.log('Selected trailer:', video);
                             if (userLang === 'uk' && video.iso_639_1 !== 'uk' && video.iso_639_1 !== 'ua') {
                                 Lampa.Noty.show(Lampa.Lang.translate('trailers_no_uk_trailer'));
                             } else if (userLang === 'ru' && video.iso_639_1 !== 'ru') {
                                 Lampa.Noty.show(Lampa.Lang.translate('trailers_no_ru_trailer'));
                             }
                             _this2.play(video.key);
+                            data.trailer_lang = video.iso_639_1;
                             _this2.setTrailerLanguage(video.iso_639_1);
                         } else {
                             Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
@@ -286,7 +296,7 @@
                                     items.push({
                                         title: video.name || 'Trailer',
                                         id: video.key,
-                                        subtitle: video.iso_639_1 === userLang || video.iso_639_1 === 'ua' ? 'Local' : video.iso_639_1
+                                        subtitle: video.iso_639_1 === userLang || (userLang === 'uk' && video.iso_639_1 === 'ua') ? 'Local' : video.iso_639_1
                                     });
                                 }
                             });
@@ -307,7 +317,8 @@
                                     });
                                 } else {
                                     _this2.play(item.id);
-                                    _this2.setTrailerLanguage(trailers.find(v => v.key === item.id).iso_639_1);
+                                    data.trailer_lang = trailers.find(v => v.key === item.id).iso_639_1;
+                                    _this2.setTrailerLanguage(data.trailer_lang);
                                 }
                             },
                             onBack: function () {
@@ -399,12 +410,76 @@
                 content.find('.items-line__title').after(filter);
             }
 
+            if (data.type === 'series') {
+                filter = $('<div class="items-line__filter selector"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg></div>');
+                filter.on('hover:enter', function () {
+                    var items = [
+                        { title: Lampa.Lang.translate('trailers_filter_recent'), value: 'recent', selected: Lampa.Storage.get('trailers_series_filter', 'recent') === 'recent' },
+                        { title: Lampa.Lang.translate('trailers_filter_all'), value: 'all', selected: Lampa.Storage.get('trailers_series_filter', 'recent') === 'all' }
+                    ];
+                    Lampa.Select.show({
+                        title: Lampa.Lang.translate('trailers_filter'),
+                        items: items,
+                        onSelect: function (item) {
+                            Lampa.Storage.set('trailers_series_filter', item.value);
+                            Lampa.Activity.push({
+                                url: item.value === 'recent' ? `/discover/tv?sort_by=popularity.desc&first_air_date.gte=2020-01-01` :
+                                     `/discover/tv?sort_by=popularity.desc`,
+                                title: Lampa.Lang.translate('trailers_series'),
+                                component: 'trailers_main',
+                                type: 'series',
+                                page: 1
+                            });
+                        },
+                        onBack: function () {
+                            Lampa.Controller.toggle('content');
+                        }
+                    });
+                });
+                content.find('.items-line__title').after(filter);
+            }
+
             this.bind();
             body.append(scroll.render());
         };
 
         this.bind = function () {
-            data.results.slice(0, light ? 6 : data.results.length).forEach(this.append.bind(this));
+            var maxRequests = 5; // Обмеження одночасних запитів
+            var queue = data.results.slice(0, light ? 6 : data.results.length);
+            var currentRequests = 0;
+
+            function processNext() {
+                if (queue.length === 0 || currentRequests >= maxRequests) return;
+                var element = queue.shift();
+                currentRequests++;
+                Api.videos(element, function (videos) {
+                    var userLang = Lampa.Storage.get('language', 'ru');
+                    var trailers = videos.results.filter(function (v) {
+                        return v.type === 'Trailer';
+                    });
+                    var video = trailers.find(function (v) {
+                        return v.iso_639_1 === userLang || (userLang === 'uk' && v.iso_639_1 === 'ua');
+                    }) || trailers.find(function (v) {
+                        return v.iso_639_1 === 'ru';
+                    }) || trailers.find(function (v) {
+                        return v.iso_639_1 === 'en';
+                    }) || trailers[0];
+                    element.trailer_lang = video ? video.iso_639_1 : '';
+                    _this.append(element);
+                    currentRequests--;
+                    processNext();
+                }, function () {
+                    element.trailer_lang = '';
+                    _this.append(element);
+                    currentRequests--;
+                    processNext();
+                });
+            }
+
+            var _this = this;
+            for (var i = 0; i < maxRequests && queue.length; i++) {
+                processNext();
+            }
             this.more();
             Lampa.Layer.update();
         };
@@ -597,7 +672,7 @@
                 right: function () {
                     Navigator.move('right');
                 },
-                up: function () {
+                up sprend: function () {
                     if (Navigator.canmove('up')) Navigator.move('up');
                     else Lampa.Controller.toggle('head');
                 },
@@ -679,7 +754,39 @@
 
         this.append = function (data, append) {
             var _this2 = this;
-            data.results.forEach(function (element) {
+            var maxRequests = 5;
+            var queue = data.results.slice();
+            var currentRequests = 0;
+
+            function processNext() {
+                if (queue.length === 0 || currentRequests >= maxRequests) return;
+                var element = queue.shift();
+                currentRequests++;
+                Api.videos(element, function (videos) {
+                    var userLang = Lampa.Storage.get('language', 'ru');
+                    var trailers = videos.results.filter(function (v) {
+                        return v.type === 'Trailer';
+                    });
+                    var video = trailers.find(function (v) {
+                        return v.iso_639_1 === userLang || (userLang === 'uk' && v.iso_639_1 === 'ua');
+                    }) || trailers.find(function (v) {
+                        return v.iso_639_1 === 'ru';
+                    }) || trailers.find(function (v) {
+                        return v.iso_639_1 === 'en';
+                    }) || trailers[0];
+                    element.trailer_lang = video ? video.iso_639_1 : '';
+                    appendCard(element);
+                    currentRequests--;
+                    processNext();
+                }, function () {
+                    element.trailer_lang = '';
+                    appendCard(element);
+                    currentRequests--;
+                    processNext();
+                });
+            }
+
+            function appendCard(element) {
                 var card = new Trailer(element, { type: object.type });
                 card.create();
                 card.visible();
@@ -691,7 +798,11 @@
                 body.append(card.render());
                 items.push(card);
                 if (append) Lampa.Controller.collectionAppend(card.render());
-            });
+            }
+
+            for (var i = 0; i < maxRequests && queue.length; i++) {
+                processNext();
+            }
         };
 
         this.build = function (data) {
@@ -875,6 +986,16 @@
             ru: 'Год',
             uk: 'Рік',
             en: 'Year'
+        },
+        trailers_filter_recent: {
+            ru: 'Недавние',
+            uk: 'Недавні',
+            en: 'Recent'
+        },
+        trailers_filter_all: {
+            ru: 'Все время',
+            uk: 'Весь час',
+            en: 'All time'
         }
     });
 
