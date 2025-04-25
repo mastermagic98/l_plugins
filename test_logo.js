@@ -58,9 +58,9 @@
         Lampa.Listener.follow('full', function (event) {
             // Логування всіх подій full для діагностики
             console.log('Full event triggered:', event.type, event.data); // Лог для діагностики
-            // Перевірка, чи подія є завершенням рендерингу та чи увімкнена заміна логотипу
-            // Примітка: якщо 'complite' не працює, спробуйте замінити на 'movie', 'render' або інший тип, який з’являється в логах
-            if (event.type == 'complite' && Lampa.Storage.get('logo_glav') != '1') {
+            // Перевірка, чи подія є завершенням рендерингу або типом movie та чи увімкнена заміна логотипу
+            // Примітка: якщо 'complite' не працює, перевірте логи для інших типів (наприклад, 'movie', 'render', 'ready')
+            if ((event.type == 'complite' || event.type == 'movie') && Lampa.Storage.get('logo_glav') != '1') {
                 var item = event.data.movie;
                 var mediaType = item.name ? 'tv' : 'movie';
                 // Формування URL для запиту логотипу з TMDB
