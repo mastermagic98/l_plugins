@@ -56,8 +56,10 @@
 
         // Підписка на подію активності для обробки повноекранного режиму
         Lampa.Listener.follow('full', function (event) {
+            // Логування всіх подій full для діагностики
+            console.log('Full event triggered:', event.type, event.data); // Лог для діагностики
             // Перевірка, чи подія є завершенням рендерингу та чи увімкнена заміна логотипу
-            console.log('Full event triggered:', event.type); // Лог для діагностики
+            // Примітка: якщо 'complite' не працює, спробуйте замінити на 'movie', 'render' або інший тип, який з’являється в логах
             if (event.type == 'complite' && Lampa.Storage.get('logo_glav') != '1') {
                 var item = event.data.movie;
                 var mediaType = item.name ? 'tv' : 'movie';
