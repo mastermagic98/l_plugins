@@ -25,41 +25,12 @@
         window.logoplugin = true;
         console.log('Plugin initialized'); // Лог для діагностики
 
-        // Захист від дебагінгу: обфускований код для перевірки конструктора функції
-        (function () {
-            return (function () {
-                return {}.constructor("return this")();
-            }).toString().search('(((.+)+)+)+$').toString().constructor(this).toString();
-        })();
-
-        // Налаштування консольного логування для захисту від дебагінгу
-        (function () {
-            var consoleObj = (function () {
-                var global;
-                try {
-                    global = Function('return (function() {}.constructor("return this")());')();
-                } catch (e) {
-                    global = window;
-                }
-                return global;
-            })();
-            var consoleMethods = consoleObj.console = consoleObj.console || {};
-            var methods = ['log', 'info', 'warn', 'error', 'exception', 'table', 'trace'];
-            for (var i = 0; i < methods.length; i++) {
-                var method = methods[i];
-                var originalMethod = consoleMethods[method] || function () {};
-                originalMethod.__proto__ = Function.prototype;
-                originalMethod.toString = originalMethod.toString.bind(originalMethod);
-                consoleMethods[method] = originalMethod;
-            }
-        })();
-
         // Підписка на подію активності для обробки повноекранного режиму
         Lampa.Listener.follow('full', function (event) {
             // Логування всіх подій full для діагностики
             console.log('Full event triggered:', event.type, event.data); // Лог для діагностики
             // Перевірка, чи подія є завершенням рендерингу або типом movie та чи увімкнена заміна логотипу
-            // Примітка: якщо 'complite' не працює, перевірте логи для інших типів (наприклад, 'movie', 'render', 'ready')
+            // Примітка: якщо 'complite' або 'movie' не працюють, перевірте логи для інших типів (наприклад, 'render', 'ready')
             if ((event.type == 'complite' || event.type == 'movie') && Lampa.Storage.get('logo_glav') != '1') {
                 var item = event.data.movie;
                 var mediaType = item.name ? 'tv' : 'movie';
