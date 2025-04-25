@@ -1,5 +1,6 @@
 (function () {
     'use strict';
+    console.log('Trailers Plugin: Loading...'); // Лог для перевірки завантаження
 
     var network = new Lampa.Reguest();
     var tmdb_api_key = Lampa.TMDB.key();
@@ -22,7 +23,7 @@
     function get(url, page, resolve, reject, useRegion) {
         var lang = Lampa.Storage.get('language', 'ru');
         var full_url = `${tmdb_base_url}${url}&api_key=${tmdb_api_key}&language=${lang}&page=${page}`;
-        if (useRegion) full_url += `®ion=${getRegion()}`;
+        if (useRegion) full_url += `&region=${getRegion()}`;
         console.log('API Request:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
@@ -34,7 +35,7 @@
     }
 
     function main(oncomplite, onerror) {
-        var status = new Lampa.Status(6);
+        var status = new Lampa.Status(6); // Шість категорій
 
         status.onComplite = function () {
             var fulldata = [];
@@ -93,8 +94,8 @@
             }, status.error.bind(status));
         }, false);
 
-        get(`/discover/tv?sort_by=popularity.desc&first_air_date.gte=2020-01-01`, 1, function (json) {
-            append(Lampa.Lang.translate('trailers_series'), 'series', '/discover/tv?sort_by=popularity.desc&first_air_date.gte=2020-01-01', json.results.length ? json : { results: [] });
+        get(`/discover/tv?sort_by=popularity.desc`, 1, function (json) {
+            append(Lampa.Lang.translate('trailers_series'), 'series', '/discover/tv?sort_by=popularity.desc', json.results.length ? json : { results: [] });
         }, status.error.bind(status), false);
     }
 
@@ -147,11 +148,7 @@
                 var create = ((data.release_date || data.first_air_date || '0000') + '').slice(0, 4);
                 this.card.find('.card__title').text(data.title || data.name);
                 this.card.find('.card__details').text(create + ' - ' + (data.original_title || data.original_name));
-                this.card.find('.card__view').append('<div class="card__lang"></div>');
-                // Встановлюємо мову трейлера, якщо вона є в data
-                if (data.trailer_lang) {
-                    this.setTrailerLanguage(data.trailer_lang);
-                }
+                this.card.find('.card__view').append('<div class="card__lang"></div>'); // Місце для позначки мови
             } else {
                 this.card.find('.card__title').text(data.name);
                 this.card.find('.card__details').remove();
@@ -204,8 +201,6 @@
             if (!this.is_youtube && lang) {
                 console.log('Setting trailer language:', lang);
                 this.card.find('.card__lang').text(lang.toUpperCase());
-            } else {
-                this.card.find('.card__lang').text('');
             }
         };
 
@@ -215,24 +210,22 @@
             this.card.on('hover:focus', function (e, is_mouse) {
                 Lampa.Background.change(_this2.cardImgBackground(data));
                 _this2.onFocus(e.target, data, is_mouse);
-                // Оновлюємо мову трейлера, якщо вона ще не встановлена
-                if (!_this2.is_youtube && !data.trailer_lang) {
+                // Завантажуємо мову трейлера для відображення
+                if (!_this2.is_youtube) {
                     Api.videos(data, function (videos) {
                         var userLang = Lampa.Storage.get('language', 'ru');
                         var trailers = videos.results.filter(function (v) {
                             return v.type === 'Trailer';
                         });
                         var video = trailers.find(function (v) {
-                            return v.iso_639_1 === userLang || (userLang === 'uk' && v.iso_639_1 === 'ua');
+                            return v.iso_639_1 === userLang || v.iso_639_1 === 'ua';
                         }) || trailers.find(function (v) {
                             return v.iso_639_1 === 'ru';
                         }) || trailers.find(function (v) {
                             return v.iso_639_1 === 'en';
                         }) || trailers[0];
-                        data.trailer_lang = video ? video.iso_639_1 : '';
-                        _this2.setTrailerLanguage(data.trailer_lang);
+                        _this2.setTrailerLanguage(video ? video.iso_639_1 : '');
                     }, function () {
-                        data.trailer_lang = '';
                         _this2.setTrailerLanguage('');
                     });
                 }
@@ -246,7 +239,7 @@
                             return v.type === 'Trailer';
                         });
                         var video = trailers.find(function (v) {
-                            return v.iso_639_1 === userLang || (userLang === 'uk' && v.iso_639_1 === 'ua');
+                            return v.iso_639_1 === userLang || v.iso_639_1 === 'ua';
                         }) || trailers.find(function (v) {
                             return v.iso_639_1 === 'ru';
                         }) || trailers.find(function (v) {
@@ -254,14 +247,12 @@
                         }) || trailers[0];
 
                         if (video && video.key) {
-                            console.log('Selected trailer:', video);
                             if (userLang === 'uk' && video.iso_639_1 !== 'uk' && video.iso_639_1 !== 'ua') {
                                 Lampa.Noty.show(Lampa.Lang.translate('trailers_no_uk_trailer'));
                             } else if (userLang === 'ru' && video.iso_639_1 !== 'ru') {
                                 Lampa.Noty.show(Lampa.Lang.translate('trailers_no_ru_trailer'));
                             }
                             _this2.play(video.key);
-                            data.trailer_lang = video.iso_639_1;
                             _this2.setTrailerLanguage(video.iso_639_1);
                         } else {
                             Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
@@ -296,7 +287,7 @@
                                     items.push({
                                         title: video.name || 'Trailer',
                                         id: video.key,
-                                        subtitle: video.iso_639_1 === userLang || (userLang === 'uk' && video.iso_639_1 === 'ua') ? 'Local' : video.iso_639_1
+                                        subtitle: video.iso_639_1 === userLang || video.iso_639_1 === 'ua' ? 'Local' : video.iso_639_1
                                     });
                                 }
                             });
@@ -317,8 +308,7 @@
                                     });
                                 } else {
                                     _this2.play(item.id);
-                                    data.trailer_lang = trailers.find(v => v.key === item.id).iso_639_1;
-                                    _this2.setTrailerLanguage(data.trailer_lang);
+                                    _this2.setTrailerLanguage(trailers.find(v => v.key === item.id).iso_639_1);
                                 }
                             },
                             onBack: function () {
@@ -410,76 +400,12 @@
                 content.find('.items-line__title').after(filter);
             }
 
-            if (data.type === 'series') {
-                filter = $('<div class="items-line__filter selector"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg></div>');
-                filter.on('hover:enter', function () {
-                    var items = [
-                        { title: Lampa.Lang.translate('trailers_filter_recent'), value: 'recent', selected: Lampa.Storage.get('trailers_series_filter', 'recent') === 'recent' },
-                        { title: Lampa.Lang.translate('trailers_filter_all'), value: 'all', selected: Lampa.Storage.get('trailers_series_filter', 'recent') === 'all' }
-                    ];
-                    Lampa.Select.show({
-                        title: Lampa.Lang.translate('trailers_filter'),
-                        items: items,
-                        onSelect: function (item) {
-                            Lampa.Storage.set('trailers_series_filter', item.value);
-                            Lampa.Activity.push({
-                                url: item.value === 'recent' ? `/discover/tv?sort_by=popularity.desc&first_air_date.gte=2020-01-01` :
-                                     `/discover/tv?sort_by=popularity.desc`,
-                                title: Lampa.Lang.translate('trailers_series'),
-                                component: 'trailers_main',
-                                type: 'series',
-                                page: 1
-                            });
-                        },
-                        onBack: function () {
-                            Lampa.Controller.toggle('content');
-                        }
-                    });
-                });
-                content.find('.items-line__title').after(filter);
-            }
-
             this.bind();
             body.append(scroll.render());
         };
 
         this.bind = function () {
-            var maxRequests = 5; // Обмеження одночасних запитів
-            var queue = data.results.slice(0, light ? 6 : data.results.length);
-            var currentRequests = 0;
-
-            function processNext() {
-                if (queue.length === 0 || currentRequests >= maxRequests) return;
-                var element = queue.shift();
-                currentRequests++;
-                Api.videos(element, function (videos) {
-                    var userLang = Lampa.Storage.get('language', 'ru');
-                    var trailers = videos.results.filter(function (v) {
-                        return v.type === 'Trailer';
-                    });
-                    var video = trailers.find(function (v) {
-                        return v.iso_639_1 === userLang || (userLang === 'uk' && v.iso_639_1 === 'ua');
-                    }) || trailers.find(function (v) {
-                        return v.iso_639_1 === 'ru';
-                    }) || trailers.find(function (v) {
-                        return v.iso_639_1 === 'en';
-                    }) || trailers[0];
-                    element.trailer_lang = video ? video.iso_639_1 : '';
-                    _this.append(element);
-                    currentRequests--;
-                    processNext();
-                }, function () {
-                    element.trailer_lang = '';
-                    _this.append(element);
-                    currentRequests--;
-                    processNext();
-                });
-            }
-
-            var _this = this;
-            for (var i = 0; i < maxRequests && queue.length; i++) {
-                processNext();
-            }
+            data.results.slice(0, light ? 6 : data.results.length).forEach(this.append.bind(this));
             this.more();
             Lampa.Layer.update();
         };
@@ -487,7 +413,7 @@
         this.cardImgBackground = function (card_data) {
             if (Lampa.Storage.field('background')) {
                 if (Lampa.Storage.get('background_type', 'complex') === 'poster' && window.innerWidth > 790) {
-                    return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'original') : '';
+                    return card_data.backdrop_path ? Lampa.Api.img(card_data.back perspective, Lampa.Api.img(card_data.backdrop_path, 'original') : '';
                 }
                 return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'w500') : '';
             }
@@ -524,7 +450,7 @@
             more.on('hover:focus', function (e) {
                 last = e.target;
                 scroll.update(more, true);
-            });
+            };
             scroll.append(more);
         };
 
@@ -672,7 +598,7 @@
                 right: function () {
                     Navigator.move('right');
                 },
-                up sprend: function () {
+                up: function () {
                     if (Navigator.canmove('up')) Navigator.move('up');
                     else Lampa.Controller.toggle('head');
                 },
@@ -754,39 +680,7 @@
 
         this.append = function (data, append) {
             var _this2 = this;
-            var maxRequests = 5;
-            var queue = data.results.slice();
-            var currentRequests = 0;
-
-            function processNext() {
-                if (queue.length === 0 || currentRequests >= maxRequests) return;
-                var element = queue.shift();
-                currentRequests++;
-                Api.videos(element, function (videos) {
-                    var userLang = Lampa.Storage.get('language', 'ru');
-                    var trailers = videos.results.filter(function (v) {
-                        return v.type === 'Trailer';
-                    });
-                    var video = trailers.find(function (v) {
-                        return v.iso_639_1 === userLang || (userLang === 'uk' && v.iso_639_1 === 'ua');
-                    }) || trailers.find(function (v) {
-                        return v.iso_639_1 === 'ru';
-                    }) || trailers.find(function (v) {
-                        return v.iso_639_1 === 'en';
-                    }) || trailers[0];
-                    element.trailer_lang = video ? video.iso_639_1 : '';
-                    appendCard(element);
-                    currentRequests--;
-                    processNext();
-                }, function () {
-                    element.trailer_lang = '';
-                    appendCard(element);
-                    currentRequests--;
-                    processNext();
-                });
-            }
-
-            function appendCard(element) {
+            data.results.forEach(function (element) {
                 var card = new Trailer(element, { type: object.type });
                 card.create();
                 card.visible();
@@ -798,11 +692,7 @@
                 body.append(card.render());
                 items.push(card);
                 if (append) Lampa.Controller.collectionAppend(card.render());
-            }
-
-            for (var i = 0; i < maxRequests && queue.length; i++) {
-                processNext();
-            }
+            });
         };
 
         this.build = function (data) {
@@ -986,140 +876,184 @@
             ru: 'Год',
             uk: 'Рік',
             en: 'Year'
-        },
-        trailers_filter_recent: {
-            ru: 'Недавние',
-            uk: 'Недавні',
-            en: 'Recent'
-        },
-        trailers_filter_all: {
-            ru: 'Все время',
-            uk: 'Весь час',
-            en: 'All time'
         }
     });
 
     function startPlugin() {
+        console.log('Trailers Plugin: Starting startPlugin'); // Лог для startPlugin
         window.plugin_trailers_ready = true;
-        Lampa.Component.add('trailers_main', Component$1);
-        Lampa.Component.add('trailers_full', Component);
-        Lampa.Template.add('trailer', `
-            <div class="card selector card--trailer layer--render layer--visible">
-                <div class="card__view">
-                    <img src="./img/img_load.svg" class="card__img">
-                    <div class="card__promo">
-                        <div class="card__promo-text">
-                            <div class="card__title"></div>
-                        </div>
-                        <div class="card__details"></div>
-                    </div>
-                </div>
-                <div class="card__play">
-                    <img src="./img/icons/player/play.svg">
-                </div>
-            </div>
-        `);
-        Lampa.Template.add('trailer_style', `
-            <style>
-            .card.card--trailer,
-            .card-more.more--trailers {
-                width: 25.7em;
-            }
-            .card.card--trailer .card__view {
-                padding-bottom: 56%;
-                margin-bottom: 0;
-                position: relative;
-            }
-            .card.card--trailer .card__details {
-                margin-top: 0.8em;
-            }
-            .card.card--trailer .card__play {
-                position: absolute;
-                top: 1.4em;
-                left: 1.5em;
-                background: #000000b8;
-                width: 2.2em;
-                height: 2.2em;
-                border-radius: 100%;
-                text-align: center;
-                padding-top: 0.6em;
-            }
-            .card.card--trailer .card__play img {
-                width: 0.9em;
-                height: 1em;
-            }
-            .card.card--trailer .card__lang {
-                position: absolute;
-                top: 0.5em;
-                right: 0.5em;
-                background: #000000b8;
-                color: white;
-                padding: 0.2em 0.5em;
-                border-radius: 3px;
-                font-size: 0.9em;
-            }
-            .card-more.more--trailers .card-more__box {
-                padding-bottom: 56%;
-            }
-            .category-full--trailers .card {
-                margin-bottom: 1.5em;
-            }
-            .category-full--trailers .card {
-                width: 33.3%;
-            }
-            .items-line__filter {
-                display: inline-block;
-                margin-left: 10px;
-                cursor: pointer;
-            }
-            .items-line__filter svg {
-                width: 20px;
-                height: 20px;
-                vertical-align: middle;
-            }
-            @media screen and (max-width: 767px) {
-                .category-full--trailers .card {
-                    width: 50%;
-                }
-            }
-            @media screen and (max-width: 400px) {
-                .category-full--trailers .card {
-                    width: 100%;
-                }
-            }
-            </style>
-        `);
+        console.log('Trailers Plugin: window.plugin_trailers_ready set to true');
 
-        function add() {
-            var button = $(`
-                <li class="menu__item selector">
-                    <div class="menu__ico">
-                        <svg height="70" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/>
-                        </svg>
-                    </div>
-                    <div class="menu__text">${Lampa.Lang.translate('title_trailers')}</div>
-                </li>
-            `);
-            button.on('hover:enter', function () {
-                Lampa.Activity.push({
-                    url: '',
-                    title: Lampa.Lang.translate('title_trailers'),
-                    component: 'trailers_main',
-                    page: 1
-                });
-            });
-            $('.menu .menu__list').eq(0).append(button);
-            $('body').append(Lampa.Template.get('trailer_style', {}, true));
+        try {
+            Lampa.Component.add('trailers_main', Component$1);
+            Lampa.Component.add('trailers_full', Component);
+            console.log('Trailers Plugin: Components added');
+        } catch (e) {
+            console.error('Trailers Plugin: Error adding components:', e.message);
         }
 
-        if (window.appready) add();
-        else {
-            Lampa.Listener.follow('app', function (e) {
-                if (e.type === 'ready') add();
-            });
+        try {
+            Lampa.Template.add('trailer', `
+                <div class="card selector card--trailer layer--render layer--visible">
+                    <div class="card__view">
+                        <img src="./img/img_load.svg" class="card__img">
+                        <div class="card__promo">
+                            <div class="card__promo-text">
+                                <div class="card__title"></div>
+                            </div>
+                            <div class="card__details"></div>
+                        </div>
+                    </div>
+                    <div class="card__play">
+                        <img src="./img/icons/player/play.svg">
+                    </div>
+                </div>
+            `);
+            Lampa.Template.add('trailer_style', `
+                <style>
+                .card.card--trailer,
+                .card-more.more--trailers {
+                    width: 25.7em;
+                }
+                .card.card--trailer .card__view {
+                    padding-bottom: 56%;
+                    margin-bottom: 0;
+                    position: relative;
+                }
+                .card.card--trailer .card__details {
+                    margin-top: 0.8em;
+                }
+                .card.card--trailer .card__play {
+                    position: absolute;
+                    top: 1.4em;
+                    left: 1.5em;
+                    background: #000000b8;
+                    width: 2.2em;
+                    height: 2.2em;
+                    border-radius: 100%;
+                    text-align: center;
+                    padding-top: 0.6em;
+                }
+                .card.card--trailer .card__play img {
+                    width: 0.9em;
+                    height: 1em;
+                }
+                .card.card--trailer .card__lang {
+                    position: absolute;
+                    top: 0.5em;
+                    right: 0.5em;
+                    background: #000000b8;
+                    color: white;
+                    padding: 0.2em 0.5em;
+                    border-radius: 3px;
+                    font-size: 0.9em;
+                }
+                .card-more.more--trailers .card-more__box {
+                    padding-bottom: 56%;
+                }
+                .category-full--trailers .card {
+                    margin-bottom: 1.5em;
+                }
+                .category-full--trailers .card {
+                    width: 33.3%;
+                }
+                .items-line__filter {
+                    display: inline-block;
+                    margin-left: 10px;
+                    cursor: pointer;
+                }
+                .items-line__filter svg {
+                    width: 20px;
+                    height: 20px;
+                    vertical-align: middle;
+                }
+                @media screen and (max-width: 767px) {
+                    .category-full--trailers .card {
+                        width: 50%;
+                    }
+                }
+                @media screen and (max-width: 400px) {
+                    .category-full--trailers .card {
+                        width: 100%;
+                    }
+                }
+                </style>
+            `);
+            console.log('Trailers Plugin: Templates added');
+        } catch (e) {
+            console.error('Trailers Plugin: Error adding templates:', e.message);
+        }
+
+        function add() {
+            console.log('Trailers Plugin: Attempting to add menu item');
+            try {
+                var button = $(`
+                    <li class="menu__item selector">
+                        <div class="menu__ico">
+                            <svg height="70" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/>
+                            </svg>
+                        </div>
+                        <div class="menu__text">${Lampa.Lang.translate('title_trailers')}</div>
+                    </li>
+                `);
+                button.on('hover:enter', function () {
+                    console.log('Trailers Plugin: Menu item clicked');
+                    Lampa.Activity.push({
+                        url: '',
+                        title: Lampa.Lang.translate('title_trailers'),
+                        component: 'trailers_main',
+                        page: 1
+                    });
+                });
+                var menuList = $('.menu .menu__list').eq(0);
+                if (menuList.length) {
+                    menuList.append(button);
+                    console.log('Trailers Plugin: Menu item added successfully');
+                } else {
+                    console.error('Trailers Plugin: Menu list not found');
+                    setTimeout(add, 1000); // Повторити через 1 секунду
+                }
+                $('body').append(Lampa.Template.get('trailer_style', {}, true));
+                console.log('Trailers Plugin: Styles appended');
+            } catch (e) {
+                console.error('Trailers Plugin: Error adding menu item:', e.message);
+            }
+        }
+
+        console.log('Trailers Plugin: Checking Lampa and menu availability');
+        if (typeof Lampa !== 'undefined' && $('.menu .menu__list').length) {
+            console.log('Trailers Plugin: Lampa and menu ready, adding immediately');
+            add();
+        } else {
+            console.log('Trailers Plugin: Waiting for app ready');
+            try {
+                Lampa.Listener.follow('app', function (e) {
+                    if (e.type === 'ready') {
+                        console.log('Trailers Plugin: App ready, adding menu item');
+                        add();
+                    }
+                });
+            } catch (e) {
+                console.error('Trailers Plugin: Error setting app listener:', e.message);
+            }
+            // Додаткова спроба через таймер
+            setTimeout(function () {
+                if ($('.menu .menu__list').length) {
+                    console.log('Trailers Plugin: Menu found via timeout, adding');
+                    add();
+                } else {
+                    console.error('Trailers Plugin: Menu still not found after timeout');
+                }
+            }, 2000);
         }
     }
 
-    if (!window.plugin_trailers_ready) startPlugin();
+    console.log('Trailers Plugin: Checking if already initialized');
+    if (!window.plugin_trailers_ready) {
+        console.log('Trailers Plugin: Not initialized, starting');
+        startPlugin();
+    } else {
+        console.log('Trailers Plugin: Already initialized');
+    }
 })();
