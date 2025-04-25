@@ -5,7 +5,6 @@
 
     // Функція для заміни логотипу замість назви в інтерфейсі
     (function () {
-
         // Функція ініціалізації та налаштування логіки заміни логотипу
         function initLogoReplacement() {
             // Захист від дебагінгу: обфускований код для перевірки конструктора функції
@@ -66,7 +65,7 @@
                     var baseUrl = 'http://api.themoviedb.org/3/';
                     var imgBaseUrl = 'http://image.tmdb.org/t/p/w500';
                     // Формування URL для запиту логотипу з TMDB
-                    var url = baseUrl + 'movie/' + item.id + '/images?api_key=' + apiKey + '&language=' + Lampa.Storage.get('language');
+                    var url = baseUrl + mediaType + '/' + item.id + '/images?api_key=' + apiKey + '&language=' + Lampa.Storage.get('language');
 
                     // Виконання AJAX-запиту для отримання логотипів
                     $.get(url, function (response) {
