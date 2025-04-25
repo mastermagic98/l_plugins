@@ -67,8 +67,8 @@
                 $.get(url, function (response) {
                     console.log('TMDB response (current lang):', response.logos ? response.logos : 'No logos'); // Лог для діагностики
                     if (response.logos && response.logos[0]) {
-                        // Логотип знайдено для поточної мови
-                        renderLogo(response.logos[0].file_path, event, mediaType);
+                        // Логотип знайдено для поточної мови (uk/ru), відображаємо лише логотип
+                        renderLogo(response.logos[0].file_path, event, mediaType, false);
                     } else if (currentLang !== 'en') {
                         // Якщо логотип відсутній і мова не англійська, спробувати англійську
                         var enUrl = Lampa.TMDB.api(mediaType + '/' + item.id + '/images?api_key=' + Lampa.TMDB.key() + '&language=en');
@@ -76,8 +76,8 @@
                         $.get(enUrl, function (enResponse) {
                             console.log('TMDB response (en):', enResponse.logos ? enResponse.logos : 'No logos'); // Лог для діагностики
                             if (enResponse.logos && enResponse.logos[0]) {
-                                // Використати англійський логотип
-                                renderLogo(enResponse.logos[0].file_path, event, mediaType);
+                                // Використати англійський логотип із текстом назви
+                                renderLogo(enResponse.logos[0].file_path, event, mediaType, true);
                             } else {
                                 console.log('No logo available for any language'); // Лог для діагностики
                                 // Назва залишиться мовою інтерфейсу
@@ -98,7 +98,7 @@
                         $.get(enUrl, function (enResponse) {
                             console.log('TMDB response (en):', enResponse.logos ? enResponse.logos : 'No logos'); // Лог для діагностики
                             if (enResponse.logos && enResponse.logos[0]) {
-                                renderLogo(enResponse.logos[0].file_path, event, mediaType);
+                                renderLogo(enResponse.logos[0].file_path, event, mediaType, true);
                             } else {
                                 console.log('No logo available for any language'); // Лог для діагностики
                             }
@@ -109,42 +109,37 @@
                 });
 
                 // Функція для рендерингу логотипу
-                function renderLogo(logoPath, event, mediaType) {
+                function renderLogo(logoPath, event, mediaType, showTitle) {
                     if (logoPath !== '') {
                         var card = event.object.activity.render();
                         console.log('Title element found:', card.find('.full-start-new__title').length); // Лог для діагностики
                         var logoHtml;
-                        var titleText;
+                        var titleText = showTitle ? (card.find('.full-start-new__title').text() || card.find('.full-start__title').text() || item.title || item.name) : '';
                         // Логіка залежно від налаштувань та ширини екрану
                         if (window.innerWidth > 585) {
                             if (Lampa.Storage.get('card_interfice_type') === 'new' && !card.find('div[data-name="card_interfice_cover"]').length) {
-                                titleText = card.find('.full-start-new__title').text() || item.title || item.name; // Зберегти назву
-                                logoHtml = '<img style="margin-right: 0.5em; vertical-align: middle; max-height: 1.8em;" src="' + Lampa.TMDB.image('/t/p/w300' + logoPath.replace('.svg', '.png')) + '" />' + titleText;
+                                logoHtml = '<div><img style="display: block; margin-bottom: 0.2em; max-height: 1.8em;" src="' + Lampa.TMDB.image('/t/p/w500' + logoPath.replace('.svg', '.png')) + '" />' + (titleText ? '<span>' + titleText + '</span>' : '') + '</div>';
                                 card.find('.full-start-new__tagline').remove();
                                 card.find('.full-start-new__title').html(logoHtml);
                                 console.log('Rendered logo (new, no cover, desktop):', logoHtml); // Лог для діагностики
                             } else if (Lampa.Storage.get('card_interfice_type') === 'new' && card.find('div[data-name="card_interfice_cover"]').length) {
-                                titleText = card.find('.full-start-new__title').text() || item.title || item.name;
-                                logoHtml = '<img style="margin-right: 0.5em; vertical-align: middle; max-height: 2.8em;" src="' + Lampa.TMDB.image('/t/p/w300' + logoPath.replace('.svg', '.png')) + '" />' + titleText;
+                                logoHtml = '<div><img style="display: block; margin-bottom: 0.2em; max-height: 2.8em;" src="' + Lampa.TMDB.image('/t/p/w500' + logoPath.replace('.svg', '.png')) + '" />' + (titleText ? '<span>' + titleText + '</span>' : '') + '</div>';
                                 card.find('.full-start-new__title').html(logoHtml);
                                 console.log('Rendered logo (new, with cover, desktop):', logoHtml); // Лог для діагностики
                             } else if (Lampa.Storage.get('card_interfice_type') === 'old' && !card.find('div[data-name="card_interfice_cover"]').length) {
-                                titleText = card.find('.full-start__title').text() || item.title || item.name;
-                                logoHtml = '<img style="margin-right: 0.5em; vertical-align: middle; max-height: 1.8em;" src="' + Lampa.TMDB.image('/t/p/w300' + logoPath.replace('.svg', '.png')) + '" />' + titleText;
+                                logoHtml = '<div><img style="display: block; margin-bottom: 0.2em; max-height: 1.8em;" src="' + Lampa.TMDB.image('/t/p/w500' + logoPath.replace('.svg', '.png')) + '" />' + (titleText ? '<span>' + titleText + '</span>' : '') + '</div>';
                                 card.find('.full-start__title-original').remove();
                                 card.find('.full-start__title').html(logoHtml);
                                 console.log('Rendered logo (old, no cover, desktop):', logoHtml); // Лог для діагностики
                             }
                         } else {
                             if (Lampa.Storage.get('card_interfice_type') === 'new') {
-                                titleText = card.find('.full-start-new__title').text() || item.title || item.name;
-                                logoHtml = '<img style="margin-right: 0.5em; vertical-align: middle; max-height: 1.8em;" src="' + Lampa.TMDB.image('/t/p/w300' + logoPath.replace('.svg', '.png')) + '" />' + titleText;
+                                logoHtml = '<div><img style="display: block; margin-bottom: 0.2em; max-height: 1.8em;" src="' + Lampa.TMDB.image('/t/p/w500' + logoPath.replace('.svg', '.png')) + '" />' + (titleText ? '<span>' + titleText + '</span>' : '') + '</div>';
                                 card.find('.full-start-new__tagline').remove();
                                 card.find('.full-start-new__title').html(logoHtml);
                                 console.log('Rendered logo (new, mobile):', logoHtml); // Лог для діагностики
                             } else {
-                                titleText = card.find('.full-start__title').text() || item.title || item.name;
-                                logoHtml = '<img style="margin-right: 0.5em; vertical-align: middle; max-height: 2.2em;" src="' + Lampa.TMDB.image('/t/p/w300' + logoPath.replace('.svg', '.png')) + '" />' + titleText;
+                                logoHtml = '<div><img style="display: block; margin-bottom: 0.2em; max-height: 2.2em;" src="' + Lampa.TMDB.image('/t/p/w500' + logoPath.replace('.svg', '.png')) + '" />' + (titleText ? '<span>' + titleText + '</span>' : '') + '</div>';
                                 card.find('.full-start__title-original').remove();
                                 card.find('.full-start__title').html(logoHtml);
                                 console.log('Rendered logo (old, mobile):', logoHtml); // Лог для діагностики
