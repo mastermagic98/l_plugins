@@ -57,9 +57,9 @@
 
             // Підписка на подію активності для обробки повноекранного режиму
             Lampa.Listener.follow('full', function (event) {
-                // Перевірка, чи подія стосується фільму або серіалу та чи увімкнена заміна логотипу
-                console.log('Full event triggered:', event.type, event.data); // Лог для діагностики
-                if ((event.type == 'movie' || event.type == 'tv') && Lampa.Storage.get('logo_card') !== false) {
+                // Перевірка, чи подія стосується фільму та чи увімкнена заміна логотипу
+                console.log('Full event triggered:', event.type); // Лог для діагностики
+                if (event.type == 'movie' && Lampa.Storage.get('logo_card') !== false) {
                     var item = event.data.movie;
                     var mediaType = item.name ? 'tv' : 'movie';
                     var apiKey = '4ef0d7355d9ffb5151e987764708ce96';
@@ -71,13 +71,13 @@
 
                     // Виконання AJAX-запиту для отримання логотипів
                     $.get(url, function (response) {
-                        console.log('TMDB response:', response); // Лог для діагностики
+                        console.log('TMDB response:', response.logos ? response.logos : 'No logos'); // Лог для діагностики
                         if (response.logos && response.logos[0]) {
                             var logoPath = response.logos[0].file_path;
                             console.log('Logo path:', logoPath); // Лог для діагностики
                             if (logoPath !== '') {
                                 var card = event.render.full.html();
-                                console.log('Card element:', $('.full-start-new__title', card).length); // Лог для перевірки селектора
+                                console.log('Title element found:', $('.full-start-new__title', card).length); // Лог для діагностики
                                 var logoHtml;
                                 // Логіка залежно від налаштувань та ширини екрану
                                 if (window.innerWidth > 585) {
@@ -110,8 +110,6 @@
                                     }
                                 }
                             }
-                        } else {
-                            console.log('No logos found in TMDB response'); // Лог для діагностики
                         }
                     }).fail(function (xhr, status, error) {
                         console.log('TMDB request failed:', status, error); // Лог для діагностики
