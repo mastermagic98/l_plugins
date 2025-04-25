@@ -23,10 +23,25 @@
                 en: 'Hide',
                 uk: 'Приховати',
                 ru: 'Скрыть'
+            },
+            logo_display_mode_title: {
+                en: 'Display mode',
+                uk: 'Режим відображення',
+                ru: 'Режим отображения'
+            },
+            logo_display_mode_logo_only: {
+                en: 'Logo only',
+                uk: 'Тільки логотип',
+                ru: 'Только логотип'
+            },
+            logo_display_mode_logo_and_text: {
+                en: 'Logo and text',
+                uk: 'Логотип і текст',
+                ru: 'Логотип и текст'
             }
         });
 
-        // Додавання параметру в налаштування для увімкнення/вимкнення заміни логотипу
+        // Додавання параметру для увімкнення/вимкнення заміни логотипу
         Lampa.SettingsApi.addParam({
             component: 'interface',
             param: {
@@ -40,6 +55,24 @@
             },
             field: {
                 name: Lampa.Lang.translate('logo_main_title'),
+                description: Lampa.Lang.translate('logo_main_description')
+            }
+        });
+
+        // Додавання параметру для вибору режиму відображення
+        Lampa.SettingsApi.addParam({
+            component: 'interface',
+            param: {
+                name: 'logo_display_mode',
+                type: 'select',
+                values: {
+                    'logo_only': Lampa.Lang.translate('logo_display_mode_logo_only'),
+                    'logo_and_text': Lampa.Lang.translate('logo_display_mode_logo_and_text')
+                },
+                default: 'logo_only'
+            },
+            field: {
+                name: Lampa.Lang.translate('logo_display_mode_title'),
                 description: Lampa.Lang.translate('logo_main_description')
             }
         });
@@ -67,8 +100,8 @@
                 $.get(url, function (response) {
                     console.log('TMDB response (current lang):', response.logos ? response.logos : 'No logos'); // Лог для діагностики
                     if (response.logos && response.logos[0]) {
-                        // Логотип знайдено для поточної мови (uk/ru), відображаємо лише логотип
-                        renderLogo(response.logos[0].file_path, event, mediaType, false);
+                        // Логотип знайдено для поточної мови (uk/ru)
+                        renderLogo(response.logos[0].file_path, event, mediaType, currentLang);
                     } else if (currentLang !== 'en') {
                         // Якщо логотип відсутній і мова не англійська, спробувати англійську
                         var enUrl = Lampa.TMDB.api(mediaType + '/' + item.id + '/images?api_key=' + Lampa.TMDB.key() + '&language=en');
@@ -76,8 +109,8 @@
                         $.get(enUrl, function (enResponse) {
                             console.log('TMDB response (en):', enResponse.logos ? enResponse.logos : 'No logos'); // Лог для діагностики
                             if (enResponse.logos && enResponse.logos[0]) {
-                                // Використати англійський логотип із текстом назви
-                                renderLogo(enResponse.logos[0].file_path, event, mediaType, true);
+                                // Використати англійський логотип
+                                renderLogo(enResponse.logos[0].file_path, event, mediaType, currentLang, true);
                             } else {
                                 console.log('No logo available for any language'); // Лог для діагностики
                                 // Назва залишиться мовою інтерфейсу
@@ -98,7 +131,7 @@
                         $.get(enUrl, function (enResponse) {
                             console.log('TMDB response (en):', enResponse.logos ? enResponse.logos : 'No logos'); // Лог для діагностики
                             if (enResponse.logos && enResponse.logos[0]) {
-                                renderLogo(enResponse.logos[0].file_path, event, mediaType, true);
+                                renderLogo(enResponse.logos[0].file_path, event, mediaType, currentLang, true);
                             } else {
                                 console.log('No logo available for any language'); // Лог для діагностики
                             }
@@ -109,11 +142,12 @@
                 });
 
                 // Функція для рендерингу логотипу
-                function renderLogo(logoPath, event, mediaType, showTitle) {
+                function renderLogo(logoPath, event, mediaType, currentLang, isEnglishLogo) {
                     if (logoPath !== '') {
                         var card = event.object.activity.render();
                         console.log('Title element found:', card.find('.full-start-new__title').length); // Лог для діагностики
                         var logoHtml;
+                        var showTitle = Lampa.Storage.get('logo_display_mode') === 'logo_and_text' || (isEnglishLogo && Lampa.Storage.get('logo_display_mode') === 'logo_only');
                         var titleText = showTitle ? (card.find('.full-start-new__title').text() || card.find('.full-start__title').text() || item.title || item.name) : '';
                         // Логіка залежно від налаштувань та ширини екрану
                         if (window.innerWidth > 585) {
