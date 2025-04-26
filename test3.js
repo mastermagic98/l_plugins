@@ -22,7 +22,7 @@
     function get(url, page, resolve, reject, useRegion) {
         var lang = Lampa.Storage.get('language', 'ru');
         var full_url = `${tmdb_base_url}${url}&api_key=${tmdb_api_key}&language=${lang}&page=${page}`;
-        if (useRegion) full_url += `®ion=${getRegion()}`;
+        if (useRegion) full_url += `&region=${getRegion()}`;
         console.log('API Request:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
@@ -117,35 +117,61 @@
         var userLang = Lampa.Storage.get('language', 'ru');
         var langPriority = userLang === 'uk' ? ['uk', 'ru', 'en'] :
                           userLang === 'ru' ? ['ru', 'uk', 'en'] : ['en', 'uk', 'ru'];
-        var trailer = null;
-        var selectedLang = '';
+        var allTrailers = [];
+        var selectedTrailer = null;
 
+        // Збираємо всі трейлери для всіх мов
         for (var lang of langPriority) {
             try {
                 var url = `${tmdb_base_url}/${type}/${card.id}/videos?api_key=${tmdb_api_key}&language=${lang}`;
                 console.log('Videos request:', url);
                 var response = await fetch(url);
                 var result = await response.json();
-                console.log('Videos result:', result);
+                console.log('Videos result for', lang, ':', result);
 
-                // Фільтруємо трейлери за типом і платформою
-                trailer = result.results.find(function (v) {
-                    return v.type === 'Trailer' && v.site === 'YouTube';
-                });
-
-                if (trailer) {
-                    selectedLang = lang;
-                    break; // Знайшли трейлер, виходимо
+                // Додаємо трейлери до загального списку
+                if (result.results && result.results.length) {
+                    result.results.forEach(function (video) {
+                        if (video.type === 'Trailer' && video.site === 'YouTube') {
+                            video.requested_lang = lang; // Зберігаємо мову запиту
+                            allTrailers.push(video);
+                        }
+                    });
                 }
             } catch (error) {
-                console.log('Videos error:', error);
+                console.log('Videos error for', lang, ':', error);
             }
         }
 
-        if (trailer) {
-            trailer.iso_639_1 = selectedLang; // Додаємо мову для відображення
-            oncomplite({ results: [trailer] });
+        // Логуємо всі знайдені трейлери
+        console.log('All trailers found:', allTrailers);
+
+        // Вибираємо трейлер за пріоритетом мови
+        for (var lang of langPriority) {
+            selectedTrailer = allTrailers.find(function (video) {
+                return (video.iso_639_1 === lang || video.requested_lang === lang) && video.type === 'Trailer' && video.site === 'YouTube';
+            });
+            if (selectedTrailer) {
+                selectedTrailer.iso_639_1 = lang; // Встановлюємо мову для відображення
+                break;
+            }
+        }
+
+        // Якщо трейлер не знайдено, пробуємо взяти будь-який YouTube-трейлер
+        if (!selectedTrailer) {
+            selectedTrailer = allTrailers.find(function (video) {
+                return video.type === 'Trailer' && video.site === 'YouTube';
+            });
+            if (selectedTrailer) {
+                selectedTrailer.iso_639_1 = selectedTrailer.iso_639_1 || 'en'; // За замовчуванням en
+            }
+        }
+
+        if (selectedTrailer) {
+            console.log('Selected trailer:', selectedTrailer);
+            oncomplite({ results: [selectedTrailer] });
         } else {
+            console.log('No trailers found for card:', card.id);
             onerror();
         }
     }
@@ -975,7 +1001,7 @@
                 <li class="menu__item selector">
                     <div class="menu__ico">
                         <svg height="70" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/>
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 welcome 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/>
                         </svg>
                     </div>
                     <div class="menu__text">${Lampa.Lang.translate('title_trailers')}</div>
