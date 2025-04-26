@@ -112,17 +112,42 @@
         }, params.type === 'streaming' || params.type === 'for_rent');
     }
 
-    function videos(card, oncomplite, onerror) {
+    async function videos(card, oncomplite, onerror) {
         var type = card.name ? 'tv' : 'movie';
-        var url = `${tmdb_base_url}/${type}/${card.id}/videos?api_key=${tmdb_api_key}`;
-        console.log('Videos request:', url);
-        network.silent(url, function (result) {
-            console.log('Videos result:', result);
-            oncomplite(result);
-        }, function (error) {
-            console.log('Videos error:', error);
+        var userLang = Lampa.Storage.get('language', 'ru');
+        var langPriority = userLang === 'uk' ? ['uk', 'ru', 'en'] :
+                          userLang === 'ru' ? ['ru', 'uk', 'en'] : ['en', 'uk', 'ru'];
+        var trailer = null;
+        var selectedLang = '';
+
+        for (var lang of langPriority) {
+            try {
+                var url = `${tmdb_base_url}/${type}/${card.id}/videos?api_key=${tmdb_api_key}&language=${lang}`;
+                console.log('Videos request:', url);
+                var response = await fetch(url);
+                var result = await response.json();
+                console.log('Videos result:', result);
+
+                // Фільтруємо трейлери за типом і платформою
+                trailer = result.results.find(function (v) {
+                    return v.type === 'Trailer' && v.site === 'YouTube';
+                });
+
+                if (trailer) {
+                    selectedLang = lang;
+                    break; // Знайшли трейлер, виходимо
+                }
+            } catch (error) {
+                console.log('Videos error:', error);
+            }
+        }
+
+        if (trailer) {
+            trailer.iso_639_1 = selectedLang; // Додаємо мову для відображення
+            oncomplite({ results: [trailer] });
+        } else {
             onerror();
-        });
+        }
     }
 
     function clear() {
@@ -209,21 +234,18 @@
             this.card.on('hover:focus', function (e, is_mouse) {
                 Lampa.Background.change(_this2.cardImgBackground(data));
                 _this2.onFocus(e.target, data, is_mouse);
-                // Завантажуємо мову трейлера для відображення
                 if (!_this2.is_youtube) {
                     Api.videos(data, function (videos) {
                         var userLang = Lampa.Storage.get('language', 'ru');
-                        var trailers = videos.results.filter(function (v) {
-                            return v.type === 'Trailer';
-                        });
-                        var video = trailers.find(function (v) {
-                            return v.iso_639_1 === userLang || v.iso_639_1 === 'ua';
-                        }) || trailers.find(function (v) {
-                            return v.iso_639_1 === 'ru';
-                        }) || trailers.find(function (v) {
-                            return v.iso_639_1 === 'en';
-                        }) || trailers[0];
-                        _this2.setTrailerLanguage(video ? video.iso_639_1 : '');
+                        var video = videos.results[0]; // Оскільки videos повертає один трейлер
+                        if (video) {
+                            _this2.setTrailerLanguage(video.iso_639_1);
+                            if (userLang === 'uk' && video.iso_639_1 !== 'uk') {
+                                Lampa.Noty.show(Lampa.Lang.translate('trailers_no_uk_trailer'));
+                            } else if (userLang === 'ru' && video.iso_639_1 !== 'ru') {
+                                Lampa.Noty.show(Lampa.Lang.translate('trailers_no_ru_trailer'));
+                            }
+                        }
                     }, function () {
                         _this2.setTrailerLanguage('');
                     });
@@ -234,23 +256,8 @@
                 } else {
                     Api.videos(data, function (videos) {
                         var userLang = Lampa.Storage.get('language', 'ru');
-                        var trailers = videos.results.filter(function (v) {
-                            return v.type === 'Trailer';
-                        });
-                        var video = trailers.find(function (v) {
-                            return v.iso_639_1 === userLang || v.iso_639_1 === 'ua';
-                        }) || trailers.find(function (v) {
-                            return v.iso_639_1 === 'ru';
-                        }) || trailers.find(function (v) {
-                            return v.iso_639_1 === 'en';
-                        }) || trailers[0];
-
+                        var video = videos.results[0];
                         if (video && video.key) {
-                            if (userLang === 'uk' && video.iso_639_1 !== 'uk' && video.iso_639_1 !== 'ua') {
-                                Lampa.Noty.show(Lampa.Lang.translate('trailers_no_uk_trailer'));
-                            } else if (userLang === 'ru' && video.iso_639_1 !== 'ru') {
-                                Lampa.Noty.show(Lampa.Lang.translate('trailers_no_ru_trailer'));
-                            }
                             _this2.play(video.key);
                             _this2.setTrailerLanguage(video.iso_639_1);
                         } else {
@@ -273,22 +280,16 @@
                     Api.videos(data, function (videos) {
                         Lampa.Loading.stop();
                         var userLang = Lampa.Storage.get('language', 'ru');
-                        var trailers = videos.results.filter(function (v) {
-                            return v.type === 'Trailer';
-                        });
-                        if (trailers.length) {
+                        var video = videos.results[0];
+                        if (video && video.key) {
                             items.push({
                                 title: Lampa.Lang.translate('title_trailers'),
                                 separator: true
                             });
-                            trailers.forEach(function (video) {
-                                if (video.key) {
-                                    items.push({
-                                        title: video.name || 'Trailer',
-                                        id: video.key,
-                                        subtitle: video.iso_639_1 === userLang || video.iso_639_1 === 'ua' ? 'Local' : video.iso_639_1
-                                    });
-                                }
+                            items.push({
+                                title: video.name || 'Trailer',
+                                id: video.key,
+                                subtitle: video.iso_639_1 === userLang ? 'Local' : video.iso_639_1
                             });
                         }
                         Lampa.Select.show({
@@ -307,7 +308,7 @@
                                     });
                                 } else {
                                     _this2.play(item.id);
-                                    _this2.setTrailerLanguage(trailers.find(v => v.key === item.id).iso_639_1);
+                                    _this2.setTrailerLanguage(videos.results[0].iso_639_1);
                                 }
                             },
                             onBack: function () {
