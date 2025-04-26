@@ -153,7 +153,7 @@
                                 card.find('.full-start-new__tagline').remove();
                                 card.find('.full-start-new__title').html(logoHtml);
                             } else {
-                                logoHtml = '<div style="height: auto !important; overflow: visible !important;"><img style="display: block; margin-bottom: 0.1em;" src="' + Lampa.TMDB.image('/t/p/w300' + logoPath.replace('.svg', '.png')) + '" onload="if(this.naturalHeight > 40) { let ratio = this.naturalWidth / this.naturalHeight; this.height = 40; this.width = 40 * ratio; }" />' + (titleText ? '<span style="display: block; line-height: normal;">' + titleText + '</span>' : '') + '</div>';
+                                logoHtml = '<div style="height: auto !important; overflow: visible !important;"><img style="display: block; margin-bottom: 0em;" src="' + Lampa.TMDB.image('/t/p/w300' + logoPath.replace('.svg', '.png')) + '" onload="if(this.naturalHeight > 38) { let ratio = this.naturalWidth / this.naturalHeight; this.height = 38; this.width = 38 * ratio; }" />' + (titleText ? '<span style="display: block; line-height: normal;">' + titleText + '</span>' : '') + '</div>';
                                 card.find('.full-start__title-original').remove();
                                 card.find('.full-start__title').css({
                                     'height': 'auto !important',
