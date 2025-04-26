@@ -136,7 +136,7 @@
                                 logoHtml = '<div><img style="display: block; margin-bottom: 0.2em; max-height: 2.8em;" src="' + Lampa.TMDB.image('/t/p/w500' + logoPath.replace('.svg', '.png')) + '" />' + (titleText ? '<span>' + titleText + '</span>' : '') + '</div>';
                                 card.find('.full-start-new__title').html(logoHtml);
                             } else if (Lampa.Storage.get('card_interfice_type') === 'old' && !card.find('div[data-name="card_interfice_cover"]').length) {
-                                logoHtml = '<div style="height: auto !important; overflow: visible !important;"><img style="display: block; margin-bottom: 0.2em; max-height: 1.8em;" src="' + Lampa.TMDB.image('/t/p/w300' + logoPath.replace('.svg', '.png')) + '" />' + (titleText ? '<span style="display: block; line-height: normal;">' + titleText + '</span>' : '') + '</div>';
+                                logoHtml = '<div style="height: auto !important; overflow: visible !important;"><img style="display: block; margin-bottom: 0.2em;" src="' + Lampa.TMDB.image('/t/p/w300' + logoPath.replace('.svg', '.png')) + '" onload="if(this.naturalHeight > 80) { let ratio = this.naturalWidth / this.naturalHeight; this.height = 80; this.width = 80 * ratio; }" />' + (titleText ? '<span style="display: block; line-height: normal;">' + titleText + '</span>' : '') + '</div>';
                                 card.find('.full-start__title-original').remove();
                                 card.find('.full-start__title').css({
                                     'height': 'auto !important',
@@ -150,7 +150,7 @@
                                 card.find('.full-start-new__tagline').remove();
                                 card.find('.full-start-new__title').html(logoHtml);
                             } else {
-                                logoHtml = '<div style="height: auto !important; overflow: visible !important;"><img style="display: block; margin-bottom: 0.2em; max-height: 2.2em;" src="' + Lampa.TMDB.image('/t/p/w300' + logoPath.replace('.svg', '.png')) + '" />' + (titleText ? '<span style="display: block; line-height: normal;">' + titleText + '</span>' : '') + '</div>';
+                                logoHtml = '<div style="height: auto !important; overflow: visible !important;"><img style="display: block; margin-bottom: 0.2em;" src="' + Lampa.TMDB.image('/t/p/w300' + logoPath.replace('.svg', '.png')) + '" onload="if(this.naturalHeight > 80) { let ratio = this.naturalWidth / this.naturalHeight; this.height = 80; this.width = 80 * ratio; }" />' + (titleText ? '<span style="display: block; line-height: normal;">' + titleText + '</span>' : '') + '</div>';
                                 card.find('.full-start__title-original').remove();
                                 card.find('.full-start__title').css({
                                     'height': 'auto !important',
