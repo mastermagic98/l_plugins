@@ -59,7 +59,7 @@
             }
         });
 
-        // Додавання параметру для вибору режиму відображення
+        // Додавання параметру для вибору режиму відображення (залежить від logo_main)
         Lampa.SettingsApi.addParam({
             component: 'interface',
             param: {
@@ -73,7 +73,10 @@
             },
             field: {
                 name: Lampa.Lang.translate('logo_display_mode_title'),
-                description: Lampa.Lang.translate('logo_main_description')
+                description: Lampa.Lang.translate('logo_main_description'),
+                show: function () {
+                    return Lampa.Storage.get('logo_main') === '0';
+                }
             }
         });
 
