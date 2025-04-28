@@ -40,7 +40,7 @@
     function get(url, page, resolve, reject, useRegion) {
         var lang = Lampa.Storage.get('language', 'ru');
         var full_url = `${tmdb_base_url}${url}&api_key=${tmdb_api_key}&language=${lang}&page=${page}`;
-        if (useRegion) full_url += `®ion=${getRegion()}`;
+        if (useRegion) full_url += `&region=${getRegion()}`;
         console.log('API Request:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
@@ -548,8 +548,8 @@
 
         this.create = function () {
             var switcher = $('<div class="trailers-switcher"></div>');
-            var movieButton = $(`<div class="switcher-button selector"><div class="switcher-button__text">Фільми</div></div>`);
-            var seriesButton = $(`<div class="switcher-button selector"><div class="switcher-button__text">Серіали</div></div>`);
+            var movieButton = $('<div class="menu__item selector"><div class="menu__text">Фільми</div></div>');
+            var seriesButton = $('<div class="menu__item selector"><div class="menu__text">Серіали</div></div>');
             if (Lampa.Storage.get('trailers_media_type', 'movie') === 'movie') {
                 movieButton.addClass('active');
             } else {
@@ -944,6 +944,10 @@
     });
 
     function startPlugin() {
+        if (window.plugin_trailers_ready) {
+            console.log('Trailers plugin: Already initialized, skipping');
+            return;
+        }
         console.log('Trailers plugin: startPlugin called');
         window.plugin_trailers_ready = true;
         Lampa.Component.add('trailers_main', Component$1);
@@ -1012,7 +1016,7 @@
                 color: white;
                 padding: 0.2em 0.5em;
                 border-radius: 3px;
-                font-size: 0.9em;
+                font-size: 1.2em;
             }
             .card.card--trailer.card--focus {
                 box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
@@ -1033,25 +1037,18 @@
                 display: flex;
                 gap: 1em;
             }
-            .switcher-button {
-                display: flex;
-                align-items: center;
-                padding: 0.8em 1em;
+            .menu__item {
                 background: transparent;
                 color: white;
                 border-radius: 5px;
-                cursor: pointer;
+                padding: 0.5em 1em;
                 transition: all 0.2s ease;
             }
-            .switcher-button__text {
-                font-size: 1.1em;
-                font-weight: 500;
-            }
-            .switcher-button.active {
+            .menu__item.active {
                 background: #007bff;
                 color: black;
             }
-            .switcher-button:hover, .switcher-button.focused {
+            .menu__item:hover, .menu__item.focused {
                 background: rgba(255, 255, 255, 0.2);
                 box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
                 transform: scale(1.05);
@@ -1123,12 +1120,13 @@
         }
     }
 
-    console.log('Trailers plugin: Checking plugin_trailers_ready');
-    console.log('Trailers plugin: window.plugin_trailers_ready =', window.plugin_trailers_ready);
-    if (!window.plugin_trailers_ready) {
-        console.log('Trailers plugin: Calling startPlugin');
-        startPlugin();
-    } else {
-        console.log('Trailers plugin: startPlugin skipped, already initialized');
-    }
+    console.log('Trailers plugin: Forcing initialization');
+    setTimeout(function () {
+        if (!window.plugin_trailers_ready) {
+            console.log('Trailers plugin: Calling startPlugin');
+            startPlugin();
+        } else {
+            console.log('Trailers plugin: startPlugin skipped, already initialized');
+        }
+    }, 1000);
 })();
