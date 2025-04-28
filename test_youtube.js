@@ -40,7 +40,7 @@
     function get(url, page, resolve, reject, useRegion) {
         var lang = Lampa.Storage.get('language', 'ru');
         var full_url = `${tmdb_base_url}${url}&api_key=${tmdb_api_key}&language=${lang}&page=${page}`;
-        if (useRegion) full_url += `&region=${getRegion()}`;
+        if (useRegion) full_url += `®ion=${getRegion()}`;
         console.log('API Request:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
@@ -1045,14 +1045,11 @@
                 transition: all 0.2s ease;
             }
             .menu__item.active {
-                background: #007bff;
-                color: black;
+                background: #ffffff;
+                color: #ffffff;
             }
             .menu__item:hover, .menu__item.focused {
                 background: rgba(255, 255, 255, 0.2);
-                box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
-                transform: scale(1.05);
-                z-index: 1;
             }
             .period-select {
                 margin-top: 0.5em;
@@ -1118,6 +1115,14 @@
                 }
             });
         }
+
+        function checkMenuButton() {
+            if ($('.menu .menu__list').eq(0).find('.menu__item:contains("Трейлери")').length === 0) {
+                console.log('Trailers plugin: Menu button missing, re-adding');
+                add();
+            }
+        }
+        setInterval(checkMenuButton, 5000); // Перевірка кожні 5 секунд
     }
 
     console.log('Trailers plugin: Forcing initialization');
@@ -1128,5 +1133,5 @@
         } else {
             console.log('Trailers plugin: startPlugin skipped, already initialized');
         }
-    }, 1000);
+    }, 3000); // Збільшено затримку до 3 секунд
 })();
