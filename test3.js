@@ -1,3 +1,5 @@
+console.log('Trailers plugin file loaded');
+
 (function () {
     'use strict';
 
@@ -1235,6 +1237,114 @@
             $('body').append(Lampa.Template.get('trailer_style', {}, true));
         }
 
+        console.log('Checking plugin initialization, plugin_trailers_ready:', window.plugin_trailers_ready);
+        window.plugin_trailers_ready = false; // Примусово скидаємо, щоб ініціалізація відбулася
+        console.log('startPlugin called');
+        Lampa.Component.add('trailers_main', Component$1);
+        Lampa.Component.add('trailers_full', Component);
+        Lampa.Template.add('trailer', `
+            <div class="card selector card--trailer layer--render layer--visible">
+                <div class="card__view">
+                    <img src="./img/img_load.svg" class="card__img">
+                    <div class="card__promo">
+                        <div class="card__promo-text">
+                            <div class="card__title"></div>
+                        </div>
+                        <div class="card__details"></div>
+                    </div>
+                </div>
+                <div class="card__play">
+                    <img src="./img/icons/player/play.svg">
+                </div>
+            </div>
+        `);
+        Lampa.Template.add('trailer_style', `
+            <style>
+            .card.card--trailer,
+            .card-more.more--trailers {
+                width: 25.7em;
+            }
+            .card.card--trailer .card__view {
+                padding-bottom: 56%;
+                margin-bottom: 0;
+                position: relative;
+            }
+            .card.card--trailer .card__details {
+                margin-top: 0.8em;
+            }
+            .card.card--trailer .card__play {
+                position: absolute;
+                top: 1.4em;
+                left: 1.5em;
+                background: #000000b8;
+                width: 2.2em;
+                height: 2.2em;
+                border-radius: 100%;
+                text-align: center;
+                padding-top: 0.6em;
+            }
+            .card.card--trailer .card__play img {
+                width: 0.9em;
+                height: 1em;
+            }
+            .card.card--trailer .card__lang {
+                position: absolute;
+                top: 0.5em;
+                right: 0.5em;
+                background: #000000b8;
+                color: white;
+                padding: 0.2em 0.5em;
+                border-radius: 3px;
+                font-size: 0.9em;
+            }
+            .card-more.more--trailers .card-more__box {
+                padding-bottom: 56%;
+            }
+            .category-full--trailers .card {
+                margin-bottom: 1.5em;
+            }
+            .category-full--trailers .card {
+                width: 33.3%;
+            }
+            .items-line__filters {
+                margin: 0.5em 0;
+                display: flex;
+                gap: 0.5em;
+                flex-wrap: wrap;
+            }
+            .filter-item {
+                padding: 0.3em 0.8em;
+                background: #333;
+                border-radius: 3px;
+                cursor: pointer;
+                color: #fff;
+                font-size: 0.9em;
+            }
+            .filter-item.selected {
+                background: #007bff;
+            }
+            .sort-button {
+                padding: 0.5em 1em;
+                background: #007bff;
+                color: #fff;
+                border-radius: 3px;
+                margin-bottom: 1em;
+                cursor: pointer;
+                display: inline-block;
+            }
+            @media screen and (max-width: 767px) {
+                .category-full--trailers .card {
+                    width: 50%;
+                }
+            }
+            @media screen and (max-width: 400px) {
+                .category-full--trailers .card {
+                    width: 100%;
+                }
+            }
+            </style>
+        `);
+
         if (window.appready) {
             console.log('App already ready, calling add');
             add();
@@ -1243,6 +1353,7 @@
             Lampa.Listener.follow('app', function (e) {
                 console.log('App event:', e.type);
                 if (e.type === 'ready') {
+                    console.log('App ready, calling add');
                     add();
                 }
             });
@@ -1250,17 +1361,15 @@
 
         // Додатковий таймер як запасний варіант
         setTimeout(function () {
-            if (!window.plugin_trailers_ready) {
-                console.log('Fallback: Forcing add after timeout');
+            console.log('Fallback: Checking menu button after timeout');
+            if (!$('.menu__item:contains("' + Lampa.Lang.translate('title_trailers') + '")').length) {
+                console.log('Menu button not found, forcing add');
                 add();
+            } else {
+                console.log('Menu button already exists');
             }
         }, 5000);
     }
 
-    if (!window.plugin_trailers_ready) {
-        console.log('Plugin not ready, starting');
-        startPlugin();
-    } else {
-        console.log('Plugin already initialized');
-    }
+    startPlugin();
 })();
