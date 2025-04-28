@@ -1037,38 +1037,10 @@
                 display: flex;
                 gap: 1em;
             }
-            .trailers-switcher .menu__item {
-                background: transparent;
-                color: white;
-                border-radius: 5px;
-                padding: 0.5em 1em;
-                transition: all 0.2s ease;
-                border: none;
-            }
-            .trailers-switcher .menu__item.active,
-            .trailers-switcher .menu__item.focused {
-                background: white;
-                color: black;
-                border: 2px solid white;
-                border-radius: 5px;
-            }
-            .trailers-switcher .menu__item:hover {
-                background: rgba(255, 255, 255, 0.2);
-            }
             .period-select {
                 margin-top: 0.5em;
                 display: flex;
                 gap: 0.5em;
-            }
-            .period-button {
-                padding: 0.3em 0.8em;
-                background: #333;
-                color: white;
-                border-radius: 3px;
-                font-size: 0.9em;
-            }
-            .period-button.active {
-                background: #007bff;
             }
             @media screen and (max-width: 767px) {
                 .category-full--trailers .card {
