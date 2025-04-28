@@ -36,7 +36,7 @@
     }
 
     function main(oncomplite, onerror) {
-        var status = new Lampa.Status(5); // П’ять категорій: Популярне, Зараз у кіно, Очікувані, Жанри, Серіали
+        var status = new Lampa.Status(5);
 
         status.onComplite = function () {
             var fulldata = [];
@@ -60,31 +60,26 @@
         var excludeRegions = 'JP,KR,TR,MX,BR,AR,CO,CN';
         var excludeLanguages = 'ja,ko,tr,es,pt,zh';
 
-        // Популярне (за рік за замовчуванням)
-        get(`/movie/popular?sort_by=popularity.desc&release_date.gte=${getFormattedDate(-1, 'year')}&release_date.lte=${getFormattedDate(0, 'year')}&without_genres=16&without_keywords=210024,287501,33511&region!=${excludeRegions}&with_original_language!=${excludeLanguages}`, 1, function (json) {
-            append(Lampa.Lang.translate('trailers_popular'), 'popular', `/movie/popular?sort_by=popularity.desc&release_date.gte=${getFormattedDate(-1, 'year')}&release_date.lte=${getFormattedDate(0, 'year')}&without_genres=16&without_keywords=210024,287501,33511&region!=${excludeRegions}&with_original_language!=${excludeLanguages}`, json.results.length ? json : { results: [] });
+        get(`/movie/popular?sort_by=popularity.desc&release_date.gte=${getFormattedDate(-1, 'year')}&release_date.lte=${getFormattedDate(0, 'year')}&without_genres=16&without_keywords=210024,287501,33511®ion!=${excludeRegions}&with_original_language!=${excludeLanguages}`, 1, function (json) {
+            append(Lampa.Lang.translate('trailers_popular'), 'popular', `/movie/popular?sort_by=popularity.desc&release_date.gte=${getFormattedDate(-1, 'year')}&release_date.lte=${getFormattedDate(0, 'year')}&without_genres=16&without_keywords=210024,287501,33511®ion!=${excludeRegions}&with_original_language!=${excludeLanguages}`, json.results.length ? json : { results: [] });
         }, status.error.bind(status), true);
 
-        // Зараз у кіно
-        get(`/movie/now_playing?sort_by=release_date.desc&release_date.gte=${getFormattedDate(-1, 'year')}&release_date.lte=${getFormattedDate(0, 'year')}&without_genres=16&without_keywords=210024,287501,33511&region!=${excludeRegions}&with_original_language!=${excludeLanguages}`, 1, function (json) {
-            append(Lampa.Lang.translate('trailers_now_playing'), 'now_playing', `/movie/now_playing?sort_by=release_date.desc&release_date.gte=${getFormattedDate(-1, 'year')}&release_date.lte=${getFormattedDate(0, 'year')}&without_genres=16&without_keywords=210024,287501,33511&region!=${excludeRegions}&with_original_language!=${excludeLanguages}`, json.results.length ? json : { results: [] });
+        get(`/movie/now_playing?sort_by=release_date.desc&release_date.gte=${getFormattedDate(-1, 'year')}&release_date.lte=${getFormattedDate(0, 'year')}&without_genres=16&without_keywords=210024,287501,33511®ion!=${excludeRegions}&with_original_language!=${excludeLanguages}`, 1, function (json) {
+            append(Lampa.Lang.translate('trailers_now_playing'), 'now_playing', `/movie/now_playing?sort_by=release_date.desc&release_date.gte=${getFormattedDate(-1, 'year')}&release_date.lte=${getFormattedDate(0, 'year')}&without_genres=16&without_keywords=210024,287501,33511®ion!=${excludeRegions}&with_original_language!=${excludeLanguages}`, json.results.length ? json : { results: [] });
         }, function () {
-            get(`/discover/movie?sort_by=release_date.desc&release_date.gte=${getFormattedDate(-1, 'year')}&release_date.lte=${getFormattedDate(0, 'year')}&without_genres=16&without_keywords=210024,287501,33511&region!=${excludeRegions}&with_original_language!=${excludeLanguages}`, 1, function (json) {
-                append(Lampa.Lang.translate('trailers_now_playing'), 'now_playing', `/discover/movie?sort_by=release_date.desc&release_date.gte=${getFormattedDate(-1, 'year')}&release_date.lte=${getFormattedDate(0, 'year')}&without_genres=16&without_keywords=210024,287501,33511&region!=${excludeRegions}&with_original_language!=${excludeLanguages}`, json);
+            get(`/discover/movie?sort_by=release_date.desc&release_date.gte=${getFormattedDate(-1, 'year')}&release_date.lte=${getFormattedDate(0, 'year')}&without_genres=16&without_keywords=210024,287501,33511®ion!=${excludeRegions}&with_original_language!=${excludeLanguages}`, 1, function (json) {
+                append(Lampa.Lang.translate('trailers_now_playing'), 'now_playing', `/discover/movie?sort_by=release_date.desc&release_date.gte=${getFormattedDate(-1, 'year')}&release_date.lte=${getFormattedDate(0, 'year')}&without_genres=16&without_keywords=210024,287501,33511®ion!=${excludeRegions}&with_original_language!=${excludeLanguages}`, json);
             }, status.error.bind(status));
         }, true);
 
-        // Очікувані (наступні 12 місяців)
-        get(`/movie/upcoming?sort_by=release_date.asc&release_date.gte=${getFormattedDate(0, 'month')}&release_date.lte=${getFormattedDate(12, 'month', true)}&without_genres=16&without_keywords=210024,287501,33511&region!=${excludeRegions}&with_original_language!=${excludeLanguages}`, 1, function (json) {
-            append(Lampa.Lang.translate('trailers_upcoming'), 'upcoming', `/movie/upcoming?sort_by=release_date.asc&release_date.gte=${getFormattedDate(0, 'month')}&release_date.lte=${getFormattedDate(12, 'month', true)}&without_genres=16&without_keywords=210024,287501,33511&region!=${excludeRegions}&with_original_language!=${excludeLanguages}`, json.results.length ? json : { results: [] });
+        get(`/movie/upcoming?sort_by=release_date.asc&release_date.gte=${getFormattedDate(0, 'month')}&release_date.lte=${getFormattedDate(12, 'month', true)}&without_genres=16&without_keywords=210024,287501,33511®ion!=${excludeRegions}&with_original_language!=${excludeLanguages}`, 1, function (json) {
+            append(Lampa.Lang.translate('trailers_upcoming'), 'upcoming', `/movie/upcoming?sort_by=release_date.asc&release_date.gte=${getFormattedDate(0, 'month')}&release_date.lte=${getFormattedDate(12, 'month', true)}&without_genres=16&without_keywords=210024,287501,33511®ion!=${excludeRegions}&with_original_language!=${excludeLanguages}`, json.results.length ? json : { results: [] });
         }, status.error.bind(status), true);
 
-        // Жанри (за замовчуванням усі жанри)
         get(`/discover/movie?sort_by=release_date.desc`, 1, function (json) {
             append(Lampa.Lang.translate('trailers_genres'), 'genres', `/discover/movie?sort_by=release_date.desc`, json.results.length ? json : { results: [] });
         }, status.error.bind(status), false);
 
-        // Серіали (без змін)
         get(`/discover/tv?sort_by=first_air_date.desc&first_air_date.gte=${getFormattedDate(-1, 'year')}&first_air_date.lte=${getFormattedDate(1, 'year', true)}&without_genres=99,10763`, 1, function (json) {
             append(Lampa.Lang.translate('trailers_series'), 'series', `/discover/tv?sort_by=first_air_date.desc&first_air_date.gte=${getFormattedDate(-1, 'year')}&first_air_date.lte=${getFormattedDate(1, 'year', true)}&without_genres=99,10763`, json.results.length ? json : { results: [] });
         }, status.error.bind(status), false);
@@ -512,4 +507,760 @@
 
         this.more = function () {
             more = Lampa.Template.get('more');
-            more.addClass('more--
+            more.addClass('more--trailers');
+            more.on('hover:enter', function () {
+                Lampa.Activity.push({
+                    url: data.url,
+                    title: data.title,
+                    component: 'trailers_full',
+                    type: data.type,
+                    page: 2
+                });
+            });
+            more.on('hover:focus', function (e) {
+                last = e.target;
+                scroll.update(more, true);
+            });
+            scroll.append(more);
+        };
+
+        this.toggle = function () {
+            var _this2 = this;
+            Lampa.Controller.add('items_line', {
+                toggle: function () {
+                    Lampa.Controller.collectionSet(scroll.render());
+                    Lampa.Controller.collectionFocus(items.length ? last : false, scroll.render());
+                },
+                right: function () {
+                    Navigator.move('right');
+                    Lampa.Controller.enable('items_line');
+                },
+                left: function () {
+                    if (Navigator.canmove('left')) Navigator.move('left');
+                    else if (_this2.onLeft) _this2.onLeft();
+                    else Lampa.Controller.toggle('menu');
+                },
+                down: this.onDown,
+                up: this.onUp,
+                gone: function () {},
+                back: this.onBack
+            });
+            Lampa.Controller.toggle('items_line');
+        };
+
+        this.render = function () {
+            return content;
+        };
+
+        this.destroy = function () {
+            Lampa.Arrays.destroy(items);
+            scroll.destroy();
+            content.remove();
+            more && more.remove();
+            filters && filters.remove();
+            items = [];
+        };
+    }
+
+    function Component$1(object) {
+        var scroll = new Lampa.Scroll({ mask: true, over: true, scroll_by_item: true });
+        var items = [];
+        var html = $('<div></div>');
+        var active = 0;
+        var light = Lampa.Storage.field('light_version') && window.innerWidth >= 767;
+
+        this.create = function () {
+            Api.main(this.build.bind(this), this.empty.bind(this));
+            return this.render();
+        };
+
+        this.empty = function () {
+            var empty = new Lampa.Empty();
+            html.append(empty.render());
+            this.start = empty.start;
+            this.activity.loader(false);
+            this.activity.toggle();
+        };
+
+        this.build = function (data) {
+            var _this = this;
+            scroll.minus();
+            html.append(scroll.render());
+            data.forEach(this.append.bind(this));
+            if (light) {
+                scroll.onWheel = function (step) {
+                    if (step > 0) _this.down();
+                    else _this.up();
+                };
+            }
+            this.activity.loader(false);
+            this.activity.toggle();
+        };
+
+        this.append = function (element) {
+            var item = new Line(element);
+            item.create();
+            item.onDown = this.down.bind(this);
+            item.onUp = this.up.bind(this);
+            item.onBack = this.back.bind(this);
+            item.onToggle = function () {
+                active = items.indexOf(item);
+            };
+            item.wrap = $('<div></div>');
+            if (light) {
+                scroll.append(item.wrap);
+            } else {
+                scroll.append(item.render());
+            }
+            items.push(item);
+        };
+
+        this.back = function () {
+            Lampa.Activity.backward();
+        };
+
+        this.detach = function () {
+            if (light) {
+                items.forEach(function (item) {
+                    item.render().detach();
+                });
+                items.slice(active, active + 2).forEach(function (item) {
+                    item.wrap.append(item.render());
+                });
+            }
+        };
+
+        this.down = function () {
+            active++;
+            active = Math.min(active, items.length - 1);
+            this.detach();
+            items[active].toggle();
+            scroll.update(items[active].render());
+        };
+
+        this.up = function () {
+            active--;
+            if (active < 0) {
+                active = 0;
+                this.detach();
+                Lampa.Controller.toggle('head');
+            } else {
+                this.detach();
+                items[active].toggle();
+            }
+            scroll.update(items[active].render());
+        };
+
+        this.start = function () {
+            var _this2 = this;
+            if (Lampa.Activity.active().activity !== this.activity) return;
+            Lampa.Controller.add('content', {
+                toggle: function () {
+                    if (items.length) {
+                        _this2.detach();
+                        items[active].toggle();
+                    }
+                },
+                left: function () {
+                    if (Navigator.canmove('left')) Navigator.move('left');
+                    else Lampa.Controller.toggle('menu');
+                },
+                right: function () {
+                    Navigator.move('right');
+                },
+                up: function () {
+                    if (Navigator.canmove('up')) Navigator.move('up');
+                    else Lampa.Controller.toggle('head');
+                },
+                down: function () {
+                    if (Navigator.canmove('down')) Navigator.move('down');
+                },
+                back: this.back
+            });
+            Lampa.Controller.toggle('content');
+        };
+
+        this.pause = function () {};
+        this.stop = function () {};
+        this.render = function () {
+            return html;
+        };
+
+        this.destroy = function () {
+            Lampa.Arrays.destroy(items);
+            scroll.destroy();
+            html.remove();
+            items = [];
+        };
+    }
+
+    function Component(object) {
+        var scroll = new Lampa.Scroll({ mask: true, over: true, step: 250, end_ratio: 2 });
+        var items = [];
+        var html = $('<div></div>');
+        var body = $('<div class="category-full category-full--trailers"></div>');
+        var newlampa = Lampa.Manifest.app_digital >= 166;
+        var light = newlampa ? false : Lampa.Storage.field('light_version') && window.innerWidth >= 767;
+        var total_pages = 0;
+        var last;
+        var waitload = false;
+
+        this.create = function () {
+            if (object.type === 'genres' && object.genre_id) {
+                var sortButton = $('<div class="sort-button selector">${Lampa.Lang.translate('sort_by_date')}</div>');
+                sortButton.on('hover:enter', function () {
+                    var sortItems = [
+                        { title: Lampa.Lang.translate('sort_by_date'), sort: 'release_date.desc', selected: true },
+                        { title: Lampa.Lang.translate('sort_by_rating'), sort: 'vote_average.desc' }
+                    ];
+                    Lampa.Select.show({
+                        title: Lampa.Lang.translate('sort_title'),
+                        items: sortItems,
+                        onSelect: function (item) {
+                            var newUrl = object.url.replace(/sort_by=[^&]*/, `sort_by=${item.sort}`);
+                            Lampa.Activity.push({
+                                url: newUrl,
+                                title: object.title,
+                                component: 'trailers_full',
+                                type: object.type,
+                                page: 1,
+                                genre_id: object.genre_id
+                            });
+                        },
+                        onBack: function () {
+                            Lampa.Controller.toggle('content');
+                        }
+                    });
+                });
+                html.append(sortButton);
+            }
+
+            Api.full(object, this.build.bind(this), this.empty.bind(this));
+            return this.render();
+        };
+
+        this.empty = function () {
+            var empty = new Lampa.Empty();
+            scroll.append(empty.render());
+            this.start = empty.start;
+            this.activity.loader(false);
+            this.activity.toggle();
+        };
+
+        this.next = function () {
+            var _this = this;
+            if (waitload) return;
+            if (object.page < 30 && object.page < total_pages) {
+                waitload = true;
+                object.page++;
+                Api.full(object, function (result) {
+                    if (result.results && result.results.length) {
+                        _this.append(result, true);
+                    } else {
+                        Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
+                    }
+                    waitload = false;
+                }, function () {
+                    Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
+                    waitload = false;
+                });
+            }
+        };
+
+        this.cardImgBackground = function (card_data) {
+            if (Lampa.Storage.field('background')) {
+                if (Lampa.Storage.get('background_type', 'complex') === 'poster' && window.innerWidth > 790) {
+                    return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'original') : '';
+                }
+                return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'w500') : '';
+            }
+            return '';
+        };
+
+        this.append = async function (data, append) {
+            var _this2 = this;
+            for (var element of data.results) {
+                try {
+                    var trailer = await new Promise(function (resolve, reject) {
+                        Api.videos(element, function (videos) {
+                            resolve(videos.results[0]);
+                        }, function () {
+                            reject();
+                        });
+                    });
+                    if (trailer) {
+                        var card = new Trailer(element, { type: object.type });
+                        card.create();
+                        card.visible();
+                        card.onFocus = function (target, card_data) {
+                            last = target;
+                            scroll.update(card.render(), true);
+                            if (!light && !newlampa && scroll.isEnd()) _this2.next();
+                        };
+                        body.append(card.render());
+                        items.push(card);
+                        if (append) Lampa.Controller.collectionAppend(card.render());
+                    }
+                } catch (e) {
+                    console.log('No trailer for:', element.id);
+                }
+            }
+        };
+
+        this.build = function (data) {
+            var _this3 = this;
+            if (data.results && data.results.length) {
+                total_pages = data.total_pages || 1;
+                scroll.minus();
+                html.append(scroll.render());
+                this.append(data);
+                if (light && items.length) this.back();
+                if (total_pages > data.page && items.length) this.more();
+                scroll.append(body);
+                if (newlampa) {
+                    scroll.onEnd = this.next.bind(this);
+                    scroll.onWheel = function (step) {
+                        if (!Lampa.Controller.own(_this3)) _this3.start();
+                        if (step > 0) Navigator.move('down');
+                        else if (active > 0) Navigator.move('up');
+                    };
+                }
+                this.activity.loader(false);
+                this.activity.toggle();
+            } else {
+                html.append(scroll.render());
+                this.empty();
+            }
+        };
+
+        this.more = function () {
+            var _this = this;
+            var more = $('<div class="selector" style="width: 100%; height: 5px"></div>');
+            more.on('hover:enter', function () {
+                var next = Lampa.Arrays.clone(object);
+                delete next.activity;
+                next.page = (next.page || 1) + 1;
+                Lampa.Activity.push({
+                    url: next.url,
+                    title: object.title || Lampa.Lang.translate('title_trailers'),
+                    component: 'trailers_full',
+                    type: next.type,
+                    page: next.page,
+                    genre_id: object.genre_id
+                });
+            });
+            body.append(more);
+        };
+
+        this.back = function () {
+            last = items[0].render()[0];
+            var more = $('<div class="selector" style="width: 100%; height: 5px"></div>');
+            more.on('hover:enter', function () {
+                if (object.page > 1) {
+                    Lampa.Activity.backward();
+                } else {
+                    Lampa.Controller.toggle('head');
+                }
+            });
+            body.prepend(more);
+        };
+
+        this.start = function () {
+            if (Lampa.Activity.active().activity !== this.activity) return;
+            Lampa.Controller.add('content', {
+                link: this,
+                toggle: function () {
+                    Lampa.Controller.collectionSet(scroll.render());
+                    Lampa.Controller.collectionFocus(last || false, scroll.render());
+                },
+                left: function () {
+                    if (Navigator.canmove('left')) Navigator.move('left');
+                    else Lampa.Controller.toggle('menu');
+                },
+                right: function () {
+                    Navigator.move('right');
+                },
+                up: function () {
+                    if (Navigator.canmove('up')) Navigator.move('up');
+                    else Lampa.Controller.toggle('head');
+                },
+                down: function () {
+                    if (Navigator.canmove('down')) Navigator.move('down');
+                },
+                back: function () {
+                    Lampa.Activity.backward();
+                }
+            });
+            Lampa.Controller.toggle('content');
+        };
+
+        this.pause = function () {};
+        this.stop = function () {};
+        this.render = function () {
+            return html;
+        };
+
+        this.destroy = function () {
+            Lampa.Arrays.destroy(items);
+            scroll.destroy();
+            html.remove();
+            body.remove();
+            items = [];
+        };
+    }
+
+    Lampa.Lang.add({
+        trailers_popular: {
+            ru: 'Популярное',
+            uk: 'Популярне',
+            en: 'Popular'
+        },
+        trailers_now_playing: {
+            ru: 'Сейчас в кино',
+            uk: 'Зараз у кіно',
+            en: 'Now Playing'
+        },
+        trailers_upcoming: {
+            ru: 'Ожидаемые',
+            uk: 'Очікувані',
+            en: 'Upcoming'
+        },
+        trailers_genres: {
+            ru: 'Жанры',
+            uk: 'Жанри',
+            en: 'Genres'
+        },
+        trailers_series: {
+            ru: 'Сериалы',
+            uk: 'Серіали',
+            en: 'Series'
+        },
+        trailers_no_trailers: {
+            ru: 'Трейлеров не найдено',
+            uk: 'Трейлерів не знайдено',
+            en: 'No trailers found'
+        },
+        trailers_no_uk_trailer: {
+            ru: 'Нет украинского трейлера',
+            uk: 'Немає українського трейлера',
+            en: 'No Ukrainian trailer'
+        },
+        trailers_no_ru_trailer: {
+            ru: 'Нет русского трейлера',
+            uk: 'Немає російського трейлера',
+            en: 'No Russian trailer'
+        },
+        trailers_view: {
+            ru: 'Подробнее',
+            uk: 'Докладніше',
+            en: 'More'
+        },
+        title_trailers: {
+            ru: 'Трейлеры',
+            uk: 'Трейлери',
+            en: 'Trailers'
+        },
+        filter_week: {
+            ru: 'За неделю',
+            uk: 'За тиждень',
+            en: 'This Week'
+        },
+        filter_month: {
+            ru: 'За месяц',
+            uk: 'За місяць',
+            en: 'This Month'
+        },
+        filter_year: {
+            ru: 'За год',
+            uk: 'За рік',
+            en: 'This Year'
+        },
+        genre_all: {
+            ru: 'Все жанры',
+            uk: 'Всі жанри',
+            en: 'All Genres'
+        },
+        genre_anime: {
+            ru: 'Аниме',
+            uk: 'Аніме',
+            en: 'Anime'
+        },
+        genre_history: {
+            ru: 'Исторический',
+            uk: 'Історичний',
+            en: 'History'
+        },
+        genre_action: {
+            ru: 'Боевик',
+            uk: 'Бойовик',
+            en: 'Action'
+        },
+        genre_western: {
+            ru: 'Вестерн',
+            uk: 'Вестерн',
+            en: 'Western'
+        },
+        genre_war: {
+            ru: 'Военный',
+            uk: 'Військовий',
+            en: 'War'
+        },
+        genre_crime: {
+            ru: 'Криминал',
+            uk: 'Кримінал',
+            en: 'Crime'
+        },
+        genre_documentary: {
+            ru: 'Документальный',
+            uk: 'Документальний',
+            en: 'Documentary'
+        },
+        genre_drama: {
+            ru: 'Драма',
+            uk: 'Драма',
+            en: 'Drama'
+        },
+        genre_family: {
+            ru: 'Семейный',
+            uk: 'Сімейний',
+            en: 'Family'
+        },
+        genre_horror: {
+            ru: 'Ужасы',
+            uk: 'Жахи',
+            en: 'Horror'
+        },
+        genre_comedy: {
+            ru: 'Комедия',
+            uk: 'Комедія',
+            en: 'Comedy'
+        },
+        genre_romance: {
+            ru: 'Мелодрама',
+            uk: 'Мелодрама',
+            en: 'Romance'
+        },
+        genre_music: {
+            ru: 'Музыка',
+            uk: 'Музика',
+            en: 'Music'
+        },
+        genre_animation: {
+            ru: 'Мультфильм',
+            uk: 'Мультфільм',
+            en: 'Animation'
+        },
+        genre_adventure: {
+            ru: 'Приключения',
+            uk: 'Пригоди',
+            en: 'Adventure'
+        },
+        genre_tv_movie: {
+            ru: 'Телефильм',
+            uk: 'Телефільм',
+            en: 'TV Movie'
+        },
+        genre_thriller: {
+            ru: 'Триллер',
+            uk: 'Трилер',
+            en: 'Thriller'
+        },
+        genre_sci_fi: {
+            ru: 'Фантастика',
+            uk: 'Фантастика',
+            en: 'Sci-Fi'
+        },
+        genre_fantasy: {
+            ru: 'Фэнтези',
+            uk: 'Фентезі',
+            en: 'Fantasy'
+        },
+        sort_title: {
+            ru: 'Сортировка',
+            uk: 'Сортування',
+            en: 'Sort'
+        },
+        sort_by_date: {
+            ru: 'По дате',
+            uk: 'За датою',
+            en: 'By Date'
+        },
+        sort_by_rating: {
+            ru: 'По рейтингу',
+            uk: 'За рейтингом',
+            en: 'By Rating'
+        }
+    });
+
+    function startPlugin() {
+        console.log('startPlugin called');
+        window.plugin_trailers_ready = true;
+        Lampa.Component.add('trailers_main', Component$1);
+        Lampa.Component.add('trailers_full', Component);
+        Lampa.Template.add('trailer', `
+            <div class="card selector card--trailer layer--render layer--visible">
+                <div class="card__view">
+                    <img src="./img/img_load.svg" class="card__img">
+                    <div class="card__promo">
+                        <div class="card__promo-text">
+                            <div class="card__title"></div>
+                        </div>
+                        <div class="card__details"></div>
+                    </div>
+                </div>
+                <div class="card__play">
+                    <img src="./img/icons/player/play.svg">
+                </div>
+            </div>
+        `);
+        Lampa.Template.add('trailer_style', `
+            <style>
+            .card.card--trailer,
+            .card-more.more--trailers {
+                width: 25.7em;
+            }
+            .card.card--trailer .card__view {
+                padding-bottom: 56%;
+                margin-bottom: 0;
+                position: relative;
+            }
+            .card.card--trailer .card__details {
+                margin-top: 0.8em;
+            }
+            .card.card--trailer .card__play {
+                position: absolute;
+                top: 1.4em;
+                left: 1.5em;
+                background: #000000b8;
+                width: 2.2em;
+                height: 2.2em;
+                border-radius: 100%;
+                text-align: center;
+                padding-top: 0.6em;
+            }
+            .card.card--trailer .card__play img {
+                width: 0.9em;
+                height: 1em;
+            }
+            .card.card--trailer .card__lang {
+                position: absolute;
+                top: 0.5em;
+                right: 0.5em;
+                background: #000000b8;
+                color: white;
+                padding: 0.2em 0.5em;
+                border-radius: 3px;
+                font-size: 0.9em;
+            }
+            .card-more.more--trailers .card-more__box {
+                padding-bottom: 56%;
+            }
+            .category-full--trailers .card {
+                margin-bottom: 1.5em;
+            }
+            .category-full--trailers .card {
+                width: 33.3%;
+            }
+            .items-line__filters {
+                margin: 0.5em 0;
+                display: flex;
+                gap: 0.5em;
+                flex-wrap: wrap;
+            }
+            .filter-item {
+                padding: 0.3em 0.8em;
+                background: #333;
+                border-radius: 3px;
+                cursor: pointer;
+                color: #fff;
+                font-size: 0.9em;
+            }
+            .filter-item.selected {
+                background: #007bff;
+            }
+            .sort-button {
+                padding: 0.5em 1em;
+                background: #007bff;
+                color: #fff;
+                border-radius: 3px;
+                margin-bottom: 1em;
+                cursor: pointer;
+                display: inline-block;
+            }
+            @media screen and (max-width: 767px) {
+                .category-full--trailers .card {
+                    width: 50%;
+                }
+            }
+            @media screen and (max-width: 400px) {
+                .category-full--trailers .card {
+                    width: 100%;
+                }
+            }
+            </style>
+        `);
+
+        function add() {
+            console.log('add called');
+            var menuList = $('.menu .menu__list').eq(0);
+            if (!menuList.length) {
+                console.warn('Menu list not found, trying alternative selector');
+                menuList = $('.menu__list').first();
+            }
+            if (!menuList.length) {
+                console.error('No menu list found');
+                return;
+            }
+            var button = $(`
+                <li class="menu__item selector">
+                    <div class="menu__ico">
+                        <svg height="70" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    <div class="menu__text">${Lampa.Lang.translate('title_trailers')}</div>
+                </li>
+            `);
+            button.on('hover:enter', function () {
+                console.log('Trailers button clicked');
+                Lampa.Activity.push({
+                    url: '',
+                    title: Lampa.Lang.translate('title_trailers'),
+                    component: 'trailers_main',
+                    page: 1
+                });
+            });
+            menuList.append(button);
+            console.log('Button appended to menu');
+            $('body').append(Lampa.Template.get('trailer_style', {}, true));
+        }
+
+        if (window.appready) {
+            console.log('App already ready, calling add');
+            add();
+        } else {
+            console.log('Waiting for app ready event');
+            Lampa.Listener.follow('app', function (e) {
+                console.log('App event:', e.type);
+                if (e.type === 'ready') {
+                    add();
+                }
+            });
+        }
+
+        // Додатковий таймер як запасний варіант
+        setTimeout(function () {
+            if (!window.plugin_trailers_ready) {
+                console.log('Fallback: Forcing add after timeout');
+                add();
+            }
+        }, 5000);
+    }
+
+    if (!window.plugin_trailers_ready) {
+        console.log('Plugin not ready, starting');
+        startPlugin();
+    } else {
+        console.log('Plugin already initialized');
+    }
+})();
