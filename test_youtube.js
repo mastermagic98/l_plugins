@@ -1,4 +1,5 @@
 (function () {
+    console.log('Trailers plugin: File loaded');
     'use strict';
 
     var network = new Lampa.Reguest();
@@ -39,7 +40,7 @@
     function get(url, page, resolve, reject, useRegion) {
         var lang = Lampa.Storage.get('language', 'ru');
         var full_url = `${tmdb_base_url}${url}&api_key=${tmdb_api_key}&language=${lang}&page=${page}`;
-        if (useRegion) full_url += `&region=${getRegion()}`;
+        if (useRegion) full_url += `®ion=${getRegion()}`;
         console.log('API Request:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
@@ -268,7 +269,7 @@
             this.card.on('hover:focus', function (e, is_mouse) {
                 Lampa.Background.change(_this2.cardImgBackground(data));
                 _this2.onFocus(e.target, data, is_mouse);
-            }).on('hover:enter', donutfunction () {
+            }).on('hover:enter', function () {
                 if (_this2.is_youtube) {
                     _this2.play(data.id);
                 } else {
@@ -943,6 +944,7 @@
     });
 
     function startPlugin() {
+        console.log('Trailers plugin: startPlugin called');
         window.plugin_trailers_ready = true;
         Lampa.Component.add('trailers_main', Component$1);
         Lampa.Component.add('trailers_full', Component);
@@ -1084,6 +1086,7 @@
         `);
 
         function add() {
+            console.log('Trailers plugin: Adding menu button');
             var button = $(`
                 <li class="menu__item selector">
                     <div class="menu__ico">
@@ -1106,13 +1109,26 @@
             $('body').append(Lampa.Template.get('trailer_style', {}, true));
         }
 
-        if (window.appready) add();
-        else {
+        if (window.appready) {
+            console.log('Trailers plugin: appready true, calling add');
+            add();
+        } else {
+            console.log('Trailers plugin: waiting for app ready');
             Lampa.Listener.follow('app', function (e) {
-                if (e.type === 'ready') add();
+                if (e.type === 'ready') {
+                    console.log('Trailers plugin: app ready event, calling add');
+                    add();
+                }
             });
         }
     }
 
-    if (!window.plugin_trailers_ready) startPlugin();
+    console.log('Trailers plugin: Checking plugin_trailers_ready');
+    console.log('Trailers plugin: window.plugin_trailers_ready =', window.plugin_trailers_ready);
+    if (!window.plugin_trailers_ready) {
+        console.log('Trailers plugin: Calling startPlugin');
+        startPlugin();
+    } else {
+        console.log('Trailers plugin: startPlugin skipped, already initialized');
+    }
 })();
