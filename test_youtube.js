@@ -1037,18 +1037,22 @@
                 display: flex;
                 gap: 1em;
             }
-            .menu__item {
+            .trailers-switcher .menu__item {
                 background: transparent;
                 color: white;
                 border-radius: 5px;
                 padding: 0.5em 1em;
                 transition: all 0.2s ease;
+                border: none;
             }
-            .menu__item.active {
-                background: #ffffff;
-                color: #ffffff;
+            .trailers-switcher .menu__item.active,
+            .trailers-switcher .menu__item.focused {
+                background: white;
+                color: black;
+                border: 2px solid white;
+                border-radius: 5px;
             }
-            .menu__item:hover, .menu__item.focused {
+            .trailers-switcher .menu__item:hover {
                 background: rgba(255, 255, 255, 0.2);
             }
             .period-select {
