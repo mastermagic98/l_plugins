@@ -14,6 +14,23 @@
         return `${year}-${month}-${day}`;
     }
 
+    function formatReleaseDate(date) {
+        if (!date) return '-';
+        var d = new Date(date);
+        var day = String(d.getDate()).padStart(2, '0');
+        var month = String(d.getMonth() + 1).padStart(2, '0');
+        var year = d.getFullYear();
+        return `${day}.${month}.${year}`;
+    }
+
+    function shuffle(array) {
+        for (var i = array.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
     function getRegion() {
         var lang = Lampa.Storage.get('language', 'ru');
         return lang === 'uk' ? 'UA' : lang === 'ru' ? 'RU' : 'US';
@@ -34,10 +51,10 @@
     }
 
     function main(oncomplite, onerror) {
-        var status = new Lampa.Status(3); // Три категорії
-        var mediaType = Lampa.Storage.get('trailers_media_type', 'movie'); // movie or tv
-        var popularPeriod = Lampa.Storage.get('trailers_popular_period', 'week'); // week, month, year
-        var upcomingPeriod = Lampa.Storage.get('trailers_upcoming_period', 'week'); // week, month, year
+        var status = new Lampa.Status(3);
+        var mediaType = Lampa.Storage.get('trailers_media_type', 'movie');
+        var popularPeriod = Lampa.Storage.get('trailers_popular_period', 'week');
+        var upcomingPeriod = Lampa.Storage.get('trailers_upcoming_period', 'week');
 
         status.onComplite = function () {
             var fulldata = [];
@@ -55,23 +72,23 @@
             json.title = title;
             json.type = name;
             json.url = url;
+            if (name === 'now_playing') {
+                json.results = shuffle(json.results);
+            }
             status.append(name, json);
         };
 
-        // Популярні
         var popularDate = popularPeriod === 'week' ? getFormattedDate(-7) :
                          popularPeriod === 'month' ? getFormattedDate(-30) :
                          getFormattedDate(-365);
-        get(`/${mediaType}/popular?sort_by=popularity.desc&primary_release_date.gte=${popularDate}&without_genres=99,10763`, 1, function (json) {
-            append(Lampa.Lang.translate('trailers_popular'), 'popular', `/${mediaType}/popular?sort_by=popularity.desc&primary_release_date.gte=${popularDate}&without_genres=99,10763`, json.results.length ? json : { results: [] });
+        get(`/${mediaType}/popular?sort_by=vote_average.desc&primary_release_date.gte=${popularDate}&without_genres=99,10763`, 1, function (json) {
+            append(Lampa.Lang.translate('trailers_popular'), 'popular', `/${mediaType}/popular?sort_by=vote_average.desc&primary_release_date.gte=${popularDate}&without_genres=99,10763`, json.results.length ? json : { results: [] });
         }, status.error.bind(status), true);
 
-        // В прокаті
-        get(`/${mediaType}/${mediaType === 'movie' ? 'now_playing' : 'on_the_air'}?sort_by=release_date.desc&release_date.gte=${getFormattedDate(-30)}&release_date.lte=${getFormattedDate(0)}&without_genres=99,10763`, 1, function (json) {
-            append(Lampa.Lang.translate('trailers_in_theaters'), 'now_playing', `/${mediaType}/${mediaType === 'movie' ? 'now_playing' : 'on_the_air'}?sort_by=release_date.desc&release_date.gte=${getFormattedDate(-30)}&release_date.lte=${getFormattedDate(0)}&without_genres=99,10763`, json.results.length ? json : { results: [] });
+        get(`/${mediaType}/${mediaType === 'movie' ? 'now_playing' : 'on_the_air'}?release_date.gte=${getFormattedDate(-30)}&release_date.lte=${getFormattedDate(0)}&without_genres=99,10763`, 1, function (json) {
+            append(Lampa.Lang.translate('trailers_in_theaters'), 'now_playing', `/${mediaType}/${mediaType === 'movie' ? 'now_playing' : 'on_the_air'}?release_date.gte=${getFormattedDate(-30)}&release_date.lte=${getFormattedDate(0)}&without_genres=99,10763`, json.results.length ? json : { results: [] });
         }, status.error.bind(status), true);
 
-        // Незабаром
         var upcomingDate = upcomingPeriod === 'week' ? getFormattedDate(7) :
                           upcomingPeriod === 'month' ? getFormattedDate(30) :
                           getFormattedDate(365);
@@ -83,6 +100,9 @@
     function full(params, oncomplite, onerror) {
         get(params.url, params.page, function (result) {
             if (result && result.results && result.results.length) {
+                if (params.type === 'now_playing') {
+                    result.results = shuffle(result.results);
+                }
                 oncomplite(result);
             } else {
                 console.log('Full: No results for', params.url);
@@ -168,9 +188,15 @@
                 this.card.find('.card__title').text(data.title || data.name);
                 this.card.find('.card__details').text(create + ' - ' + (data.original_title || data.original_name));
                 this.card.find('.card__view').append('<div class="card__lang">-</div>');
+                if (params.type === 'popular' || params.type === 'now_playing') {
+                    this.card.find('.card__info').text(data.vote_average ? data.vote_average.toFixed(1) : '-');
+                } else if (params.type === 'upcoming') {
+                    this.card.find('.card__info').text(formatReleaseDate(data.release_date || data.first_air_date));
+                }
             } else {
                 this.card.find('.card__title').text(data.name);
                 this.card.find('.card__details').remove();
+                this.card.find('.card__info').remove();
             }
         };
 
@@ -242,7 +268,7 @@
             this.card.on('hover:focus', function (e, is_mouse) {
                 Lampa.Background.change(_this2.cardImgBackground(data));
                 _this2.onFocus(e.target, data, is_mouse);
-            }).on('hover:enter', function () {
+            }).on('hover:enter', donutfunction () {
                 if (_this2.is_youtube) {
                     _this2.play(data.id);
                 } else {
@@ -383,7 +409,6 @@
             scroll.render().find('.scroll__body').addClass('items-cards');
             content.find('.items-line__title').text(data.title);
 
-            // Додаємо кнопки вибору періоду для "Популярні" та "Незабаром"
             if (data.type === 'popular' || data.type === 'upcoming') {
                 var periodSelect = $('<div class="period-select"></div>');
                 var periods = ['week', 'month', 'year'];
@@ -521,10 +546,9 @@
         var light = Lampa.Storage.field('light_version') && window.innerWidth >= 767;
 
         this.create = function () {
-            // Додаємо перемикач Фільми/Серіали
             var switcher = $('<div class="trailers-switcher"></div>');
-            var movieButton = $('<span class="switcher-button selector">Фільми</span>');
-            var seriesButton = $('<span class="switcher-button selector">Серіали</span>');
+            var movieButton = $(`<div class="switcher-button selector"><div class="switcher-button__text">Фільми</div></div>`);
+            var seriesButton = $(`<div class="switcher-button selector"><div class="switcher-button__text">Серіали</div></div>`);
             if (Lampa.Storage.get('trailers_media_type', 'movie') === 'movie') {
                 movieButton.addClass('active');
             } else {
@@ -932,6 +956,7 @@
                         </div>
                         <div class="card__details"></div>
                     </div>
+                    <div class="card__info"></div>
                 </div>
                 <div class="card__play">
                     <img src="./img/icons/player/play.svg">
@@ -977,6 +1002,21 @@
                 border-radius: 3px;
                 font-size: 0.9em;
             }
+            .card.card--trailer .card__info {
+                position: absolute;
+                bottom: 0.5em;
+                right: 0.5em;
+                background: #000000b8;
+                color: white;
+                padding: 0.2em 0.5em;
+                border-radius: 3px;
+                font-size: 0.9em;
+            }
+            .card.card--trailer.card--focus {
+                box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+                transform: scale(1.05);
+                z-index: 1;
+            }
             .card-more.more--trailers .card-more__box {
                 padding-bottom: 56%;
             }
@@ -992,14 +1032,28 @@
                 gap: 1em;
             }
             .switcher-button {
-                padding: 0.5em 1em;
-                background: #333;
+                display: flex;
+                align-items: center;
+                padding: 0.8em 1em;
+                background: transparent;
                 color: white;
                 border-radius: 5px;
                 cursor: pointer;
+                transition: all 0.2s ease;
+            }
+            .switcher-button__text {
+                font-size: 1.1em;
+                font-weight: 500;
             }
             .switcher-button.active {
                 background: #007bff;
+                color: black;
+            }
+            .switcher-button:hover, .switcher-button.focused {
+                background: rgba(255, 255, 255, 0.2);
+                box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+                transform: scale(1.05);
+                z-index: 1;
             }
             .period-select {
                 margin-top: 0.5em;
