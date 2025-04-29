@@ -228,12 +228,13 @@
             }
             console.log('Playing video ID:', id);
             if (Lampa.Manifest.app_digital >= 183) {
+                var poster = data.poster_path ? Lampa.Api.img(data.poster_path) : data.backdrop_path ? Lampa.Api.img(data.backdrop_path, 'w500') : '';
                 var item = {
                     title: Lampa.Utils.shortText(data.title || data.name, 50),
                     id: id,
                     youtube: true,
                     url: `https://www.youtube.com/watch?v=${id}`,
-                    icon: `<img class="size-youtube" src="https://img.youtube.com/vi/${data.id}/default.jpg" />`,
+                    icon: `<img class="size-youtube" src="https://img.youtube.com/vi/${id}/hqdefault.jpg" onerror="this.src='${poster}'" />`,
                     template: 'selectbox_icon'
                 };
                 Lampa.Player.play(item);
@@ -1077,6 +1078,7 @@
             });
             $('.menu .menu__list').eq(0).append(button);
             $('body').append(Lampa.Template.get('trailer_style', {}, true));
+            console.log('Trailers plugin: Menu button added');
         }
 
         if (window.appready) {
@@ -1093,9 +1095,12 @@
         }
 
         function checkMenuButton() {
-            if ($('.menu .menu__list').eq(0).find('.menu__item:contains("Трейлери")').length === 0) {
+            var menuButton = $('.menu .menu__list').eq(0).find('.menu__item:contains("Трейлери")');
+            if (menuButton.length === 0) {
                 console.log('Trailers plugin: Menu button missing, re-adding');
                 add();
+            } else {
+                console.log('Trailers plugin: Menu button present, count:', menuButton.length);
             }
         }
         setInterval(checkMenuButton, 5000); // Перевірка кожні 5 секунд
@@ -1104,10 +1109,10 @@
     console.log('Trailers plugin: Forcing initialization');
     setTimeout(function () {
         if (!window.plugin_trailers_ready) {
-            console.log('Trailers plugin: Calling startPlugin');
+            console.log('Trailers plugin: Calling startPlugin after delay');
             startPlugin();
         } else {
             console.log('Trailers plugin: startPlugin skipped, already initialized');
         }
-    }, 3000); // Збільшено затримку до 3 секунд
+    }, 5000); // Збільшено затримку до 5 секунд
 })();
