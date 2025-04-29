@@ -1094,7 +1094,9 @@
                     page: 1
                 });
             });
-            $('.menu .menu__list').eq(0).append(button);
+            // Змінюємо місце додавання кнопки на друге меню
+            $('.menu .menu__list').eq(1).append(button);
+            console.log('Trailers plugin: Button appended to second menu');
             $('body').append(Lampa.Template.get('trailer_style', {}, true));
             console.log('Trailers plugin: Menu button added');
         }
@@ -1113,12 +1115,12 @@
         }
 
         function checkMenuButton() {
-            var menuButton = $('.menu .menu__list').eq(0).find('.menu__item:contains("Трейлери")');
+            var menuButton = $('.menu .menu__list').eq(1).find('.menu__item:contains("Трейлери")');
             if (menuButton.length === 0) {
-                console.log('Trailers plugin: Menu button missing, re-adding');
+                console.log('Trailers plugin: Menu button missing in second menu, re-adding');
                 add();
             } else {
-                console.log('Trailers plugin: Menu button present, count:', menuButton.length);
+                console.log('Trailers plugin: Menu button present in second menu, count:', menuButton.length);
             }
         }
         setInterval(checkMenuButton, 5000); // Перевірка кожні 5 секунд
