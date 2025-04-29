@@ -39,11 +39,10 @@
     }
 
     function main(oncomplite, onerror, type = 'movie') {
-        var categories = type === 'movie' ? 3 : 2;
-        var status = new Lampa.Status(categories);
+        var status = new Lampa.Status(3);
         status.onComplite = function () {
             var fulldata = [];
-            var keys = type === 'movie' ? ['in_theaters', 'popular', 'upcoming'] : ['popular', 'upcoming'];
+            var keys = type === 'movie' ? ['in_theaters', 'popular', 'upcoming'] : ['popular', 'upcoming_new', 'upcoming_seasons'];
             keys.forEach(function (key) {
                 if (status.data[key] && status.data[key].results.length) {
                     fulldata.push(status.data[key]);
@@ -67,12 +66,6 @@
                          popularFilter === 'month' ? `/discover/${type}?sort_by=popularity.desc&release_date.gte=${getFormattedDate(30)}` :
                          `/discover/${type}?sort_by=popularity.desc&release_date.gte=${getFormattedDate(365)}`;
 
-        var upcomingFilter = Lampa.Storage.get('trailers_upcoming_filter', 'day');
-        var upcomingUrl = upcomingFilter === 'day' ? `/trending/${type}/day` :
-                          upcomingFilter === 'week' ? `/trending/${type}/week` :
-                          upcomingFilter === 'month' ? `/discover/${type}?sort_by=popularity.desc&release_date.gte=${getFormattedDate(30)}` :
-                          `/discover/${type}?sort_by=popularity.desc&release_date.gte=${getFormattedDate(365)}`;
-
         if (type === 'movie') {
             get(`/movie/now_playing`, 1, function (json) {
                 append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/movie/now_playing', json.results.length ? json : { results: [] });
@@ -80,24 +73,48 @@
                 get('/discover/movie?sort_by=popularity.desc', 1, function (json) {
                     append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/discover/movie?sort_by=popularity.desc', json);
                 }, status.error.bind(status));
+            }, true);
+
+            get(popularUrl, 1, function (json) {
+                append(Lampa.Lang.translate('trailers_popular'), 'popular', popularUrl, json.results.length ? json : { results: [] });
+            }, function () {
+                get('/discover/movie?sort_by=popularity.desc', 1, function (json) {
+                    append(Lampa.Lang.translate('trailers_popular'), 'popular', '/discover/movie?sort_by=popularity.desc', json);
+                }, status.error.bind(status));
+            }, false);
+
+            get(`/movie/upcoming`, 1, function (json) {
+                append(Lampa.Lang.translate('trailers_upcoming'), 'upcoming', '/movie/upcoming', json.results.length ? json : { results: [] });
+            }, function () {
+                get('/discover/movie?sort_by=popularity.desc', 1, function (json) {
+                    append(Lampa.Lang.translate('trailers_upcoming'), 'upcoming', '/discover/movie?sort_by=popularity.desc', json);
+                }, status.error.bind(status));
+            }, true);
+        } else {
+            get(popularUrl, 1, function (json) {
+                append(Lampa.Lang.translate('trailers_popular_series'), 'popular', popularUrl, json.results.length ? json : { results: [] });
+            }, function () {
+                get('/discover/tv?sort_by=popularity.desc', 1, function (json) {
+                    append(Lampa.Lang.translate('trailers_popular_series'), 'popular', '/discover/tv?sort_by=popularity.desc', json);
+                }, status.error.bind(status));
+            }, false);
+
+            get(`/tv/on_the_air`, 1, function (json) {
+                append(Lampa.Lang.translate('trailers_upcoming_new'), 'upcoming_new', '/tv/on_the_air', json.results.length ? json : { results: [] });
+            }, function () {
+                get('/discover/tv?sort_by=popularity.desc', 1, function (json) {
+                    append(Lampa.Lang.translate('trailers_upcoming_new'), 'upcoming_new', '/discover/tv?sort_by=popularity.desc', json);
+                }, status.error.bind(status));
+            }, true);
+
+            get(`/discover/tv?sort_by=popularity.desc`, 1, function (json) {
+                append(Lampa.Lang.translate('trailers_upcoming_seasons'), 'upcoming_seasons', '/discover/tv?sort_by=popularity.desc', json.results.length ? json : { results: [] });
+            }, function () {
+                get('/discover/tv?sort_by=popularity.desc', 1, function (json) {
+                    append(Lampa.Lang.translate('trailers_upcoming_seasons'), 'upcoming_seasons', '/discover/tv?sort_by=popularity.desc', json);
+                }, status.error.bind(status));
             }, false);
         }
-
-        get(popularUrl, 1, function (json) {
-            append(Lampa.Lang.translate('trailers_popular'), 'popular', popularUrl, json.results.length ? json : { results: [] });
-        }, function () {
-            get(`/discover/${type}?sort_by=popularity.desc`, 1, function (json) {
-                append(Lampa.Lang.translate('trailers_popular'), 'popular', `/discover/${type}?sort_by=popularity.desc`, json);
-            }, status.error.bind(status));
-        }, false);
-
-        get(type === 'movie' ? `/movie/upcoming` : `/tv/on_the_air`, 1, function (json) {
-            append(Lampa.Lang.translate('trailers_upcoming'), 'upcoming', type === 'movie' ? '/movie/upcoming' : '/tv/on_the_air', json.results.length ? json : { results: [] });
-        }, function () {
-            get(`/discover/${type}?sort_by=popularity.desc`, 1, function (json) {
-                append(Lampa.Lang.translate('trailers_upcoming'), 'upcoming', `/discover/${type}?sort_by=popularity.desc`, json);
-            }, status.error.bind(status));
-        }, false);
     }
 
     function full(params, oncomplite, onerror) {
@@ -111,7 +128,7 @@
         }, function (error) {
             console.log('Full error:', params.url, error);
             onerror();
-        }, params.type === 'streaming' || params.type === 'for_rent');
+        }, params.type === 'in_theaters' || params.type === 'upcoming' || params.type === 'upcoming_new');
     }
 
     function videos(card, oncomplite, onerror) {
@@ -357,7 +374,7 @@
             scroll.render().find('.scroll__body').addClass('items-cards');
             content.find('.items-line__title').text(data.title);
 
-            if (data.type === 'popular' || data.type === 'upcoming') {
+            if (data.type === 'popular') {
                 filter = $('<div class="items-line__filter selector"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg></div>');
                 filter.on('hover:enter', function () {
                     var items = [
@@ -834,6 +851,21 @@
             uk: 'Очікуване',
             en: 'Upcoming'
         },
+        trailers_popular_series: {
+            ru: 'Популярные сериалы',
+            uk: 'Популярні серіали',
+            en: 'Popular Series'
+        },
+        trailers_upcoming_new: {
+            ru: 'Ожидаемые новые сериалы',
+            uk: 'Очікувані нові серіали',
+            en: 'Upcoming New Series'
+        },
+        trailers_upcoming_seasons: {
+            ru: 'Ожидаемые новые сезоны сериалов',
+            uk: 'Очікувані нові сезони серіалів',
+            en: 'Upcoming New Seasons'
+        },
         trailers_no_trailers: {
             ru: 'Нет трейлеров',
             uk: 'Немає трейлерів',
@@ -892,6 +924,7 @@
     });
 
     function startPlugin() {
+        if (window.plugin_trailers_ready) return;
         window.plugin_trailers_ready = true;
         Lampa.Component.add('trailers_main', Component$1);
         Lampa.Component.add('trailers_full', Component);
