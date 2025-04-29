@@ -28,7 +28,7 @@
         var lang = Lampa.Storage.get('language', 'ru');
         var full_url = `${tmdb_base_url}${url}&api_key=${tmdb_api_key}&page=${page}`;
         if (!noLang) full_url += `&language=${lang}`;
-        if (useRegion) full_url += `&region=${getRegion()}`;
+        if (useRegion) full_url += `®ion=${getRegion()}`;
         console.log('API Request:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
@@ -553,42 +553,43 @@
         var html = $('<div></div>');
         var active = 0;
         var light = Lampa.Storage.field('light_version') && window.innerWidth >= 767;
-        var currentTab = 'movie';
+        var currentType = 'movie';
 
         this.create = function () {
-            var tabs = $('<div class="tabs selector"></div>');
-            var moviesTab = $('<div class="tab selector tab--active">' + Lampa.Lang.translate('trailers_movies') + '</div>');
-            var seriesTab = $('<div class="tab selector">' + Lampa.Lang.translate('trailers_series') + '</div>');
+            var buttons = $('<div class="selector"></div>');
+            var moviesButton = $('<div class="selector">' + Lampa.Lang.translate('trailers_movies') + '</div>');
+            var seriesButton = $('<div class="selector">' + Lampa.Lang.translate('trailers_series') + '</div>');
 
-            tabs.append(moviesTab).append(seriesTab);
-            html.append(tabs);
+            buttons.append(moviesButton).append(seriesButton);
+            html.append(buttons);
 
-            moviesTab.on('hover:enter', function () {
-                if (currentTab !== 'movie') {
-                    currentTab = 'movie';
-                    moviesTab.addClass('tab--active');
-                    seriesTab.removeClass('tab--active');
+            moviesButton.on('hover:enter hover:click', function () {
+                if (currentType !== 'movie') {
+                    currentType = 'movie';
+                    moviesButton.addClass('selector--active');
+                    seriesButton.removeClass('selector--active');
                     items.forEach(function (item) { item.destroy(); });
                     items = [];
                     scroll.render().empty();
-                    console.log('Switching to Movies');
+                    console.log('Loading Movies');
                     Api.main(this.build.bind(this), this.empty.bind(this), 'movie');
                 }
             }.bind(this));
 
-            seriesTab.on('hover:enter', function () {
-                if (currentTab !== 'series') {
-                    currentTab = 'series';
-                    seriesTab.addClass('tab--active');
-                    moviesTab.removeClass('tab--active');
+            seriesButton.on('hover:enter hover:click', function () {
+                if (currentType !== 'series') {
+                    currentType = 'series';
+                    seriesButton.addClass('selector--active');
+                    moviesButton.removeClass('selector--active');
                     items.forEach(function (item) { item.destroy(); });
                     items = [];
                     scroll.render().empty();
-                    console.log('Switching to Series');
+                    console.log('Loading Series');
                     Api.main(this.build.bind(this), this.empty.bind(this), 'tv');
                 }
             }.bind(this));
 
+            moviesButton.addClass('selector--active'); // Початково активна кнопка "Фільми"
             console.log('Initial load: Movies');
             Api.main(this.build.bind(this), this.empty.bind(this), 'movie');
             return this.render();
@@ -1066,19 +1067,6 @@
                 width: 20px;
                 height: 20px;
                 vertical-align: middle;
-            }
-            .tabs {
-                margin-bottom: 1em;
-            }
-            .tab {
-                display: inline-block;
-                padding: 0.5em 1em;
-                margin-right: 0.5em;
-                cursor: pointer;
-            }
-            .tab--active {
-                background: #ffffff33;
-                border-radius: 3px;
             }
             @media screen and (max-width: 767px) {
                 .category-full--trailers .card {
