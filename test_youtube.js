@@ -28,7 +28,7 @@
         var lang = Lampa.Storage.get('language', 'ru');
         var full_url = `${tmdb_base_url}${url}&api_key=${tmdb_api_key}&page=${page}`;
         if (!noLang) full_url += `&language=${lang}`;
-        if (useRegion) full_url += `&region=${getRegion()}`;
+        if (useRegion) full_url += `®ion=${getRegion()}`;
         console.log('API Request:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
@@ -452,9 +452,7 @@
                         }
                     });
                 });
-                content.find('.items-line__title').after(filter);
 
-                // Додаємо кнопку "Ще" праворуч від фільтра
                 moreButton = $('<div class="items-line__more selector">' + Lampa.Lang.translate('trailers_more') + '</div>');
                 moreButton.on('hover:enter', function () {
                     console.log('More button clicked:', data.title);
@@ -466,9 +464,11 @@
                         page: 2
                     });
                 });
-                filter.after(moreButton);
+
+                // Розміщуємо спочатку фільтр, потім кнопку "Ще"
+                content.find('.items-line__title').after(moreButton);
+                moreButton.before(filter);
             } else {
-                // Додаємо кнопку "Ще" після заголовка для інших категорій
                 moreButton = $('<div class="items-line__more selector">' + Lampa.Lang.translate('trailers_more') + '</div>');
                 moreButton.on('hover:enter', function () {
                     console.log('More button clicked:', data.title);
@@ -585,11 +585,12 @@
         var active = 0;
         var light = Lampa.Storage.field('light_version') && window.innerWidth >= 767;
         var currentType = 'movie';
+        var moviesButton, seriesButton;
 
         this.create = function () {
-            var buttons = $('<div class="selector"></div>');
-            var moviesButton = $('<div class="selector">' + Lampa.Lang.translate('trailers_movies') + '</div>');
-            var seriesButton = $('<div class="selector">' + Lampa.Lang.translate('trailers_series') + '</div>');
+            var buttons = $('<div class="buttons"></div>');
+            moviesButton = $('<div class="selector">' + Lampa.Lang.translate('trailers_movies') + '</div>');
+            seriesButton = $('<div class="selector">' + Lampa.Lang.translate('trailers_series') + '</div>');
 
             buttons.append(moviesButton).append(seriesButton);
             html.append(buttons);
@@ -601,7 +602,7 @@
                     seriesButton.removeClass('selector--active');
                     items.forEach(function (item) { item.destroy(); });
                     items = [];
-                    scroll.render().empty();
+                    scroll.clear();
                     console.log('Loading Movies');
                     Api.main(this.build.bind(this), this.empty.bind(this), 'movie');
                 }
@@ -614,15 +615,17 @@
                     moviesButton.removeClass('selector--active');
                     items.forEach(function (item) { item.destroy(); });
                     items = [];
-                    scroll.render().empty();
+                    scroll.clear();
                     console.log('Loading Series');
                     Api.main(this.build.bind(this), this.empty.bind(this), 'tv');
                 }
             }.bind(this));
 
-            moviesButton.addClass('selector--active'); // Початково активна кнопка "Фільми"
+            // Початково активна кнопка "Фільми"
+            moviesButton.addClass('selector--active');
             console.log('Initial load: Movies');
             Api.main(this.build.bind(this), this.empty.bind(this), 'movie');
+
             return this.render();
         };
 
@@ -714,6 +717,9 @@
                     if (items.length) {
                         _this2.detach();
                         items[active].toggle();
+                    } else {
+                        Lampa.Controller.collectionSet(html);
+                        Lampa.Controller.collectionFocus(moviesButton[0], html);
                     }
                 },
                 left: function () {
@@ -746,6 +752,8 @@
             scroll.destroy();
             html.remove();
             items = [];
+            moviesButton = null;
+            seriesButton = null;
         };
     }
 
