@@ -1,5 +1,5 @@
 (function () {
-    console.log('Trailers plugin: Script execution started');
+    console.log('Trailers plugin: Script execution started at', new Date().toISOString());
     'use strict';
 
     var network = new Lampa.Reguest();
@@ -40,7 +40,7 @@
     function get(url, page, resolve, reject, useRegion) {
         var lang = Lampa.Storage.get('language', 'ru');
         var full_url = `${tmdb_base_url}${url}&api_key=${tmdb_api_key}&language=${lang}&page=${page}`;
-        if (useRegion) full_url += `®ion=${getRegion()}`;
+        if (useRegion) full_url += `&region=${getRegion()}`;
         console.log('API Request:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
@@ -279,7 +279,7 @@
                         var video = videos.results[0];
                         if (video && video.key) {
                             _this2.play(video.key);
-                            _this2.setTrailerLanguage(video.iso_639_1);
+                            _this2.setTrailerLanguage(video  .iso_639_1);
                             if (userLang === 'uk' && video.iso_639_1 !== 'uk' && video.iso_639_1 !== 'en') {
                                 Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
                             } else if (userLang === 'ru' && video.iso_639_1 !== 'ru' && video.iso_639_1 !== 'en') {
@@ -964,10 +964,10 @@
 
     function startPlugin() {
         if (window.plugin_trailers_ready) {
-            console.log('Trailers plugin: Already initialized, skipping');
+            console.log('Trailers plugin: Already initialized, skipping at', new Date().toISOString());
             return;
         }
-        console.log('Trailers plugin: startPlugin called');
+        console.log('Trailers plugin: startPlugin called at', new Date().toISOString());
         window.plugin_trailers_ready = true;
         Lampa.Component.add('trailers_main', Component$1);
         Lampa.Component.add('trailers_full', Component);
@@ -1009,7 +1009,7 @@
                 background: #000000b8;
                 width: 2.2em;
                 height: 2.2em;
-                border-radius: 100%;
+                border-radiusgester 100%;
                 text-align: center;
                 padding-top: 0.6em;
             }
@@ -1075,7 +1075,7 @@
         `);
 
         function add() {
-            console.log('Trailers plugin: Adding menu button');
+            console.log('Trailers plugin: Adding menu button at', new Date().toISOString());
             var button = $(`
                 <li class="menu__item selector">
                     <div class="menu__ico">
@@ -1087,6 +1087,7 @@
                 </li>
             `);
             button.on('hover:enter', function () {
+                console.log('Trailers plugin: Button clicked, pushing activity at', new Date().toISOString());
                 Lampa.Activity.push({
                     url: '',
                     title: Lampa.Lang.translate('title_trailers'),
@@ -1094,45 +1095,98 @@
                     page: 1
                 });
             });
-            // Змінюємо місце додавання кнопки на друге меню
-            $('.menu .menu__list').eq(1).append(button);
-            console.log('Trailers plugin: Button appended to second menu');
+
+            // Перевіряємо наявність меню
+            var menuLists = $('.menu .menu__list');
+            console.log('Trailers plugin: Available menu lists:', menuLists.length);
+            
+            // Спробуємо додати в друге меню
+            var secondMenu = $('.menu .menu__list').eq(1);
+            if (secondMenu.length) {
+                console.log('Trailers plugin: Second menu exists, appending button');
+                secondMenu.append(button);
+                console.log('Trailers plugin: Button appended to second menu at', new Date().toISOString());
+            } else {
+                console.log('Trailers plugin: Second menu does not exist, trying first menu');
+                // Якщо другого меню немає, додаємо в перше
+                var firstMenu = $('.menu .menu__list').eq(0);
+                if (firstMenu.length) {
+                    console.log('Trailers plugin: First menu exists, appending button');
+                    firstMenu.append(button);
+                    console.log('Trailers plugin: Button appended to first menu at', new Date().toISOString());
+                } else {
+                    console.log('Trailers plugin: No menu lists available to append button');
+                }
+            }
+
             $('body').append(Lampa.Template.get('trailer_style', {}, true));
-            console.log('Trailers plugin: Menu button added');
+            console.log('Trailers plugin: Menu button added at', new Date().toISOString());
+        }
+
+        // Функція для повторного додавання кнопки, якщо меню з’явиться пізніше
+        function tryAddButtonWithRetry(attempts, delay) {
+            if (attempts <= 0) {
+                console.log('Trailers plugin: Max attempts reached, stopping retry');
+                return;
+            }
+
+            var menuLists = $('.menu .menu__list');
+            if (menuLists.length) {
+                console.log('Trailers plugin: Menu found during retry, adding button');
+                add();
+            } else {
+                console.log('Trailers plugin: Menu not found, retrying in', delay, 'ms (attempts left:', attempts, ')');
+                setTimeout(function () {
+                    tryAddButtonWithRetry(attempts - 1, delay);
+                }, delay);
+            }
         }
 
         if (window.appready) {
-            console.log('Trailers plugin: appready true, calling add');
+            console.log('Trailers plugin: appready true, calling add at', new Date().toISOString());
             add();
         } else {
-            console.log('Trailers plugin: waiting for app ready');
+            console.log('Trailers plugin: waiting for app ready at', new Date().toISOString());
             Lampa.Listener.follow('app', function (e) {
                 if (e.type === 'ready') {
-                    console.log('Trailers plugin: app ready event, calling add');
+                    console.log('Trailers plugin: app ready event, calling add at', new Date().toISOString());
                     add();
+                    // Додаємо повторну спробу на випадок, якщо меню ще не готове
+                    tryAddButtonWithRetry(5, 1000); // 5 спроб з інтервалом 1 секунда
                 }
             });
         }
 
         function checkMenuButton() {
-            var menuButton = $('.menu .menu__list').eq(1).find('.menu__item:contains("Трейлери")');
-            if (menuButton.length === 0) {
-                console.log('Trailers plugin: Menu button missing in second menu, re-adding');
-                add();
+            var secondMenuButton = $('.menu .menu__list').eq(1).find('.menu__item:contains("Трейлери")');
+            var firstMenuButton = $('.menu .menu__list').eq(0).find('.menu__item:contains("Трейлери")');
+            if (secondMenuButton.length) {
+                console.log('Trailers plugin: Menu button present in second menu, count:', secondMenuButton.length);
+            } else if (firstMenuButton.length) {
+                console.log('Trailers plugin: Menu button present in first menu, count:', firstMenuButton.length);
             } else {
-                console.log('Trailers plugin: Menu button present in second menu, count:', menuButton.length);
+                console.log('Trailers plugin: Menu button missing, re-adding at', new Date().toISOString());
+                add();
             }
         }
         setInterval(checkMenuButton, 5000); // Перевірка кожні 5 секунд
+
+        // Додаємо обробник для перевірки після перезавантаження
+        Lampa.Listener.follow('app', function (e) {
+            if (e.type === 'reload') {
+                console.log('Trailers plugin: App reloaded, re-adding button at', new Date().toISOString());
+                add();
+            }
+        });
     }
 
-    console.log('Trailers plugin: Forcing initialization');
+    console.log('Trailers plugin: Forcing initialization at', new Date().toISOString());
     setTimeout(function () {
         if (!window.plugin_trailers_ready) {
-            console.log('Trailers plugin: Calling startPlugin after delay');
+            console.log('Trailers plugin: Calling startPlugin after delay at', new Date().toISOString());
             startPlugin();
         } else {
-            console.log('Trailers plugin: startPlugin skipped, already initialized');
+            console.log('Trailers plugin: startPlugin skipped, already initialized at', new Date().toISOString());
         }
-    }, 5000); // Збільшено затримку до 5 секунд
+    }, 5000); // Затримка 5 секунд
 })();
