@@ -161,9 +161,9 @@
             console.log('Videos request:', fetchUrl);
             network.silent(fetchUrl, function (result) {
                 console.log('Videos result:', result);
-                var trailers = result.results.filter(function (v) {
+                var trailers = result.results ? result.results.filter(function (v) {
                     return v.type === 'Trailer';
-                });
+                }) : [];
                 if (trailers.length) {
                     oncomplite(result);
                 } else if (langIndex < preferredLangs.length - 1) {
@@ -217,7 +217,7 @@
                 this.card.find('.card__view').append(`<div class="card__trailer-lang"></div>`);
             } else {
                 this.card.find('.card__title').text(data.name);
-                this.card__details').remove();
+                this.card.find('.card__details').remove();
             }
         };
 
@@ -245,9 +245,9 @@
             var _this = this;
             if (!this.is_youtube && !this.trailer_lang) {
                 Api.videos(data, function (videos) {
-                    var trailers = videos.results.filter(function (v) {
+                    var trailers = videos.results ? videos.results.filter(function (v) {
                         return v.type === 'Trailer';
-                    });
+                    }) : [];
                     var preferredLangs = getPreferredLanguage();
                     var video = trailers.find(function (v) {
                         return preferredLangs.includes(v.iso_639_1);
@@ -297,9 +297,9 @@
                 } else {
                     Api.videos(data, function (videos) {
                         var preferredLangs = getPreferredLanguage();
-                        var trailers = videos.results.filter(function (v) {
+                        var trailers = videos.results ? videos.results.filter(function (v) {
                             return v.type === 'Trailer';
-                        });
+                        }) : [];
                         var video = trailers.find(function (v) {
                             return preferredLangs.includes(v.iso_639_1);
                         }) || trailers[0];
@@ -329,9 +329,9 @@
                     Api.videos(data, function (videos) {
                         Lampa.Loading.stop();
                         var preferredLangs = getPreferredLanguage();
-                        var trailers = videos.results.filter(function (v) {
+                        var trailers = videos.results ? videos.results.filter(function (v) {
                             return v.type === 'Trailer';
-                        });
+                        }) : [];
                         if (trailers.length) {
                             items.push({
                                 title: Lampa.Lang.translate('title_trailers'),
