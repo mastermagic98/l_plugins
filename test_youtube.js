@@ -1,5 +1,5 @@
 (function () {
-    console.log('Trailers plugin: File loaded');
+    console.log('Trailers plugin: Script execution started');
     'use strict';
 
     var network = new Lampa.Reguest();
@@ -418,16 +418,22 @@
                     var periodButton = $(`<span class="period-button selector">${Lampa.Lang.translate('trailers_period_' + period)}</span>`);
                     if ((data.type === 'popular' && period === Lampa.Storage.get('trailers_popular_period', 'week')) ||
                         (data.type === 'upcoming' && period === Lampa.Storage.get('trailers_upcoming_period', 'week'))) {
-                        periodButton.addClass('active');
+                        periodButton.addClass('active focused');
                     }
                     periodButton.on('hover:enter', function () {
                         Lampa.Storage.set(data.type === 'popular' ? 'trailers_popular_period' : 'trailers_upcoming_period', period);
+                        $('.period-button').removeClass('focused');
+                        periodButton.addClass('focused');
                         Lampa.Activity.push({
                             url: '',
                             title: Lampa.Lang.translate('title_trailers'),
                             component: 'trailers_main',
                             page: 1
                         });
+                    });
+                    periodButton.on('hover:focus', function () {
+                        $('.period-button').removeClass('focused');
+                        periodButton.addClass('focused');
                     });
                     periodSelect.append(periodButton);
                 });
@@ -552,12 +558,14 @@
             var movieButton = $('<div class="menu__item selector"><div class="menu__text">Фільми</div></div>');
             var seriesButton = $('<div class="menu__item selector"><div class="menu__text">Серіали</div></div>');
             if (Lampa.Storage.get('trailers_media_type', 'movie') === 'movie') {
-                movieButton.addClass('active');
+                movieButton.addClass('active focused');
             } else {
-                seriesButton.addClass('active');
+                seriesButton.addClass('active focused');
             }
             movieButton.on('hover:enter', function () {
                 Lampa.Storage.set('trailers_media_type', 'movie');
+                $('.trailers-switcher .menu__item').removeClass('focused');
+                movieButton.addClass('focused');
                 Lampa.Activity.push({
                     url: '',
                     title: Lampa.Lang.translate('title_trailers'),
@@ -567,12 +575,22 @@
             });
             seriesButton.on('hover:enter', function () {
                 Lampa.Storage.set('trailers_media_type', 'tv');
+                $('.trailers-switcher .menu__item').removeClass('focused');
+                seriesButton.addClass('focused');
                 Lampa.Activity.push({
                     url: '',
                     title: Lampa.Lang.translate('title_trailers'),
                     component: 'trailers_main',
                     page: 1
                 });
+            });
+            movieButton.on('hover:focus', function () {
+                $('.trailers-switcher .menu__item').removeClass('focused');
+                movieButton.addClass('focused');
+            });
+            seriesButton.on('hover:focus', function () {
+                $('.trailers-switcher .menu__item').removeClass('focused');
+                seriesButton.addClass('focused');
             });
             switcher.append(movieButton).append(seriesButton);
             html.append(switcher);
