@@ -465,7 +465,7 @@
                     });
                 });
 
-                // Розміщуємо спочатку фільтр, потім кнопку "Ще"
+                // Розміщуємо фільтр одразу лівіше від кнопки "Ще"
                 content.find('.items-line__title').after(moreButton);
                 moreButton.before(filter);
             } else {
@@ -586,40 +586,170 @@
         var light = Lampa.Storage.field('light_version') && window.innerWidth >= 767;
         var currentType = 'movie';
         var moviesButton, seriesButton;
+        var controlls = {};
+        var active$1 = null;
+        var active_name = 'movies';
+
+        function toggle$2(name) {
+            if (active$1 && active$1.gone) active$1.gone(name);
+
+            if (controlls[name]) {
+                active$1 = controlls[name];
+                active_name = name;
+                Lampa.Activity.call(function () {
+                    Lampa.Activity.backward();
+                });
+                if (active$1.toggle) active$1.toggle();
+                if (active$1.update) active$1.update();
+                else {
+                    Lampa.Layer.update();
+                }
+                Lampa.Listener.send('toggle', {
+                    name: name
+                });
+            }
+        }
+
+        function bindEvents(elem) {
+            if (elem.classList.contains('selector') && !elem.bind_events) {
+                elem.bind_events = true;
+                var long_position = 0;
+                var long_timer;
+
+                var longStart = function longStart() {
+                    clearTimeout(long_timer);
+                    var offset = elem.getBoundingClientRect();
+                    long_timer = setTimeout(function () {
+                        var time = elem.long_time || 0;
+                        offset = elem.getBoundingClientRect();
+
+                        if (time + 100 < Date.now()) {
+                            var mutation = Math.abs(long_position - (offset.top + offset.left));
+                            if (mutation < 30) Lampa.Utils.trigger(elem, 'hover:long');
+                        }
+
+                        elem.long_time = Date.now();
+                    }, 800);
+                    long_position = offset.top + offset.left;
+                };
+
+                var longClear = function longClear() {
+                    clearTimeout(long_timer);
+                };
+
+                var touchStart = function touchStart() {
+                    longStart();
+                    Lampa.Utils.trigger(elem, 'hover:touch');
+                };
+
+                var rightClick = function rightClick(e) {
+                    Lampa.Utils.trigger(elem, 'hover:long');
+                };
+
+                elem.trigger_click = function (e) {
+                    if (Lampa.Storage.field('navigation_type') == 'mouse' || Lampa.Platform.screen('mobile')) {
+                        if (Lampa.DeviceInput.canClick(e)) {
+                            Lampa.AnimateTrigger.enter(elem);
+                            Lampa.Utils.trigger(elem, 'hover:enter');
+                        }
+                    }
+                };
+
+                elem.trigger_mouseenter = function () {
+                    clearAllFocus();
+                    elem.classList.add('focus');
+                    Lampa.Utils.trigger(elem, 'hover:hover');
+                };
+
+                elem.trigger_mouseleave = function () {
+                    elem.classList.remove('focus');
+                };
+
+                if (Lampa.Storage.field('navigation_type') == 'mouse' || Lampa.Platform.screen('mobile')) {
+                    elem.addEventListener('click', elem.trigger_click);
+                }
+
+                if (!Lampa.Utils.isTouchDevice() && Lampa.Storage.field('navigation_type') == 'mouse') {
+                    elem.addEventListener('mouseenter', elem.trigger_mouseenter);
+                    elem.addEventListener('mouseleave', elem.trigger_mouseleave);
+                    elem.addEventListener('mouseout', longClear);
+                    elem.addEventListener('mouseup', longClear);
+                    elem.addEventListener('mousedown', longStart);
+                    elem.addEventListener('contextmenu', rightClick);
+                }
+
+                if (Lampa.Utils.isTouchDevice()) {
+                    elem.addEventListener('touchstart', touchStart);
+                    elem.addEventListener('touchend', longClear);
+                    elem.addEventListener('touchmove', longClear);
+                }
+            }
+        }
+
+        function clearAllFocus() {
+            var collection = Array.from(document.body.querySelectorAll('.selector'));
+            collection.forEach(function (item) {
+                return item.classList.remove('focus');
+            });
+        }
 
         this.create = function () {
-            var buttons = $('<div class="buttons"></div>');
+            var buttons = $('<div class="buttons" style="display: flex; gap: 10px;"></div>');
             moviesButton = $('<div class="selector">' + Lampa.Lang.translate('trailers_movies') + '</div>');
             seriesButton = $('<div class="selector">' + Lampa.Lang.translate('trailers_series') + '</div>');
 
             buttons.append(moviesButton).append(seriesButton);
             html.append(buttons);
 
+            controlls.movies = {
+                toggle: function () {
+                    if (currentType !== 'movie') {
+                        currentType = 'movie';
+                        moviesButton.addClass('selector--active');
+                        seriesButton.removeClass('selector--active');
+                        items.forEach(function (item) { item.destroy(); });
+                        items = [];
+                        scroll.clear();
+                        console.log('Loading Movies');
+                        Api.main(this.build.bind(this), this.empty.bind(this), 'movie');
+                    }
+                }.bind(this),
+                update: function () {
+                    Lampa.Layer.update();
+                },
+                gone: function () {}
+            };
+
+            controlls.series = {
+                toggle: function () {
+                    if (currentType !== 'series') {
+                        currentType = 'series';
+                        seriesButton.addClass('selector--active');
+                        moviesButton.removeClass('selector--active');
+                        items.forEach(function (item) { item.destroy(); });
+                        items = [];
+                        scroll.clear();
+                        console.log('Loading Series');
+                        Api.main(this.build.bind(this), this.empty.bind(this), 'tv');
+                    }
+                }.bind(this),
+                update: function () {
+                    Lampa.Layer.update();
+                },
+                gone: function () {}
+            };
+
             moviesButton.on('hover:enter hover:click', function () {
-                if (currentType !== 'movie') {
-                    currentType = 'movie';
-                    moviesButton.addClass('selector--active');
-                    seriesButton.removeClass('selector--active');
-                    items.forEach(function (item) { item.destroy(); });
-                    items = [];
-                    scroll.clear();
-                    console.log('Loading Movies');
-                    Api.main(this.build.bind(this), this.empty.bind(this), 'movie');
-                }
-            }.bind(this));
+                toggle$2('movies');
+            });
 
             seriesButton.on('hover:enter hover:click', function () {
-                if (currentType !== 'series') {
-                    currentType = 'series';
-                    seriesButton.addClass('selector--active');
-                    moviesButton.removeClass('selector--active');
-                    items.forEach(function (item) { item.destroy(); });
-                    items = [];
-                    scroll.clear();
-                    console.log('Loading Series');
-                    Api.main(this.build.bind(this), this.empty.bind(this), 'tv');
-                }
-            }.bind(this));
+                toggle$2('series');
+            });
+
+            // Застосовуємо bindEvents до кнопок
+            bindEvents(moviesButton[0]);
+            bindEvents(seriesButton[0]);
 
             // Початково активна кнопка "Фільми"
             moviesButton.addClass('selector--active');
@@ -1108,8 +1238,8 @@
                 padding: 0.5em 1em;
             }
             .items-line__filter svg {
-                width: 20px;
-                height: 20px;
+                width: 36px;
+                height: 36px;
                 vertical-align: middle;
             }
             .items-line__more {
