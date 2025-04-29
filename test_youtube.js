@@ -39,10 +39,12 @@
     }
 
     function main(oncomplite, onerror, type = 'movie') {
-        var status = new Lampa.Status(3);
+        var categories = type === 'movie' ? 3 : 2;
+        var status = new Lampa.Status(categories);
         status.onComplite = function () {
             var fulldata = [];
-            ['in_theaters', 'popular', 'upcoming'].forEach(function (key) {
+            var keys = type === 'movie' ? ['in_theaters', 'popular', 'upcoming'] : ['popular', 'upcoming'];
+            keys.forEach(function (key) {
                 if (status.data[key] && status.data[key].results.length) {
                     fulldata.push(status.data[key]);
                 }
@@ -71,13 +73,15 @@
                           upcomingFilter === 'month' ? `/discover/${type}?sort_by=popularity.desc&release_date.gte=${getFormattedDate(30)}` :
                           `/discover/${type}?sort_by=popularity.desc&release_date.gte=${getFormattedDate(365)}`;
 
-        get(`/movie/now_playing`, 1, function (json) {
-            append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/movie/now_playing', json.results.length ? json : { results: [] });
-        }, function () {
-            get('/discover/movie?sort_by=popularity.desc', 1, function (json) {
-                append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/discover/movie?sort_by=popularity.desc', json);
-            }, status.error.bind(status));
-        }, false);
+        if (type === 'movie') {
+            get(`/movie/now_playing`, 1, function (json) {
+                append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/movie/now_playing', json.results.length ? json : { results: [] });
+            }, function () {
+                get('/discover/movie?sort_by=popularity.desc', 1, function (json) {
+                    append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/discover/movie?sort_by=popularity.desc', json);
+                }, status.error.bind(status));
+            }, false);
+        }
 
         get(popularUrl, 1, function (json) {
             append(Lampa.Lang.translate('trailers_popular'), 'popular', popularUrl, json.results.length ? json : { results: [] });
@@ -87,8 +91,8 @@
             }, status.error.bind(status));
         }, false);
 
-        get(`/movie/upcoming`, 1, function (json) {
-            append(Lampa.Lang.translate('trailers_upcoming'), 'upcoming', '/movie/upcoming', json.results.length ? json : { results: [] });
+        get(type === 'movie' ? `/movie/upcoming` : `/tv/on_the_air`, 1, function (json) {
+            append(Lampa.Lang.translate('trailers_upcoming'), 'upcoming', type === 'movie' ? '/movie/upcoming' : '/tv/on_the_air', json.results.length ? json : { results: [] });
         }, function () {
             get(`/discover/${type}?sort_by=popularity.desc`, 1, function (json) {
                 append(Lampa.Lang.translate('trailers_upcoming'), 'upcoming', `/discover/${type}?sort_by=popularity.desc`, json);
@@ -370,8 +374,8 @@
                             Lampa.Activity.push({
                                 url: item.value === 'day' ? `/trending/all/${item.value}` :
                                      item.value === 'week' ? `/trending/all/${item.value}` :
-                                     item.value === 'month' ? `/discover/movie?sort_by=popularity.desc&release_date.gte=${getFormattedDate(30)}` :
-                                     `/discover/movie?sort_by=popularity.desc&release_date.gte=${getFormattedDate(365)}`,
+                                     item.value === 'month' ? `/discover/${data.type === 'popular' ? 'movie' : 'tv'}?sort_by=popularity.desc&release_date.gte=${getFormattedDate(30)}` :
+                                     `/discover/${data.type === 'popular' ? 'movie' : 'tv'}?sort_by=popularity.desc&release_date.gte=${getFormattedDate(365)}`,
                                 title: Lampa.Lang.translate(`trailers_${data.type}`),
                                 component: 'trailers_main',
                                 type: data.type,
@@ -514,7 +518,7 @@
                     items.forEach(function (item) { item.destroy(); });
                     items = [];
                     scroll.render().empty();
-                    this.empty();
+                    Api.main(this.build.bind(this), this.empty.bind(this), 'tv');
                 }
             }.bind(this));
 
@@ -922,7 +926,8 @@
             }
             .card.card--trailer .card__play {
                 position: absolute;
-                top: 1.4em;
+                top: 50%;
+                transform: translateY(-50%);
                 left: 1.5em;
                 background: #000000b8;
                 width: 2.2em;
@@ -942,6 +947,7 @@
                 background: #000000b8;
                 padding: 0.2em 0.5em;
                 border-radius: 3px;
+                font-size: 1.2em;
             }
             .card.card--trailer .card__trailer-lang {
                 position: absolute;
@@ -965,6 +971,7 @@
                 display: inline-block;
                 margin-left: 10px;
                 cursor: pointer;
+                padding: 0.5em 1em;
             }
             .items-line__filter svg {
                 width: 20px;
