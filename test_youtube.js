@@ -28,7 +28,7 @@
         var lang = Lampa.Storage.get('language', 'ru');
         var full_url = `${tmdb_base_url}${url}&api_key=${tmdb_api_key}&page=${page}`;
         if (!noLang) full_url += `&language=${lang}`;
-        if (useRegion) full_url += `®ion=${getRegion()}`;
+        if (useRegion) full_url += `&region=${getRegion()}`;
         console.log('API Request:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
@@ -415,6 +415,7 @@
         var active = 0;
         var more;
         var filter;
+        var moreButton;
         var last;
 
         this.create = function () {
@@ -452,6 +453,34 @@
                     });
                 });
                 content.find('.items-line__title').after(filter);
+
+                // Додаємо кнопку "Ще" праворуч від фільтра
+                moreButton = $('<div class="items-line__more selector">' + Lampa.Lang.translate('trailers_more') + '</div>');
+                moreButton.on('hover:enter', function () {
+                    console.log('More button clicked:', data.title);
+                    Lampa.Activity.push({
+                        url: data.url,
+                        title: data.title,
+                        component: 'trailers_full',
+                        type: data.type,
+                        page: 2
+                    });
+                });
+                filter.after(moreButton);
+            } else {
+                // Додаємо кнопку "Ще" після заголовка для інших категорій
+                moreButton = $('<div class="items-line__more selector">' + Lampa.Lang.translate('trailers_more') + '</div>');
+                moreButton.on('hover:enter', function () {
+                    console.log('More button clicked:', data.title);
+                    Lampa.Activity.push({
+                        url: data.url,
+                        title: data.title,
+                        component: 'trailers_full',
+                        type: data.type,
+                        page: 2
+                    });
+                });
+                content.find('.items-line__title').after(moreButton);
             }
 
             this.bind();
@@ -494,6 +523,7 @@
             more = Lampa.Template.get('more');
             more.addClass('more--trailers');
             more.on('hover:enter', function () {
+                console.log('More card clicked:', data.title);
                 Lampa.Activity.push({
                     url: data.url,
                     title: data.title,
@@ -543,6 +573,7 @@
             content.remove();
             more && more.remove();
             filter && filter.remove();
+            moreButton && moreButton.remove();
             items = [];
         };
     }
@@ -977,6 +1008,11 @@
             ru: 'Сериалы',
             uk: 'Серіали',
             en: 'Series'
+        },
+        trailers_more: {
+            ru: 'Ещё',
+            uk: 'Ще',
+            en: 'More'
         }
     });
 
@@ -1067,6 +1103,12 @@
                 width: 20px;
                 height: 20px;
                 vertical-align: middle;
+            }
+            .items-line__more {
+                display: inline-block;
+                margin-left: 10px;
+                cursor: pointer;
+                padding: 0.5em 1em;
             }
             @media screen and (max-width: 767px) {
                 .category-full--trailers .card {
