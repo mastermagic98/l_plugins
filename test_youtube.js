@@ -25,192 +25,168 @@
     }
 
     function get(url, page, resolve, reject, useRegion, noLang) {
-        try {
-            var lang = Lampa.Storage.get('language', 'ru');
-            var full_url = `${tmdb_base_url}${url}&api_key=${tmdb_api_key}&page=${page}`;
-            if (!noLang) full_url += `&language=${lang}`;
-            if (useRegion) full_url += `®ion=${getRegion()}`;
-            console.log('API Request:', full_url);
-            network.silent(full_url, function (result) {
-                console.log('API Result:', url, result);
-                resolve(result);
-            }, function (error) {
-                console.log('API Error:', url, error);
-                reject(error);
-            });
-        } catch (e) {
-            console.error('Get error:', e);
-            reject(e);
-        }
+        var lang = Lampa.Storage.get('language', 'ru');
+        var full_url = `${tmdb_base_url}${url}&api_key=${tmdb_api_key}&page=${page}`;
+        if (!noLang) full_url += `&language=${lang}`;
+        if (useRegion) full_url += `&region=${getRegion()}`;
+        console.log('API Request:', full_url);
+        network.silent(full_url, function (result) {
+            console.log('API Result:', url, result);
+            resolve(result);
+        }, function (error) {
+            console.log('API Error:', url, error);
+            reject(error);
+        });
     }
 
     function main(oncomplite, onerror, type = 'movie') {
-        try {
-            console.log('Main called with type:', type);
-            var status = new Lampa.Status(3);
-            status.onComplite = function () {
-                var fulldata = [];
-                var keys = type === 'movie' ? ['in_theaters', 'popular', 'upcoming'] : ['popular', 'upcoming_new', 'upcoming_seasons'];
-                keys.forEach(function (key) {
-                    if (status.data[key] && status.data[key].results && status.data[key].results.length) {
-                        fulldata.push(status.data[key]);
-                    }
-                });
-                console.log('Main completed:', fulldata);
-                if (fulldata.length) oncomplite(fulldata);
-                else {
-                    console.log('No data to display');
-                    onerror();
+        var status = new Lampa.Status(3);
+        status.onComplite = function () {
+            var fulldata = [];
+            var keys = type === 'movie' ? ['popular', 'in_theaters', 'upcoming'] : ['popular', 'new_seasons', 'new_series'];
+            keys.forEach(function (key) {
+                if (status.data[key] && status.data[key].results && status.data[key].results.length) {
+                    fulldata.push(status.data[key]);
                 }
-            };
-
-            var append = function (title, name, url, json) {
-                json.title = title;
-                json.type = name;
-                json.url = url;
-                status.append(name, json);
-            };
-
-            var popularFilter = Lampa.Storage.get('trailers_popular_filter', 'day');
-            var popularUrl = popularFilter === 'day' ? `/trending/${type}/day` :
-                             popularFilter === 'week' ? `/trending/${type}/week` :
-                             popularFilter === 'month' ? `/discover/${type}?sort_by=popularity.desc&release_date.gte=${getFormattedDate(30)}` :
-                             `/discover/${type}?sort_by=popularity.desc&release_date.gte=${getFormattedDate(365)}`;
-
-            if (type === 'movie') {
-                get(`/movie/now_playing`, 1, function (json) {
-                    console.log('Fetched In Theaters:', json);
-                    append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/movie/now_playing', json.results.length ? json : { results: [] });
-                }, function () {
-                    console.log('Fallback for In Theaters');
-                    get('/discover/movie?sort_by=popularity.desc', 1, function (json) {
-                        append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/discover/movie?sort_by=popularity.desc', json);
-                    }, status.error.bind(status), false);
-                }, true);
-
-                get(popularUrl, 1, function (json) {
-                    console.log('Fetched Popular:', json);
-                    append(Lampa.Lang.translate('trailers_popular'), 'popular', popularUrl, json.results.length ? json : { results: [] });
-                }, function () {
-                    console.log('Fallback for Popular');
-                    get(`/discover/${type}?sort_by=popularity.desc`, 1, function (json) {
-                        append(Lampa.Lang.translate('trailers_popular'), 'popular', `/discover/${type}?sort_by=popularity.desc`, json);
-                    }, status.error.bind(status), false);
-                }, false);
-
-                get(`/movie/upcoming`, 1, function (json) {
-                    console.log('Fetched Upcoming:', json);
-                    append(Lampa.Lang.translate('trailers_upcoming'), 'upcoming', '/movie/upcoming', json.results.length ? json : { results: [] });
-                }, function () {
-                    console.log('Fallback for Upcoming');
-                    get(`/discover/${type}?sort_by=popularity.desc`, 1, function (json) {
-                        append(Lampa.Lang.translate('trailers_upcoming'), 'upcoming', `/discover/${type}?sort_by=popularity.desc`, json);
-                    }, status.error.bind(status), false);
-                }, true);
-            } else {
-                get(popularUrl, 1, function (json) {
-                    console.log('Fetched Popular Series:', json);
-                    append(Lampa.Lang.translate('trailers_popular_series'), 'popular', popularUrl, json.results.length ? json : { results: [] });
-                }, function () {
-                    console.log('Fallback for Popular Series');
-                    get('/discover/tv?sort_by=popularity.desc', 1, function (json) {
-                        append(Lampa.Lang.translate('trailers_popular_series'), 'popular', '/discover/tv?sort_by=popularity.desc', json);
-                    }, status.error.bind(status), false);
-                }, false);
-
-                get(`/tv/on_the_air`, 1, function (json) {
-                    console.log('Fetched Upcoming New Series:', json);
-                    append(Lampa.Lang.translate('trailers_upcoming_new'), 'upcoming_new', '/tv/on_the_air', json.results.length ? json : { results: [] });
-                }, function () {
-                    console.log('Fallback for Upcoming New Series');
-                    get('/discover/tv?sort_by=popularity.desc', 1, function (json) {
-                        append(Lampa.Lang.translate('trailers_upcoming_new'), 'upcoming_new', '/discover/tv?sort_by=popularity.desc', json);
-                    }, status.error.bind(status), false);
-                }, true);
-
-                get(`/discover/tv?sort_by=popularity.desc`, 1, function (json) {
-                    console.log('Fetched Upcoming New Seasons:', json);
-                    append(Lampa.Lang.translate('trailers_upcoming_seasons'), 'upcoming_seasons', '/discover/tv?sort_by=popularity.desc', json.results.length ? json : { results: [] });
-                }, function () {
-                    console.log('Fallback for Upcoming New Seasons');
-                    get('/discover/tv?sort_by=popularity.desc', 1, function (json) {
-                        append(Lampa.Lang.translate('trailers_upcoming_seasons'), 'upcoming_seasons', '/discover/tv?sort_by=popularity.desc', json);
-                    }, status.error.bind(status), false);
-                }, false);
+            });
+            console.log('Main completed:', fulldata);
+            if (fulldata.length) oncomplite(fulldata);
+            else {
+                console.log('No data to display');
+                onerror();
             }
-        } catch (e) {
-            console.error('Main error:', e);
-            onerror();
-            Lampa.Noty.show('Error loading data: ' + e.message);
+        };
+
+        var append = function (title, name, url, json) {
+            json.title = title;
+            json.type = name;
+            json.url = url;
+            status.append(name, json);
+        };
+
+        var popularFilter = Lampa.Storage.get('trailers_popular_filter', 'day');
+        var popularUrl = popularFilter === 'day' ? `/trending/${type}/day` :
+                         popularFilter === 'week' ? `/trending/${type}/week` :
+                         popularFilter === 'month' ? `/discover/${type}?sort_by=popularity.desc&release_date.gte=${getFormattedDate(30)}` :
+                         `/discover/${type}?sort_by=popularity.desc&release_date.gte=${getFormattedDate(365)}`;
+
+        if (type === 'movie') {
+            get(popularUrl, 1, function (json) {
+                console.log('Fetched Popular:', json);
+                append(Lampa.Lang.translate('trailers_popular'), 'popular', popularUrl, json.results.length ? json : { results: [] });
+            }, function () {
+                console.log('Fallback for Popular');
+                get(`/discover/${type}?sort_by=popularity.desc`, 1, function (json) {
+                    append(Lampa.Lang.translate('trailers_popular'), 'popular', `/discover/${type}?sort_by=popularity.desc`, json);
+                }, status.error.bind(status), false);
+            }, false);
+
+            get(`/movie/now_playing`, 1, function (json) {
+                console.log('Fetched In Theaters:', json);
+                append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/movie/now_playing', json.results.length ? json : { results: [] });
+            }, function () {
+                console.log('Fallback for In Theaters');
+                get('/discover/movie?sort_by=popularity.desc', 1, function (json) {
+                    append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/discover/movie?sort_by=popularity.desc', json);
+                }, status.error.bind(status), false);
+            }, true);
+
+            get(`/movie/upcoming`, 1, function (json) {
+                console.log('Fetched Upcoming:', json);
+                append(Lampa.Lang.translate('trailers_upcoming'), 'upcoming', '/movie/upcoming', json.results.length ? json : { results: [] });
+            }, function () {
+                console.log('Fallback for Upcoming');
+                get(`/discover/${type}?sort_by=popularity.desc`, 1, function (json) {
+                    append(Lampa.Lang.translate('trailers_upcoming'), 'upcoming', `/discover/${type}?sort_by=popularity.desc`, json);
+                }, status.error.bind(status), false);
+            }, true);
+        } else {
+            get(`/discover/tv?sort_by=popularity.desc&first_air_date.gte=${getFormattedDate(1825)}`, 1, function (json) {
+                console.log('Fetched Popular Series:', json);
+                append(Lampa.Lang.translate('trailers_popular_series'), 'popular', `/discover/tv?sort_by=popularity.desc&first_air_date.gte=${getFormattedDate(1825)}`, json.results.length ? json : { results: [] });
+            }, function () {
+                console.log('Fallback for Popular Series');
+                get('/discover/tv?sort_by=popularity.desc', 1, function (json) {
+                    append(Lampa.Lang.translate('trailers_popular_series'), 'popular', '/discover/tv?sort_by=popularity.desc', json);
+                }, status.error.bind(status), false);
+            }, false);
+
+            get(`/discover/tv?sort_by=popularity.desc&first_air_date.gte=${getFormattedDate(30)}`, 1, function (json) {
+                console.log('Fetched New Seasons:', json);
+                append(Lampa.Lang.translate('trailers_upcoming_seasons'), 'new_seasons', `/discover/tv?sort_by=popularity.desc&first_air_date.gte=${getFormattedDate(30)}`, json.results.length ? json : { results: [] });
+            }, function () {
+                console.log('Fallback for New Seasons');
+                get('/discover/tv?sort_by=popularity.desc', 1, function (json) {
+                    append(Lampa.Lang.translate('trailers_upcoming_seasons'), 'new_seasons', '/discover/tv?sort_by=popularity.desc', json);
+                }, status.error.bind(status), false);
+            }, false);
+
+            get(`/tv/on_the_air`, 1, function (json) {
+                console.log('Fetched New Series:', json);
+                append(Lampa.Lang.translate('trailers_upcoming_new'), 'new_series', '/tv/on_the_air', json.results.length ? json : { results: [] });
+            }, function () {
+                console.log('Fallback for New Series');
+                get('/discover/tv?sort_by=popularity.desc', 1, function (json) {
+                    append(Lampa.Lang.translate('trailers_upcoming_new'), 'new_series', '/discover/tv?sort_by=popularity.desc', json);
+                }, status.error.bind(status), false);
+            }, true);
         }
     }
 
     function full(params, oncomplite, onerror) {
-        try {
-            get(params.url, params.page, function (result) {
-                if (result && result.results && result.results.length) {
-                    console.log('Full results:', result);
-                    oncomplite(result);
-                } else {
-                    console.log('Full: No results for', params.url);
-                    onerror();
-                }
-            }, function (error) {
-                console.log('Full error:', params.url, error);
+        get(params.url, params.page, function (result) {
+            if (result && result.results && result.results.length) {
+                console.log('Full results:', result);
+                oncomplite(result);
+            } else {
+                console.log('Full: No results for', params.url);
                 onerror();
-            }, params.type === 'in_theaters' || params.type === 'upcoming' || params.type === 'upcoming_new', false);
-        } catch (e) {
-            console.error('Full error:', e);
+            }
+        }, function (error) {
+            console.log('Full error:', params.url, error);
             onerror();
-            Lampa.Noty.show('Error loading full data: ' + e.message);
-        }
+        }, params.type === 'in_theaters' || params.type === 'upcoming' || params.type === 'new_series', false);
     }
 
     function videos(card, oncomplite, onerror) {
-        try {
-            var type = card.name ? 'tv' : 'movie';
-            var url = `${tmdb_base_url}/${type}/${card.id}/videos?api_key=${tmdb_api_key}`;
-            var preferredLangs = getPreferredLanguage();
+        var type = card.name ? 'tv' : 'movie';
+        var url = `${tmdb_base_url}/${type}/${card.id}/videos?api_key=${tmdb_api_key}`;
+        var preferredLangs = getPreferredLanguage();
 
-            function tryFetch(langIndex, noLang) {
-                var fetchUrl = url;
-                if (!noLang && langIndex < preferredLangs.length) {
-                    fetchUrl += `&language=${preferredLangs[langIndex]}`;
-                }
-                console.log('Videos request:', fetchUrl);
-                network.silent(fetchUrl, function (result) {
-                    console.log('Videos result:', result);
-                    var trailers = result.results ? result.results.filter(function (v) {
-                        return v.type === 'Trailer';
-                    }) : [];
-                    if (trailers.length) {
-                        oncomplite(result);
-                    } else if (langIndex < preferredLangs.length - 1) {
-                        tryFetch(langIndex + 1, false);
-                    } else if (!noLang) {
-                        tryFetch(0, true);
-                    } else {
-                        console.log('No trailers found');
-                        onerror();
-                    }
-                }, function (error) {
-                    console.log('Videos error:', error);
-                    if (langIndex < preferredLangs.length - 1) {
-                        tryFetch(langIndex + 1, false);
-                    } else if (!noLang) {
-                        tryFetch(0, true);
-                    } else {
-                        onerror();
-                    }
-                });
+        function tryFetch(langIndex, noLang) {
+            var fetchUrl = url;
+            if (!noLang && langIndex < preferredLangs.length) {
+                fetchUrl += `&language=${preferredLangs[langIndex]}`;
             }
-
-            tryFetch(0, false);
-        } catch (e) {
-            console.error('Videos error:', e);
-            onerror();
-            Lampa.Noty.show('Error loading videos: ' + e.message);
+            console.log('Videos request:', fetchUrl);
+            network.silent(fetchUrl, function (result) {
+                console.log('Videos result:', result);
+                var trailers = result.results ? result.results.filter(function (v) {
+                    return v.type === 'Trailer';
+                }) : [];
+                if (trailers.length) {
+                    oncomplite(result);
+                } else if (langIndex < preferredLangs.length - 1) {
+                    tryFetch(langIndex + 1, false);
+                } else if (!noLang) {
+                    tryFetch(0, true);
+                } else {
+                    console.log('No trailers found');
+                    onerror();
+                }
+            }, function (error) {
+                console.log('Videos error:', error);
+                if (langIndex < preferredLangs.length - 1) {
+                    tryFetch(langIndex + 1, false);
+                } else if (!noLang) {
+                    tryFetch(0, true);
+                } else {
+                    onerror();
+                }
+            });
         }
+
+        tryFetch(0, false);
     }
 
     function clear() {
@@ -447,7 +423,7 @@
             content.find('.items-line__title').text(data.title);
 
             if (data.type === 'popular') {
-                filter = $('<div class="items-line__filter trailers-plugin-selector"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg></div>');
+                filter = $('<div class="items-line__filter selector"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg></div>');
                 filter.on('hover:enter', function () {
                     var items = [
                         { title: Lampa.Lang.translate('trailers_filter_today'), value: 'day', selected: Lampa.Storage.get(`trailers_${data.type}_filter`, 'day') === 'day' },
@@ -477,7 +453,7 @@
                     });
                 });
 
-                moreButton = $('<div class="items-line__more trailers-plugin-selector">' + Lampa.Lang.translate('trailers_more') + '</div>');
+                moreButton = $('<div class="items-line__more selector">' + Lampa.Lang.translate('trailers_more') + '</div>');
                 moreButton.on('hover:enter', function () {
                     console.log('More button clicked:', data.title);
                     Lampa.Activity.push({
@@ -492,7 +468,7 @@
                 content.find('.items-line__title').after(moreButton);
                 moreButton.before(filter);
             } else {
-                moreButton = $('<div class="items-line__more trailers-plugin-selector">' + Lampa.Lang.translate('trailers_more') + '</div>');
+                moreButton = $('<div class="items-line__more selector">' + Lampa.Lang.translate('trailers_more') + '</div>');
                 moreButton.on('hover:enter', function () {
                     console.log('More button clicked:', data.title);
                     Lampa.Activity.push({
@@ -607,105 +583,82 @@
         var html = $('<div></div>');
         var active = 0;
         var light = Lampa.Storage.field('light_version') && window.innerWidth >= 767;
-        var currentType = 'movie';
-        var moviesButton, seriesButton;
+        var currentType = Lampa.Storage.get('trailers_type', 'movie');
+        var filterButton;
 
-        function toggle$2(name) {
-            try {
-                console.log('Toggle called with name:', name, 'Current type:', currentType);
-                if (!moviesButton || !seriesButton) {
-                    console.error('Buttons not initialized');
-                    Lampa.Noty.show('Error: Buttons not initialized');
-                    return;
-                }
-
-                var selectors = document.querySelectorAll('.trailers-plugin-buttons .trailers-plugin-selector');
-                if (selectors.length === 0) {
-                    console.error('No .trailers-plugin-buttons .trailers-plugin-selector found');
-                    Lampa.Noty.show('Error: No buttons found');
-                    return;
-                }
-
-                selectors.forEach(function (item) {
-                    item.classList.remove('focus', 'selector--active');
-                });
-
-                if (name === 'movies' && currentType !== 'movie') {
-                    currentType = 'movie';
-                    moviesButton.addClass('selector--active focus');
-                    seriesButton.removeClass('selector--active focus');
+        function toggleFilter(context) {
+            var items = [
+                { title: Lampa.Lang.translate('trailers_movies'), value: 'movie', selected: currentType === 'movie' },
+                { title: Lampa.Lang.translate('trailers_series'), value: 'series', selected: currentType === 'series' }
+            ];
+            Lampa.Select.show({
+                title: Lampa.Lang.translate('trailers_filter'),
+                items: items,
+                onSelect: function (item) {
+                    currentType = item.value;
+                    Lampa.Storage.set('trailers_type', currentType);
+                    filterButton.text(currentType === 'movie' ? Lampa.Lang.translate('trailers_movies') : Lampa.Lang.translate('trailers_series'));
                     items.forEach(function (item) { item.destroy(); });
                     items = [];
                     scroll.clear();
-                    console.log('Loading Movies');
-                    Api.main(this.build.bind(this), this.empty.bind(this), 'movie');
-                    Lampa.Listener.send('toggle', { name: 'movies' });
-                    Lampa.Controller.collectionFocus(moviesButton[0], html);
-                } else if (name === 'series' && currentType !== 'series') {
-                    currentType = 'series';
-                    seriesButton.addClass('selector--active focus');
-                    moviesButton.removeClass('selector--active focus');
-                    items.forEach(function (item) { item.destroy(); });
-                    items = [];
-                    scroll.clear();
-                    console.log('Loading Series');
-                    Api.main(this.build.bind(this), this.empty.bind(this), 'tv');
-                    Lampa.Listener.send('toggle', { name: 'series' });
-                    Lampa.Controller.collectionFocus(seriesButton[0], html);
+                    console.log('Loading', currentType === 'movie' ? 'Movies' : 'Series');
+                    Api.main(context.build.bind(context), context.empty.bind(context), currentType === 'movie' ? 'movie' : 'tv');
+                    Lampa.Listener.send('toggle', { name: currentType });
+                    Lampa.Controller.toggle('content');
+                },
+                onBack: function () {
+                    Lampa.Controller.toggle('content');
                 }
-                Lampa.Layer.update();
-            } catch (e) {
-                console.error('Toggle error:', e);
-                Lampa.Noty.show('Error switching category: ' + e.message);
-            }
+            });
         }
 
         function bindEvents(elem) {
-            try {
-                if (!elem || elem.bind_events) return;
-                console.log('Binding events for element:', elem);
+            if (elem.classList.contains('selector') && !elem.bind_events) {
                 elem.bind_events = true;
                 var long_position = 0;
                 var long_timer;
 
-                var longStart = function () {
+                var longStart = function longStart() {
                     clearTimeout(long_timer);
                     var offset = elem.getBoundingClientRect();
                     long_timer = setTimeout(function () {
                         var time = elem.long_time || 0;
                         offset = elem.getBoundingClientRect();
+
                         if (time + 100 < Date.now()) {
                             var mutation = Math.abs(long_position - (offset.top + offset.left));
                             if (mutation < 30) Lampa.Utils.trigger(elem, 'hover:long');
                         }
+
                         elem.long_time = Date.now();
                     }, 800);
                     long_position = offset.top + offset.left;
                 };
 
-                var longClear = function () {
+                var longClear = function longClear() {
                     clearTimeout(long_timer);
                 };
 
-                var touchStart = function () {
+                var touchStart = function touchStart() {
                     longStart();
                     Lampa.Utils.trigger(elem, 'hover:touch');
                 };
 
-                var rightClick = function (e) {
+                var rightClick = function rightClick(e) {
                     Lampa.Utils.trigger(elem, 'hover:long');
                 };
 
                 elem.trigger_click = function (e) {
-                    if (Lampa.Storage.field('navigation_type') === 'mouse' || Lampa.Platform.screen('mobile')) {
+                    if (Lampa.Storage.field('navigation_type') == 'mouse' || Lampa.Platform.screen('mobile')) {
                         if (Lampa.DeviceInput.canClick(e)) {
+                            Lampa.AnimateTrigger.enter(elem);
                             Lampa.Utils.trigger(elem, 'hover:enter');
                         }
                     }
                 };
 
                 elem.trigger_mouseenter = function () {
-                    document.querySelectorAll('.trailers-plugin-selector').forEach(function (item) {
+                    document.querySelectorAll('.selector').forEach(function (item) {
                         item.classList.remove('focus');
                     });
                     elem.classList.add('focus');
@@ -716,11 +669,11 @@
                     elem.classList.remove('focus');
                 };
 
-                if (Lampa.Storage.field('navigation_type') === 'mouse' || Lampa.Platform.screen('mobile')) {
+                if (Lampa.Storage.field('navigation_type') == 'mouse' || Lampa.Platform.screen('mobile')) {
                     elem.addEventListener('click', elem.trigger_click);
                 }
 
-                if (!Lampa.Utils.isTouchDevice() && Lampa.Storage.field('navigation_type') === 'mouse') {
+                if (!Lampa.Utils.isTouchDevice() && Lampa.Storage.field('navigation_type') == 'mouse') {
                     elem.addEventListener('mouseenter', elem.trigger_mouseenter);
                     elem.addEventListener('mouseleave', elem.trigger_mouseleave);
                     elem.addEventListener('mouseout', longClear);
@@ -734,48 +687,27 @@
                     elem.addEventListener('touchend', longClear);
                     elem.addEventListener('touchmove', longClear);
                 }
-            } catch (e) {
-                console.error('Bind events error:', e);
-                Lampa.Noty.show('Error binding events: ' + e.message);
             }
         }
 
         this.create = function () {
-            try {
-                console.log('Component$1 create called');
-                var buttons = $('<div class="trailers-plugin-buttons" style="display: flex; gap: 10px; margin-left: 30.4167px;"></div>');
-                moviesButton = $('<div class="trailers-plugin-selector">' + Lampa.Lang.translate('trailers_movies') + '</div>');
-                seriesButton = $('<div class="trailers-plugin-selector">' + Lampa.Lang.translate('trailers_series') + '</div>');
+            var buttons = $('<div class="buttons" style="display: flex; gap: 10px; margin-left: 30.4167px;"></div>');
+            filterButton = $('<div class="selector">' + (currentType === 'movie' ? Lampa.Lang.translate('trailers_movies') : Lampa.Lang.translate('trailers_series')) + '</div>');
 
-                buttons.append(moviesButton).append(seriesButton);
-                html.append(buttons);
+            buttons.append(filterButton);
+            html.append(buttons);
 
-                console.log('Movies button initialized:', moviesButton[0]);
-                console.log('Series button initialized:', seriesButton[0]);
+            filterButton.on('hover:enter hover:click', function () {
+                toggleFilter(this);
+            }.bind(this));
 
-                moviesButton.on('hover:enter hover:click', function () {
-                    console.log('Movies button clicked');
-                    toggle$2.call(this, 'movies');
-                }.bind(this));
+            bindEvents(filterButton[0]);
 
-                seriesButton.on('hover:enter hover:click', function () {
-                    console.log('Series button clicked');
-                    toggle$2.call(this, 'series');
-                }.bind(this));
+            filterButton.addClass('selector--active focus');
+            console.log('Initial load:', currentType === 'movie' ? 'Movies' : 'Series');
+            Api.main(this.build.bind(this), this.empty.bind(this), currentType === 'movie' ? 'movie' : 'tv');
 
-                bindEvents(moviesButton[0]);
-                bindEvents(seriesButton[0]);
-
-                moviesButton.addClass('selector--active focus');
-                console.log('Initial load: Movies');
-                Api.main(this.build.bind(this), this.empty.bind(this), 'movie');
-
-                return this.render();
-            } catch (e) {
-                console.error('Component$1 create error:', e);
-                Lampa.Noty.show('Error creating component: ' + e.message);
-                return html;
-            }
+            return this.render();
         };
 
         this.empty = function () {
@@ -788,69 +720,49 @@
         };
 
         this.build = function (data) {
-            try {
-                var _this = this;
-                console.log('Building with data:', data);
-                scroll.minus();
-                html.append(scroll.render());
-                data.forEach(this.append.bind(this));
-                if (light) {
-                    scroll.onWheel = function (step) {
-                        if (step > 0) _this.down();
-                        else _this.up();
-                    };
-                }
-                this.activity.loader(false);
-                this.activity.toggle();
-            } catch (e) {
-                console.error('Build error:', e);
-                Lampa.Noty.show('Error building component: ' + e.message);
+            var _this = this;
+            console.log('Building with data:', data);
+            scroll.minus();
+            html.append(scroll.render());
+            data.forEach(this.append.bind(this));
+            if (light) {
+                scroll.onWheel = function (step) {
+                    if (step > 0) _this.down();
+                    else _this.up();
+                };
             }
+            this.activity.loader(false);
+            this.activity.toggle();
         };
 
         this.append = function (element) {
-            try {
-                console.log('Appending element:', element);
-                var item = new Line(element);
-                item.create();
-                item.onDown = this.down.bind(this);
-                item.onUp = this.up.bind(this);
-                item.onBack = this.back.bind(this);
-                item.onToggle = function () {
-                    active = items.indexOf(item);
-                };
-                item.wrap = $('<div></div>');
-                if (light) {
-                    scroll.append(item.wrap);
-                } else {
-                    scroll.append(item.render());
-                }
-                items.push(item);
-            } catch (e) {
-                console.error('Append error:', e);
-                Lampa.Noty.show('Error appending element: ' + e.message);
+            console.log('Appending element:', element);
+            var item = new Line(element);
+            item.create();
+            item.onDown = this.down.bind(this);
+            item.onUp = this.up.bind(this);
+            item.onBack = this.back.bind(this);
+            item.onToggle = function () {
+                active = items.indexOf(item);
+            };
+            item.wrap = $('<div></div>');
+            if (light) {
+                scroll.append(item.wrap);
+            } else {
+                scroll.append(item.render());
             }
+            items.push(item);
         };
 
         this.back = function () {
             Lampa.Activity.backward();
         };
 
-        this.detach = function () {
-            if (light) {
-                items.forEach(function (item) {
-                    item.render().detach();
-                });
-                items.slice(active, active + 2).forEach(function (item) {
-                    item.wrap.append(item.render());
-                });
-            }
-        };
+        this.detach = Function.prototype;
 
         this.down = function () {
             active++;
             active = Math.min(active, items.length - 1);
-            this.detach();
             items[active].toggle();
             scroll.update(items[active].render());
         };
@@ -859,26 +771,22 @@
             active--;
             if (active < 0) {
                 active = 0;
-                this.detach();
                 Lampa.Controller.toggle('head');
             } else {
-                this.detach();
                 items[active].toggle();
             }
             scroll.update(items[active].render());
         };
 
         this.start = function () {
-            var _this2 = this;
             if (Lampa.Activity.active().activity !== this.activity) return;
             Lampa.Controller.add('content', {
                 toggle: function () {
                     if (items.length) {
-                        _this2.detach();
                         items[active].toggle();
                     } else {
                         Lampa.Controller.collectionSet(html);
-                        Lampa.Controller.collectionFocus(moviesButton[0], html);
+                        Lampa.Controller.collectionFocus(filterButton[0], html);
                     }
                 },
                 left: function () {
@@ -911,8 +819,7 @@
             scroll.destroy();
             html.remove();
             items = [];
-            moviesButton = null;
-            seriesButton = null;
+            filterButton = null;
         };
     }
 
@@ -928,15 +835,8 @@
         var waitload = false;
 
         this.create = function () {
-            try {
-                console.log('Component create called');
-                Api.full(object, this.build.bind(this), this.empty.bind(this));
-                return this.render();
-            } catch (e) {
-                console.error('Component create error:', e);
-                Lampa.Noty.show('Error creating full component: ' + e.message);
-                return html;
-            }
+            Api.full(object, this.build.bind(this), this.empty.bind(this));
+            return this.render();
         };
 
         this.empty = function () {
@@ -1024,7 +924,7 @@
 
         this.more = function () {
             var _this = this;
-            var more = $('<div class="trailers-plugin-selector" style="width: 100%; height: 5px"></div>');
+            var more = $('<div class="selector" style="width: 100%; height: 5px"></div>');
             more.on('hover:enter', function () {
                 var next = Lampa.Arrays.clone(object);
                 delete next.activity;
@@ -1042,7 +942,7 @@
 
         this.back = function () {
             last = items[0].render()[0];
-            var more = $('<div class="trailers-plugin-selector" style="width: 100%; height: 5px"></div>');
+            var more = $('<div class="selector" style="width: 100%; height: 5px"></div>');
             more.on('hover:enter', function () {
                 if (object.page > 1) {
                     Lampa.Activity.backward();
@@ -1119,14 +1019,14 @@
             en: 'Popular Series'
         },
         trailers_upcoming_new: {
-            ru: 'Ожидаемые новые сериалы',
-            uk: 'Очікувані нові серіали',
-            en: 'Upcoming New Series'
+            ru: 'Новые сериалы',
+            uk: 'Нові серіали',
+            en: 'New Series'
         },
         trailers_upcoming_seasons: {
-            ru: 'Ожидаемые новые сезоны сериалов',
-            uk: 'Очікувані нові сезони серіалів',
-            en: 'Upcoming New Seasons'
+            ru: 'Новые сезоны',
+            uk: 'Нові сезони',
+            en: 'New Seasons'
         },
         trailers_no_trailers: {
             ru: 'Нет трейлеров',
@@ -1191,178 +1091,150 @@
     });
 
     function startPlugin() {
-        try {
-            console.log('startPlugin called');
-            window.plugin_trailers_ready = true;
-            Lampa.Component.add('trailers_main', Component$1);
-            Lampa.Component.add('trailers_full', Component);
-            Lampa.Template.add('trailer', `
-                <div class="card trailers-plugin-card selector card--trailer layer--render layer--visible">
-                    <div class="card__view">
-                        <img src="./img/img_load.svg" class="card__img">
-                        <div class="card__promo">
-                            <div class="card__promo-text">
-                                <div class="card__title"></div>
-                            </div>
-                            <div class="card__details"></div>
+        if (window.plugin_trailers_ready) return;
+        window.plugin_trailers_ready = true;
+        Lampa.Component.add('trailers_main', Component$1);
+        Lampa.Component.add('trailers_full', Component);
+        Lampa.Template.add('trailer', `
+            <div class="card selector card--trailer layer--render layer--visible">
+                <div class="card__view">
+                    <img src="./img/img_load.svg" class="card__img">
+                    <div class="card__promo">
+                        <div class="card__promo-text">
+                            <div class="card__title"></div>
                         </div>
-                    </div>
-                    <div class="card__play">
-                        <img src="./img/icons/player/play.svg">
+                        <div class="card__details"></div>
                     </div>
                 </div>
-            `);
-            Lampa.Template.add('trailer_style', `
-                <style>
-                .trailers-plugin-card.card--trailer,
-                .more--trailers {
-                    width: 25.7em;
-                }
-                .trailers-plugin-card.card--trailer .card__view {
-                    padding-bottom: 56%;
-                    margin-bottom: 0;
-                }
-                .trailers-plugin-card.card--trailer .card__details {
-                    margin-top: 0.8em;
-                }
-                .trailers-plugin-card.card--trailer .card__play {
-                    position: absolute;
-                    top: 50%;
-                    transform: translateY(-50%);
-                    left: 1.5em;
-                    background: #000000b8;
-                    width: 2.2em;
-                    height: 2.2em;
-                    border-radius: 100%;
-                    text-align: center;
-                    padding-top: 0.6em;
-                }
-                .trailers-plugin-card.card--trailer .card__play img {
-                    width: 0.9em;
-                    height: 1em;
-                }
-                .trailers-plugin-card.card--trailer .card__rating {
-                    position: absolute;
-                    bottom: 0.5em;
-                    right: 0.5em;
-                    background: #000000b8;
-                    padding: 0.2em 0.5em;
-                    border-radius: 3px;
-                    font-size: 1.2em;
-                }
-                .trailers-plugin-card.card--trailer .card__trailer-lang {
-                    position: absolute;
-                    top: 0.5em;
-                    right: 0.5em;
-                    background: #000000b8;
-                    padding: 0.2em 0.5em;
-                    border-radius: 3px;
-                    text-transform: uppercase;
-                }
-                .more--trailers .card-more__box {
-                    padding-bottom: 56%;
-                }
-                .category-full--trailers .trailers-plugin-card {
-                    margin-bottom: 1.5em;
-                }
-                .category-full--trailers .trailers-plugin-card {
-                    width: 33.3%;
-                }
-                .items-line__filter.trailers-plugin-selector {
-                    display: inline-block;
-                    margin-left: 10px;
-                    cursor: pointer;
-                    padding: 0.5em 1em;
-                }
-                .items-line__filter.trailers-plugin-selector svg {
-                    width: 36px;
-                    height: 36px;
-                    vertical-align: middle;
-                }
-                .items-line__more.trailers-plugin-selector {
-                    display: inline-block;
-                    margin-left: 10px;
-                    cursor: pointer;
-                    padding: 0.5em 1em;
-                }
-                .trailers-plugin-buttons .trailers-plugin-selector {
-                    display: inline-block;
-                    margin-left: 10px;
-                    padding: 0.5em 1em;
-                    cursor: pointer;
-                    font-size: inherit;
-                    color: inherit;
-                    background: transparent;
-                    border: none;
-                }
-                .trailers-plugin-buttons .trailers-plugin-selector.selector--active {
-                    background: #4a4a4a;
-                }
-                .trailers-plugin-buttons .trailers-plugin-selector.focus {
-                    background: #666;
-                }
-                @media screen and (max-width: 767px) {
-                    .category-full--trailers .trailers-plugin-card {
-                        width: 50%;
-                    }
-                }
-                @media screen and (max-width: 400px) {
-                    .category-full--trailers .trailers-plugin-card {
-                        width: 100%;
-                    }
-                }
-                </style>
-            `);
-
-            function add() {
-                try {
-                    if ($('.menu__list .menu__item:has(.menu__text:contains("Трейлери"))').length > 0) {
-                        console.log('Trailers button already exists');
-                        return;
-                    }
-                    console.log('Adding trailers button');
-                    var button = $(`
-                        <li class="menu__item trailers-plugin-menu-item selector">
-                            <div class="menu__ico">
-                                <svg height="70" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/>
-                                </svg>
-                            </div>
-                            <div class="menu__text">${Lampa.Lang.translate('title_trailers')}</div>
-                        </li>
-                    `);
-                    button.on('hover:enter', function () {
-                        console.log('Trailers button clicked');
-                        Lampa.Activity.push({
-                            url: '',
-                            title: Lampa.Lang.translate('title_trailers'),
-                            component: 'trailers_main',
-                            page: 1
-                        });
-                    });
-                    $('.menu .menu__list').eq(0).append(button);
-                    console.log('Trailers button added');
-                    $('body').append(Lampa.Template.get('trailer_style', {}, true));
-                } catch (e) {
-                    console.error('Add button error:', e);
-                    Lampa.Noty.show('Error adding trailers button: ' + e.message);
+                <div class="card__play">
+                    <img src="./img/icons/player/play.svg">
+                </div>
+            </div>
+        `);
+        Lampa.Template.add('trailer_style', `
+            <style>
+            .card.card--trailer,
+            .card-more.more--trailers {
+                width: 25.7em;
+            }
+            .card.card--trailer .card__view {
+                padding-bottom: 56%;
+                margin-bottom: 0;
+            }
+            .card.card--trailer .card__details {
+                margin-top: 0.8em;
+            }
+            .card.card--trailer .card__play {
+                position: absolute;
+                top: 50%;
+                transform: translateY(-50%);
+                left: 1.5em;
+                background: #000000b8;
+                width: 2.2em;
+                height: 2.2em;
+                border-radius: 100%;
+                text-align: center;
+                padding-top: 0.6em;
+            }
+            .card.card--trailer .card__play img {
+                width: 0.9em;
+                height: 1em;
+            }
+            .card.card--trailer .card__rating {
+                position: absolute;
+                bottom: 0.5em;
+                right: 0.5em;
+                background: #000000b8;
+                padding: 0.2em 0.5em;
+                border-radius: 3px;
+                font-size: 1.2em;
+            }
+            .card.card--trailer .card__trailer-lang {
+                position: absolute;
+                top: 0.5em;
+                right: 0.5em;
+                background: #000000b8;
+                padding: 0.2em 0.5em;
+                border-radius: 3px;
+                text-transform: uppercase;
+            }
+            .card-more.more--trailers .card-more__box {
+                padding-bottom: 56%;
+            }
+            .category-full--trailers .card {
+                margin-bottom: 1.5em;
+            }
+            .category-full--trailers .card {
+                width: 33.3%;
+            }
+            .items-line__filter {
+                display: inline-block;
+                margin-left: 10px;
+                cursor: pointer;
+                padding: 0.5em 1em;
+            }
+            .items-line__filter svg {
+                width: 36px;
+                height: 36px;
+                vertical-align: middle;
+            }
+            .items-line__more {
+                display: inline-block;
+                margin-left: 10px;
+                cursor: pointer;
+                padding: 0.5em 1em;
+            }
+            .buttons .selector {
+                font-size: 1.4em;
+                padding: 0.5em 1em;
+                cursor: pointer;
+                display: inline-block;
+                background: #4a4a4a;
+            }
+            .buttons .selector.focus {
+                background: #666;
+            }
+            @media screen and (max-width: 767px) {
+                .category-full--trailers .card {
+                    width: 50%;
                 }
             }
+            @media screen and (max-width: 400px) {
+                .category-full--trailers .card {
+                    width: 100%;
+                }
+            }
+            </style>
+        `);
 
-            if (window.appready) {
-                console.log('App ready, adding button');
-                add();
-            } else {
-                Lampa.Listener.follow('app', function (e) {
-                    if (e.type === 'ready') {
-                        console.log('App ready event, adding button');
-                        add();
-                    }
+        function add() {
+            var button = $(`
+                <li class="menu__item selector">
+                    <div class="menu__ico">
+                        <svg height="70" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    <div class="menu__text">${Lampa.Lang.translate('title_trailers')}</div>
+                </li>
+            `);
+            button.on('hover:enter', function () {
+                Lampa.Activity.push({
+                    url: '',
+                    title: Lampa.Lang.translate('title_trailers'),
+                    component: 'trailers_main',
+                    page: 1
                 });
-            }
-        } catch (e) {
-            console.error('startPlugin error:', e);
-            Lampa.Noty.show('Error initializing plugin: ' + e.message);
+            });
+            $('.menu .menu__list').eq(0).append(button);
+            $('body').append(Lampa.Template.get('trailer_style', {}, true));
+        }
+
+        if (window.appready) add();
+        else {
+            Lampa.Listener.follow('app', function (e) {
+                if (e.type === 'ready') add();
+            });
         }
     }
 
