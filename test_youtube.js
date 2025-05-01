@@ -4,6 +4,7 @@
     var network = new Lampa.Reguest();
     var tmdb_api_key = Lampa.TMDB.key();
     var tmdb_base_url = 'https://api.themoviedb.org/3';
+    var trailerCache = {}; // Кеш для зберігання результатів запитів
 
     function getFormattedDate(daysAgo) {
         var today = new Date();
@@ -106,7 +107,15 @@
 
     function videos(card, oncomplite, onerror) {
         var type = card.name ? 'tv' : 'movie';
-        var url = `${tmdb_base_url}/${type}/${card.id}/videos?api_key=${tmdb_api_key}`;
+        var id = card.id;
+
+        if (trailerCache[id]) {
+            console.log('Using cached trailer data for id:', id);
+            oncomplite(trailerCache[id]);
+            return;
+        }
+
+        var url = `${tmdb_base_url}/${type}/${id}/videos?api_key=${tmdb_api_key}`;
         var preferredLangs = getPreferredLanguage();
 
         function tryFetch(langIndex, noLang) {
@@ -121,6 +130,7 @@
                     return v.type === 'Trailer';
                 }) : [];
                 if (trailers.length) {
+                    trailerCache[id] = result;
                     oncomplite(result);
                 } else if (langIndex < preferredLangs.length - 1) {
                     tryFetch(langIndex + 1, false);
@@ -128,6 +138,7 @@
                     tryFetch(0, true);
                 } else {
                     console.log('No trailers found');
+                    trailerCache[id] = { results: [] };
                     onerror();
                 }
             }, function (error) {
@@ -137,6 +148,7 @@
                 } else if (!noLang) {
                     tryFetch(0, true);
                 } else {
+                    trailerCache[id] = { results: [] };
                     onerror();
                 }
             });
@@ -243,10 +255,10 @@
         this.create = function () {
             var _this2 = this;
             this.build();
-            this.loadTrailerInfo();
             this.card.on('hover:focus', function (e, is_mouse) {
                 Lampa.Background.change(_this2.cardImgBackground(data));
                 _this2.onFocus(e.target, data, is_mouse);
+                _this2.loadTrailerInfo();
             }).on('hover:enter', function () {
                 if (_this2.is_youtube) {
                     _this2.play(data.id);
@@ -373,15 +385,14 @@
         var filter;
         var moreButton;
         var last;
+        var visibleCards = light ? 6 : 10; // Обмеження кількості видимих карток
 
         this.create = function () {
             scroll.render().find('.scroll__body').addClass('items-cards');
             content.find('.items-line__title').text(data.title);
 
-            filter = $('<div class="items-line__more selector"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg></div>');
+            filter = $('<div class="items-line__more selector"><svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg></div>');
             filter.css({
-                width: '36px',
-                height: '36px',
                 display: 'inline-block',
                 marginLeft: '10px',
                 cursor: 'pointer',
@@ -439,7 +450,7 @@
 
         this.bind = function () {
             console.log('Binding data:', data.results);
-            data.results.slice(0, light ? 6 : data.results.length).forEach(this.append.bind(this));
+            data.results.slice(0, visibleCards).forEach(this.append.bind(this));
             this.more();
             Lampa.Layer.update();
         };
@@ -674,6 +685,7 @@
         var total_pages = 0;
         var last;
         var waitload = false;
+        var visibleCards = light ? 6 : 12; // Обмеження кількості видимих карток
 
         this.create = function () {
             Api.full(object, this.build.bind(this), this.empty.bind(this));
@@ -721,7 +733,7 @@
 
         this.append = function (data, append) {
             var _this2 = this;
-            data.results.forEach(function (element) {
+            data.results.slice(0, visibleCards).forEach(function (element) {
                 var card = new Trailer(element, { type: object.type });
                 card.create();
                 card.visible();
