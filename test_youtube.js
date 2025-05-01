@@ -1,6 +1,18 @@
 (function () {
     'use strict';
-    // Версія 1.01 Обмеження запитів кнопки ЩЕ, ліниве завантаження при скролінгу, виправлення рекурсії
+    // Версія 1.02 Виправлення помилки Lampa.Utils.debounce, обмеження запитів кнопки ЩЕ, ліниве завантаження, виправлення рекурсії
+
+    // Власна функція debounce для обробки подій із затримкою
+    function debounce(func, wait) {
+        var timeout;
+        return function () {
+            var context = this, args = arguments;
+            clearTimeout(timeout);
+            timeout = setTimeout(function () {
+                func.apply(context, args);
+            }, wait);
+        };
+    }
 
     var network = new Lampa.Reguest();
     var tmdb_api_key = Lampa.TMDB.key();
@@ -30,7 +42,7 @@
         var lang = Lampa.Storage.get('language', 'ru');
         var full_url = `${tmdb_base_url}${url}?api_key=${tmdb_api_key}&page=${page}`;
         if (!noLang) full_url += `&language=${lang}`;
-        if (useRegion) full_url += `®ion=${getRegion()}`;
+        if (useRegion) full_url += `&region=${getRegion()}`;
         console.log('Сформований URL:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
@@ -445,7 +457,7 @@
             body.append(scroll.render());
 
             // Додаємо дебонсинг для обробника скролінгу
-            var debouncedLoad = Lampa.Utils.debounce(function () {
+            var debouncedLoad = debounce(function () {
                 if (scroll.isEnd() && !isLoading) {
                     loadMoreCards();
                 }
@@ -797,7 +809,7 @@
                         else if (active > 0) Navigator.move('up');
                     };
                     // Додаємо дебонсинг для обробника скролінгу
-                    var debouncedLoad = Lampa.Utils.debounce(function () {
+                    var debouncedLoad = debounce(function () {
                         if (scroll.isEnd() && !isLoading) {
                             _this3.next();
                         }
