@@ -28,7 +28,7 @@
         var lang = Lampa.Storage.get('language', 'ru');
         var full_url = `${tmdb_base_url}${url}&api_key=${tmdb_api_key}&page=${page}`;
         if (!noLang) full_url += `&language=${lang}`;
-        if (useRegion) full_url += `&region=${getRegion()}`;
+        if (useRegion) full_url += `®ion=${getRegion()}`;
         console.log('API Request:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
@@ -287,10 +287,10 @@
         this.create = function () {
             var _this2 = this;
             this.build();
-            this.loadTrailerInfo();
             this.card.on('hover:focus', function (e, is_mouse) {
                 Lampa.Background.change(_this2.cardImgBackground(data));
                 _this2.onFocus(e.target, data, is_mouse);
+                _this2.loadTrailerInfo(); // Завантажуємо інформацію про трейлер лише при фокусі
             }).on('hover:enter', function () {
                 if (_this2.is_youtube) {
                     _this2.play(data.id);
@@ -587,29 +587,430 @@
         var filterButton;
 
         function toggleFilter(context) {
-            var items = [
-                { title: Lampa.Lang.translate('trailers_movies'), value: 'movie', selected: currentType === 'movie' },
-                { title: Lampa.Lang.translate('trailers_series'), value: 'series', selected: currentType === 'series' }
-            ];
-            Lampa.Select.show({
-                title: Lampa.Lang.translate('trailers_filter'),
-                items: items,
-                onSelect: function (item) {
-                    currentType = item.value;
-                    Lampa.Storage.set('trailers_type', currentType);
-                    filterButton.text(currentType === 'movie' ? Lampa.Lang.translate('trailers_movies') : Lampa.Lang.translate('trailers_series'));
-                    items.forEach(function (item) { item.destroy(); });
-                    items = [];
-                    scroll.clear();
-                    console.log('Loading', currentType === 'movie' ? 'Movies' : 'Series');
-                    Api.main(context.build.bind(context), context.empty.bind(context), currentType === 'movie' ? 'movie' : 'tv');
-                    Lampa.Listener.send('toggle', { name: currentType });
-                    Lampa.Controller.toggle('content');
+            try {
+                var items = [
+                    { title: Lampa.Lang.translate('trailers_movies'), value: 'movie', selected: currentType === 'movie' },
+                    { title: Lampa.Lang.translate('trailers_series'), value: 'series', selected: currentType === 'series' }
+                ];
+                Lampa.Select.show({
+                    title: Lampa.Lang.translate('trailers_filter'),
+                    items: items,
+                    onSelect: function (item) {
+                        try {
+                            currentType = item.value;
+                            Lampa.Storage.set('trailers_type', currentType);
+                            filterButton.text(currentType === 'movie' ? Lampa.Lang.translate('trailers_movies') : Lampa.Lang.translate('trailers_series'));
+                            items.forEach(function (item) { item.destroy(); });
+                            items.length = 0;
+                            scroll.clear();
+                            console.log('Loading', currentType === 'movie' ? 'Movies' : 'Series');
+                            Api.main(context.build.bind(context), context.empty.bind(context), currentType === 'movie' ? 'movie' : 'tv');
+                            Lampa.Listener.send('toggle', { name: currentType });
+                            Lampa.Controller.toggle('content');
+                        } catch (e) {
+                            console.error('Error in filter selection:', e);
+                            Lampa.Noty.show('Error switching category: ' + e.message);
+                        }
+                    },
+                    onBack: function () {
+                        Lampa.Controller.toggle('content');
+                    }
+                });
+            } catch (e) {
+                console.error('Error in toggleFilter:', e);
+                Lampa.Noty.show('Error opening filter: ' + e.message);
+            }
+        }
+
+        function bindEvents(elem) {
+            if (elem.classList.contains('selector') && !elem.bind_events) {
+                elem.bind_events = true;
+                var long_position = 0;
+                var long_timer;
+
+                var longStart = function longStart() {
+                    clearTimeout(long_timer);
+                    var offset = elem.getBoundingClientRect();
+                    long_timer = setTimeout(function () {
+                        var time = elem.long_time || 0;
+                        offset = elem.getBoundingClientRect();
+
+                        if (time + 100 < Date.now()) {
+                            var mutation = Math.abs(long_position - (offset.top + offset.left));
+                            if (mutation < 30) Lampa.Utils.trigger(elem, 'hover:long');
+                        }
+
+                        elem.long_time = Date.now();
+                    }, 800);
+                    long_position = offset.top + offset.left;
+                };
+
+                var longClear = function longClear() {
+                    clearTimeout(long_timer);
+                };
+
+                var touchStart = function touchStart() {
+                    longStart();
+                    Lampa.Utils.trigger(elem, 'hover:touch');
+                };
+
+                var rightClick = function rightClick(e) {
+                    Lampa.Utils.trigger(elem, 'hover:long');
+                };
+
+                elem.trigger_click = function (e) {
+                    if (Lampa.Storage.field('navigation_type') == 'mouse' || Lampa.Platform.screen('mobile')) {
+                        if (Lampa.DeviceInput.canClick(e)) {
+                            Lampa.AnimateTrigger.enter(elem);
+                            Lampa.Utils.trigger(elem, 'hover:enter');
+                        }
+                    }
+                };
+
+                elem.trigger_mouseenter = function () {
+                    document.querySelectorAll('.selector').forEach(function (item) {
+                        item.classList.remove('focus');
+                    });
+                    elem.classList.add('focus');
+                    Lampa.Utils.trigger(elem, 'hover:hover');
+                };
+
+                elem.trigger_mouseleave = function () {
+                    elem.classList.remove('focus');
+                };
+
+                if (Lampa.Storage.field('navigation_type') == 'mouse' || Lampa.Platform.screen('mobile')) {
+                    elem.addEventListener('click', elem.trigger_click);
+                }
+
+                if (!Lampa.Utils.isTouchDevice() && Lampa.Storage.field('navigation_type') == 'mouse') {
+                    elem.addEventListener('mouseenter', elem.trigger_mouseenter);
+                    elem.addEventListener('mouseleave', elem.trigger_mouseleave);
+                    elem.addEventListener('mouseout', longClear);
+                    elem.addEventListener('mouseup', longClear);
+                    elem.addEventListener('mousedown', longStart);
+                    elem.addEventListener('contextmenu', rightClick);
+                }
+
+                if (Lampa.Utils.isTouchDevice()) {
+                    elem.addEventListener('touchstart', touchStart);
+                    elem.addEventListener('touchend', longClear);
+                    elem.addEventListener('touchmove', longClear);
+                }
+            }
+        }
+
+        this.create = function () {
+            var buttons = $('<div class="buttons" style="display: flex; gap: 10px; margin-left: 30.4167px;"></div>');
+            filterButton = $('<div class="selector">' + (currentType === 'movie' ? Lampa.Lang.translate('trailers_movies') : Lampa.Lang.translate('trailers_series')) + '</div>');
+
+            buttons.append(filterButton);
+            html.append(buttons);
+
+            filterButton.on('hover:enter hover:click', function () {
+                toggleFilter(this);
+            }.bind(this));
+
+            bindEvents(filterButton[0]);
+
+            filterButton.addClass('selector--active focus');
+            console.log('Initial load:', currentType === 'movie' ? 'Movies' : 'Series');
+            Api.main(this.build.bind(this), this.empty.bind(this), currentType === 'movie' ? 'movie' : 'tv');
+
+            return this.render();
+        };
+
+        this.empty = function () {
+            console.log('Displaying empty state');
+            var empty = new Lampa.Empty();
+            html.append(empty.render());
+            this.start = empty.start;
+            this.activity.loader(false);
+            this.activity.toggle();
+        };
+
+        this.build = function (data) {
+            var _this = this;
+            console.log('Building with data:', data);
+            scroll.minus();
+            html.append(scroll.render());
+            data.forEach(this.append.bind(this));
+            if (light) {
+                scroll.onWheel = function (step) {
+                    if (step > 0) _this.down();
+                    else _this.up();
+                };
+            }
+            this.activity.loader(false);
+            this.activity.toggle();
+        };
+
+        this.append = function (element) {
+            console.log('Appending element:', element);
+            var item = new Line(element);
+            item.create();
+            item.onDown = this.down.bind(this);
+            item.onUp = this.up.bind(this);
+            item.onBack = this.back.bind(this);
+            item.onToggle = function () {
+                active = items.indexOf(item);
+            };
+            item.wrap = $('<div></div>');
+            if (light) {
+                scroll.append(item.wrap);
+            } else {
+                scroll.append(item.render());
+            }
+            items.push(item);
+        };
+
+        this.back = function () {
+            Lampa.Activity.backward();
+        };
+
+        this.detach = Function.prototype;
+
+        this.down = function () {
+            active++;
+            active = Math.min(active, items.length - 1);
+            items[active].toggle();
+            scroll.update(items[active].render());
+        };
+
+        this.up = function () {
+            active--;
+            if (active < 0) {
+                active = 0;
+                Lampa.Controller.toggle('head');
+            } else {
+                items[active].toggle();
+            }
+            scroll.update(items[active].render());
+        };
+
+        this.start = function () {
+            if (Lampa.Activity.active().activity !== this.activity) return;
+            Lampa.Controller.add('content', {
+                toggle: function () {
+                    if (items.length) {
+                        items[active].toggle();
+                    } else {
+                        Lampa.Controller.collectionSet(html);
+                        Lampa.Controller.collectionFocus(filterButton[0], html);
+                    }
                 },
-                onBack: function () {
-                    Lampa.Controller.toggle('content');
+                left: function () {
+                    if (Navigator.canmove('left')) Navigator.move('left');
+                    else Lampa.Controller.toggle('menu');
+                },
+                right: function () {
+                    Navigator.move('right');
+                },
+                up: function () {
+                    if (Navigator.canmove('up')) Navigator.move('up');
+                    else Lampa.Controller.toggle('head');
+                },
+                down: function () {
+                    if (Navigator.canmove('down')) Navigator.move('down');
+                },
+                back: this.back
+            });
+            Lampa.Controller.toggle('content');
+        };
+
+        this.pause = function () {};
+        this.stop = function () {};
+        this.render = function () {
+            return html;
+        };
+
+        this.destroy = function () {
+            Lampa.Arrays.destroy(items);
+            scroll.destroy();
+            html.remove();
+            items = [];
+            filterButton = null;
+        };
+    }
+
+    function Component(object) {
+        var scroll = new Lampa.Scroll({ mask: true, over: true, step: 250, end_ratio: 2 });
+        var items = [];
+        var html = $('<div></div>');
+        var body = $('<div class="category-full category-full--trailers"></div>');
+        var newlampa = Lampa.Manifest.app_digital >= 166;
+        var light = newlampa ? false : Lampa.Storage.field('light_version') && window.innerWidth >= 767;
+        var total_pages = 0;
+        var last;
+        var waitload = false;
+
+        this.create = function () {
+            Api.full(object, this.build.bind(this), this.empty.bind(this));
+            return this.render();
+        };
+
+        this.empty = function () {
+            console.log('Displaying empty state for full view');
+            var empty = new Lampa.Empty();
+            scroll.append(empty.render());
+            this.start = empty.start;
+            this.activity.loader(false);
+            this.activity.toggle();
+        };
+
+        this.next = function () {
+            var _this = this;
+            if (waitload) return;
+            if (object.page < 30 && object.page < total_pages) {
+                waitload = true;
+                object.page++;
+                Api.full(object, function (result) {
+                    if (result.results && result.results.length) {
+                        _this.append(result, true);
+                    } else {
+                        Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
+                    }
+                    waitload = false;
+                }, function () {
+                    Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
+                    waitload = false;
+                });
+            }
+        };
+
+        this.cardImgBackground = function (card_data) {
+            if (Lampa.Storage.field('background')) {
+                if (Lampa.Storage.get('background_type', 'complex') === 'poster' && window.innerWidth > 790) {
+                    return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'original') : '';
+                }
+                return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'w500') : '';
+            }
+            return '';
+        };
+
+        this.append = function (data, append) {
+            var _this2 = this;
+            data.results.forEach(function (element) {
+                var card = new Trailer(element, { type: object.type });
+                card.create();
+                card.visible();
+                card.onFocus = function (target, card_data) {
+                    last = target;
+                    scroll.update(card.render(), true);
+                    if (!light && !newlampa && scroll.isEnd()) _this2.next();
+                };
+                body.append(card.render());
+                items.push(card);
+                if (append) Lampa.Controller.collectionAppend(card.render());
+            });
+        };
+
+        this.build = function (data) {
+            var _this3 = this;
+            console.log('Building full view with data:', data);
+            if (data.results && data.results.length) {
+                total_pages = data.total_pages || 1;
+                scroll.minus();
+                html.append(scroll.render());
+                this.append(data);
+                if (light && items.length) this.back();
+                if (total_pages > data.page && items.length) this.more();
+                scroll.append(body);
+                if (newlampa) {
+                    scroll.onEnd = this.next.bind(this);
+                    scroll.onWheel = function (step) {
+                        if (!Lampa.Controller.own(_this3)) _this3.start();
+                        if (step > 0) Navigator.move('down');
+                        else if (active > 0) Navigator.move('up');
+                    };
+                }
+                this.activity.loader(false);
+                this.activity.toggle();
+            } else {
+                html.append(scroll.render());
+                this.empty();
+            }
+        };
+
+        this.more = function () {
+            var _this = this;
+            var more = $('<div class="selector" style="width: 100%; height: 5px"></div>');
+            more.on('hover:enter', function () {
+                var next = Lampa.Arrays.clone(object);
+                delete next.activity;
+                next.page = (next.page || 1) + 1;
+                Lampa.Activity.push({
+                    url: next.url,
+                    title: object.title || Lampa.Lang.translate('title_trailers'),
+                    component: 'trailers_full',
+                    type: next.type,
+                    page: next.page
+                });
+            });
+            body.append(more);
+        };
+
+        this.back = function () {
+            last = items[0].render()[0];
+            var more = $('<div class="selector" style="width: 100%; height: 5px"></div>');
+            more.on('hover:enter', function () {
+                if (object.page > 1) {
+                    Lampa.Activity.backward();
+                } else {
+                    Lampa.Controller.toggle('head');
                 }
             });
+            body.prepend(more);
+        };
+
+        this.start = function () {
+            if (Lampa.Activity.active().activity !== this.activity) return;
+            Lampa.Controller.add('content', {
+                link: this,
+                toggle: function () {
+                    Lampa.Controller.collectionSet(scroll.render());
+                    Lampa.Controller.collection  scroll_by_item: true });
+        var items = [];
+        var html = $('<div></div>');
+        var active = 0;
+        var light = Lampa.Storage.field('light_version') && window.innerWidth >= 767;
+        var currentType = Lampa.Storage.get('trailers_type', 'movie');
+        var filterButton;
+
+        function toggleFilter(context) {
+            try {
+                var items = [
+                    { title: Lampa.Lang.translate('trailers_movies'), value: 'movie', selected: currentType === 'movie' },
+                    { title: Lampa.Lang.translate('trailers_series'), value: 'series', selected: currentType === 'series' }
+                ];
+                Lampa.Select.show({
+                    title: Lampa.Lang.translate('trailers_filter'),
+                    items: items,
+                    onSelect: function (item) {
+                        try {
+                            currentType = item.value;
+                            Lampa.Storage.set('trailers_type', currentType);
+                            filterButton.text(currentType === 'movie' ? Lampa.Lang.translate('trailers_movies') : Lampa.Lang.translate('trailers_series'));
+                            items.forEach(function (item) { item.destroy(); });
+                            items.length = 0;
+                            scroll.clear();
+                            console.log('Loading', currentType === 'movie' ? 'Movies' : 'Series');
+                            Api.main(context.build.bind(context), context.empty.bind(context), currentType === 'movie' ? 'movie' : 'tv');
+                            Lampa.Listener.send('toggle', { name: currentType });
+                            Lampa.Controller.toggle('content');
+                        } catch (e) {
+                            console.error('Error in filter selection:', e);
+                            Lampa.Noty.show('Error switching category: ' + e.message);
+                        }
+                    },
+                    onBack: function () {
+                        Lampa.Controller.toggle('content');
+                    }
+                });
+            } catch (e) {
+                console.error('Error in toggleFilter:', e);
+                Lampa.Noty.show('Error opening filter: ' + e.message);
+            }
         }
 
         function bindEvents(elem) {
@@ -1183,16 +1584,6 @@
                 margin-left: 10px;
                 cursor: pointer;
                 padding: 0.5em 1em;
-            }
-            .buttons .selector {
-                font-size: 1.4em;
-                padding: 0.5em 1em;
-                cursor: pointer;
-                display: inline-block;
-                background: #4a4a4a;
-            }
-            .buttons .selector.focus {
-                background: #666;
             }
             @media screen and (max-width: 767px) {
                 .category-full--trailers .card {
