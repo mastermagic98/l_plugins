@@ -25,22 +25,28 @@
     }
 
     function get(url, page, resolve, reject, useRegion, noLang) {
-        var lang = Lampa.Storage.get('language', 'ru');
-        var full_url = `${tmdb_base_url}${url}&api_key=${tmdb_api_key}&page=${page}`;
-        if (!noLang) full_url += `&language=${lang}`;
-        if (useRegion) full_url += `®ion=${getRegion()}`;
-        console.log('API Request:', full_url);
-        network.silent(full_url, function (result) {
-            console.log('API Result:', url, result);
-            resolve(result);
-        }, function (error) {
-            console.log('API Error:', url, error);
-            reject(error);
-        });
+        try {
+            var lang = Lampa.Storage.get('language', 'ru');
+            var full_url = `${tmdb_base_url}${url}&api_key=${tmdb_api_key}&page=${page}`;
+            if (!noLang) full_url += `&language=${lang}`;
+            if (useRegion) full_url += `®ion=${getRegion()}`;
+            console.log('API Request:', full_url);
+            network.silent(full_url, function (result) {
+                console.log('API Result:', url, result);
+                resolve(result);
+            }, function (error) {
+                console.log('API Error:', url, error);
+                reject(error);
+            });
+        } catch (e) {
+            console.error('Get error:', e);
+            reject(e);
+        }
     }
 
     function main(oncomplite, onerror, type = 'movie') {
         try {
+            console.log('Main called with type:', type);
             var status = new Lampa.Status(3);
             status.onComplite = function () {
                 var fulldata = [];
@@ -604,10 +610,23 @@
         var currentType = 'movie';
         var moviesButton, seriesButton;
 
-        function toggle$2(name, context) {
+        function toggle$2(name) {
             try {
-                console.log('Toggle called:', name);
-                document.querySelectorAll('.buttons .selector').forEach(function (item) {
+                console.log('Toggle called:', name, 'Current type:', currentType);
+                if (!moviesButton || !seriesButton) {
+                    console.error('Buttons not initialized');
+                    Lampa.Noty.show('Error: Buttons not initialized');
+                    return;
+                }
+
+                var selectors = document.querySelectorAll('.buttons .selector');
+                if (selectors.length === 0) {
+                    console.error('No .buttons .selector found');
+                    Lampa.Noty.show('Error: No buttons found');
+                    return;
+                }
+
+                selectors.forEach(function (item) {
                     item.classList.remove('focus', 'selector--active');
                 });
 
@@ -619,7 +638,7 @@
                     items = [];
                     scroll.clear();
                     console.log('Loading Movies');
-                    Api.main(context.build.bind(context), context.empty.bind(context), 'movie');
+                    Api.main(this.build.bind(this), this.empty.bind(this), 'movie');
                     Lampa.Listener.send('toggle', { name: 'movies' });
                     Lampa.Controller.collectionFocus(moviesButton[0], html);
                 } else if (name === 'series' && currentType !== 'series') {
@@ -630,7 +649,7 @@
                     items = [];
                     scroll.clear();
                     console.log('Loading Series');
-                    Api.main(context.build.bind(context), context.empty.bind(context), 'tv');
+                    Api.main(this.build.bind(this), this.empty.bind(this), 'tv');
                     Lampa.Listener.send('toggle', { name: 'series' });
                     Lampa.Controller.collectionFocus(seriesButton[0], html);
                 }
@@ -642,43 +661,43 @@
         }
 
         function bindEvents(elem) {
-            if (elem.classList.contains('selector') && !elem.bind_events) {
+            try {
+                if (!elem || elem.bind_events) return;
+                console.log('Binding events for:', elem);
                 elem.bind_events = true;
                 var long_position = 0;
                 var long_timer;
 
-                var longStart = function longStart() {
+                var longStart = function () {
                     clearTimeout(long_timer);
                     var offset = elem.getBoundingClientRect();
                     long_timer = setTimeout(function () {
                         var time = elem.long_time || 0;
                         offset = elem.getBoundingClientRect();
-
                         if (time + 100 < Date.now()) {
                             var mutation = Math.abs(long_position - (offset.top + offset.left));
                             if (mutation < 30) Lampa.Utils.trigger(elem, 'hover:long');
                         }
-
                         elem.long_time = Date.now();
                     }, 800);
                     long_position = offset.top + offset.left;
                 };
 
-                var longClear = function longClear() {
+                var longClear = function () {
                     clearTimeout(long_timer);
                 };
 
-                var touchStart = function touchStart() {
+                var touchStart = function () {
                     longStart();
                     Lampa.Utils.trigger(elem, 'hover:touch');
                 };
 
-                var rightClick = function rightClick(e) {
+                var rightClick = function (e) {
                     Lampa.Utils.trigger(elem, 'hover:long');
                 };
 
                 elem.trigger_click = function (e) {
-                    if (Lampa.Storage.field('navigation_type') == 'mouse' || Lampa.Platform.screen('mobile')) {
+                    if (Lampa.Storage.field('navigation_type') === 'mouse' || Lampa.Platform.screen('mobile')) {
                         if (Lampa.DeviceInput.canClick(e)) {
                             Lampa.AnimateTrigger.enter(elem);
                             Lampa.Utils.trigger(elem, 'hover:enter');
@@ -698,11 +717,11 @@
                     elem.classList.remove('focus');
                 };
 
-                if (Lampa.Storage.field('navigation_type') == 'mouse' || Lampa.Platform.screen('mobile')) {
+                if (Lampa.Storage.field('navigation_type') === 'mouse' || Lampa.Platform.screen('mobile')) {
                     elem.addEventListener('click', elem.trigger_click);
                 }
 
-                if (!Lampa.Utils.isTouchDevice() && Lampa.Storage.field('navigation_type') == 'mouse') {
+                if (!Lampa.Utils.isTouchDevice() && Lampa.Storage.field('navigation_type') === 'mouse') {
                     elem.addEventListener('mouseenter', elem.trigger_mouseenter);
                     elem.addEventListener('mouseleave', elem.trigger_mouseleave);
                     elem.addEventListener('mouseout', longClear);
@@ -716,34 +735,48 @@
                     elem.addEventListener('touchend', longClear);
                     elem.addEventListener('touchmove', longClear);
                 }
+            } catch (e) {
+                console.error('Bind events error:', e);
+                Lampa.Noty.show('Error binding events: ' + e.message);
             }
         }
 
         this.create = function () {
-            console.log('Component$1 create called');
-            var buttons = $('<div class="buttons" style="display: flex; gap: 10px; margin-left: 30.4167px;"></div>');
-            moviesButton = $('<div class="selector">' + Lampa.Lang.translate('trailers_movies') + '</div>');
-            seriesButton = $('<div class="selector">' + Lampa.Lang.translate('trailers_series') + '</div>');
+            try {
+                console.log('Component$1 create called');
+                var buttons = $('<div class="buttons" style="display: flex; gap: 10px; margin-left: 30.4167px;"></div>');
+                moviesButton = $('<div class="selector">' + Lampa.Lang.translate('trailers_movies') + '</div>');
+                seriesButton = $('<div class="selector">' + Lampa.Lang.translate('trailers_series') + '</div>');
 
-            buttons.append(moviesButton).append(seriesButton);
-            html.append(buttons);
+                buttons.append(moviesButton).append(seriesButton);
+                html.append(buttons);
 
-            moviesButton.on('hover:enter hover:click', function () {
-                toggle$2('movies', this);
-            }.bind(this));
+                console.log('Movies button:', moviesButton[0]);
+                console.log('Series button:', seriesButton[0]);
 
-            seriesButton.on('hover:enter hover:click', function () {
-                toggle$2('series', this);
-            }.bind(this));
+                moviesButton.on('hover:enter hover:click', function () {
+                    console.log('Movies button clicked');
+                    toggle$2.call(this, 'movies');
+                }.bind(this));
 
-            bindEvents(moviesButton[0]);
-            bindEvents(seriesButton[0]);
+                seriesButton.on('hover:enter hover:click', function () {
+                    console.log('Series button clicked');
+                    toggle$2.call(this, 'series');
+                }.bind(this));
 
-            moviesButton.addClass('selector--active focus');
-            console.log('Initial load: Movies');
-            Api.main(this.build.bind(this), this.empty.bind(this), 'movie');
+                bindEvents(moviesButton[0]);
+                bindEvents(seriesButton[0]);
 
-            return this.render();
+                moviesButton.addClass('selector--active focus');
+                console.log('Initial load: Movies');
+                Api.main(this.build.bind(this), this.empty.bind(this), 'movie');
+
+                return this.render();
+            } catch (e) {
+                console.error('Component$1 create error:', e);
+                Lampa.Noty.show('Error creating component: ' + e.message);
+                return html;
+            }
         };
 
         this.empty = function () {
@@ -756,38 +789,48 @@
         };
 
         this.build = function (data) {
-            var _this = this;
-            console.log('Building with data:', data);
-            scroll.minus();
-            html.append(scroll.render());
-            data.forEach(this.append.bind(this));
-            if (light) {
-                scroll.onWheel = function (step) {
-                    if (step > 0) _this.down();
-                    else _this.up();
-                };
+            try {
+                var _this = this;
+                console.log('Building with data:', data);
+                scroll.minus();
+                html.append(scroll.render());
+                data.forEach(this.append.bind(this));
+                if (light) {
+                    scroll.onWheel = function (step) {
+                        if (step > 0) _this.down();
+                        else _this.up();
+                    };
+                }
+                this.activity.loader(false);
+                this.activity.toggle();
+            } catch (e) {
+                console.error('Build error:', e);
+                Lampa.Noty.show('Error building component: ' + e.message);
             }
-            this.activity.loader(false);
-            this.activity.toggle();
         };
 
         this.append = function (element) {
-            console.log('Appending element:', element);
-            var item = new Line(element);
-            item.create();
-            item.onDown = this.down.bind(this);
-            item.onUp = this.up.bind(this);
-            item.onBack = this.back.bind(this);
-            item.onToggle = function () {
-                active = items.indexOf(item);
-            };
-            item.wrap = $('<div></div>');
-            if (light) {
-                scroll.append(item.wrap);
-            } else {
-                scroll.append(item.render());
+            try {
+                console.log('Appending element:', element);
+                var item = new Line(element);
+                item.create();
+                item.onDown = this.down.bind(this);
+                item.onUp = this.up.bind(this);
+                item.onBack = this.back.bind(this);
+                item.onToggle = function () {
+                    active = items.indexOf(item);
+                };
+                item.wrap = $('<div></div>');
+                if (light) {
+                    scroll.append(item.wrap);
+                } else {
+                    scroll.append(item.render());
+                }
+                items.push(item);
+            } catch (e) {
+                console.error('Append error:', e);
+                Lampa.Noty.show('Error appending element: ' + e.message);
             }
-            items.push(item);
         };
 
         this.back = function () {
@@ -886,9 +929,15 @@
         var waitload = false;
 
         this.create = function () {
-            console.log('Component create called');
-            Api.full(object, this.build.bind(this), this.empty.bind(this));
-            return this.render();
+            try {
+                console.log('Component create called');
+                Api.full(object, this.build.bind(this), this.empty.bind(this));
+                return this.render();
+            } catch (e) {
+                console.error('Component create error:', e);
+                Lampa.Noty.show('Error creating full component: ' + e.message);
+                return html;
+            }
         };
 
         this.empty = function () {
@@ -1143,155 +1192,163 @@
     });
 
     function startPlugin() {
-        console.log('startPlugin called');
-        window.plugin_trailers_ready = true;
-        Lampa.Component.add('trailers_main', Component$1);
-        Lampa.Component.add('trailers_full', Component);
-        Lampa.Template.add('trailer', `
-            <div class="card selector card--trailer layer--render layer--visible">
-                <div class="card__view">
-                    <img src="./img/img_load.svg" class="card__img">
-                    <div class="card__promo">
-                        <div class="card__promo-text">
-                            <div class="card__title"></div>
-                        </div>
-                        <div class="card__details"></div>
-                    </div>
-                </div>
-                <div class="card__play">
-                    <img src="./img/icons/player/play.svg">
-                </div>
-            </div>
-        `);
-        Lampa.Template.add('trailer_style', `
-            <style>
-            .card.card--trailer,
-            .card-more.more--trailers {
-                width: 25.7em;
-            }
-            .card.card--trailer .card__view {
-                padding-bottom: 56%;
-                margin-bottom: 0;
-            }
-            .card.card--trailer .card__details {
-                margin-top: 0.8em;
-            }
-            .card.card--trailer .card__play {
-                position: absolute;
-                top: 50%;
-                transform: translateY(-50%);
-                left: 1.5em;
-                background: #000000b8;
-                width: 2.2em;
-                height: 2.2em;
-                border-radius: 100%;
-                text-align: center;
-                padding-top: 0.6em;
-            }
-            .card.card--trailer .card__play img {
-                width: 0.9em;
-                height: 1em;
-            }
-            .card.card--trailer .card__rating {
-                position: absolute;
-                bottom: 0.5em;
-                right: 0.5em;
-                background: #000000b8;
-                padding: 0.2em 0.5em;
-                border-radius: 3px;
-                font-size: 1.2em;
-            }
-            .card.card--trailer .card__trailer-lang {
-                position: absolute;
-                top: 0.5em;
-                right: 0.5em;
-                background: #000000b8;
-                padding: 0.2em 0.5em;
-                border-radius: 3px;
-                text-transform: uppercase;
-            }
-            .card-more.more--trailers .card-more__box {
-                padding-bottom: 56%;
-            }
-            .category-full--trailers .card {
-                margin-bottom: 1.5em;
-            }
-            .category-full--trailers .card {
-                width: 33.3%;
-            }
-            .items-line__filter {
-                display: inline-block;
-                margin-left: 10px;
-                cursor: pointer;
-                padding: 0.5em 1em;
-            }
-            .items-line__filter svg {
-                width: 36px;
-                height: 36px;
-                vertical-align: middle;
-            }
-            .items-line__more {
-                display: inline-block;
-                margin-left: 10px;
-                cursor: pointer;
-                padding: 0.5em 1em;
-            }
-            .buttons .selector {
-                font-size: 1.4em;
-                padding: 0.5em 1em;
-                cursor: pointer;
-                display: inline-block;
-            }
-            .selector--active {
-                background: #4a4a4a;
-            }
-            .selector.focus {
-                background: #666;
-            }
-            .menu__list .menu__item:has(.menu__text:contains("Трейлери")) {
-                display: block !important;
-            }
-            @media screen and (max-width: 767px) {
-                .category-full--trailers .card {
-                    width: 50%;
-                }
-            }
-            @media screen and (max-width: 400px) {
-                .category-full--trailers .card {
-                    width: 100%;
-                }
-            }
-            </style>
-        `);
-
-        function add() {
-            console.log('Adding trailers button');
-            var button = $(`
-                <li class="menu__item selector">
-                    <div class="menu__ico">
-                        <svg height="70" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/>
-                        </svg>
-                    </div>
-                    <div class="menu__text">${Lampa.Lang.translate('title_trailers')}</div>
-                </li>
-            `);
-            button.on('hover:enter', function () {
-                console.log('Trailers button clicked');
-                Lampa.Activity.push({
-                    url: '',
-                    title: Lampa.Lang.translate('title_trailers'),
-                    component: 'trailers_main',
-                    page: 1
-                });
-            });
-            $('.menu .menu__list').eq(0).append(button);
-            console.log('Trailers button added');
-            $('body').append(Lampa.Template.get('trailer_style', {}, true));
-        }
-
         try {
-            add();
+            console.log('startPlugin called');
+            window.plugin_trailers_ready = true;
+            Lampa.Component.add('trailers_main', Component$1);
+            Lampa.Component.add('trailers_full', Component);
+            Lampa.Template.add('trailer', `
+                <div class="card selector card--trailer layer--render layer--visible">
+                    <div class="card__view">
+                        <img src="./img/img_load.svg" class="card__img">
+                        <div class="card__promo">
+                            <div class="card__promo-text">
+                                <div class="card__title"></div>
+                            </div>
+                            <div class="card__details"></div>
+                        </div>
+                    </div>
+                    <div class="card__play">
+                        <img src="./img/icons/player/play.svg">
+                    </div>
+                </div>
+            `);
+            Lampa.Template.add('trailer_style', `
+                <style>
+                .card.card--trailer,
+                .card-more.more--trailers {
+                    width: 25.7em;
+                }
+                .card.card--trailer .card__view {
+                    padding-bottom: 56%;
+                    margin-bottom: 0;
+                }
+                .card.card--trailer .card__details {
+                    margin-top: 0.8em;
+                }
+                .card.card--trailer .card__play {
+                    position: absolute;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    left: 1.5em;
+                    background: #000000b8;
+                    width: 2.2em;
+                    height: 2.2em;
+                    border-radius: 100%;
+                    text-align: center;
+                    padding-top: 0.6em;
+                }
+                .card.card--trailer .card__play img {
+                    width: 0.9em;
+                    height: 1em;
+                }
+                .card.card--trailer .card__rating {
+                    position: absolute;
+                    bottom: 0.5em;
+                    right: 0.5em;
+                    background: #000000b8;
+                    padding: 0.2em 0.5em;
+                    border-radius: 3px;
+                    font-size: 1.2em;
+                }
+                .card.card--trailer .card__trailer-lang {
+                    position: absolute;
+                    top: 0.5em;
+                    right: 0.5em;
+                    background: #000000b8;
+                    padding: 0.2em 0.5em;
+                    border-radius: 3px;
+                    text-transform: uppercase;
+                }
+                .card-more.more--trailers .card-more__box {
+                    padding-bottom: 56%;
+                }
+                .category-full--trailers .card {
+                    margin-bottom: 1.5em;
+                }
+                .category-full--trailers .card {
+                    width: 33.3%;
+                }
+                .items-line__filter {
+                    display: inline-block;
+                    margin-left: 10px;
+                    cursor: pointer;
+                    padding: 0.5em 1em;
+                }
+                .items-line__filter svg {
+                    width: 36px;
+                    height: 36px;
+                    vertical-align: middle;
+                }
+                .items-line__more {
+                    display: inline-block;
+                    margin-left: 10px;
+                    cursor: pointer;
+                    padding: 0.5em 1em;
+                }
+                .buttons .selector {
+                    font-size: 1.4em;
+                    padding: 0.5em 1em;
+                    cursor: pointer;
+                    display: inline-block;
+                }
+                .selector--active {
+                    background: #4a4a4a;
+                }
+                .selector.focus {
+                    background: #666;
+                }
+                .menu__list .menu__item:has(.menu__text:contains("Трейлери")) {
+                    display: block !important;
+                }
+                @media screen and (max-width: 767px) {
+                    .category-full--trailers .card {
+                        width: 50%;
+                    }
+                }
+                @media screen and (max-width: 400px) {
+                    .category-full--trailers .card {
+                        width: 100%;
+                    }
+                }
+                </style>
+            `);
+
+            function add() {
+                try {
+                    if ($('.menu__list .menu__item:has(.menu__text:contains("Трейлери"))').length > 0) {
+                        console.log('Trailers button already exists');
+                        return;
+                    }
+                    console.log('Adding trailers button');
+                    var button = $(`
+                        <li class="menu__item selector">
+                            <div class="menu__ico">
+                                <svg height="70" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/>
+                                </svg>
+                            </div>
+                            <div class="menu__text">${Lampa.Lang.translate('title_trailers')}</div>
+                        </li>
+                    `);
+                    button.on('hover:enter', function () {
+                        console.log('Trailers button clicked');
+                        Lampa.Activity.push({
+                            url: '',
+                            title: Lampa.Lang.translate('title_trailers'),
+                            component: 'trailers_main',
+                            page: 1
+                        });
+                    });
+                    $('.menu .menu__list').eq(0).append(button);
+                    console.log('Trailers button added');
+                    $('body').append(Lampa.Template.get('trailer_style', {}, true));
+                } catch (e) {
+                    console.error('Add button error:', e);
+                    Lampa.Noty.show('Error adding trailers button: ' + e.message);
+                }
+            }
+
             if (window.appready) {
                 console.log('App ready, adding button');
                 add();
