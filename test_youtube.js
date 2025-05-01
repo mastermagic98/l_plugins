@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.04 Виправлення this is undefined в onFocus, виправлення _this is not defined, виправлення Lampa.Utils.debounce, обмеження запитів кнопки ЩЕ, ліниве завантаження, виправлення рекурсії
+    // Версія 1.05 Виправлення _this is undefined в onFocus (замикання), виправлення this is undefined, виправлення _this is not defined, виправлення Lampa.Utils.debounce, обмеження запитів кнопки ЩЕ, ліниве завантаження, виправлення рекурсії
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -42,7 +42,7 @@
         var lang = Lampa.Storage.get('language', 'ru');
         var full_url = `${tmdb_base_url}${url}?api_key=${tmdb_api_key}&page=${page}`;
         if (!noLang) full_url += `&language=${lang}`;
-        if (useRegion) full_url += `&region=${getRegion()}`;
+        if (useRegion) full_url += `®ion=${getRegion()}`;
         console.log('Сформований URL:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
@@ -388,6 +388,7 @@
     }
 
     function Line(data) {
+        var _this = this; // Зберігаємо контекст Line на рівні конструктора
         var content = Lampa.Template.get('items_line', { title: data.title });
         var body = content.find('.items-line__body');
         var scroll = new Lampa.Scroll({ horizontal: true, step: 600 });
@@ -469,7 +470,6 @@
             if (isLoading) return;
             isLoading = true;
 
-            var _this = this; // Зберігаємо контекст Line
             var remainingCards = data.results.slice(loadedIndex, loadedIndex + visibleCards);
             if (remainingCards.length > 0) {
                 remainingCards.forEach(function (element) {
