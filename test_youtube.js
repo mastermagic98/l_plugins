@@ -447,7 +447,7 @@
             content.find('.items-line__title').text(data.title);
 
             if (data.type === 'popular') {
-                filter = $('<div class="items-line__filter selector"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg></div>');
+                filter = $('<div class="items-line__filter trailers-plugin-selector"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg></div>');
                 filter.on('hover:enter', function () {
                     var items = [
                         { title: Lampa.Lang.translate('trailers_filter_today'), value: 'day', selected: Lampa.Storage.get(`trailers_${data.type}_filter`, 'day') === 'day' },
@@ -477,7 +477,7 @@
                     });
                 });
 
-                moreButton = $('<div class="items-line__more selector">' + Lampa.Lang.translate('trailers_more') + '</div>');
+                moreButton = $('<div class="items-line__more trailers-plugin-selector">' + Lampa.Lang.translate('trailers_more') + '</div>');
                 moreButton.on('hover:enter', function () {
                     console.log('More button clicked:', data.title);
                     Lampa.Activity.push({
@@ -492,7 +492,7 @@
                 content.find('.items-line__title').after(moreButton);
                 moreButton.before(filter);
             } else {
-                moreButton = $('<div class="items-line__more selector">' + Lampa.Lang.translate('trailers_more') + '</div>');
+                moreButton = $('<div class="items-line__more trailers-plugin-selector">' + Lampa.Lang.translate('trailers_more') + '</div>');
                 moreButton.on('hover:enter', function () {
                     console.log('More button clicked:', data.title);
                     Lampa.Activity.push({
@@ -612,16 +612,16 @@
 
         function toggle$2(name) {
             try {
-                console.log('Toggle called:', name, 'Current type:', currentType);
+                console.log('Toggle called with name:', name, 'Current type:', currentType);
                 if (!moviesButton || !seriesButton) {
                     console.error('Buttons not initialized');
                     Lampa.Noty.show('Error: Buttons not initialized');
                     return;
                 }
 
-                var selectors = document.querySelectorAll('.buttons .selector');
+                var selectors = document.querySelectorAll('.trailers-plugin-buttons .trailers-plugin-selector');
                 if (selectors.length === 0) {
-                    console.error('No .buttons .selector found');
+                    console.error('No .trailers-plugin-buttons .trailers-plugin-selector found');
                     Lampa.Noty.show('Error: No buttons found');
                     return;
                 }
@@ -663,7 +663,7 @@
         function bindEvents(elem) {
             try {
                 if (!elem || elem.bind_events) return;
-                console.log('Binding events for:', elem);
+                console.log('Binding events for element:', elem);
                 elem.bind_events = true;
                 var long_position = 0;
                 var long_timer;
@@ -699,14 +699,13 @@
                 elem.trigger_click = function (e) {
                     if (Lampa.Storage.field('navigation_type') === 'mouse' || Lampa.Platform.screen('mobile')) {
                         if (Lampa.DeviceInput.canClick(e)) {
-                            Lampa.AnimateTrigger.enter(elem);
                             Lampa.Utils.trigger(elem, 'hover:enter');
                         }
                     }
                 };
 
                 elem.trigger_mouseenter = function () {
-                    document.querySelectorAll('.selector').forEach(function (item) {
+                    document.querySelectorAll('.trailers-plugin-selector').forEach(function (item) {
                         item.classList.remove('focus');
                     });
                     elem.classList.add('focus');
@@ -744,15 +743,15 @@
         this.create = function () {
             try {
                 console.log('Component$1 create called');
-                var buttons = $('<div class="buttons" style="display: flex; gap: 10px; margin-left: 30.4167px;"></div>');
-                moviesButton = $('<div class="selector">' + Lampa.Lang.translate('trailers_movies') + '</div>');
-                seriesButton = $('<div class="selector">' + Lampa.Lang.translate('trailers_series') + '</div>');
+                var buttons = $('<div class="trailers-plugin-buttons" style="display: flex; gap: 10px; margin-left: 30.4167px;"></div>');
+                moviesButton = $('<div class="trailers-plugin-selector">' + Lampa.Lang.translate('trailers_movies') + '</div>');
+                seriesButton = $('<div class="trailers-plugin-selector">' + Lampa.Lang.translate('trailers_series') + '</div>');
 
                 buttons.append(moviesButton).append(seriesButton);
                 html.append(buttons);
 
-                console.log('Movies button:', moviesButton[0]);
-                console.log('Series button:', seriesButton[0]);
+                console.log('Movies button initialized:', moviesButton[0]);
+                console.log('Series button initialized:', seriesButton[0]);
 
                 moviesButton.on('hover:enter hover:click', function () {
                     console.log('Movies button clicked');
@@ -1025,7 +1024,7 @@
 
         this.more = function () {
             var _this = this;
-            var more = $('<div class="selector" style="width: 100%; height: 5px"></div>');
+            var more = $('<div class="trailers-plugin-selector" style="width: 100%; height: 5px"></div>');
             more.on('hover:enter', function () {
                 var next = Lampa.Arrays.clone(object);
                 delete next.activity;
@@ -1043,7 +1042,7 @@
 
         this.back = function () {
             last = items[0].render()[0];
-            var more = $('<div class="selector" style="width: 100%; height: 5px"></div>');
+            var more = $('<div class="trailers-plugin-selector" style="width: 100%; height: 5px"></div>');
             more.on('hover:enter', function () {
                 if (object.page > 1) {
                     Lampa.Activity.backward();
@@ -1198,7 +1197,7 @@
             Lampa.Component.add('trailers_main', Component$1);
             Lampa.Component.add('trailers_full', Component);
             Lampa.Template.add('trailer', `
-                <div class="card selector card--trailer layer--render layer--visible">
+                <div class="card trailers-plugin-card selector card--trailer layer--render layer--visible">
                     <div class="card__view">
                         <img src="./img/img_load.svg" class="card__img">
                         <div class="card__promo">
@@ -1215,18 +1214,18 @@
             `);
             Lampa.Template.add('trailer_style', `
                 <style>
-                .card.card--trailer,
-                .card-more.more--trailers {
+                .trailers-plugin-card.card--trailer,
+                .more--trailers {
                     width: 25.7em;
                 }
-                .card.card--trailer .card__view {
+                .trailers-plugin-card.card--trailer .card__view {
                     padding-bottom: 56%;
                     margin-bottom: 0;
                 }
-                .card.card--trailer .card__details {
+                .trailers-plugin-card.card--trailer .card__details {
                     margin-top: 0.8em;
                 }
-                .card.card--trailer .card__play {
+                .trailers-plugin-card.card--trailer .card__play {
                     position: absolute;
                     top: 50%;
                     transform: translateY(-50%);
@@ -1238,11 +1237,11 @@
                     text-align: center;
                     padding-top: 0.6em;
                 }
-                .card.card--trailer .card__play img {
+                .trailers-plugin-card.card--trailer .card__play img {
                     width: 0.9em;
                     height: 1em;
                 }
-                .card.card--trailer .card__rating {
+                .trailers-plugin-card.card--trailer .card__rating {
                     position: absolute;
                     bottom: 0.5em;
                     right: 0.5em;
@@ -1251,7 +1250,7 @@
                     border-radius: 3px;
                     font-size: 1.2em;
                 }
-                .card.card--trailer .card__trailer-lang {
+                .trailers-plugin-card.card--trailer .card__trailer-lang {
                     position: absolute;
                     top: 0.5em;
                     right: 0.5em;
@@ -1260,54 +1259,55 @@
                     border-radius: 3px;
                     text-transform: uppercase;
                 }
-                .card-more.more--trailers .card-more__box {
+                .more--trailers .card-more__box {
                     padding-bottom: 56%;
                 }
-                .category-full--trailers .card {
+                .category-full--trailers .trailers-plugin-card {
                     margin-bottom: 1.5em;
                 }
-                .category-full--trailers .card {
+                .category-full--trailers .trailers-plugin-card {
                     width: 33.3%;
                 }
-                .items-line__filter {
+                .items-line__filter.trailers-plugin-selector {
                     display: inline-block;
                     margin-left: 10px;
                     cursor: pointer;
                     padding: 0.5em 1em;
                 }
-                .items-line__filter svg {
+                .items-line__filter.trailers-plugin-selector svg {
                     width: 36px;
                     height: 36px;
                     vertical-align: middle;
                 }
-                .items-line__more {
+                .items-line__more.trailers-plugin-selector {
                     display: inline-block;
                     margin-left: 10px;
                     cursor: pointer;
                     padding: 0.5em 1em;
                 }
-                .buttons .selector {
-                    font-size: 1.4em;
+                .trailers-plugin-buttons .trailers-plugin-selector {
+                    display: inline-block;
+                    margin-left: 10px;
                     padding: 0.5em 1em;
                     cursor: pointer;
-                    display: inline-block;
+                    font-size: inherit;
+                    color: inherit;
+                    background: transparent;
+                    border: none;
                 }
-                .selector--active {
+                .trailers-plugin-buttons .trailers-plugin-selector.selector--active {
                     background: #4a4a4a;
                 }
-                .selector.focus {
+                .trailers-plugin-buttons .trailers-plugin-selector.focus {
                     background: #666;
                 }
-                .menu__list .menu__item:has(.menu__text:contains("Трейлери")) {
-                    display: block !important;
-                }
                 @media screen and (max-width: 767px) {
-                    .category-full--trailers .card {
+                    .category-full--trailers .trailers-plugin-card {
                         width: 50%;
                     }
                 }
                 @media screen and (max-width: 400px) {
-                    .category-full--trailers .card {
+                    .category-full--trailers .trailers-plugin-card {
                         width: 100%;
                     }
                 }
@@ -1322,7 +1322,7 @@
                     }
                     console.log('Adding trailers button');
                     var button = $(`
-                        <li class="menu__item selector">
+                        <li class="menu__item trailers-plugin-menu-item selector">
                             <div class="menu__ico">
                                 <svg height="70" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/>
