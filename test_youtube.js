@@ -29,7 +29,7 @@
         var lang = Lampa.Storage.get('language', 'ru');
         var full_url = `${tmdb_base_url}${url}?api_key=${tmdb_api_key}&page=${page}`;
         if (!noLang) full_url += `&language=${lang}`;
-        if (useRegion) full_url += `&region=${getRegion()}`;
+        if (useRegion) full_url += `®ion=${getRegion()}`;
         console.log('Сформований URL:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
@@ -385,7 +385,8 @@
         var filter;
         var moreButton;
         var last;
-        var visibleCards = light ? 6 : 10; // Обмеження кількості видимих карток
+        var visibleCards = light ? 6 : 10; // Кількість видимих карток
+        var loadedIndex = 0; // Індекс останньої завантаженої картки
 
         this.create = function () {
             scroll.render().find('.scroll__body').addClass('items-cards');
@@ -432,13 +433,7 @@
             moreButton = $('<div class="items-line__more selector">' + Lampa.Lang.translate('trailers_more') + '</div>');
             moreButton.on('hover:enter', function () {
                 console.log('More button clicked:', data.title);
-                Lampa.Activity.push({
-                    url: data.url,
-                    title: data.title,
-                    component: 'trailers_full',
-                    type: data.type,
-                    page: 2
-                });
+                loadMoreCards();
             });
 
             content.find('.items-line__title').after(filter);
@@ -446,11 +441,48 @@
 
             this.bind();
             body.append(scroll.render());
+
+            // Додаємо обробник скролінгу для лінивого завантаження
+            scroll.render().on('scroll', function () {
+                if (scroll.isEnd()) {
+                    loadMoreCards();
+                }
+            });
         };
+
+        function loadMoreCards() {
+            var remainingCards = data.results.slice(loadedIndex, loadedIndex + visibleCards);
+            if (remainingCards.length > 0) {
+                remainingCards.forEach(function (element) {
+                    var card = new Trailer(element, { type: data.type });
+                    card.create();
+                    card.visible();
+                    card.onFocus = function (target, card_data, is_mouse) {
+                        last = target;
+                        active = items.indexOf(card);
+                        if (!is_mouse) scroll.update(items[active].render(), true);
+                        if (this.onFocus) this.onFocus(card_data);
+                    };
+                    scroll.append(card.render());
+                    items.push(card);
+                });
+                loadedIndex += remainingCards.length;
+                Lampa.Layer.update();
+            } else {
+                console.log('No more cards to load in this line');
+                Lampa.Activity.push({
+                    url: data.url,
+                    title: data.title,
+                    component: 'trailers_full',
+                    type: data.type,
+                    page: Math.floor(loadedIndex / visibleCards) + 2
+                });
+            }
+        }
 
         this.bind = function () {
             console.log('Binding data:', data.results);
-            data.results.slice(0, visibleCards).forEach(this.append.bind(this));
+            loadMoreCards();
             this.more();
             Lampa.Layer.update();
         };
@@ -465,33 +497,12 @@
             return '';
         };
 
-        this.append = function (element) {
-            var _this = this;
-            var card = new Trailer(element, { type: data.type });
-            card.create();
-            card.visible();
-            card.onFocus = function (target, card_data, is_mouse) {
-                last = target;
-                active = items.indexOf(card);
-                if (!is_mouse) scroll.update(items[active].render(), true);
-                if (_this.onFocus) _this.onFocus(card_data);
-            };
-            scroll.append(card.render());
-            items.push(card);
-        };
-
         this.more = function () {
             more = Lampa.Template.get('more');
             more.addClass('more--trailers');
             more.on('hover:enter', function () {
                 console.log('More card clicked:', data.title);
-                Lampa.Activity.push({
-                    url: data.url,
-                    title: data.title,
-                    component: 'trailers_full',
-                    type: data.type,
-                    page: 2
-                });
+                loadMoreCards();
             });
             more.on('hover:focus', function (e) {
                 last = e.target;
@@ -685,7 +696,8 @@
         var total_pages = 0;
         var last;
         var waitload = false;
-        var visibleCards = light ? 6 : 12; // Обмеження кількості видимих карток
+        var visibleCards = light ? 6 : 12; // Кількість видимих карток
+        var loadedIndex = 0; // Індекс останньої завантаженої картки
 
         this.create = function () {
             Api.full(object, this.build.bind(this), this.empty.bind(this));
@@ -733,19 +745,26 @@
 
         this.append = function (data, append) {
             var _this2 = this;
-            data.results.slice(0, visibleCards).forEach(function (element) {
-                var card = new Trailer(element, { type: object.type });
-                card.create();
-                card.visible();
-                card.onFocus = function (target, card_data) {
-                    last = target;
-                    scroll.update(card.render(), true);
-                    if (!light && !newlampa && scroll.isEnd()) _this2.next();
-                };
-                body.append(card.render());
-                items.push(card);
-                if (append) Lampa.Controller.collectionAppend(card.render());
-            });
+            var cardsToLoad = data.results.slice(loadedIndex, loadedIndex + visibleCards);
+            if (cardsToLoad.length > 0) {
+                cardsToLoad.forEach(function (element) {
+                    var card = new Trailer(element, { type: object.type });
+                    card.create();
+                    card.visible();
+                    card.onFocus = function (target, card_data) {
+                        last = target;
+                        scroll.update(card.render(), true);
+                        if (!light && !newlampa && scroll.isEnd()) _this2.next();
+                    };
+                    body.append(card.render());
+                    items.push(card);
+                    if (append) Lampa.Controller.collectionAppend(card.render());
+                });
+                loadedIndex += cardsToLoad.length;
+                Lampa.Layer.update();
+            } else {
+                console.log('No more cards to load on this page');
+            }
         };
 
         this.build = function (data) {
@@ -766,6 +785,12 @@
                         if (step > 0) Navigator.move('down');
                         else if (active > 0) Navigator.move('up');
                     };
+                    // Додаємо обробник скролінгу для лінивого завантаження
+                    scroll.render().on('scroll', function () {
+                        if (scroll.isEnd()) {
+                            _this3.next();
+                        }
+                    });
                 }
                 this.activity.loader(false);
                 this.activity.toggle();
