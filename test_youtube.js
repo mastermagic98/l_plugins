@@ -465,7 +465,6 @@
                     });
                 });
 
-                // Розміщуємо фільтр одразу лівіше від кнопки "Ще"
                 content.find('.items-line__title').after(moreButton);
                 moreButton.before(filter);
             } else {
@@ -588,28 +587,40 @@
         var moviesButton, seriesButton;
 
         function toggle$2(name, context) {
-            if (name === 'movies' && currentType !== 'movie') {
-                currentType = 'movie';
-                moviesButton.addClass('selector--active');
-                seriesButton.removeClass('selector--active');
-                items.forEach(function (item) { item.destroy(); });
-                items = [];
-                scroll.clear();
-                console.log('Loading Movies');
-                Api.main(context.build.bind(context), context.empty.bind(context), 'movie');
-                Lampa.Listener.send('toggle', { name: 'movies' });
-            } else if (name === 'series' && currentType !== 'series') {
-                currentType = 'series';
-                seriesButton.addClass('selector--active');
-                moviesButton.removeClass('selector--active');
-                items.forEach(function (item) { item.destroy(); });
-                items = [];
-                scroll.clear();
-                console.log('Loading Series');
-                Api.main(context.build.bind(context), context.empty.bind(context), 'tv');
-                Lampa.Listener.send('toggle', { name: 'series' });
+            try {
+                console.log('Toggle called:', name);
+                document.querySelectorAll('.buttons .selector').forEach(function (item) {
+                    item.classList.remove('focus', 'selector--active');
+                });
+
+                if (name === 'movies' && currentType !== 'movie') {
+                    currentType = 'movie';
+                    moviesButton.addClass('selector--active focus');
+                    seriesButton.removeClass('selector--active focus');
+                    items.forEach(function (item) { item.destroy(); });
+                    items = [];
+                    scroll.clear();
+                    console.log('Loading Movies');
+                    Api.main(context.build.bind(context), context.empty.bind(context), 'movie');
+                    Lampa.Listener.send('toggle', { name: 'movies' });
+                    Lampa.Controller.collectionFocus(moviesButton[0], html);
+                } else if (name === 'series' && currentType !== 'series') {
+                    currentType = 'series';
+                    seriesButton.addClass('selector--active focus');
+                    moviesButton.removeClass('selector--active focus');
+                    items.forEach(function (item) { item.destroy(); });
+                    items = [];
+                    scroll.clear();
+                    console.log('Loading Series');
+                    Api.main(context.build.bind(context), context.empty.bind(context), 'tv');
+                    Lampa.Listener.send('toggle', { name: 'series' });
+                    Lampa.Controller.collectionFocus(seriesButton[0], html);
+                }
+                Lampa.Layer.update();
+            } catch (e) {
+                console.error('Toggle error:', e);
+                Lampa.Noty.show('Error switching category: ' + e.message);
             }
-            Lampa.Layer.update();
         }
 
         function bindEvents(elem) {
@@ -706,12 +717,10 @@
                 toggle$2('series', this);
             }.bind(this));
 
-            // Застосовуємо bindEvents до кнопок
             bindEvents(moviesButton[0]);
             bindEvents(seriesButton[0]);
 
-            // Початково активна кнопка "Фільми"
-            moviesButton.addClass('selector--active');
+            moviesButton.addClass('selector--active focus');
             console.log('Initial load: Movies');
             Api.main(this.build.bind(this), this.empty.bind(this), 'movie');
 
@@ -1042,6 +1051,7 @@
             en: 'Popular Series'
         },
         trailers_upcoming_new: {
+ burnin: {
             ru: 'Ожидаемые новые сериалы',
             uk: 'Очікувані нові серіали',
             en: 'Upcoming New Series'
@@ -1211,6 +1221,13 @@
                 font-size: 1.4em;
                 padding: 0.5em 1em;
                 cursor: pointer;
+                display: inline-block;
+            }
+            .selector--active {
+                background: #4a4a4a;
+            }
+            .selector.focus {
+                background: #666;
             }
             @media screen and (max-width: 767px) {
                 .category-full--trailers .card {
