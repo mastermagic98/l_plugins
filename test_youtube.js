@@ -586,28 +586,30 @@
         var light = Lampa.Storage.field('light_version') && window.innerWidth >= 767;
         var currentType = 'movie';
         var moviesButton, seriesButton;
-        var controlls = {};
-        var active$1 = null;
-        var active_name = 'movies';
 
-        function toggle$2(name) {
-            if (active$1 && active$1.gone) active$1.gone(name);
-
-            if (controlls[name]) {
-                active$1 = controlls[name];
-                active_name = name;
-                Lampa.Activity.call(function () {
-                    Lampa.Activity.backward();
-                });
-                if (active$1.toggle) active$1.toggle();
-                if (active$1.update) active$1.update();
-                else {
-                    Lampa.Layer.update();
-                }
-                Lampa.Listener.send('toggle', {
-                    name: name
-                });
+        function toggle$2(name, context) {
+            if (name === 'movies' && currentType !== 'movie') {
+                currentType = 'movie';
+                moviesButton.addClass('selector--active');
+                seriesButton.removeClass('selector--active');
+                items.forEach(function (item) { item.destroy(); });
+                items = [];
+                scroll.clear();
+                console.log('Loading Movies');
+                Api.main(context.build.bind(context), context.empty.bind(context), 'movie');
+                Lampa.Listener.send('toggle', { name: 'movies' });
+            } else if (name === 'series' && currentType !== 'series') {
+                currentType = 'series';
+                seriesButton.addClass('selector--active');
+                moviesButton.removeClass('selector--active');
+                items.forEach(function (item) { item.destroy(); });
+                items = [];
+                scroll.clear();
+                console.log('Loading Series');
+                Api.main(context.build.bind(context), context.empty.bind(context), 'tv');
+                Lampa.Listener.send('toggle', { name: 'series' });
             }
+            Lampa.Layer.update();
         }
 
         function bindEvents(elem) {
@@ -656,7 +658,9 @@
                 };
 
                 elem.trigger_mouseenter = function () {
-                    clearAllFocus();
+                    document.querySelectorAll('.selector').forEach(function (item) {
+                        item.classList.remove('focus');
+                    });
                     elem.classList.add('focus');
                     Lampa.Utils.trigger(elem, 'hover:hover');
                 };
@@ -686,66 +690,21 @@
             }
         }
 
-        function clearAllFocus() {
-            var collection = Array.from(document.body.querySelectorAll('.selector'));
-            collection.forEach(function (item) {
-                return item.classList.remove('focus');
-            });
-        }
-
         this.create = function () {
-            var buttons = $('<div class="buttons" style="display: flex; gap: 10px;"></div>');
+            var buttons = $('<div class="buttons" style="display: flex; gap: 10px; margin-left: 30.4167px;"></div>');
             moviesButton = $('<div class="selector">' + Lampa.Lang.translate('trailers_movies') + '</div>');
             seriesButton = $('<div class="selector">' + Lampa.Lang.translate('trailers_series') + '</div>');
 
             buttons.append(moviesButton).append(seriesButton);
             html.append(buttons);
 
-            controlls.movies = {
-                toggle: function () {
-                    if (currentType !== 'movie') {
-                        currentType = 'movie';
-                        moviesButton.addClass('selector--active');
-                        seriesButton.removeClass('selector--active');
-                        items.forEach(function (item) { item.destroy(); });
-                        items = [];
-                        scroll.clear();
-                        console.log('Loading Movies');
-                        Api.main(this.build.bind(this), this.empty.bind(this), 'movie');
-                    }
-                }.bind(this),
-                update: function () {
-                    Lampa.Layer.update();
-                },
-                gone: function () {}
-            };
-
-            controlls.series = {
-                toggle: function () {
-                    if (currentType !== 'series') {
-                        currentType = 'series';
-                        seriesButton.addClass('selector--active');
-                        moviesButton.removeClass('selector--active');
-                        items.forEach(function (item) { item.destroy(); });
-                        items = [];
-                        scroll.clear();
-                        console.log('Loading Series');
-                        Api.main(this.build.bind(this), this.empty.bind(this), 'tv');
-                    }
-                }.bind(this),
-                update: function () {
-                    Lampa.Layer.update();
-                },
-                gone: function () {}
-            };
-
             moviesButton.on('hover:enter hover:click', function () {
-                toggle$2('movies');
-            });
+                toggle$2('movies', this);
+            }.bind(this));
 
             seriesButton.on('hover:enter hover:click', function () {
-                toggle$2('series');
-            });
+                toggle$2('series', this);
+            }.bind(this));
 
             // Застосовуємо bindEvents до кнопок
             bindEvents(moviesButton[0]);
@@ -1247,6 +1206,11 @@
                 margin-left: 10px;
                 cursor: pointer;
                 padding: 0.5em 1em;
+            }
+            .buttons .selector {
+                font-size: 1.4em;
+                padding: 0.5em 1em;
+                cursor: pointer;
             }
             @media screen and (max-width: 767px) {
                 .category-full--trailers .card {
