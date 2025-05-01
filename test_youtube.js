@@ -4,7 +4,6 @@
     var network = new Lampa.Reguest();
     var tmdb_api_key = Lampa.TMDB.key();
     var tmdb_base_url = 'https://api.themoviedb.org/3';
-    var videoCache = {};
 
     function getFormattedDate(daysAgo) {
         var today = new Date();
@@ -170,27 +169,10 @@
     function videos(card, oncomplite, onerror) {
         try {
             var type = card.name ? 'tv' : 'movie';
-            var cacheKey = `${type}_${card.id}`;
-            if (videoCache[cacheKey]) {
-                console.log('Using cached videos for:', cacheKey);
-                oncomplite(videoCache[cacheKey]);
-                return;
-            }
-
             var url = `${tmdb_base_url}/${type}/${card.id}/videos?api_key=${tmdb_api_key}`;
             var preferredLangs = getPreferredLanguage();
-            var maxAttempts = preferredLangs.length + 1;
-            var attemptCount = 0;
 
             function tryFetch(langIndex, noLang) {
-                if (attemptCount >= maxAttempts) {
-                    console.log('Max attempts reached for videos request:', url);
-                    videoCache[cacheKey] = { id: card.id, results: [] };
-                    onerror();
-                    return;
-                }
-
-                attemptCount++;
                 var fetchUrl = url;
                 if (!noLang && langIndex < preferredLangs.length) {
                     fetchUrl += `&language=${preferredLangs[langIndex]}`;
@@ -198,7 +180,6 @@
                 console.log('Videos request:', fetchUrl);
                 network.silent(fetchUrl, function (result) {
                     console.log('Videos result:', result);
-                    videoCache[cacheKey] = result;
                     var trailers = result.results ? result.results.filter(function (v) {
                         return v.type === 'Trailer';
                     }) : [];
@@ -214,7 +195,6 @@
                     }
                 }, function (error) {
                     console.log('Videos error:', error);
-                    videoCache[cacheKey] = { id: card.id, results: [] };
                     if (langIndex < preferredLangs.length - 1) {
                         tryFetch(langIndex + 1, false);
                     } else if (!noLang) {
@@ -228,7 +208,6 @@
             tryFetch(0, false);
         } catch (e) {
             console.error('Videos error:', e);
-            videoCache[cacheKey] = { id: card.id, results: [] };
             onerror();
             Lampa.Noty.show('Error loading videos: ' + e.message);
         }
@@ -236,7 +215,6 @@
 
     function clear() {
         network.clear();
-        videoCache = {};
     }
 
     var Api = {
@@ -254,7 +232,6 @@
             this.is_youtube = params.type === 'rating';
             this.rating = data.vote_average ? data.vote_average.toFixed(1) : '';
             this.trailer_lang = '';
-            this.trailer_loaded = false;
 
             if (!this.is_youtube) {
                 var create = ((data.release_date || data.first_air_date || '0000') + '').slice(0, 4);
@@ -290,8 +267,7 @@
 
         this.loadTrailerInfo = function () {
             var _this = this;
-            if (!this.is_youtube && !this.trailer_lang && !this.trailer_loaded) {
-                this.trailer_loaded = true;
+            if (!this.is_youtube && !this.trailer_lang) {
                 Api.videos(data, function (videos) {
                     var trailers = videos.results ? videos.results.filter(function (v) {
                         return v.type === 'Trailer';
@@ -335,10 +311,10 @@
         this.create = function () {
             var _this2 = this;
             this.build();
+            this.loadTrailerInfo();
             this.card.on('hover:focus', function (e, is_mouse) {
                 Lampa.Background.change(_this2.cardImgBackground(data));
                 _this2.onFocus(e.target, data, is_mouse);
-                _this2.loadTrailerInfo();
             }).on('hover:enter', function () {
                 if (_this2.is_youtube) {
                     _this2.play(data.id);
@@ -1314,13 +1290,10 @@
                     margin-left: 10px;
                     padding: 0.5em 1em;
                     cursor: pointer;
-                    color: #fff;
+                    font-size: inherit;
+                    color: inherit;
                     background: transparent;
                     border: none;
-                    font-size: 1em;
-                    line-height: normal;
-                    text-transform: uppercase;
-                    font-family: inherit;
                 }
                 .trailers-plugin-buttons .trailers-plugin-selector.selector--active {
                     background: #4a4a4a;
