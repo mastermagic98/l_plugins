@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.03 Виправлення _this is not defined, виправлення Lampa.Utils.debounce, обмеження запитів кнопки ЩЕ, ліниве завантаження, виправлення рекурсії
+    // Версія 1.04 Виправлення this is undefined в onFocus, виправлення _this is not defined, виправлення Lampa.Utils.debounce, обмеження запитів кнопки ЩЕ, ліниве завантаження, виправлення рекурсії
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -469,6 +469,7 @@
             if (isLoading) return;
             isLoading = true;
 
+            var _this = this; // Зберігаємо контекст Line
             var remainingCards = data.results.slice(loadedIndex, loadedIndex + visibleCards);
             if (remainingCards.length > 0) {
                 remainingCards.forEach(function (element) {
@@ -478,8 +479,8 @@
                     card.onFocus = function (target, card_data, is_mouse) {
                         last = target;
                         active = items.indexOf(card);
-                        if (this.onFocus) this.onFocus(card_data);
-                    }.bind(this); // Прив'язуємо контекст Line
+                        if (_this.onFocus) _this.onFocus(card_data);
+                    };
                     scroll.append(card.render());
                     items.push(card);
                 });
