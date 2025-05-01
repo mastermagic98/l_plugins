@@ -1,5 +1,6 @@
 (function () {
     'use strict';
+    // Версія 1.01 Обмеження запитів кнопки ЩЕ, ліниве завантаження при скролінгу, виправлення рекурсії
 
     var network = new Lampa.Reguest();
     var tmdb_api_key = Lampa.TMDB.key();
@@ -387,6 +388,7 @@
         var last;
         var visibleCards = light ? 6 : 10; // Кількість видимих карток
         var loadedIndex = 0; // Індекс останньої завантаженої картки
+        var isLoading = false; // Флаг для запобігання одночасного завантаження
 
         this.create = function () {
             scroll.render().find('.scroll__body').addClass('items-cards');
@@ -442,15 +444,19 @@
             this.bind();
             body.append(scroll.render());
 
-            // Додаємо обробник скролінгу для лінивого завантаження
-            scroll.render().on('scroll', function () {
-                if (scroll.isEnd()) {
+            // Додаємо дебонсинг для обробника скролінгу
+            var debouncedLoad = Lampa.Utils.debounce(function () {
+                if (scroll.isEnd() && !isLoading) {
                     loadMoreCards();
                 }
-            });
+            }, 200);
+            scroll.render().on('scroll', debouncedLoad);
         };
 
         function loadMoreCards() {
+            if (isLoading) return;
+            isLoading = true;
+
             var remainingCards = data.results.slice(loadedIndex, loadedIndex + visibleCards);
             if (remainingCards.length > 0) {
                 remainingCards.forEach(function (element) {
@@ -460,14 +466,14 @@
                     card.onFocus = function (target, card_data, is_mouse) {
                         last = target;
                         active = items.indexOf(card);
-                        if (!is_mouse) scroll.update(items[active].render(), true);
-                        if (this.onFocus) this.onFocus(card_data);
+                        if (_this.onFocus) _this.onFocus(card_data);
                     };
                     scroll.append(card.render());
                     items.push(card);
                 });
                 loadedIndex += remainingCards.length;
                 Lampa.Layer.update();
+                isLoading = false;
             } else {
                 console.log('No more cards to load in this line');
                 Lampa.Activity.push({
@@ -477,6 +483,7 @@
                     type: data.type,
                     page: Math.floor(loadedIndex / visibleCards) + 2
                 });
+                isLoading = false;
             }
         }
 
@@ -698,6 +705,7 @@
         var waitload = false;
         var visibleCards = light ? 6 : 12; // Кількість видимих карток
         var loadedIndex = 0; // Індекс останньої завантаженої картки
+        var isLoading = false; // Флаг для запобігання одночасного завантаження
 
         this.create = function () {
             Api.full(object, this.build.bind(this), this.empty.bind(this));
@@ -715,19 +723,23 @@
 
         this.next = function () {
             var _this = this;
-            if (waitload) return;
+            if (waitload || isLoading) return;
             if (object.page < 30 && object.page < total_pages) {
+                isLoading = true;
                 waitload = true;
                 object.page++;
                 Api.full(object, function (result) {
                     if (result.results && result.results.length) {
+                        loadedIndex = 0; // Скидаємо індекс для нової сторінки
                         _this.append(result, true);
                     } else {
                         Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
                     }
+                    isLoading = false;
                     waitload = false;
                 }, function () {
                     Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
+                    isLoading = false;
                     waitload = false;
                 });
             }
@@ -753,8 +765,7 @@
                     card.visible();
                     card.onFocus = function (target, card_data) {
                         last = target;
-                        scroll.update(card.render(), true);
-                        if (!light && !newlampa && scroll.isEnd()) _this2.next();
+                        if (_this2.onFocus) _this2.onFocus(card_data);
                     };
                     body.append(card.render());
                     items.push(card);
@@ -785,12 +796,13 @@
                         if (step > 0) Navigator.move('down');
                         else if (active > 0) Navigator.move('up');
                     };
-                    // Додаємо обробник скролінгу для лінивого завантаження
-                    scroll.render().on('scroll', function () {
-                        if (scroll.isEnd()) {
+                    // Додаємо дебонсинг для обробника скролінгу
+                    var debouncedLoad = Lampa.Utils.debounce(function () {
+                        if (scroll.isEnd() && !isLoading) {
                             _this3.next();
                         }
-                    });
+                    }, 200);
+                    scroll.render().on('scroll', debouncedLoad);
                 }
                 this.activity.loader(false);
                 this.activity.toggle();
