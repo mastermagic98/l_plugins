@@ -26,10 +26,10 @@
 
     function get(url, page, resolve, reject, useRegion, noLang) {
         var lang = Lampa.Storage.get('language', 'ru');
-        var full_url = `${tmdb_base_url}${url}&api_key=${tmdb_api_key}&page=${page}`;
+        var full_url = `${tmdb_base_url}${url}?api_key=${tmdb_api_key}&page=${page}`;
         if (!noLang) full_url += `&language=${lang}`;
         if (useRegion) full_url += `&region=${getRegion()}`;
-        console.log('API Request:', full_url);
+        console.log('Сформований URL:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
             resolve(result);
@@ -40,7 +40,7 @@
     }
 
     function main(oncomplite, onerror) {
-        var status = new Lampa.Status(6); // 6 категорій
+        var status = new Lampa.Status(6);
         status.onComplite = function () {
             var fulldata = [];
             var keys = ['popular_movies', 'in_theaters', 'upcoming_movies', 'popular_series', 'upcoming_seasons', 'upcoming_new_series'];
@@ -64,32 +64,26 @@
             status.append(name, json);
         };
 
-        // Популярні фільми
         get(`/trending/movie/day`, 1, function (json) {
             append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/trending/movie/day', json.results.length ? json : { results: [] });
         }, status.error.bind(status), false);
 
-        // В прокаті
         get(`/movie/now_playing`, 1, function (json) {
             append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/movie/now_playing', json.results.length ? json : { results: [] });
         }, status.error.bind(status), true);
 
-        // Очікувані фільми
         get(`/movie/upcoming`, 1, function (json) {
             append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/movie/upcoming', json.results.length ? json : { results: [] });
         }, status.error.bind(status), true);
 
-        // Популярні серіали
         get(`/trending/tv/day`, 1, function (json) {
             append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', '/trending/tv/day', json.results.length ? json : { results: [] });
         }, status.error.bind(status), false);
 
-        // Нові сезони серіалів
         get(`/tv/on_the_air`, 1, function (json) {
             append(Lampa.Lang.translate('trailers_upcoming_seasons'), 'upcoming_seasons', '/tv/on_the_air', json.results.length ? json : { results: [] });
         }, status.error.bind(status), true);
 
-        // Нові серіали
         get(`/tv/airing_today`, 1, function (json) {
             append(Lampa.Lang.translate('trailers_upcoming_new_series'), 'upcoming_new_series', '/tv/airing_today', json.results.length ? json : { results: [] });
         }, status.error.bind(status), true);
@@ -384,7 +378,6 @@
             scroll.render().find('.scroll__body').addClass('items-cards');
             content.find('.items-line__title').text(data.title);
 
-            // Додаємо кнопку "Фільтр" для всіх категорій
             filter = $('<div class="items-line__more selector"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg></div>');
             filter.css({
                 width: '36px',
@@ -425,7 +418,6 @@
                 });
             });
 
-            // Додаємо кнопку "Ще" після фільтра
             moreButton = $('<div class="items-line__more selector">' + Lampa.Lang.translate('trailers_more') + '</div>');
             moreButton.on('hover:enter', function () {
                 console.log('More button clicked:', data.title);
