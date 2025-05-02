@@ -5,161 +5,112 @@
     var tmdb_api_key = Lampa.TMDB.key();
     var tmdb_base_url = 'https://api.themoviedb.org/3';
 
-    function getFormattedDate(daysAgo, monthsAhead) {
+    // Функція для форматування дати у форматі YYYY-MM-DD
+    function getFormattedDate(daysAgo) {
         var today = new Date();
         if (daysAgo) today.setDate(today.getDate() - daysAgo);
-        if (monthsAhead) today.setMonth(today.getMonth() + monthsAhead);
         var year = today.getFullYear();
         var month = String(today.getMonth() + 1).padStart(2, '0');
         var day = String(today.getDate()).padStart(2, '0');
-        return year + '-' + month + '-' + day;
+        return `${year}-${month}-${day}`;
     }
 
-    function formatReleaseDate(dateStr) {
-        if (!dateStr) return 'N/A';
-        var date = new Date(dateStr);
-        var day = String(date.getDate()).padStart(2, '0');
-        var month = String(date.getMonth() + 1).padStart(2, '0');
-        var year = date.getFullYear();
-        return day + '.' + month + '.' + year;
-    }
-
+    // Визначення регіону залежно від мови
     function getRegion() {
         var lang = Lampa.Storage.get('language', 'ru');
-        return lang === 'uk' ? 'UA' : lang === 'ru' ? 'RU' : 'US';
+        return lang === 'uk' || lang === 'ua' ? 'UA' : lang === 'ru' ? 'RU' : 'US';
     }
 
+    // Основна функція для запитів до TMDB
     function get(url, page, resolve, reject, useRegion) {
         var lang = Lampa.Storage.get('language', 'ru');
-        var region = getRegion();
-        var full_url = tmdb_base_url + url + '&api_key=' + tmdb_api_key + '&language=' + lang + '&page=' + page;
-        if (useRegion) full_url += '&region=' + region;
+        var full_url = `${tmdb_base_url}${url}&api_key=${tmdb_api_key}&language=${lang}&page=${page}`;
+        if (useRegion) full_url += `&region=${getRegion()}`;
         console.log('API Request:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
-            if (result && result.results) {
-                resolve(result);
-            } else {
-                console.log('API Warning: No results in response', url);
-                resolve({ results: [] });
-            }
+            resolve(result);
         }, function (error) {
             console.log('API Error:', url, error);
-            Lampa.Noty.show('Не вдалося отримати дані для ' + url);
-            resolve({ results: [] });
+            reject(error);
         });
     }
 
-    function getSeasonInfo(card, callback) {
-        if (!card.name) return callback(null);
-        var url = tmdb_base_url + '/tv/' + card.id + '?api_key=' + tmdb_api_key;
-        network.silent(url, function (result) {
-            callback({
-                season: result.number_of_seasons,
-                episode: result.seasons && result.seasons.length ? result.seasons[result.seasons.length - 1].episode_count : 1
-            });
-        }, function () {
-            callback(null);
-        });
-    }
-
+    // Головна функція для отримання списків категорій
     function main(oncomplite, onerror) {
-        var status = new Lampa.Status(6);
+        var status = new Lampa.Status(6); // Шість категорій
 
         status.onComplite = function () {
             var fulldata = [];
-            ['popular_movies', 'popular_series', 'now_playing', 'upcoming', 'new_series', 'new_seasons'].forEach(function (key) {
-                if (status.data[key] && status.data[key].results && status.data[key].results.length) {
+            ['popular_movies', 'in_theaters', 'upcoming_movies', 'popular_series', 'new_seasons', 'upcoming_seasons'].forEach(function (key) {
+                if (status.data[key] && status.data[key].results.length) {
                     fulldata.push(status.data[key]);
-                } else {
-                    console.log('No data for category:', key, status.data[key]);
                 }
             });
             console.log('Main completed:', fulldata);
             if (fulldata.length) oncomplite(fulldata);
-            else {
-                console.log('No data to display');
-                onerror();
-            }
+            else onerror();
         };
 
         var append = function (title, name, url, json) {
-            console.log('Appending data for:', name, 'Results:', json.results.length);
             json.title = title;
             json.type = name;
             json.url = url;
             status.append(name, json);
         };
 
-        var popularMoviesUrl = '/discover/movie?sort_by=vote_average.desc&vote_count.gte=1000&release_date.gte=2005-01-01';
+        var popularFilter = Lampa.Storage.get('trailers_popular_filter', 'vote_average.desc');
+        var popularMoviesUrl = `/discover/movie?sort_by=${popularFilter}`;
+
+        // Запити для категорій
         get(popularMoviesUrl, 1, function (json) {
-            append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', popularMoviesUrl, json);
+            append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', popularMoviesUrl, json.results.length ? json : { results: [] });
         }, function () {
-            get('/discover/movie?sort_by=popularity.desc', 1, function (json) {
-                append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/discover/movie?sort_by=popularity.desc', json);
-            }, status.error.bind(status));
-        }, false);
-
-        var popularSeriesUrl = '/discover/tv?sort_by=vote_average.desc&vote_count.gte=1000&first_air_date.gte=2005-01-01';
-        get(popularSeriesUrl, 1, function (json) {
-            append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', popularSeriesUrl, json);
-        }, function () {
-            get('/discover/tv?sort_by=popularity.desc', 1, function (json) {
-                append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', '/discover/tv?sort_by=popularity.desc', json);
-            }, status.error.bind(status));
-        }, false);
-
-        get('/discover/movie?sort_by=release_date.desc&release_date.gte=' + getFormattedDate(90), 1, function (json) {
-            append(Lampa.Lang.translate('trailers_now_playing'), 'now_playing', '/discover/movie?sort_by=release_date.desc&release_date.gte=' + getFormattedDate(90), json);
-        }, function () {
-            get('/discover/movie?sort_by=popularity.desc', 1, function (json) {
-                append(Lampa.Lang.translate('trailers_now_playing'), 'now_playing', '/discover/movie?sort_by=popularity.desc', json);
+            get('/discover/movie?sort_by=vote_average.desc', 1, function (json) {
+                append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/discover/movie?sort_by=vote_average.desc', json);
             }, status.error.bind(status));
         }, true);
 
-        get('/movie/upcoming?release_date.gte=' + getFormattedDate() + '&release_date.lte=' + getFormattedDate(0, 12), 1, function (json) {
-            append(Lampa.Lang.translate('trailers_upcoming'), 'upcoming', '/movie/upcoming?release_date.gte=' + getFormattedDate() + '&release_date.lte=' + getFormattedDate(0, 12), json);
-        }, function () {
-            get('/discover/movie?sort_by=popularity.desc', 1, function (json) {
-                append(Lampa.Lang.translate('trailers_upcoming'), 'upcoming', '/discover/movie?sort_by=popularity.desc', json);
-            }, status.error.bind(status));
-        }, true);
+        get(`/discover/movie?sort_by=vote_average.desc&release_date.gte=${getFormattedDate(90)}`, 1, function (json) {
+            append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', `/discover/movie?sort_by=vote_average.desc&release_date.gte=${getFormattedDate(90)}`, json.results.length ? json : { results: [] });
+        }, status.error.bind(status), true);
 
-        get('/tv/on_the_air?first_air_date.gte=' + getFormattedDate(90), 1, function (json) {
-            append(Lampa.Lang.translate('trailers_new_series'), 'new_series', '/tv/on_the_air?first_air_date.gte=' + getFormattedDate(90), json);
-        }, function () {
-            get('/discover/tv?sort_by=popularity.desc', 1, function (json) {
-                append(Lampa.Lang.translate('trailers_new_series'), 'new_series', '/discover/tv?sort_by=popularity.desc', json);
-            }, status.error.bind(status));
-        }, true);
+        get(`/movie/upcoming?sort_by=release_date.asc&release_date.gte=${getFormattedDate(0)}&release_date.lte=${getFormattedDate(-365)}`, 1, function (json) {
+            append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', `/movie/upcoming?sort_by=release_date.asc&release_date.gte=${getFormattedDate(0)}&release_date.lte=${getFormattedDate(-365)}`, json.results.length ? json : { results: [] });
+        }, status.error.bind(status), true);
 
-        get('/tv/airing_today?first_air_date.gte=' + getFormattedDate(90), 1, function (json) {
-            append(Lampa.Lang.translate('trailers_new_seasons'), 'new_seasons', '/tv/airing_today?first_air_date.gte=' + getFormattedDate(90), json);
-        }, function () {
-            get('/discover/tv?sort_by=popularity.desc', 1, function (json) {
-                append(Lampa.Lang.translate('trailers_new_seasons'), 'new_seasons', '/discover/tv?sort_by=popularity.desc', json);
-            }, status.error.bind(status));
-        }, true);
+        get(`/discover/tv?sort_by=vote_average.desc`, 1, function (json) {
+            append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', `/discover/tv?sort_by=vote_average.desc`, json.results.length ? json : { results: [] });
+        }, status.error.bind(status), true);
+
+        get(`/discover/tv?sort_by=first_air_date.desc&first_air_date.gte=${getFormattedDate(365)}`, 1, function (json) {
+            append(Lampa.Lang.translate('trailers_new_seasons'), 'new_seasons', `/discover/tv?sort_by=first_air_date.desc&first_air_date.gte=${getFormattedDate(365)}`, json.results.length ? json : { results: [] });
+        }, status.error.bind(status), true);
+
+        get(`/discover/tv?sort_by=first_air_date.asc&first_air_date.gte=${getFormattedDate(0)}&first_air_date.lte=${getFormattedDate(-365)}`, 1, function (json) {
+            append(Lampa.Lang.translate('trailers_upcoming_seasons'), 'upcoming_seasons', `/discover/tv?sort_by=first_air_date.asc&first_air_date.gte=${getFormattedDate(0)}&first_air_date.lte=${getFormattedDate(-365)}`, json.results.length ? json : { results: [] });
+        }, status.error.bind(status), true);
     }
 
+    // Функція для отримання повного списку для пагінації
     function full(params, oncomplite, onerror) {
         get(params.url, params.page, function (result) {
-            console.log('Full results for:', params.url, result.results ? result.results.length : 0);
             if (result && result.results && result.results.length) {
                 oncomplite(result);
             } else {
                 console.log('Full: No results for', params.url);
                 onerror();
             }
-        }, function () {
-            console.log('Full error:', params.url);
+        }, function (error) {
+            console.log('Full error:', params.url, error);
             onerror();
-        }, params.type === 'now_playing' || params.type === 'upcoming' || params.type === 'new_series' || params.type === 'new_seasons');
+        }, ['popular_movies', 'in_theaters', 'popular_series', 'new_seasons'].includes(params.type));
     }
 
+    // Функція для отримання трейлерів із пріоритетом мови
     function videos(card, oncomplite, onerror) {
         var type = card.name ? 'tv' : 'movie';
-        var url = tmdb_base_url + '/' + type + '/' + card.id + '/videos?api_key=' + tmdb_api_key;
+        var url = `${tmdb_base_url}/${type}/${card.id}/videos?api_key=${tmdb_api_key}`;
         console.log('Videos request:', url);
         network.silent(url, function (result) {
             console.log('Videos result:', result);
@@ -190,33 +141,12 @@
 
             if (!this.is_youtube) {
                 var create = ((data.release_date || data.first_air_date || '0000') + '').slice(0, 4);
-                var title = data.title || data.name;
-                this.card.find('.card__title').text(title);
+                this.card.find('.card__title').text(data.title || data.name);
                 this.card.find('.card__details').text(create + ' - ' + (data.original_title || data.original_name));
-                this.card.find('.card__view').append('<div class="card__language"></div>');
-                
-                var _this = this;
-                if (params.type === 'popular_series' || params.type === 'new_series' || params.type === 'new_seasons') {
-                    getSeasonInfo(data, function (info) {
-                        if (info) {
-                            var seasonText = Lampa.Lang.translate('season') + ' ' + info.season;
-                            if (params.type === 'popular_series') {
-                                seasonText += ', ' + info.episode + ' ' + Lampa.Lang.translate('episode');
-                            }
-                            _this.card.find('.card__view').append('<div class="card__season">' + seasonText + '</div>');
-                        }
-                        appendRatingOrDate();
-                    });
-                } else {
-                    appendRatingOrDate();
-                }
-
-                function appendRatingOrDate() {
-                    if (params.type === 'upcoming' && data.release_date) {
-                        _this.card.find('.card__view').append('<div class="card__release">' + formatReleaseDate(data.release_date) + '</div>');
-                    }
-                    var ratingOrDate = data.vote_average ? data.vote_average.toFixed(1) : (params.type === 'upcoming' && data.release_date ? 'N/A' : 'N/A');
-                    _this.card.find('.card__view').append('<div class="card__rating">' + ratingOrDate + '</div>');
+                // Додаємо рейтинг для вказаних категорій
+                if (['popular_movies', 'in_theaters', 'popular_series', 'new_seasons'].includes(params.type)) {
+                    var rating = data.vote_average ? data.vote_average.toFixed(1) : 'N/A';
+                    this.card.find('.card__promo').append(`<div class="card__rating">${rating}</div>`);
                 }
             } else {
                 this.card.find('.card__title').text(data.name);
@@ -227,9 +157,9 @@
         this.cardImgBackground = function (card_data) {
             if (Lampa.Storage.field('background')) {
                 if (Lampa.Storage.get('background_type', 'complex') === 'poster' && window.innerWidth > 790) {
-                    return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'original') : this.is_youtube ? 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg' : '';
+                    return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'original') : this.is_youtube ? `https://img.youtube.com/vi/${data.id}/hqdefault.jpg` : '';
                 }
-                return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'w500') : this.is_youtube ? 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg' : '';
+                return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'w500') : this.is_youtube ? `https://img.youtube.com/vi/${data.id}/hqdefault.jpg` : '';
             }
             return '';
         };
@@ -238,15 +168,13 @@
             var _this = this;
             this.img.onload = function () {
                 _this.card.addClass('card--loaded');
-                console.log('Image loaded for card:', data.title || data.name);
             };
             this.img.onerror = function () {
                 _this.img.src = './img/img_broken.svg';
-                console.log('Image failed to load for card:', data.title || data.name);
             };
         };
 
-        this.play = function (id, language) {
+        this.play = function (id) {
             if (!id) {
                 Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
                 return;
@@ -257,17 +185,14 @@
                     title: Lampa.Utils.shortText(data.title || data.name, 50),
                     id: id,
                     youtube: true,
-                    url: 'https://www.youtube.com/watch?v=' + id,
-                    icon: '<img class="size-youtube" src="https://img.youtube.com/vi/' + id + '/default.jpg" />',
+                    url: `https://www.youtube.com/watch?v=${id}`,
+                    icon: `<img class="size-youtube" src="https://img.youtube.com/vi/${id}/default.jpg" />`,
                     template: 'selectbox_icon'
                 };
                 Lampa.Player.play(item);
                 Lampa.Player.playlist([item]);
             } else {
                 Lampa.YouTube.play(id);
-            }
-            if (!this.is_youtube) {
-                this.card.find('.card__language').text(language.toUpperCase());
             }
         };
 
@@ -279,7 +204,7 @@
                 _this2.onFocus(e.target, data, is_mouse);
             }).on('hover:enter', function () {
                 if (_this2.is_youtube) {
-                    _this2.play(data.id, 'EN');
+                    _this2.play(data.id);
                 } else {
                     Api.videos(data, function (videos) {
                         var userLang = Lampa.Storage.get('language', 'ru');
@@ -294,12 +219,11 @@
                             return v.iso_639_1 === 'en';
                         }) || trailers[0];
 
-                        var language = video ? (video.iso_639_1 === 'ua' ? 'UK' : video.iso_639_1.toUpperCase()) : 'EN';
                         if (video && video.key) {
                             if (userLang === 'uk' && video.iso_639_1 !== 'uk' && video.iso_639_1 !== 'ua') {
                                 Lampa.Noty.show(Lampa.Lang.translate('trailers_no_uk_trailer'));
                             }
-                            _this2.play(video.key, language);
+                            _this2.play(video.key);
                         } else {
                             Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
                         }
@@ -353,7 +277,7 @@
                                         source: 'tmdb'
                                     });
                                 } else {
-                                    _this2.play(item.id, item.subtitle === 'Local' ? userLang.toUpperCase() : item.subtitle.toUpperCase());
+                                    _this2.play(item.id);
                                 }
                             },
                             onBack: function () {
@@ -381,7 +305,7 @@
         this.visible = function () {
             if (this.visibled) return;
             if (params.type === 'rating') {
-                this.img.src = 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg';
+                this.img.src = `https://img.youtube.com/vi/${data.id}/hqdefault.jpg`;
             } else if (data.backdrop_path) {
                 this.img.src = Lampa.Api.img(data.backdrop_path, 'w500');
             } else if (data.poster_path) {
@@ -390,7 +314,6 @@
                 this.img.src = './img/img_broken.svg';
             }
             this.visibled = true;
-            console.log('Card made visible:', data.title || data.name);
         };
 
         this.render = function () {
@@ -401,6 +324,8 @@
     function Line(data) {
         var content = Lampa.Template.get('items_line', { title: data.title });
         var body = content.find('.items-line__body');
+        var scroll = new Lampa.Scroll({ horizontal: true, step: 600 });
+        var light = Lampa.Storage.field('light_version') && window.innerWidth >= 767;
         var items = [];
         var active = 0;
         var more;
@@ -408,17 +333,16 @@
         var last;
 
         this.create = function () {
-            console.log('Creating line for:', data.title, 'Results:', data.results.length);
+            scroll.render().find('.scroll__body').addClass('items-cards');
             content.find('.items-line__title').text(data.title);
 
+            // Додаємо кнопку фільтра для категорії "Популярні фільми"
             if (data.type === 'popular_movies') {
                 filter = $('<div class="items-line__filter selector"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg></div>');
                 filter.on('hover:enter', function () {
                     var items = [
-                        { title: Lampa.Lang.translate('trailers_filter_today'), value: 'day', selected: Lampa.Storage.get('trailers_popular_filter', 'day') === 'day' },
-                        { title: Lampa.Lang.translate('trailers_filter_week'), value: 'week', selected: Lampa.Storage.get('trailers_popular_filter', 'day') === 'week' },
-                        { title: Lampa.Lang.translate('trailers_filter_month'), value: 'month', selected: Lampa.Storage.get('trailers_popular_filter', 'day') === 'month' },
-                        { title: Lampa.Lang.translate('trailers_filter_year'), value: 'year', selected: Lampa.Storage.get('trailers_popular_filter', 'day') === 'year' }
+                        { title: Lampa.Lang.translate('trailers_filter_rating'), value: 'vote_average.desc', selected: Lampa.Storage.get('trailers_popular_filter', 'vote_average.desc') === 'vote_average.desc' },
+                        { title: Lampa.Lang.translate('trailers_filter_popularity'), value: 'popularity.desc', selected: Lampa.Storage.get('trailers_popular_filter', 'vote_average.desc') === 'popularity.desc' }
                     ];
                     Lampa.Select.show({
                         title: Lampa.Lang.translate('trailers_filter'),
@@ -426,10 +350,7 @@
                         onSelect: function (item) {
                             Lampa.Storage.set('trailers_popular_filter', item.value);
                             Lampa.Activity.push({
-                                url: item.value === 'day' ? '/trending/movie/day' :
-                                     item.value === 'week' ? '/trending/movie/week' :
-                                     item.value === 'month' ? '/discover/movie?sort_by=popularity.desc&release_date.gte=' + getFormattedDate(30) :
-                                     '/discover/movie?sort_by=popularity.desc&release_date.gte=' + getFormattedDate(365),
+                                url: `/discover/movie?sort_by=${item.value}`,
                                 title: Lampa.Lang.translate('trailers_popular_movies'),
                                 component: 'trailers_main',
                                 type: 'popular_movies',
@@ -445,23 +366,13 @@
             }
 
             this.bind();
-            body.append($('<div class="items-cards"></div>'));
-            console.log('Items-cards container appended to:', body[0]);
-            content.on('mouseover', function () {
-                Lampa.Controller.enable('items_line');
-            });
+            body.append(scroll.render());
         };
 
         this.bind = function () {
-            console.log('Binding items for:', data.title);
-            if (data.results && data.results.length) {
-                data.results.forEach(this.append.bind(this));
-            } else {
-                console.log('No results to bind for:', data.title);
-            }
+            data.results.slice(0, light ? 6 : data.results.length).forEach(this.append.bind(this));
             this.more();
             Lampa.Layer.update();
-            console.log('Lampa.Layer.update called for:', data.title);
         };
 
         this.cardImgBackground = function (card_data) {
@@ -476,24 +387,22 @@
 
         this.append = function (element) {
             var _this = this;
-            console.log('Appending card:', element.title || element.name);
             var card = new Trailer(element, { type: data.type });
             card.create();
             card.visible();
             card.onFocus = function (target, card_data, is_mouse) {
                 last = target;
                 active = items.indexOf(card);
+                if (!is_mouse) scroll.update(items[active].render(), true);
                 if (_this.onFocus) _this.onFocus(card_data);
             };
-            body.find('.items-cards').append(card.render());
-            console.log('Card appended to items-cards:', element.title || element.name);
+            scroll.append(card.render());
             items.push(card);
         };
 
         this.more = function () {
-            var _this = this;
             more = Lampa.Template.get('more');
-            more.addClass('more--trailers selector');
+            more.addClass('more--trailers');
             more.on('hover:enter', function () {
                 Lampa.Activity.push({
                     url: data.url,
@@ -505,40 +414,26 @@
             });
             more.on('hover:focus', function (e) {
                 last = e.target;
-                active = items.length;
+                scroll.update(more, true);
             });
-            body.find('.items-cards').append(more);
-            console.log('More button appended to items-cards');
-            items.push({ render: function () { return more; } });
+            scroll.append(more);
         };
 
         this.toggle = function () {
             var _this2 = this;
             Lampa.Controller.add('items_line', {
                 toggle: function () {
-                    Lampa.Controller.collectionSet(body);
-                    Lampa.Controller.collectionFocus(last || (items.length ? items[0].render() : false), body);
-                    console.log('Controller toggled for items_line, focused:', last ? last.outerHTML : 'none');
+                    Lampa.Controller.collectionSet(scroll.render());
+                    Lampa.Controller.collectionFocus(items.length ? last : false, scroll.render());
                 },
                 right: function () {
-                    if (active < items.length - 1) {
-                        active++;
-                        Lampa.Controller.collectionFocus(items[active].render(), body);
-                    } else {
-                        Navigator.move('right');
-                    }
+                    Navigator.move('right');
+                    Lampa.Controller.enable('items_line');
                 },
                 left: function () {
-                    if (active > 0) {
-                        active--;
-                        Lampa.Controller.collectionFocus(items[active].render(), body);
-                    } else if (Navigator.canmove('left')) {
-                        Navigator.move('left');
-                    } else if (_this2.onLeft) {
-                        _this2.onLeft();
-                    } else {
-                        Lampa.Controller.toggle('menu');
-                    }
+                    if (Navigator.canmove('left')) Navigator.move('left');
+                    else if (_this2.onLeft) _this2.onLeft();
+                    else Lampa.Controller.toggle('menu');
                 },
                 down: this.onDown,
                 up: this.onUp,
@@ -546,7 +441,6 @@
                 back: this.onBack
             });
             Lampa.Controller.toggle('items_line');
-            console.log('Lampa.Controller toggled for items_line');
         };
 
         this.render = function () {
@@ -555,6 +449,7 @@
 
         this.destroy = function () {
             Lampa.Arrays.destroy(items);
+            scroll.destroy();
             content.remove();
             more && more.remove();
             filter && filter.remove();
@@ -563,18 +458,18 @@
     }
 
     function Component$1(object) {
+        var scroll = new Lampa.Scroll({ mask: true, over: true, scroll_by_item: true });
         var items = [];
         var html = $('<div></div>');
         var active = 0;
+        var light = Lampa.Storage.field('light_version') && window.innerWidth >= 767;
 
         this.create = function () {
-            console.log('Creating trailers_main component');
             Api.main(this.build.bind(this), this.empty.bind(this));
             return this.render();
         };
 
         this.empty = function () {
-            console.log('Displaying empty state');
             var empty = new Lampa.Empty();
             html.append(empty.render());
             this.start = empty.start;
@@ -584,16 +479,20 @@
 
         this.build = function (data) {
             var _this = this;
-            console.log('Building main component with data:', data.length, 'categories');
-            html.append($('<div class="content-container"></div>'));
+            scroll.minus();
+            html.append(scroll.render());
             data.forEach(this.append.bind(this));
+            if (light) {
+                scroll.onWheel = function (step) {
+                    if (step > 0) _this.down();
+                    else _this.up();
+                };
+            }
             this.activity.loader(false);
             this.activity.toggle();
-            console.log('Main component built, content-container appended');
         };
 
         this.append = function (element) {
-            console.log('Appending category:', element.title);
             var item = new Line(element);
             item.create();
             item.onDown = this.down.bind(this);
@@ -602,8 +501,12 @@
             item.onToggle = function () {
                 active = items.indexOf(item);
             };
-            html.find('.content-container').append(item.render());
-            console.log('Category appended to content-container:', element.title);
+            item.wrap = $('<div></div>');
+            if (light) {
+                scroll.append(item.wrap);
+            } else {
+                scroll.append(item.render());
+            }
             items.push(item);
         };
 
@@ -611,47 +514,46 @@
             Lampa.Activity.backward();
         };
 
+        this.detach = function () {
+            if (light) {
+                items.forEach(function (item) {
+                    item.render().detach();
+                });
+                items.slice(active, active + 2).forEach(function (item) {
+                    item.wrap.append(item.render());
+                });
+            }
+        };
+
         this.down = function () {
             active++;
             active = Math.min(active, items.length - 1);
+            this.detach();
             items[active].toggle();
-            if (items[active].items && items[active].items.length) {
-                items[active].active = 0;
-                Lampa.Controller.collectionFocus(items[active].items[0].render(), items[active].body);
-            }
+            scroll.update(items[active].render());
         };
 
         this.up = function () {
             active--;
             if (active < 0) {
                 active = 0;
+                this.detach();
                 Lampa.Controller.toggle('head');
             } else {
+                this.detach();
                 items[active].toggle();
-                if (items[active].items && items[active].items.length) {
-                    items[active].active = 0;
-                    Lampa.Controller.collectionFocus(items[active].items[0].render(), items[active].body);
-                }
             }
+            scroll.update(items[active].render());
         };
 
         this.start = function () {
-            console.log('Starting trailers_main component');
-            if (Lampa.Activity.active().activity !== this.activity) {
-                console.log('Activity mismatch, skipping start');
-                return;
-            }
+            var _this2 = this;
+            if (Lampa.Activity.active().activity !== this.activity) return;
             Lampa.Controller.add('content', {
                 toggle: function () {
                     if (items.length) {
+                        _this2.detach();
                         items[active].toggle();
-                        if (items[active].items && items[active].items.length) {
-                            items[active].active = 0;
-                            Lampa.Controller.collectionFocus(items[active].items[0].render(), items[active].body);
-                        }
-                        console.log('Content toggled, active item:', items[active].render()[0].outerHTML);
-                    } else {
-                        console.log('No items to toggle');
                     }
                 },
                 left: function () {
@@ -659,7 +561,7 @@
                     else Lampa.Controller.toggle('menu');
                 },
                 right: function () {
-                    if (Navigator.canmove('right')) Navigator.move('right');
+                    Navigator.move('right');
                 },
                 up: function () {
                     if (Navigator.canmove('up')) Navigator.move('up');
@@ -671,7 +573,6 @@
                 back: this.back
             });
             Lampa.Controller.toggle('content');
-            console.log('Lampa.Controller toggled for content');
         };
 
         this.pause = function () {};
@@ -682,30 +583,31 @@
 
         this.destroy = function () {
             Lampa.Arrays.destroy(items);
+            scroll.destroy();
             html.remove();
             items = [];
         };
     }
 
     function Component(object) {
+        var scroll = new Lampa.Scroll({ mask: true, over: true, step: 250, end_ratio: 2 });
         var items = [];
         var html = $('<div></div>');
         var body = $('<div class="category-full category-full--trailers"></div>');
         var newlampa = Lampa.Manifest.app_digital >= 166;
+        var light = newlampa ? false : Lampa.Storage.field('light_version') && window.innerWidth >= 767;
         var total_pages = 0;
         var last;
         var waitload = false;
 
         this.create = function () {
-            console.log('Creating trailers_full component');
             Api.full(object, this.build.bind(this), this.empty.bind(this));
             return this.render();
         };
 
         this.empty = function () {
-            console.log('Displaying empty state for full component');
             var empty = new Lampa.Empty();
-            body.append(empty.render());
+            scroll.append(empty.render());
             this.start = empty.start;
             this.activity.loader(false);
             this.activity.toggle();
@@ -743,43 +645,43 @@
 
         this.append = function (data, append) {
             var _this2 = this;
-            console.log('Appending full results:', data.results ? data.results.length : 0);
-            if (data.results && data.results.length) {
-                data.results.forEach(function (element) {
-                    var card = new Trailer(element, { type: object.type });
-                    card.create();
-                    card.visible();
-                    card.onFocus = function (target, card_data) {
-                        last = target;
-                        if (!newlampa && _this2.body.children().length - 1 === _this2.items.indexOf(card)) _this2.next();
-                    };
-                    body.append(card.render());
-                    console.log('Card appended to category-full:', element.title || element.name);
-                    items.push(card);
-                    if (append) Lampa.Controller.collectionAppend(card.render());
-                });
-            } else {
-                console.log('No results to append for full component');
-            }
+            data.results.forEach(function (element) {
+                var card = new Trailer(element, { type: object.type });
+                card.create();
+                card.visible();
+                card.onFocus = function (target, card_data) {
+                    last = target;
+                    scroll.update(card.render(), true);
+                    if (!light && !newlampa && scroll.isEnd()) _this2.next();
+                };
+                body.append(card.render());
+                items.push(card);
+                if (append) Lampa.Controller.collectionAppend(card.render());
+            });
         };
 
         this.build = function (data) {
             var _this3 = this;
-            console.log('Building full component with:', data.results ? data.results.length : 0, 'results');
             if (data.results && data.results.length) {
                 total_pages = data.total_pages || 1;
-                html.append(body);
+                scroll.minus();
+                html.append(scroll.render());
                 this.append(data);
+                if (light && items.length) this.back();
                 if (total_pages > data.page && items.length) this.more();
+                scroll.append(body);
                 if (newlampa) {
-                    this.next.bind(this);
+                    scroll.onEnd = this.next.bind(this);
+                    scroll.onWheel = function ( tarkoit: step) {
+                        if (!Lampa.Controller.own(_this3)) _this3.start();
+                        if (step > 0) Navigator.move('down');
+                        else if (active > 0) Navigator.move('up');
+                    };
                 }
                 this.activity.loader(false);
                 this.activity.toggle();
-                console.log('Full component built, category-full appended');
             } else {
-                console.log('No results for full component, showing empty state');
-                html.append(body);
+                html.append(scroll.render());
                 this.empty();
             }
         };
@@ -800,7 +702,6 @@
                 });
             });
             body.append(more);
-            console.log('More button appended to category-full');
         };
 
         this.back = function () {
@@ -814,28 +715,23 @@
                 }
             });
             body.prepend(more);
-            console.log('Back button prepended to category-full');
         };
 
         this.start = function () {
-            console.log('Starting trailers_full component');
-            if (Lampa.Activity.active().activity !== this.activity) {
-                console.log('Activity mismatch, skipping start');
-                return;
-            }
+            if (Lampa.Activity.active().activity !== this.activity) return;
             Lampa.Controller.add('content', {
                 link: this,
                 toggle: function () {
-                    Lampa.Controller.collectionSet(body);
-                    Lampa.Controller.collectionFocus(last || false, body);
-                    console.log('Content toggled for trailers_full, focused:', last ? last.outerHTML : 'none');
+                    Lampa.Controller.collectionSet(scroll.render());
+                    Lampa.Controller.collectionFocus(last || false, scroll.render());
                 },
                 left: function () {
                     if (Navigator.canmove('left')) Navigator.move('left');
                     else Lampa.Controller.toggle('menu');
                 },
+                right')
                 right: function () {
-                    if (Navigator.canmove('right')) Navigator.move('right');
+                    Navigator.move('right');
                 },
                 up: function () {
                     if (Navigator.canmove('up')) Navigator.move('up');
@@ -849,7 +745,6 @@
                 }
             });
             Lampa.Controller.toggle('content');
-            console.log('Lampa.Controller toggled for trailers_full');
         };
 
         this.pause = function () {};
@@ -860,6 +755,7 @@
 
         this.destroy = function () {
             Lampa.Arrays.destroy(items);
+            scroll.destroy();
             html.remove();
             body.remove();
             items = [];
@@ -872,30 +768,30 @@
             uk: 'Популярні фільми',
             en: 'Popular Movies'
         },
+        trailers_in_theaters: {
+            ru: 'В прокате',
+            uk: 'У прокаті',
+            en: 'In Theaters'
+        },
+        trailers_upcoming_movies: {
+            ru: 'Ожидаемые',
+            uk: 'Очікувані',
+            en: 'Upcoming'
+        },
         trailers_popular_series: {
             ru: 'Популярные сериалы',
             uk: 'Популярні серіали',
             en: 'Popular Series'
         },
-        trailers_now_playing: {
-            ru: 'В прокате фильмы',
-            uk: 'В прокаті фільми',
-            en: 'Now Playing Movies'
-        },
-        trailers_upcoming: {
-            ru: 'Ожидаемые фильмы',
-            uk: 'Очікувані фільми',
-            en: 'Upcoming Movies'
-        },
-        trailers_new_series: {
-            ru: 'Новые сериалы',
-            uk: 'Нові серіали',
-            en: 'New Series'
-        },
         trailers_new_seasons: {
-            ru: 'Новые сезоны',
-            uk: 'Нові сезони',
+            ru: 'Новые телесезоны',
+            uk: 'Нові телесезони',
             en: 'New Seasons'
+        },
+        trailers_upcoming_seasons: {
+            ru: 'Ожидаемые телесезоны',
+            uk: 'Очікувані телесезони',
+            en: 'Upcoming Seasons'
         },
         trailers_no_trailers: {
             ru: 'Нет трейлеров',
@@ -922,35 +818,15 @@
             uk: 'Фільтр',
             en: 'Filter'
         },
-        trailers_filter_today: {
-            ru: 'Сегодня',
-            uk: 'Сьогодні',
-            en: 'Today'
+        trailers_filter_rating: {
+            ru: 'По рейтингу',
+            uk: 'За рейтингом',
+            en: 'By Rating'
         },
-        trailers_filter_week: {
-            ru: 'Неделя',
-            uk: 'Тиждень',
-            en: 'Week'
-        },
-        trailers_filter_month: {
-            ru: 'Месяц',
-            uk: 'Місяць',
-            en: 'Month'
-        },
-        trailers_filter_year: {
-            ru: 'Год',
-            uk: 'Рік',
-            en: 'Year'
-        },
-        season: {
-            ru: 'Сезон',
-            uk: 'Сезон',
-            en: 'Season'
-        },
-        episode: {
-            ru: 'серия',
-            uk: 'серія',
-            en: 'episode'
+        trailers_filter_popularity: {
+            ru: 'По популярности',
+            uk: 'За популярністю',
+            en: 'By Popularity'
         }
     });
 
@@ -958,146 +834,102 @@
         window.plugin_trailers_ready = true;
         Lampa.Component.add('trailers_main', Component$1);
         Lampa.Component.add('trailers_full', Component);
-        Lampa.Template.add('trailer', [
-            '<div class="card selector card--trailer layer--render layer--visible">',
-                '<div class="card__view">',
-                    '<img src="./img/img_load.svg" class="card__img">',
-                    '<div class="card__promo">',
-                        '<div class="card__promo-text">',
-                            '<div class="card__title"></div>',
-                        '</div>',
-                        '<div class="card__details"></div>',
-                    '</div>',
-                '</div>',
-                '<div class="card__play">',
-                    '<img src="./img/icons/player/play.svg">',
-                '</div>',
-            '</div>'
-        ].join(''));
-        Lampa.Template.add('trailer_style', [
-            '<style>',
-            '.card.card--trailer,',
-            '.card-more.more--trailers {',
-                'width: 25.7em;',
-                'margin-right: 1em;',
-                'display: inline-block;',
-                'vertical-align: top;',
-            '}',
-            '.card.card--trailer .card__view {',
-                'padding-bottom: 56%;',
-                'margin-bottom: 0;',
-                'position: relative;',
-            '}',
-            '.card.card--trailer .card__details {',
-                'margin-top: 0.8em;',
-            '}',
-            '.card.card--trailer .card__play {',
-                'position: absolute;',
-                'top: 1.4em;',
-                'left: 1.5em;',
-                'background: #000000b8;',
-                'width: 2.2em;',
-                'height: 2.2em;',
-                'border-radius: 100%;',
-                'text-align: center;',
-                'padding-top: 0.6em;',
-            '}',
-            '.card.card--trailer .card__play img {',
-                'width: 0.9em;',
-                'height: 1em;',
-            '}',
-            '.card.card--trailer .card__language {',
-                'position: absolute;',
-                'top: 10px;',
-                'right: 10px;',
-                'background: rgba(0,0,0,0.7);',
-                'color: white;',
-                'padding: 5px 10px;',
-                'border-radius: 4px;',
-                'font-size: 14px;',
-            '}',
-            '.card.card--trailer .card__season {',
-                'position: absolute;',
-                'bottom: 50px;',
-                'right: 10px;',
-                'color: white;',
-                'font-size: 14px;',
-                'font-weight: bold;',
-            '}',
-            '.card.card--trailer .card__release {',
-                'position: absolute;',
-                'bottom: 30px;',
-                'right: 10px;',
-                'color: white;',
-                'font-size: 14px;',
-            '}',
-            '.card.card--trailer .card__rating {',
-                'position: absolute;',
-                'bottom: 10px;',
-                'right: 10px;',
-                'color: white;',
-                'font-size: 18px;',
-                'font-weight: bold;',
-            '}',
-            '.card-more.more--trailers .card-more__box {',
-                'padding-bottom: 56%;',
-            '}',
-            '.category-full--trailers .card {',
-                'margin-bottom: 1.5em;',
-            '}',
-            '.category-full--trailers .card {',
-                'width: 33.3%;',
-                'display: inline-block;',
-                'vertical-align: top;',
-            '}',
-            '.items-line__filter {',
-                'display: inline-block;',
-                'margin-left: 10px;',
-                'cursor: pointer;',
-            '}',
-            '.items-line__filter svg {',
-                'width: 20px;',
-                'height: 20px;',
-                'vertical-align: middle;',
-            '}',
-            '.items-line {',
-                'padding: 10px 0;',
-            '}',
-            '.items-cards {',
-                'display: flex;',
-                'flex-wrap: nowrap;',
-                'visibility: visible !important;',
-                'opacity: 1 !important;',
-                'min-height: 100px;',
-            '}',
-            '.content-container {',
-                'visibility: visible !important;',
-                'opacity: 1 !important;',
-            '}',
-            '@media screen and (max-width: 767px) {',
-                '.category-full--trailers .card {',
-                    'width: 50%;',
-                '}',
-            '}',
-            '@media screen and (max-width: 400px) {',
-                '.category-full--trailers .card {',
-                    'width: 100%;',
-                '}',
-            '}',
-            '</style>'
-        ].join(''));
+        Lampa.Template.add('trailer', `
+            <div class="card selector card--trailer layer--render layer--visible">
+                <div class="card__view">
+                    <img src="./img/img_load.svg" class="card__img">
+                    <div class="card__promo">
+                        <div class="card__promo-text">
+                            <div class="card__title"></div>
+                        </div>
+                        <div class="card__details"></div>
+                        <div class="card__rating"></div>
+                    </div>
+                </div>
+                <div class="card__play">
+                    <img src="./img/icons/player/play.svg">
+                </div>
+            </div>
+        `);
+        Lampa.Template.add('trailer_style', `
+            <style>
+            .card.card--trailer,
+            .card-more.more--trailers {
+                width: 25.7em;
+            }
+            .card.card--trailer .card__view {
+                padding-bottom: 56%;
+                margin-bottom: 0;
+            }
+            .card.card--trailer .card__details {
+                margin-top: 0.8em;
+            }
+            .card.card--trailer .card__rating {
+                position: absolute;
+                bottom: 0.8em;
+                right: 0.8em;
+                font-size: 1.2em;
+                font-weight: bold;
+                color: #fff;
+            }
+            .card.card--trailer .card__play {
+                position: absolute;
+                top: 1.4em;
+                left: 1.5em;
+                background: #000000b8;
+                width: 2.2em;
+                height: 2.2em;
+                border-radius: 100%;
+                text-align: center;
+                padding-top: 0.6em;
+            }
+            .card.card--trailer .card__play img {
+                width: 0.9em;
+                height: 1em;
+            }
+            .card-more.more--trailers .card-more__box {
+                padding-bottom: 56%;
+            }
+            .category-full--trailers .card {
+                margin-bottom: 1.5em;
+            }
+            .category-full--trailers .card {
+                width: 33.3%;
+            }
+            .items-line__filter {
+                display: inline-block;
+                margin-left: 10px;
+                cursor: pointer;
+            }
+            .items-line__filter svg {
+                width: 20px;
+                height: 20px;
+                vertical-align: middle;
+            }
+            @media screen and (max-width: 767px) {
+                .category-full--trailers .card {
+                    width: 50%;
+                }
+            }
+            @media screen and (max-width: 400px) {
+                .category-full--trailers .card {
+                    width: 100%;
+                }
+            }
+            </style>
+        `);
 
         function add() {
-            var button = $([
-                '<li class="menu__item selector">',
-                    '<div class="menu__ico">',
-                        '<svg height="70" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg">',
-                            '<path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67ADV9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/>',
-                        '</svg>',
-                    '</div>',
-                    '<div class="menu__text">' + Lampa.Lang.translate('title_trailers') + '</div>',
-                '</li>'
-            ].join(''));
+            var button = $(`
+                <li class="menu__item selector">
+                    <div class="menu__ico">
+                        <svg height="70" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    <div class="menu__text">${Lampa.Lang.translate('title_trailers')}</div>
+                </li>
+            `);
             button.on('hover:enter', function () {
                 Lampa.Activity.push({
                     url: '',
@@ -1105,22 +937,15 @@
                     component: 'trailers_main',
                     page: 1
                 });
-                console.log('Menu button triggered, pushing trailers_main activity');
             });
             $('.menu .menu__list').eq(0).append(button);
             $('body').append(Lampa.Template.get('trailer_style', {}, true));
-            console.log('Menu button and styles appended');
         }
 
-        if (window.appready) {
-            console.log('App ready, adding plugin');
-            add();
-        } else {
+        if (window.appready) add();
+        else {
             Lampa.Listener.follow('app', function (e) {
-                if (e.type === 'ready') {
-                    console.log('App ready event received, adding plugin');
-                    add();
-                }
+                if (e.type === 'ready') add();
             });
         }
     }
