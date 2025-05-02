@@ -33,14 +33,20 @@
         var lang = Lampa.Storage.get('language', 'ru');
         var region = getRegion();
         var full_url = tmdb_base_url + url + '&api_key=' + tmdb_api_key + '&language=' + lang + '&page=' + page;
-        if (useRegion) full_url += '&region=' + region;
+        if (useRegion) full_url += '®ion=' + region;
         console.log('API Request:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
-            resolve(result);
+            if (result && result.results) {
+                resolve(result);
+            } else {
+                console.log('API Warning: No results in response', url);
+                resolve({ results: [] });
+            }
         }, function (error) {
             console.log('API Error:', url, error);
-            reject(error);
+            Lampa.Noty.show('Failed to fetch data for ' + url);
+            resolve({ results: [] }); // Return empty results instead of rejecting
         });
     }
 
@@ -63,16 +69,22 @@
         status.onComplite = function () {
             var fulldata = [];
             ['popular_movies', 'popular_series', 'now_playing', 'upcoming', 'new_series', 'new_seasons'].forEach(function (key) {
-                if (status.data[key] && status.data[key].results.length) {
+                if (status.data[key] && status.data[key].results && status.data[key].results.length) {
                     fulldata.push(status.data[key]);
+                } else {
+                    console.log('No data for category:', key, status.data[key]);
                 }
             });
             console.log('Main completed:', fulldata);
             if (fulldata.length) oncomplite(fulldata);
-            else onerror();
+            else {
+                console.log('No data to display');
+                onerror();
+            }
         };
 
         var append = function (title, name, url, json) {
+            console.log('Appending data for:', name, 'Results:', json.results.length);
             json.title = title;
             json.type = name;
             json.url = url;
@@ -83,7 +95,7 @@
         var popularMoviesUrl = '/discover/movie?sort_by=vote_average.desc&vote_count.gte=1000&release_date.gte=2005-01-01';
 
         get(popularMoviesUrl, 1, function (json) {
-            append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', popularMoviesUrl, json.results.length ? json : { results: [] });
+            append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', popularMoviesUrl, json);
         }, function () {
             get('/discover/movie?sort_by=popularity.desc', 1, function (json) {
                 append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/discover/movie?sort_by=popularity.desc', json);
@@ -92,7 +104,7 @@
 
         var popularSeriesUrl = '/discover/tv?sort_by=vote_average.desc&vote_count.gte=1000&first_air_date.gte=2005-01-01';
         get(popularSeriesUrl, 1, function (json) {
-            append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', popularSeriesUrl, json.results.length ? json : { results: [] });
+            append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', popularSeriesUrl, json);
         }, function () {
             get('/discover/tv?sort_by=popularity.desc', 1, function (json) {
                 append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', '/discover/tv?sort_by=popularity.desc', json);
@@ -100,7 +112,7 @@
         }, false);
 
         get('/discover/movie?sort_by=release_date.desc&release_date.gte=' + getFormattedDate(90), 1, function (json) {
-            append(Lampa.Lang.translate('trailers_now_playing'), 'now_playing', '/discover/movie?sort_by=release_date.desc&release_date.gte=' + getFormattedDate(90), json.results.length ? json : { results: [] });
+            append(Lampa.Lang.translate('trailers_now_playing'), 'now_playing', '/discover/movie?sort_by=release_date.desc&release_date.gte=' + getFormattedDate(90), json);
         }, function () {
             get('/discover/movie?sort_by=popularity.desc', 1, function (json) {
                 append(Lampa.Lang.translate('trailers_now_playing'), 'now_playing', '/discover/movie?sort_by=popularity.desc', json);
@@ -108,7 +120,7 @@
         }, true);
 
         get('/movie/upcoming?release_date.gte=' + getFormattedDate() + '&release_date.lte=' + getFormattedDate(0, 12), 1, function (json) {
-            append(Lampa.Lang.translate('trailers_upcoming'), 'upcoming', '/movie/upcoming?release_date.gte=' + getFormattedDate() + '&release_date.lte=' + getFormattedDate(0, 12), json.results.length ? json : { results: [] });
+            append(Lampa.Lang.translate('trailers_upcoming'), 'upcoming', '/movie/upcoming?release_date.gte=' + getFormattedDate() + '&release_date.lte=' + getFormattedDate(0, 12), json);
         }, function () {
             get('/discover/movie?sort_by=popularity.desc', 1, function (json) {
                 append(Lampa.Lang.translate('trailers_upcoming'), 'upcoming', '/discover/movie?sort_by=popularity.desc', json);
@@ -116,7 +128,7 @@
         }, true);
 
         get('/tv/on_the_air?first_air_date.gte=' + getFormattedDate(90), 1, function (json) {
-            append(Lampa.Lang.translate('trailers_new_series'), 'new_series', '/tv/on_the_air?first_air_date.gte=' + getFormattedDate(90), json.results.length ? json : { results: [] });
+            append(Lampa.Lang.translate('trailers_new_series'), 'new_series', '/tv/on_the_air?first_air_date.gte=' + getFormattedDate(90), json);
         }, function () {
             get('/discover/tv?sort_by=popularity.desc', 1, function (json) {
                 append(Lampa.Lang.translate('trailers_new_series'), 'new_series', '/discover/tv?sort_by=popularity.desc', json);
@@ -124,7 +136,7 @@
         }, true);
 
         get('/tv/airing_today?first_air_date.gte=' + getFormattedDate(90), 1, function (json) {
-            append(Lampa.Lang.translate('trailers_new_seasons'), 'new_seasons', '/tv/airing_today?first_air_date.gte=' + getFormattedDate(90), json.results.length ? json : { results: [] });
+            append(Lampa.Lang.translate('trailers_new_seasons'), 'new_seasons', '/tv/airing_today?first_air_date.gte=' + getFormattedDate(90), json);
         }, function () {
             get('/discover/tv?sort_by=popularity.desc', 1, function (json) {
                 append(Lampa.Lang.translate('trailers_new_seasons'), 'new_seasons', '/discover/tv?sort_by=popularity.desc', json);
@@ -134,14 +146,15 @@
 
     function full(params, oncomplite, onerror) {
         get(params.url, params.page, function (result) {
+            console.log('Full results for:', params.url, result.results ? result.results.length : 0);
             if (result && result.results && result.results.length) {
                 oncomplite(result);
             } else {
                 console.log('Full: No results for', params.url);
                 onerror();
             }
-        }, function (error) {
-            console.log('Full error:', params.url, error);
+        }, function () {
+            console.log('Full error:', params.url);
             onerror();
         }, params.type === 'now_playing' || params.type === 'upcoming' || params.type === 'new_series' || params.type === 'new_seasons');
     }
@@ -245,7 +258,7 @@
                     id: id,
                     youtube: true,
                     url: 'https://www.youtube.com/watch?v=' + id,
-                    icon: '<img class="size-youtube" src="https://img.youtube.com/vi/' + data.id + '/default.jpg" />',
+                    icon: '<img class="size-youtube" src="https://img.youtube.com/vi/' + id + '/default.jpg" />',
                     template: 'selectbox_icon'
                 };
                 Lampa.Player.play(item);
@@ -394,6 +407,7 @@
         var last;
 
         this.create = function () {
+            console.log('Creating line for:', data.title, 'Results:', data.results.length);
             content.find('.items-line__title').text(data.title);
 
             if (data.type === 'popular_movies') {
@@ -437,7 +451,12 @@
         };
 
         this.bind = function () {
-            data.results.slice(0, data.results.length).forEach(this.append.bind(this));
+            console.log('Binding items for:', data.title);
+            if (data.results && data.results.length) {
+                data.results.forEach(this.append.bind(this));
+            } else {
+                console.log('No results to bind for:', data.title);
+            }
             this.more();
             Lampa.Layer.update();
         };
@@ -454,6 +473,7 @@
 
         this.append = function (element) {
             var _this = this;
+            console.log('Appending card:', element.title || element.name);
             var card = new Trailer(element, { type: data.type });
             card.create();
             card.visible();
@@ -546,6 +566,7 @@
         };
 
         this.empty = function () {
+            console.log('Displaying empty state');
             var empty = new Lampa.Empty();
             html.append(empty.render());
             this.start = empty.start;
@@ -555,6 +576,7 @@
 
         this.build = function (data) {
             var _this = this;
+            console.log('Building main component with data:', data.length, 'categories');
             html.append($('<div class="content-container"></div>'));
             data.forEach(this.append.bind(this));
             this.activity.loader(false);
@@ -562,6 +584,7 @@
         };
 
         this.append = function (element) {
+            console.log('Appending category:', element.title);
             var item = new Line(element);
             item.create();
             item.onDown = this.down.bind(this);
@@ -662,6 +685,7 @@
         };
 
         this.empty = function () {
+            console.log('Displaying empty state for full component');
             var empty = new Lampa.Empty();
             body.append(empty.render());
             this.start = empty.start;
@@ -701,22 +725,28 @@
 
         this.append = function (data, append) {
             var _this2 = this;
-            data.results.forEach(function (element) {
-                var card = new Trailer(element, { type: object.type });
-                card.create();
-                card.visible();
-                card.onFocus = function (target, card_data) {
-                    last = target;
-                    if (!newlampa && _this2.body.children().length - 1 === _this2.items.indexOf(card)) _this2.next();
-                };
-                body.append(card.render());
-                items.push(card);
-                if (append) Lampa.Controller.collectionAppend(card.render());
-            });
+            console.log('Appending full results:', data.results ? data.results.length : 0);
+            if (data.results && data.results.length) {
+                data.results.forEach(function (element) {
+                    var card = new Trailer(element, { type: object.type });
+                    card.create();
+                    card.visible();
+                    card.onFocus = function (target, card_data) {
+                        last = target;
+                        if (!newlampa && _this2.body.children().length - 1 === _this2.items.indexOf(card)) _this2.next();
+                    };
+                    body.append(card.render());
+                    items.push(card);
+                    if (append) Lampa.Controller.collectionAppend(card.render());
+                });
+            } else {
+                console.log('No results to append for full component');
+            }
         };
 
         this.build = function (data) {
             var _this3 = this;
+            console.log('Building full component with:', data.results ? data.results.length : 0, 'results');
             if (data.results && data.results.length) {
                 total_pages = data.total_pages || 1;
                 html.append(body);
@@ -728,6 +758,7 @@
                 this.activity.loader(false);
                 this.activity.toggle();
             } else {
+                console.log('No results for full component, showing empty state');
                 html.append(body);
                 this.empty();
             }
