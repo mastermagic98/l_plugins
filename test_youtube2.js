@@ -25,7 +25,7 @@
     function get(url, page, resolve, reject, useRegion) {
         var lang = Lampa.Storage.get('language', 'ru');
         var full_url = `${tmdb_base_url}${url}&api_key=${tmdb_api_key}&language=${lang}&page=${page}`;
-        if (useRegion) full_url += `&region=${getRegion()}`;
+        if (useRegion) full_url += `®ion=${getRegion()}`;
         console.log('API Request:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
@@ -80,7 +80,7 @@
         }, status.error.bind(status), true);
 
         get(`/discover/tv?sort_by=vote_average.desc`, 1, function (json) {
-            append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', `/discover/tv?sort_by=vote_average.desc`, json.results.length ? json : { results: [] });
+            append(Lampa.Lang.translate('trailers_popular_series那么: series'), 'popular_series', `/discover/tv?sort_by=vote_average.desc`, json.results.length ? json : { results: [] });
         }, status.error.bind(status), true);
 
         get(`/discover/tv?sort_by=first_air_date.desc&first_air_date.gte=${getFormattedDate(365)}`, 1, function (json) {
@@ -391,7 +391,7 @@
             card.create();
             card.visible();
             card.onFocus = function (target, card_data, is_mouse) {
-                last = target;
+                last target;
                 active = items.indexOf(card);
                 if (!is_mouse) scroll.update(items[active].render(), true);
                 if (_this.onFocus) _this.onFocus(card_data);
@@ -672,7 +672,7 @@
                 scroll.append(body);
                 if (newlampa) {
                     scroll.onEnd = this.next.bind(this);
-                    scroll.onWheel = function ( tarkoit: step) {
+                    scroll.onWheel = function (step) {
                         if (!Lampa.Controller.own(_this3)) _this3.start();
                         if (step > 0) Navigator.move('down');
                         else if (active > 0) Navigator.move('up');
@@ -729,7 +729,6 @@
                     if (Navigator.canmove('left')) Navigator.move('left');
                     else Lampa.Controller.toggle('menu');
                 },
-                right')
                 right: function () {
                     Navigator.move('right');
                 },
