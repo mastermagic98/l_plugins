@@ -44,7 +44,13 @@
             var fulldata = [];
             ['popular_movies', 'in_theaters', 'upcoming_movies', 'popular_series', 'new_seasons', 'upcoming_seasons'].forEach(function (key) {
                 if (status.data[key] && status.data[key].results.length) {
-                    fulldata.push(status.data[key]);
+                    // Фільтруємо лише елементи з картками
+                    status.data[key].results = status.data[key].results.filter(function (item) {
+                        return item.backdrop_path || item.poster_path;
+                    });
+                    if (status.data[key].results.length) {
+                        fulldata.push(status.data[key]);
+                    }
                 }
             });
             console.log('Main completed:', fulldata);
@@ -96,7 +102,16 @@
     function full(params, oncomplite, onerror) {
         get(params.url, params.page, function (result) {
             if (result && result.results && result.results.length) {
-                oncomplite(result);
+                // Фільтруємо лише елементи з картками
+                result.results = result.results.filter(function (item) {
+                    return item.backdrop_path || item.poster_path;
+                });
+                if (result.results.length) {
+                    oncomplite(result);
+                } else {
+                    console.log('Full: No results with images for', params.url);
+                    onerror();
+                }
             } else {
                 console.log('Full: No results for', params.url);
                 onerror();
@@ -196,9 +211,46 @@
             }
         };
 
+        this.getTrailerLanguage = function (videos) {
+            var userLang = Lampa.Storage.get('language', 'ru');
+            var trailers = videos.results.filter(function (v) {
+                return v.type === 'Trailer';
+            });
+            var video;
+            if (userLang === 'uk' || userLang === 'ua') {
+                video = trailers.find(function (v) {
+                    return v.iso_639_1 === 'uk' || v.iso_639_1 === 'ua';
+                }) || trailers.find(function (v) {
+                    return v.iso_639_1 === 'en';
+                });
+            } else if (userLang === 'ru') {
+                video = trailers.find(function (v) {
+                    return v.iso_639_1 === 'ru';
+                }) || trailers.find(function (v) {
+                    return v.iso_639_1 === 'en';
+                });
+            } else {
+                video = trailers.find(function (v) {
+                    return v.iso_639_1 === 'en';
+                });
+            }
+            return video ? video.iso_639_1.toUpperCase() : 'N/A';
+        };
+
         this.create = function () {
             var _this2 = this;
             this.build();
+
+            // Додаємо мову трейлера одразу після створення картки
+            if (!this.is_youtube) {
+                Api.videos(data, function (videos) {
+                    var lang = _this2.getTrailerLanguage(videos);
+                    _this2.card.find('.card__promo').append(`<div class="card__trailer-lang">${lang}</div>`);
+                }, function () {
+                    _this2.card.find('.card__promo').append(`<div class="card__trailer-lang">N/A</div>`);
+                });
+            }
+
             this.card.on('hover:focus', function (e, is_mouse) {
                 Lampa.Background.change(_this2.cardImgBackground(data));
                 _this2.onFocus(e.target, data, is_mouse);
@@ -211,16 +263,27 @@
                         var trailers = videos.results.filter(function (v) {
                             return v.type === 'Trailer';
                         });
-                        var video = trailers.find(function (v) {
-                            return v.iso_639_1 === userLang || v.iso_639_1 === 'ua';
-                        }) || trailers.find(function (v) {
-                            return v.iso_639_1 === 'ru';
-                        }) || trailers.find(function (v) {
-                            return v.iso_639_1 === 'en';
-                        }) || trailers[0];
+                        var video;
+                        if (userLang === 'uk' || userLang === 'ua') {
+                            video = trailers.find(function (v) {
+                                return v.iso_639_1 === 'uk' || v.iso_639_1 === 'ua';
+                            }) || trailers.find(function (v) {
+                                return v.iso_639_1 === 'en';
+                            });
+                        } else if (userLang === 'ru') {
+                            video = trailers.find(function (v) {
+                                return v.iso_639_1 === 'ru';
+                            }) || trailers.find(function (v) {
+                                return v.iso_639_1 === 'en';
+                            });
+                        } else {
+                            video = trailers.find(function (v) {
+                                return v.iso_639_1 === 'en';
+                            });
+                        }
 
                         if (video && video.key) {
-                            if (userLang === 'uk' && video.iso_639_1 !== 'uk' && video.iso_639_1 !== 'ua') {
+                            if ((userLang === 'uk' || userLang === 'ua') && video.iso_639_1 !== 'uk' && video.iso_639_1 !== 'ua') {
                                 Lampa.Noty.show(Lampa.Lang.translate('trailers_no_uk_trailer'));
                             }
                             _this2.play(video.key);
@@ -843,6 +906,7 @@
                         </div>
                         <div class="card__details"></div>
                         <div class="card__rating"></div>
+                        <div class="card__trailer-lang"></div>
                     </div>
                 </div>
                 <div class="card__play">
@@ -870,6 +934,17 @@
                 font-size: 1.2em;
                 font-weight: bold;
                 color: #fff;
+            }
+            .card.card--trailer .card__trailer-lang {
+                position: absolute;
+                top: 0.8em;
+                right: 0.8em;
+                font-size: 1em;
+                font-weight: bold;
+                color: #fff;
+                background: rgba(0, 0, 0, 0.7);
+                padding: 0.2em 0.5em;
+                border-radius: 3px;
             }
             .card.card--trailer .card__play {
                 position: absolute;
