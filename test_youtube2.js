@@ -79,7 +79,7 @@
     function get(url, page, resolve, reject, useRegion) {
         var lang = Lampa.Storage.get('language', 'ru');
         var full_url = `${tmdb_base_url}${url}&api_key=${tmdb_api_key}&language=${lang}&page=${page}`;
-        if (useRegion) full_url += `&region=${getRegion().region}`;
+        if (useRegion) full_url += `®ion=${getRegion().region}`;
         console.log('API Request:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
@@ -126,7 +126,7 @@
         };
 
         // Популярні фільми
-        var popularMoviesUrl = `/trending/movie/day?language=${regionData.lang}&region=${regionData.region}`;
+        var popularMoviesUrl = `/trending/movie/day?language=${regionData.lang}®ion=${regionData.region}`;
         fetch(`${tmdb_base_url}${popularMoviesUrl}`, fetch_options)
             .then(response => response.json())
             .then(json => {
@@ -141,7 +141,7 @@
             });
 
         // Популярні серіали (з фільтрацією ток-шоу)
-        var popularSeriesUrl = `/trending/tv/day?language=${regionData.lang}&region=${regionData.region}`;
+        var popularSeriesUrl = `/trending/tv/day?language=${regionData.lang}®ion=${regionData.region}`;
         fetch(`${tmdb_base_url}${popularSeriesUrl}`, fetch_options)
             .then(response => response.json())
             .then(json => {
@@ -158,7 +158,7 @@
             });
 
         // В прокаті
-        var inTheatersUrl = `/movie/now_playing?language=${regionData.lang}&page=1&region=${regionData.region}&release_date.gte=${dates.pastMin}&release_date.lte=${dates.pastMax}`;
+        var inTheatersUrl = `/movie/now_playing?language=${regionData.lang}&page=1®ion=${regionData.region}&release_date.gte=${dates.pastMin}&release_date.lte=${dates.pastMax}`;
         console.log('In Theaters URL:', inTheatersUrl);
         fetch(`${tmdb_base_url}${inTheatersUrl}`, fetch_options)
             .then(response => response.json())
@@ -174,7 +174,7 @@
             });
 
         // Очікувані
-        var upcomingMoviesUrl = `/movie/upcoming?language=${regionData.lang}&page=1&region=${regionData.region}&release_date.gte=${dates.futureMin}&release_date.lte=${dates.futureMax}`;
+        var upcomingMoviesUrl = `/movie/upcoming?language=${regionData.lang}&page=1®ion=${regionData.region}&release_date.gte=${dates.futureMin}&release_date.lte=${dates.futureMax}`;
         fetch(`${tmdb_base_url}${upcomingMoviesUrl}`, fetch_options)
             .then(response => response.json())
             .then(json => {
@@ -210,13 +210,13 @@
 
         // Адаптація URL для fetch у пагінації
         if (params.type === 'popular_movies') {
-            url = `/trending/movie/day?language=${regionData.lang}&region=${regionData.region}&page=${params.page}`;
+            url = `/trending/movie/day?language=${regionData.lang}®ion=${regionData.region}&page=${params.page}`;
         } else if (params.type === 'popular_series') {
-            url = `/trending/tv/day?language=${regionData.lang}&region=${regionData.region}&page=${params.page}`;
+            url = `/trending/tv/day?language=${regionData.lang}®ion=${regionData.region}&page=${params.page}`;
         } else if (params.type === 'in_theaters') {
-            url = `/movie/now_playing?language=${regionData.lang}&page=${params.page}&region=${regionData.region}&release_date.gte=${dates.pastMin}&release_date.lte=${dates.pastMax}`;
+            url = `/movie/now_playing?language=${regionData.lang}&page=${params.page}®ion=${regionData.region}&release_date.gte=${dates.pastMin}&release_date.lte=${dates.pastMax}`;
         } else if (params.type === 'upcoming_movies') {
-            url = `/movie/upcoming?language=${regionData.lang}&page=${params.page}&region=${regionData.region}&release_date.gte=${dates.futureMin}&release_date.lte=${dates.futureMax}`;
+            url = `/movie/upcoming?language=${regionData.lang}&page=${params.page}®ion=${regionData.region}&release_date.gte=${dates.futureMin}&release_date.lte=${dates.futureMax}`;
         }
 
         if (params.type === 'popular_movies' || params.type === 'popular_series' || params.type === 'in_theaters' || params.type === 'upcoming_movies') {
@@ -295,6 +295,7 @@
 
     function Trailer(data, params) {
         this.build = function () {
+            var regionData = getRegion();
             this.card = Lampa.Template.get('trailer', data);
             this.img = this.card.find('img')[0];
             this.is_youtube = params.type === 'rating';
@@ -307,6 +308,15 @@
                 if (['popular_movies', 'in_theaters', 'popular_series', 'new_seasons'].includes(params.type)) {
                     var rating = data.vote_average ? data.vote_average.toFixed(1) : 'N/A';
                     this.card.find('.card__promo').append(`<div class="card__rating">${rating}</div>`);
+                }
+                // Додаємо дату релізу для фільмів
+                if (!data.name) {
+                    var releaseDate = data.release_date ? new Date(data.release_date).toLocaleDateString(regionData.lang, {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                    }) : '-';
+                    this.card.find('.card__promo').append(`<div class="card__release-date">${releaseDate}</div>`);
                 }
             } else {
                 this.card.find('.card__title').text(data.name);
@@ -582,9 +592,9 @@
                         onSelect: function (item) {
                             Lampa.Storage.set('trailers_popular_filter', item.value);
                             Lampa.Activity.push({
-                                url: `/trending/movie/day?language=${getRegion().lang}&region=${getRegion().region}`,
+                                url: `/trending/movie/day?language=${getRegion().lang}®ion=${getRegion().region}`,
                                 title: Lampa.Lang.translate('trailers_popular_movies'),
-                                component: 'trailers_main',
+                                component | 'trailers_main',
                                 type: 'popular_movies',
                                 page: 1
                             });
@@ -1081,6 +1091,7 @@
                         <div class="card__details"></div>
                         <div class="card__rating"></div>
                         <div class="card__trailer-lang"></div>
+                        <div class="card__release-date"></div>
                     </div>
                 </div>
                 <div class="card__play">
@@ -1108,6 +1119,10 @@
                 font-size: 1.2em;
                 font-weight: bold;
                 color: #fff;
+                background: rgba(0, 0, 0, 0.7);
+                padding: 0.2em 0.5em;
+                border-radius: 3px;
+                z-index: 10;
             }
             .card.card--trailer .card__trailer-lang {
                 position: absolute;
@@ -1115,6 +1130,17 @@
                 right: 0.8em;
                 font-size: 1em;
                 font-weight: bold;
+                color: #fff;
+                background: rgba(0, 0, 0, 0.7);
+                padding: 0.2em 0.5em;
+                border-radius: 3px;
+                z-index: 10;
+            }
+            .card.card--trailer .card__release-date {
+                position: absolute;
+                top: 2.2em;
+                right: 0.8em;
+                font-size: 0.9em;
                 color: #fff;
                 background: rgba(0, 0, 0, 0.7);
                 padding: 0.2em 0.5em;
