@@ -79,7 +79,7 @@
     function get(url, page, resolve, reject, useRegion) {
         var lang = Lampa.Storage.get('language', 'ru');
         var full_url = `${tmdb_base_url}${url}&api_key=${tmdb_api_key}&language=${lang}&page=${page}`;
-        if (useRegion) full_url += `®ion=${getRegion().region}`;
+        if (useRegion) full_url += `&region=${getRegion().region}`;
         console.log('API Request:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
@@ -126,6 +126,7 @@
         fetch(`${tmdb_base_url}${popularMoviesUrl}`, fetch_options)
             .then(response => response.json())
             .then(json => {
+                console.log('Popular Movies Response:', json);
                 append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', popularMoviesUrl, json.results.length ? json : { results: [] });
             })
             .catch(error => {
@@ -140,6 +141,7 @@
         fetch(`${tmdb_base_url}${popularSeriesUrl}`, fetch_options)
             .then(response => response.json())
             .then(json => {
+                console.log('Popular Series Response:', json);
                 json.results = filterTalkShows(json.results);
                 append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', popularSeriesUrl, json.results.length ? json : { results: [] });
             })
@@ -153,15 +155,17 @@
 
         // В прокаті
         var inTheatersUrl = `/movie/now_playing?language=${regionData.lang}&page=1&region=${regionData.region}&release_date.gte=${dates.pastMin}&release_date.lte=${dates.pastMax}`;
+        console.log('In Theaters URL:', inTheatersUrl);
         fetch(`${tmdb_base_url}${inTheatersUrl}`, fetch_options)
             .then(response => response.json())
             .then(json => {
+                console.log('In Theaters Response:', json);
                 append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', inTheatersUrl, json.results.length ? json : { results: [] });
             })
             .catch(error => {
                 console.log('Fetch Error for in theaters:', error);
-                get(`/discover/movie?sort_by=release_date.desc&release_date.gte=${dates.pastMin}`, 1, function (json) {
-                    append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', `/discover/movie?sort_by=release_date.desc&release_date.gte=${dates.pastMin}`, json);
+                get(`/discover/movie?sort_by=release_date.desc&release_date.gte=${dates.pastMin}&release_date.lte=${dates.pastMax}`, 1, function (json) {
+                    append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', `/discover/movie?sort_by=release_date.desc&release_date.gte=${dates.pastMin}&release_date.lte=${dates.pastMax}`, json);
                 }, status.error.bind(status));
             });
 
@@ -170,6 +174,7 @@
         fetch(`${tmdb_base_url}${upcomingMoviesUrl}`, fetch_options)
             .then(response => response.json())
             .then(json => {
+                console.log('Upcoming Movies Response:', json);
                 append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', upcomingMoviesUrl, json.results.length ? json : { results: [] });
             })
             .catch(error => {
@@ -211,9 +216,11 @@
         }
 
         if (params.type === 'popular_movies' || params.type === 'popular_series' || params.type === 'in_theaters' || params.type === 'upcoming_movies') {
+            console.log('Full Fetch URL:', `${tmdb_base_url}${url}`);
             fetch(`${tmdb_base_url}${url}`, fetch_options)
                 .then(response => response.json())
                 .then(json => {
+                    console.log('Full Response:', json);
                     if (isSeries) json.results = filterTalkShows(json.results);
                     json.results = json.results.filter(function (item) {
                         return item.backdrop_path || item.poster_path;
@@ -346,25 +353,36 @@
             var trailers = videos.results.filter(function (v) {
                 return v.type === 'Trailer';
             });
+            console.log('Available trailers:', trailers);
+
             var video;
             if (userLang === 'uk' || userLang === 'ua') {
                 video = trailers.find(function (v) {
                     return v.iso_639_1 === 'uk' || v.iso_639_1 === 'ua';
-                }) || trailers.find(function (v) {
-                    return v.iso_639_1 === 'en';
                 });
+                if (!video) {
+                    video = trailers.find(function (v) {
+                        return v.iso_639_1 === 'en';
+                    });
+                }
             } else if (userLang === 'ru') {
                 video = trailers.find(function (v) {
                     return v.iso_639_1 === 'ru';
-                }) || trailers.find(function (v) {
-                    return v.iso_639_1 === 'en';
                 });
+                if (!video) {
+                    video = trailers.find(function (v) {
+                        return v.iso_639_1 === 'en';
+                    });
+                }
             } else {
                 video = trailers.find(function (v) {
                     return v.iso_639_1 === 'en';
                 });
             }
-            return video ? video.iso_639_1.toUpperCase() : 'N/A';
+
+            var lang = video ? video.iso_639_1.toUpperCase() : 'N/A';
+            console.log('Selected trailer language:', lang);
+            return lang;
         };
 
         this.create = function () {
@@ -377,6 +395,7 @@
                     var lang = _this2.getTrailerLanguage(videos);
                     _this2.card.find('.card__promo').append(`<div class="card__trailer-lang">${lang}</div>`);
                 }, function () {
+                    console.log('No trailers found for:', data.title || data.name);
                     _this2.card.find('.card__promo').append(`<div class="card__trailer-lang">N/A</div>`);
                 });
             }
@@ -393,19 +412,33 @@
                         var trailers = videos.results.filter(function (v) {
                             return v.type === 'Trailer';
                         });
+                        console.log('Trailers on hover:enter:', trailers);
+
                         var video;
                         if (userLang === 'uk' || userLang === 'ua') {
                             video = trailers.find(function (v) {
                                 return v.iso_639_1 === 'uk' || v.iso_639_1 === 'ua';
-                            }) || trailers.find(function (v) {
-                                return v.iso_639_1 === 'en';
                             });
+                            if (!video) {
+                                video = trailers.find(function (v) {
+                                    return v.iso_639_1 === 'en';
+                                });
+                                if (video) {
+                                    Lampa.Noty.show(Lampa.Lang.translate('trailers_no_uk_trailer'));
+                                }
+                            }
                         } else if (userLang === 'ru') {
                             video = trailers.find(function (v) {
                                 return v.iso_639_1 === 'ru';
-                            }) || trailers.find(function (v) {
-                                return v.iso_639_1 === 'en';
                             });
+                            if (!video) {
+                                video = trailers.find(function (v) {
+                                    return v.iso_639_1 === 'en';
+                                });
+                                if (video) {
+                                    Lampa.Noty.show(Lampa.Lang.translate('trailers_no_ru_trailer'));
+                                }
+                            }
                         } else {
                             video = trailers.find(function (v) {
                                 return v.iso_639_1 === 'en';
@@ -413,9 +446,6 @@
                         }
 
                         if (video && video.key) {
-                            if ((userLang === 'uk' || userLang === 'ua') && video.iso_639_1 !== 'uk' && video.iso_639_1 !== 'ua') {
-                                Lampa.Noty.show(Lampa.Lang.translate('trailers_no_uk_trailer'));
-                            }
                             _this2.play(video.key);
                         } else {
                             Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
@@ -440,6 +470,7 @@
                         var trailers = videos.results.filter(function (v) {
                             return v.type === 'Trailer';
                         });
+                        console.log('Trailers on hover:long:', trailers);
                         if (trailers.length) {
                             items.push({
                                 title: Lampa.Lang.translate('title_trailers'),
@@ -933,7 +964,7 @@
                     if (Navigator.canmove('down')) Navigator.move('down');
                 },
                 back: function () {
-                    Lampa.Activity.backward();
+                    Lampi.Activity.backward();
                 }
             });
             Lampa.Controller.toggle('content');
@@ -994,6 +1025,11 @@
             ru: 'Нет украинского трейлера',
             uk: 'Немає українського трейлера',
             en: 'No Ukrainian trailer'
+        },
+        trailers_no_ru_trailer: {
+            ru: 'Нет русского трейлера',
+            uk: 'Немає російського трейлера',
+            en: 'No Russian trailer'
         },
         trailers_view: {
             ru: 'Подробнее',
@@ -1075,6 +1111,7 @@
                 background: rgba(0, 0, 0, 0.7);
                 padding: 0.2em 0.5em;
                 border-radius: 3px;
+                z-index: 10;
             }
             .card.card--trailer .card__play {
                 position: absolute;
