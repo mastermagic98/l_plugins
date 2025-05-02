@@ -4,6 +4,12 @@
     var network = new Lampa.Reguest();
     var tmdb_api_key = Lampa.TMDB.key();
     var tmdb_base_url = 'https://api.themoviedb.org/3';
+    var fetch_options = {
+        headers: {
+            'Authorization': `Bearer ${tmdb_api_key}`,
+            'Content-Type': 'application/json'
+        }
+    };
 
     // Функція для форматування дати у форматі YYYY-MM-DD
     function getFormattedDate(daysAgo) {
@@ -15,17 +21,19 @@
         return `${year}-${month}-${day}`;
     }
 
-    // Визначення регіону залежно від мови
+    // Визначення регіону та мови залежно від налаштувань інтерфейсу
     function getRegion() {
         var lang = Lampa.Storage.get('language', 'ru');
-        return lang === 'uk' || lang === 'ua' ? 'UA' : lang === 'ru' ? 'RU' : 'US';
+        if (lang === 'uk' || lang === 'ua') return { lang: 'uk-UA', region: 'UA' };
+        if (lang === 'ru') return { lang: 'ru-RU', region: 'RU' };
+        return { lang: 'en-US', region: 'US' };
     }
 
-    // Основна функція для запитів до TMDB
+    // Основна функція для запитів до TMDB через Lampa.Reguest
     function get(url, page, resolve, reject, useRegion) {
         var lang = Lampa.Storage.get('language', 'ru');
         var full_url = `${tmdb_base_url}${url}&api_key=${tmdb_api_key}&language=${lang}&page=${page}`;
-        if (useRegion) full_url += `&region=${getRegion()}`;
+        if (useRegion) full_url += `®ion=${getRegion().region}`;
         console.log('API Request:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
@@ -65,18 +73,23 @@
             status.append(name, json);
         };
 
-        var popularFilter = Lampa.Storage.get('trailers_popular_filter', 'vote_average.desc');
-        var popularMoviesUrl = `/discover/movie?sort_by=${popularFilter}`;
+        // Запит для популярних фільмів через fetch
+        var regionData = getRegion();
+        var popularMoviesUrl = `/movie/popular?language=${regionData.lang}&page=1®ion=${regionData.region}`;
+        fetch(`${tmdb_base_url}${popularMoviesUrl}`, fetch_options)
+            .then(response => response.json())
+            .then(json => {
+                append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', popularMoviesUrl, json.results.length ? json : { results: [] });
+            })
+            .catch(error => {
+                console.log('Fetch Error for popular movies:', error);
+                // Запасний запит через Lampa.Reguest
+                get('/discover/movie?sort_by=vote_average.desc', 1, function (json) {
+                    append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/discover/movie?sort_by=vote_average.desc', json);
+                }, status.error.bind(status));
+            });
 
-        // Запити для категорій
-        get(popularMoviesUrl, 1, function (json) {
-            append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', popularMoviesUrl, json.results.length ? json : { results: [] });
-        }, function () {
-            get('/discover/movie?sort_by=vote_average.desc', 1, function (json) {
-                append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/discover/movie?sort_by=vote_average.desc', json);
-            }, status.error.bind(status));
-        }, true);
-
+        // Запити для інших категорій через Lampa.Reguest
         get(`/discover/movie?sort_by=vote_average.desc&release_date.gte=${getFormattedDate(90)}`, 1, function (json) {
             append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', `/discover/movie?sort_by=vote_average.desc&release_date.gte=${getFormattedDate(90)}`, json.results.length ? json : { results: [] });
         }, status.error.bind(status), true);
