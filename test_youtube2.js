@@ -238,9 +238,11 @@
             var _this = this;
             this.img.onload = function () {
                 _this.card.addClass('card--loaded');
+                console.log('Image loaded for card:', data.title || data.name);
             };
             this.img.onerror = function () {
                 _this.img.src = './img/img_broken.svg';
+                console.log('Image failed to load for card:', data.title || data.name);
             };
         };
 
@@ -388,6 +390,7 @@
                 this.img.src = './img/img_broken.svg';
             }
             this.visibled = true;
+            console.log('Card made visible:', data.title || data.name);
         };
 
         this.render = function () {
@@ -443,6 +446,7 @@
 
             this.bind();
             body.append($('<div class="items-cards"></div>'));
+            console.log('Items-cards container appended to:', body[0]);
             content.on('mouseover', function () {
                 Lampa.Controller.enable('items_line');
             });
@@ -457,6 +461,7 @@
             }
             this.more();
             Lampa.Layer.update();
+            console.log('Lampa.Layer.update called for:', data.title);
         };
 
         this.cardImgBackground = function (card_data) {
@@ -481,6 +486,7 @@
                 if (_this.onFocus) _this.onFocus(card_data);
             };
             body.find('.items-cards').append(card.render());
+            console.log('Card appended to items-cards:', element.title || element.name);
             items.push(card);
         };
 
@@ -502,6 +508,7 @@
                 active = items.length;
             });
             body.find('.items-cards').append(more);
+            console.log('More button appended to items-cards');
             items.push({ render: function () { return more; } });
         };
 
@@ -511,6 +518,7 @@
                 toggle: function () {
                     Lampa.Controller.collectionSet(body);
                     Lampa.Controller.collectionFocus(last || (items.length ? items[0].render() : false), body);
+                    console.log('Controller toggled for items_line, focused:', last ? last.outerHTML : 'none');
                 },
                 right: function () {
                     if (active < items.length - 1) {
@@ -538,6 +546,7 @@
                 back: this.onBack
             });
             Lampa.Controller.toggle('items_line');
+            console.log('Lampa.Controller toggled for items_line');
         };
 
         this.render = function () {
@@ -559,6 +568,7 @@
         var active = 0;
 
         this.create = function () {
+            console.log('Creating trailers_main component');
             Api.main(this.build.bind(this), this.empty.bind(this));
             return this.render();
         };
@@ -579,6 +589,7 @@
             data.forEach(this.append.bind(this));
             this.activity.loader(false);
             this.activity.toggle();
+            console.log('Main component built, content-container appended');
         };
 
         this.append = function (element) {
@@ -592,6 +603,7 @@
                 active = items.indexOf(item);
             };
             html.find('.content-container').append(item.render());
+            console.log('Category appended to content-container:', element.title);
             items.push(item);
         };
 
@@ -624,8 +636,11 @@
         };
 
         this.start = function () {
-            var _this2 = this;
-            if (Lampa.Activity.active().activity !== this.activity) return;
+            console.log('Starting trailers_main component');
+            if (Lampa.Activity.active().activity !== this.activity) {
+                console.log('Activity mismatch, skipping start');
+                return;
+            }
             Lampa.Controller.add('content', {
                 toggle: function () {
                     if (items.length) {
@@ -634,6 +649,9 @@
                             items[active].active = 0;
                             Lampa.Controller.collectionFocus(items[active].items[0].render(), items[active].body);
                         }
+                        console.log('Content toggled, active item:', items[active].render()[0].outerHTML);
+                    } else {
+                        console.log('No items to toggle');
                     }
                 },
                 left: function () {
@@ -653,6 +671,7 @@
                 back: this.back
             });
             Lampa.Controller.toggle('content');
+            console.log('Lampa.Controller toggled for content');
         };
 
         this.pause = function () {};
@@ -678,6 +697,7 @@
         var waitload = false;
 
         this.create = function () {
+            console.log('Creating trailers_full component');
             Api.full(object, this.build.bind(this), this.empty.bind(this));
             return this.render();
         };
@@ -734,6 +754,7 @@
                         if (!newlampa && _this2.body.children().length - 1 === _this2.items.indexOf(card)) _this2.next();
                     };
                     body.append(card.render());
+                    console.log('Card appended to category-full:', element.title || element.name);
                     items.push(card);
                     if (append) Lampa.Controller.collectionAppend(card.render());
                 });
@@ -755,6 +776,7 @@
                 }
                 this.activity.loader(false);
                 this.activity.toggle();
+                console.log('Full component built, category-full appended');
             } else {
                 console.log('No results for full component, showing empty state');
                 html.append(body);
@@ -778,6 +800,7 @@
                 });
             });
             body.append(more);
+            console.log('More button appended to category-full');
         };
 
         this.back = function () {
@@ -791,15 +814,21 @@
                 }
             });
             body.prepend(more);
+            console.log('Back button prepended to category-full');
         };
 
         this.start = function () {
-            if (Lampa.Activity.active().activity !== this.activity) return;
+            console.log('Starting trailers_full component');
+            if (Lampa.Activity.active().activity !== this.activity) {
+                console.log('Activity mismatch, skipping start');
+                return;
+            }
             Lampa.Controller.add('content', {
                 link: this,
                 toggle: function () {
                     Lampa.Controller.collectionSet(body);
                     Lampa.Controller.collectionFocus(last || false, body);
+                    console.log('Content toggled for trailers_full, focused:', last ? last.outerHTML : 'none');
                 },
                 left: function () {
                     if (Navigator.canmove('left')) Navigator.move('left');
@@ -820,6 +849,7 @@
                 }
             });
             Lampa.Controller.toggle('content');
+            console.log('Lampa.Controller toggled for trailers_full');
         };
 
         this.pause = function () {};
@@ -950,6 +980,8 @@
             '.card-more.more--trailers {',
                 'width: 25.7em;',
                 'margin-right: 1em;',
+                'display: inline-block;',
+                'vertical-align: top;',
             '}',
             '.card.card--trailer .card__view {',
                 'padding-bottom: 56%;',
@@ -1015,6 +1047,8 @@
             '}',
             '.category-full--trailers .card {',
                 'width: 33.3%;',
+                'display: inline-block;',
+                'vertical-align: top;',
             '}',
             '.items-line__filter {',
                 'display: inline-block;',
@@ -1032,6 +1066,13 @@
             '.items-cards {',
                 'display: flex;',
                 'flex-wrap: nowrap;',
+                'visibility: visible !important;',
+                'opacity: 1 !important;',
+                'min-height: 100px;',
+            '}',
+            '.content-container {',
+                'visibility: visible !important;',
+                'opacity: 1 !important;',
             '}',
             '@media screen and (max-width: 767px) {',
                 '.category-full--trailers .card {',
@@ -1051,7 +1092,7 @@
                 '<li class="menu__item selector">',
                     '<div class="menu__ico">',
                         '<svg height="70" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg">',
-                            '<path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/>',
+                            '<path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67ADV9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/>',
                         '</svg>',
                     '</div>',
                     '<div class="menu__text">' + Lampa.Lang.translate('title_trailers') + '</div>',
@@ -1064,15 +1105,22 @@
                     component: 'trailers_main',
                     page: 1
                 });
+                console.log('Menu button triggered, pushing trailers_main activity');
             });
             $('.menu .menu__list').eq(0).append(button);
             $('body').append(Lampa.Template.get('trailer_style', {}, true));
+            console.log('Menu button and styles appended');
         }
 
-        if (window.appready) add();
-        else {
+        if (window.appready) {
+            console.log('App ready, adding plugin');
+            add();
+        } else {
             Lampa.Listener.follow('app', function (e) {
-                if (e.type === 'ready') add();
+                if (e.type === 'ready') {
+                    console.log('App ready event received, adding plugin');
+                    add();
+                }
             });
         }
     }
