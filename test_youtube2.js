@@ -346,6 +346,7 @@
 
         this.play = function (id) {
             if (!id) {
+                console.error('Invalid video ID:', id);
                 Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
                 return;
             }
@@ -594,7 +595,7 @@
                             Lampa.Activity.push({
                                 url: `/trending/movie/day?language=${getRegion().lang}®ion=${getRegion().region}`,
                                 title: Lampa.Lang.translate('trailers_popular_movies'),
-                                component | 'trailers_main',
+                                component: 'trailers_main',
                                 type: 'popular_movies',
                                 page: 1
                             });
