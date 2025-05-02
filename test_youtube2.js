@@ -100,8 +100,12 @@
             var fulldata = [];
             ['popular_movies', 'in_theaters', 'upcoming_movies', 'popular_series', 'new_seasons', 'upcoming_seasons'].forEach(function (key) {
                 if (status.data[key] && status.data[key].results.length) {
-                    // Фільтруємо лише елементи з картками
+                    // Фільтруємо лише елементи з картками та коректними датами
                     status.data[key].results = status.data[key].results.filter(function (item) {
+                        var releaseDate = item.release_date || item.first_air_date;
+                        if (key === 'in_theaters' && releaseDate) {
+                            return releaseDate >= dates.pastMin && releaseDate <= dates.pastMax && (item.backdrop_path || item.poster_path);
+                        }
                         return item.backdrop_path || item.poster_path;
                     });
                     if (status.data[key].results.length) {
@@ -223,6 +227,10 @@
                     console.log('Full Response:', json);
                     if (isSeries) json.results = filterTalkShows(json.results);
                     json.results = json.results.filter(function (item) {
+                        var releaseDate = item.release_date || item.first_air_date;
+                        if (params.type === 'in_theaters' && releaseDate) {
+                            return releaseDate >= dates.pastMin && releaseDate <= dates.pastMax && (item.backdrop_path || item.poster_path);
+                        }
                         return item.backdrop_path || item.poster_path;
                     });
                     if (json.results.length) {
@@ -262,7 +270,7 @@
     // Функція для отримання трейлерів із пріоритетом мови
     function videos(card, oncomplite, onerror) {
         var type = card.name ? 'tv' : 'movie';
-        var url = `${tmdb_base_url}/${type}/${card.id}/videos?api_key=${tmdb_api_key}`;
+        var url = `${tmdb_base_url}/${type}/${card.id}/videos?api_key=${tmdb_api_key}&language=${getRegion().lang}`;
         console.log('Videos request:', url);
         network.silent(url, function (result) {
             console.log('Videos result:', result);
@@ -353,7 +361,7 @@
             var trailers = videos.results.filter(function (v) {
                 return v.type === 'Trailer';
             });
-            console.log('Available trailers:', trailers);
+            console.log('Available trailers for', data.title || data.name, ':', trailers);
 
             var video;
             if (userLang === 'uk' || userLang === 'ua') {
@@ -380,8 +388,8 @@
                 });
             }
 
-            var lang = video ? video.iso_639_1.toUpperCase() : 'N/A';
-            console.log('Selected trailer language:', lang);
+            var lang = video ? video.iso_639_1.toUpperCase() : '-';
+            console.log('Selected trailer language for', data.title || data.name, ':', lang);
             return lang;
         };
 
@@ -396,7 +404,7 @@
                     _this2.card.find('.card__promo').append(`<div class="card__trailer-lang">${lang}</div>`);
                 }, function () {
                     console.log('No trailers found for:', data.title || data.name);
-                    _this2.card.find('.card__promo').append(`<div class="card__trailer-lang">N/A</div>`);
+                    _this2.card.find('.card__promo').append(`<div class="card__trailer-lang">-</div>`);
                 });
             }
 
@@ -412,7 +420,7 @@
                         var trailers = videos.results.filter(function (v) {
                             return v.type === 'Trailer';
                         });
-                        console.log('Trailers on hover:enter:', trailers);
+                        console.log('Trailers on hover:enter for', data.title || data.name, ':', trailers);
 
                         var video;
                         if (userLang === 'uk' || userLang === 'ua') {
@@ -470,7 +478,7 @@
                         var trailers = videos.results.filter(function (v) {
                             return v.type === 'Trailer';
                         });
-                        console.log('Trailers on hover:long:', trailers);
+                        console.log('Trailers on hover:long for', data.title || data.name, ':', trailers);
                         if (trailers.length) {
                             items.push({
                                 title: Lampa.Lang.translate('title_trailers'),
@@ -964,7 +972,7 @@
                     if (Navigator.canmove('down')) Navigator.move('down');
                 },
                 back: function () {
-                    Lampi.Activity.backward();
+                    Lampa.Activity.backward();
                 }
             });
             Lampa.Controller.toggle('content');
