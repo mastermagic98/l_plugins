@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.07.7 Адаптовано логіку підвантаження з youtube1.js (картки додаються по 6 за раз при прокручуванні вниз, без скидання loadedIndex), мова трейлера завантажується одразу при фокусуванні, збережено виправлення подвійних запитів, прокрутки (end_ratio 1.5), відображення 12 або 6 карток, оптимізацію запитів (uk → uk,ua,en; ru → ru,en), вертикальний зсув карток, поведінку кнопки та картки ЩЕ, виправлення стрілки вниз, подвійного кліку, відповідність youtube1.js, автоматичне прокручування, всі попередні виправлення (_this is undefined, debounce, ліниве завантаження, рекурсія)
+    // Версія 1.07.7 Адаптовано логіку підвантаження з youtube1.js (картки додаються по 6 за раз при прокручуванні вниз, без скидання loadedIndex), мова трейлера завантажується одразу при фокусуванні, виправлено помилку scroll.visible is not a function, збережено виправлення подвійних запитів, прокрутки (end_ratio 1.5), відображення 12 або 6 карток, оптимізацію запитів (uk → uk,ua,en; ru → ru,en), вертикальний зсув карток, поведінку кнопки та картки ЩЕ, виправлення стрілки вниз, подвійного кліку, відповідність youtube1.js, автоматичне прокручування, всі попередні виправлення (_this is undefined, debounce, ліниве завантаження, рекурсія)
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -43,7 +43,7 @@
         var lang = Lampa.Storage.get('language', 'ru');
         var full_url = `${tmdb_base_url}${url}?api_key=${tmdb_api_key}&page=${page}`;
         if (!noLang) full_url += `&language=${lang}`;
-        if (useRegion) full_url += `&region=${getRegion()}`;
+        if (useRegion) full_url += `®ion=${getRegion()}`;
         console.log('Сформований URL:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
@@ -753,10 +753,10 @@
         var total_pages = 0;
         var last;
         var waitload = false;
-        var batchSize = 6;
+        var batchSize = 6; // Завантажуємо по 6 карток за раз, як у youtube1.js
         var loadedIndex = 0;
         var isLoading = false;
-        var currentData = null;
+        var currentData = null; // Зберігаємо поточні дані сторінки
 
         this.create = function () {
             Api.full(object, this.build.bind(this), this.empty.bind(this));
@@ -776,11 +776,13 @@
             var _this = this;
             if (waitload || isLoading) return;
 
+            // Спочатку перевіряємо, чи є ще картки на поточній сторінці
             if (currentData && loadedIndex < currentData.results.length) {
                 this.append(currentData, true);
                 return;
             }
 
+            // Якщо картки на поточній сторінці закінчилися, завантажуємо наступну
             if (object.page < 30 && object.page < total_pages) {
                 isLoading = true;
                 waitload = true;
@@ -827,9 +829,8 @@
                 cardsToLoad.forEach(function (element) {
                     var card = new Trailer(element, { type: object.type });
                     card.create();
-                    if (scroll.visible(card.render())) {
-                        card.visible();
-                    }
+                    // Замінюємо scroll.visible() на просту ініціалізацію видимості
+                    card.visible(); // Завантажуємо зображення для всіх карток, а не лише видимих
                     card.onFocus = function (target, card_data) {
                         last = target;
                         if (_this2.onFocus) _this2.onFocus(card_data);
@@ -1173,7 +1174,7 @@
                 <li class="menu__item selector">
                     <div class="menu__ico">
                         <svg height="70" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/>
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z"/>
                         </svg>
                     </div>
                     <div class="menu__text">${Lampa.Lang.translate('title_trailers')}</div>
@@ -1187,17 +1188,15 @@
                     page: 1
                 });
             });
-            $('.menu .menu__list').eq(0).prepend(button);
-
-            $('body').append(Lampa.Template.get('trailer_style', {}, true));
+            $('.menu .menu__list').append(button);
         }
 
-        if (Lampa.Platform.is('webos') || Lampa.Platform.is('android') || Lampa.Platform.is('tizen') || Lampa.Platform.is('orsay')) {
-            add();
-        } else {
-            setTimeout(add, 100);
-        }
+        Lampa.Listener.follow('app', function (e) {
+            if (e.type === 'ready') {
+                add();
+            }
+        });
     }
 
-    if (!window.plugin_trailers_ready) startPlugin();
+    startPlugin();
 })();
