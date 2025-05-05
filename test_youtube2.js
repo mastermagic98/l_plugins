@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.07.4 Виправлено вертикальний зсув карток на trailers_full (картки зміщуються по вертикалі при прокручуванні, як на trailers_main по горизонталі), збережено поведінку кнопки та картки ЩЕ (відкривають trailers_full), картки додаються по мірі прокручування (12 або 6 за раз), збережено виправлення стрілки вниз, подвійного кліку, відповідність youtube1.js для visibleCards у рядку, автоматичне прокручування, всі попередні виправлення (_this is undefined, debounce, ліниве завантаження, рекурсія)
+    // Версія 1.07.5 Виправлено відображення карток на trailers_full (12 або 6 карток, прокрутка працює), оптимізовано запити до API (лише для основної мови: uk → uk,ua,en; ru → ru,en; викликаються при фокусуванні), збережено вертикальний зсув карток, поведінку кнопки та картки ЩЕ (відкривають trailers_full), виправлення стрілки вниз, подвійного кліку, відповідність youtube1.js для visibleCards у рядку, автоматичне прокручування, всі попередні виправлення (_this is undefined, debounce, ліниве завантаження, рекурсія)
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -35,7 +35,7 @@
 
     function getPreferredLanguage() {
         var lang = Lampa.Storage.get('language', 'ru');
-        return lang === 'uk' ? ['uk', 'ua', 'ru', 'en'] : lang === 'ru' ? ['ru', 'uk', 'ua', 'en'] : ['en', 'ru', 'uk', 'ua'];
+        return lang === 'uk' ? ['uk', 'ua', 'en'] : lang === 'ru' ? ['ru', 'en'] : ['en'];
     }
 
     function get(url, page, resolve, reject, useRegion, noLang) {
@@ -147,10 +147,7 @@
                     oncomplite(result);
                 } else if (langIndex < preferredLangs.length - 1) {
                     tryFetch(langIndex + 1, false);
-                } else if (!noLang) {
-                    tryFetch(0, true);
                 } else {
-                    console.log('No trailers found');
                     trailerCache[id] = { results: [] };
                     onerror();
                 }
@@ -158,8 +155,6 @@
                 console.log('Videos error:', error);
                 if (langIndex < preferredLangs.length - 1) {
                     tryFetch(langIndex + 1, false);
-                } else if (!noLang) {
-                    tryFetch(0, true);
                 } else {
                     trailerCache[id] = { results: [] };
                     onerror();
@@ -272,7 +267,7 @@
             this.card.on('hover:focus', function (e, is_mouse) {
                 Lampa.Background.change(_this2.cardImgBackground(data));
                 _this2.onFocus(e.target, data, is_mouse);
-                _this2.loadTrailerInfo();
+                _this2.loadTrailerInfo(); // Завантажуємо мову трейлера лише при фокусуванні
             }).on('hover:enter', function () {
                 if (_this2.is_youtube) {
                     _this2.play(data.id);
@@ -358,7 +353,6 @@
                 }
             });
             this.image();
-            this.loadTrailerInfo(); // Завантажуємо мову трейлера одразу після створення картки
         };
 
         this.destroy = function () {
@@ -390,7 +384,7 @@
     }
 
     function Line(data) {
-        var _this = this; // Зберігаємо контекст Line на рівні конструктора
+        var _this = this;
         var content = Lampa.Template.get('items_line', { title: data.title });
         var body = content.find('.items-line__body');
         var scroll = new Lampa.Scroll({ horizontal: true, step: 600 });
@@ -402,8 +396,8 @@
         var moreButton;
         var last;
         var visibleCards = light ? 6 : 10; // Кількість видимих карток у рядку (збігається з youtube1.js)
-        var loadedIndex = 0; // Індекс останньої завантаженої картки
-        var isLoading = false; // Флаг для запобігання одночасного завантаження
+        var loadedIndex = 0;
+        var isLoading = false;
 
         this.create = function () {
             scroll.render().find('.scroll__body').addClass('items-cards');
@@ -448,9 +442,7 @@
             });
 
             moreButton = $('<div class="items-line__more selector">' + Lampa.Lang.translate('trailers_more') + '</div>');
-            // Очищаємо попередні обробники подій перед прив’язкою
             moreButton.off('hover:enter');
-            // Додаємо дебонсинг для обробника кнопки ЩЕ
             var debouncedOpenFull = debounce(function () {
                 console.log('More button clicked:', data.title);
                 Lampa.Activity.push({
@@ -469,7 +461,6 @@
             this.bind();
             body.append(scroll.render());
 
-            // Додаємо дебонсинг для обробника скролінгу
             var debouncedLoad = debounce(function () {
                 if (scroll.isEnd() && !isLoading) {
                     console.log('Scroll end reached, opening trailers_full');
@@ -499,7 +490,6 @@
                         last = target;
                         active = items.indexOf(card);
                         if (_this.onFocus) _this.onFocus(card_data);
-                        // Прокручуємо до активної картки
                         scroll.update(card.render(), true);
                     };
                     scroll.append(card.render());
@@ -534,7 +524,6 @@
         this.more = function () {
             more = Lampa.Template.get('more');
             more.addClass('more--trailers');
-            // Очищаємо попередні обробники для картки ЩЕ
             more.off('hover:enter');
             more.on('hover:enter', function () {
                 console.log('More card clicked:', data.title);
@@ -559,7 +548,6 @@
                 toggle: function () {
                     Lampa.Controller.collectionSet(scroll.render());
                     Lampa.Controller.collectionFocus(items.length ? last : false, scroll.render());
-                    // Прокручуємо до активної картки після фокусування
                     if (last && items.length) {
                         scroll.update($(last), true);
                     }
@@ -567,7 +555,6 @@
                 right: function () {
                     if (Navigator.canmove('right')) {
                         Navigator.move('right');
-                        // Оновлюємо скрол після навігації
                         if (last && items.length) {
                             scroll.update($(last), true);
                         }
@@ -577,7 +564,6 @@
                 left: function () {
                     if (Navigator.canmove('left')) {
                         Navigator.move('left');
-                        // Оновлюємо скрол після навігації
                         if (last && items.length) {
                             scroll.update($(last), true);
                         }
@@ -687,7 +673,7 @@
             active = Math.min(active, items.length - 1);
             this.detach();
             items[active].toggle();
-            scroll.update(items[active].render(), true); // Явне оновлення скролу
+            scroll.update(items[active].render(), true);
         };
 
         this.up = function () {
@@ -700,7 +686,7 @@
                 this.detach();
                 items[active].toggle();
             }
-            scroll.update(items[active].render(), true); // Явне оновлення скролу
+            scroll.update(items[active].render(), true);
         };
 
         this.start = function () {
@@ -756,9 +742,9 @@
         var total_pages = 0;
         var last;
         var waitload = false;
-        var visibleCards = light ? 6 : 12; // Кількість видимих карток на сторінці trailers_full
-        var loadedIndex = 0; // Індекс останньої завантаженої картки
-        var isLoading = false; // Флаг для запобігання одночасного завантаження
+        var visibleCards = light ? 6 : 12;
+        var loadedIndex = 0;
+        var isLoading = false;
 
         this.create = function () {
             Api.full(object, this.build.bind(this), this.empty.bind(this));
@@ -784,7 +770,7 @@
                 console.log('Loading next page:', object.page);
                 Api.full(object, function (result) {
                     if (result.results && result.results.length) {
-                        loadedIndex = 0; // Скидаємо індекс для нової сторінки
+                        loadedIndex = 0;
                         _this.append(result, true);
                         console.log('Added cards for page:', object.page, 'Count:', result.results.length);
                     } else {
@@ -816,6 +802,7 @@
 
         this.append = function (data, append) {
             var _this2 = this;
+            console.log('Appending cards, available results:', data.results.length);
             var cardsToLoad = data.results.slice(loadedIndex, loadedIndex + visibleCards);
             if (cardsToLoad.length > 0) {
                 cardsToLoad.forEach(function (element) {
@@ -833,9 +820,9 @@
                 });
                 loadedIndex += cardsToLoad.length;
                 Lampa.Layer.update();
-                scroll.update(body, true); // Оновлюємо скрол після додавання карток
-                Lampa.Controller.collectionFocus(last || false, scroll.render()); // Оновлюємо фокус
-                console.log('Appended cards:', cardsToLoad.length, 'Total items:', items.length);
+                scroll.update(body, true, true);
+                Lampa.Controller.collectionFocus(last || false, scroll.render());
+                console.log('Appended cards:', cardsToLoad.length, 'Total items:', items.length, 'visibleCards:', visibleCards);
             } else {
                 console.log('No more cards to load on this page');
             }
@@ -852,6 +839,7 @@
                 if (light && items.length) this.back();
                 if (total_pages > data.page && items.length) this.more();
                 scroll.append(body);
+                scroll.update(body, true, true);
                 if (newlampa) {
                     scroll.onEnd = this.next.bind(this);
                     scroll.onWheel = function (step) {
@@ -859,7 +847,6 @@
                         if (step > 0) Navigator.move('down');
                         else if (active > 0) Navigator.move('up');
                     };
-                    // Додаємо дебонсинг для обробника скролінгу
                     var debouncedLoad = debounce(function () {
                         if (scroll.isEnd() && !isLoading) {
                             console.log('Scroll end reached, triggering next page');
