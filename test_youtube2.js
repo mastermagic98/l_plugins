@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.07.1 Повернення до версії 1.07 (картка ЩЕ відкриває trailers_full), виправлено подвійний клік для кнопки ЩЕ, забезпечено показ усіх карток із data.results перед підвантаженням, збережено автоматичне прокручування, всі попередні виправлення (_this is undefined, debounce, ліниве завантаження, рекурсія)
+    // Версія 1.07.2 Виправлено картку ЩЕ (відкриває trailers_full, а не додає 6 карток), виправлено стрілку вниз (нові картки відображаються), збережено поведінку кнопки ЩЕ (додає 10 або 6 карток як у youtube1.js), виправлено подвійний клік, показ усіх карток перед підвантаженням, автоматичне прокручування, всі попередні виправлення (_this is undefined, debounce, ліниве завантаження, рекурсія)
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -95,7 +95,7 @@
         }, status.error.bind(status), false);
 
         get(`/tv/on_the_air`, 1, function (json) {
-            append(Lampa.Lang.translate('trailers_upcoming_seasons'), 'upcoming_seasons', '/tv/on_the_air', json.results.length ? json : { results: [] });
+            append(Lampa.Lang.translate('trailers_upcoming_seasons'), 'upcoming_seasons', '/tv/on_the_air"', json.results.length ? json : { results: [] });
         }, status.error.bind(status), true);
 
         get(`/tv/airing_today`, 1, function (json) {
@@ -401,7 +401,7 @@
         var filter;
         var moreButton;
         var last;
-        var visibleCards = light ? 6 : 10; // Кількість видимих карток
+        var visibleCards = light ? 6 : 10; // Кількість видимих карток (збігається з youtube1.js)
         var loadedIndex = 0; // Індекс останньої завантаженої картки
         var isLoading = false; // Флаг для запобігання одночасного завантаження
 
@@ -528,6 +528,8 @@
         this.more = function () {
             more = Lampa.Template.get('more');
             more.addClass('more--trailers');
+            // Очищаємо попередні обробники для картки ЩЕ
+            more.off('hover:enter');
             more.on('hover:enter', function () {
                 console.log('More card clicked:', data.title);
                 Lampa.Activity.push({
@@ -679,7 +681,7 @@
             active = Math.min(active, items.length - 1);
             this.detach();
             items[active].toggle();
-            scroll.update(items[active].render());
+            scroll.update(items[active].render(), true); // Явне оновлення скролу
         };
 
         this.up = function () {
@@ -692,7 +694,7 @@
                 this.detach();
                 items[active].toggle();
             }
-            scroll.update(items[active].render());
+            scroll.update(items[active].render(), true); // Явне оновлення скролу
         };
 
         this.start = function () {
