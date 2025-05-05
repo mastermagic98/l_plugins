@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.07.8 Виправлено проблему з відображенням плагіна в меню, додані відладочні логи, збережено логіку підвантаження карток по 6 за раз, завантаження мови трейлера при фокусуванні, виправлення scroll.visible, оптимізацію запитів, вертикальний зсув карток, поведінку кнопки ЩЕ
+    // Версія 1.07.9 Виправлено синтаксичну помилку missing ) after argument list у Line.create, збережено логіку підвантаження карток по 6 за раз, завантаження мови трейлера при фокусуванні, виправлення scroll.visible, відображення плагіна в меню
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -427,8 +427,8 @@
                 var items = [
                     { title: Lampa.Lang.translate('trailers_filter_today'), value: 'day', selected: Lampa.Storage.get(`trailers_${data.type}_filter`, 'day') === 'day' },
                     { title: Lampa.Lang.translate('trailers_filter_week'), value: 'week', selected: Lampa.Storage.get(`trailers_${data.type}_filter`, 'day') === 'week' },
-                    { title: Lampa.Lang.translate('trailers_filter_month'), value: 'month', selected: Lampa.Storage.get(`trailers_${data.type}_filter', 'day') === 'month' },
-                    { title: Lampa.Lang.translate('trailers_filter_year'), value: 'year', selected: Lampa.Storage.get(`trailers_${data.type}_filter', 'day') === 'year' }
+                    { title: Lampa.Lang.translate('trailers_filter_month'), value: 'month', selected: Lampa.Storage.get(`trailers_${data.type}_filter`, 'day') === 'month' },
+                    { title: Lampa.Lang.translate('trailers_filter_year'), value: 'year', selected: Lampa.Storage.get(`trailers_${data.type}_filter`, 'day') === 'year' }
                 ];
                 Lampa.Select.show({
                     title: Lampa.Lang.translate('trailers_filter'),
