@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.05 Виправлення _this is undefined в onFocus (замикання), виправлення this is undefined, виправлення _this is not defined, виправлення Lampa.Utils.debounce, обмеження запитів кнопки ЩЕ, ліниве завантаження, виправлення рекурсії
+    // Версія 1.06 Додано автоматичне прокручування рядка карток при навігації стрілками, збережено всі попередні виправлення (_this is undefined, debounce, ліниве завантаження, рекурсія)
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -42,7 +42,7 @@
         var lang = Lampa.Storage.get('language', 'ru');
         var full_url = `${tmdb_base_url}${url}?api_key=${tmdb_api_key}&page=${page}`;
         if (!noLang) full_url += `&language=${lang}`;
-        if (useRegion) full_url += `®ion=${getRegion()}`;
+        if (useRegion) full_url += `&region=${getRegion()}`;
         console.log('Сформований URL:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
@@ -482,6 +482,8 @@
                         last = target;
                         active = items.indexOf(card);
                         if (_this.onFocus) _this.onFocus(card_data);
+                        // Прокручуємо до активної картки
+                        scroll.update(card.render(), true);
                     };
                     scroll.append(card.render());
                     items.push(card);
@@ -539,15 +541,33 @@
                 toggle: function () {
                     Lampa.Controller.collectionSet(scroll.render());
                     Lampa.Controller.collectionFocus(items.length ? last : false, scroll.render());
+                    // Прокручуємо до активної картки після фокусування
+                    if (last && items.length) {
+                        scroll.update($(last), true);
+                    }
                 },
                 right: function () {
-                    Navigator.move('right');
+                    if (Navigator.canmove('right')) {
+                        Navigator.move('right');
+                        // Оновлюємо скрол після навігації
+                        if (last && items.length) {
+                            scroll.update($(last), true);
+                        }
+                    }
                     Lampa.Controller.enable('items_line');
                 },
                 left: function () {
-                    if (Navigator.canmove('left')) Navigator.move('left');
-                    else if (_this2.onLeft) _this2.onLeft();
-                    else Lampa.Controller.toggle('menu');
+                    if (Navigator.canmove('left')) {
+                        Navigator.move('left');
+                        // Оновлюємо скрол після навігації
+                        if (last && items.length) {
+                            scroll.update($(last), true);
+                        }
+                    } else if (_this2.onLeft) {
+                        _this2.onLeft();
+                    } else {
+                        Lampa.Controller.toggle('menu');
+                    }
                 },
                 down: this.onDown,
                 up: this.onUp,
