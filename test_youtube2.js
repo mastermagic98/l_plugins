@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.07 Змінено поведінку картки "ЩЕ" для відкриття нової сторінки (trailers_full), збережено автоматичне прокручування рядка карток, всі попередні виправлення (_this is undefined, debounce, ліниве завантаження, рекурсія)
+    // Версія 1.08 Підтверджено, що кількість карток після натискання кнопки "ЩЕ" відповідає youtube1.js (10 карток у звичайному режимі, 6 у light), збережено поведінку картки "ЩЕ" для відкриття trailers_full, автоматичне прокручування, всі попередні виправлення (_this is undefined, debounce, ліниве завантаження, рекурсія)
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -42,7 +42,7 @@
         var lang = Lampa.Storage.get('language', 'ru');
         var full_url = `${tmdb_base_url}${url}?api_key=${tmdb_api_key}&page=${page}`;
         if (!noLang) full_url += `&language=${lang}`;
-        if (useRegion) full_url += `®ion=${getRegion()}`;
+        if (useRegion) full_url += `&region=${getRegion()}`;
         console.log('Сформований URL:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
@@ -401,7 +401,7 @@
         var filter;
         var moreButton;
         var last;
-        var visibleCards = light ? 6 : 10; // Кількість видимих карток
+        var visibleCards = light ? 6 : 10; // Кількість видимих карток (збігається з youtube1.js)
         var loadedIndex = 0; // Індекс останньої завантаженої картки
         var isLoading = false; // Флаг для запобігання одночасного завантаження
 
@@ -745,7 +745,7 @@
         var last;
         var waitload = false;
         var visibleCards = light ? 6 : 12; // Кількість видимих карток
-        var loadedIndex = 0; // Індекс останньої завантаженої картки
+        var loadedIndex = 0; // Інд ontdekken останньої завантаженої картки
         var isLoading = false; // Флаг для запобігання одночасного завантаження
 
         this.create = function () {
