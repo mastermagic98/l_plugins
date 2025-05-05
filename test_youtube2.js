@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.07.7 Адаптовано логіку підвантаження з youtube1.js (картки додаються по 6 за раз при прокручуванні вниз, без скидання loadedIndex), мова трейлера завантажується одразу при фокусуванні, виправлено помилку scroll.visible is not a function, збережено виправлення подвійних запитів, прокрутки (end_ratio 1.5), відображення 12 або 6 карток, оптимізацію запитів (uk → uk,ua,en; ru → ru,en), вертикальний зсув карток, поведінку кнопки та картки ЩЕ, виправлення стрілки вниз, подвійного кліку, відповідність youtube1.js, автоматичне прокручування, всі попередні виправлення (_this is undefined, debounce, ліниве завантаження, рекурсія)
+    // Версія 1.07.8 Виправлено проблему з відображенням плагіна в меню, додані відладочні логи, збережено логіку підвантаження карток по 6 за раз, завантаження мови трейлера при фокусуванні, виправлення scroll.visible, оптимізацію запитів, вертикальний зсув карток, поведінку кнопки ЩЕ
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -427,8 +427,8 @@
                 var items = [
                     { title: Lampa.Lang.translate('trailers_filter_today'), value: 'day', selected: Lampa.Storage.get(`trailers_${data.type}_filter`, 'day') === 'day' },
                     { title: Lampa.Lang.translate('trailers_filter_week'), value: 'week', selected: Lampa.Storage.get(`trailers_${data.type}_filter`, 'day') === 'week' },
-                    { title: Lampa.Lang.translate('trailers_filter_month'), value: 'month', selected: Lampa.Storage.get(`trailers_${data.type}_filter`, 'day') === 'month' },
-                    { title: Lampa.Lang.translate('trailers_filter_year'), value: 'year', selected: Lampa.Storage.get(`trailers_${data.type}_filter`, 'day') === 'year' }
+                    { title: Lampa.Lang.translate('trailers_filter_month'), value: 'month', selected: Lampa.Storage.get(`trailers_${data.type}_filter', 'day') === 'month' },
+                    { title: Lampa.Lang.translate('trailers_filter_year'), value: 'year', selected: Lampa.Storage.get(`trailers_${data.type}_filter', 'day') === 'year' }
                 ];
                 Lampa.Select.show({
                     title: Lampa.Lang.translate('trailers_filter'),
@@ -753,10 +753,10 @@
         var total_pages = 0;
         var last;
         var waitload = false;
-        var batchSize = 6; // Завантажуємо по 6 карток за раз, як у youtube1.js
+        var batchSize = 6;
         var loadedIndex = 0;
         var isLoading = false;
-        var currentData = null; // Зберігаємо поточні дані сторінки
+        var currentData = null;
 
         this.create = function () {
             Api.full(object, this.build.bind(this), this.empty.bind(this));
@@ -776,13 +776,11 @@
             var _this = this;
             if (waitload || isLoading) return;
 
-            // Спочатку перевіряємо, чи є ще картки на поточній сторінці
             if (currentData && loadedIndex < currentData.results.length) {
                 this.append(currentData, true);
                 return;
             }
 
-            // Якщо картки на поточній сторінці закінчилися, завантажуємо наступну
             if (object.page < 30 && object.page < total_pages) {
                 isLoading = true;
                 waitload = true;
@@ -829,8 +827,7 @@
                 cardsToLoad.forEach(function (element) {
                     var card = new Trailer(element, { type: object.type });
                     card.create();
-                    // Замінюємо scroll.visible() на просту ініціалізацію видимості
-                    card.visible(); // Завантажуємо зображення для всіх карток, а не лише видимих
+                    card.visible();
                     card.onFocus = function (target, card_data) {
                         last = target;
                         if (_this2.onFocus) _this2.onFocus(card_data);
@@ -1075,6 +1072,8 @@
     function startPlugin() {
         if (window.plugin_trailers_ready) return;
         window.plugin_trailers_ready = true;
+        console.log('Starting plugin: Trailers');
+
         Lampa.Component.add('trailers_main', Component$1);
         Lampa.Component.add('trailers_full', Component);
         Lampa.Template.add('trailer', `
@@ -1170,6 +1169,7 @@
         `);
 
         function add() {
+            console.log('Adding Trailers to menu');
             var button = $(`
                 <li class="menu__item selector">
                     <div class="menu__ico">
@@ -1181,6 +1181,7 @@
                 </li>
             `);
             button.on('hover:enter', function () {
+                console.log('Trailers menu item clicked');
                 Lampa.Activity.push({
                     url: '',
                     title: Lampa.Lang.translate('title_trailers'),
@@ -1189,10 +1190,13 @@
                 });
             });
             $('.menu .menu__list').append(button);
+            console.log('Trailers button added to menu');
         }
 
         Lampa.Listener.follow('app', function (e) {
+            console.log('App event:', e.type);
             if (e.type === 'ready') {
+                console.log('App is ready, adding Trailers');
                 add();
             }
         });
