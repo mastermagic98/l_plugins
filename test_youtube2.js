@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.08 Підтверджено, що кількість карток після натискання кнопки "ЩЕ" відповідає youtube1.js (10 карток у звичайному режимі, 6 у light), збережено поведінку картки "ЩЕ" для відкриття trailers_full, автоматичне прокручування, всі попередні виправлення (_this is undefined, debounce, ліниве завантаження, рекурсія)
+    // Версія 1.07.1 Повернення до версії 1.07 (картка ЩЕ відкриває trailers_full), виправлено подвійний клік для кнопки ЩЕ, забезпечено показ усіх карток із data.results перед підвантаженням, збережено автоматичне прокручування, всі попередні виправлення (_this is undefined, debounce, ліниве завантаження, рекурсія)
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -42,7 +42,7 @@
         var lang = Lampa.Storage.get('language', 'ru');
         var full_url = `${tmdb_base_url}${url}?api_key=${tmdb_api_key}&page=${page}`;
         if (!noLang) full_url += `&language=${lang}`;
-        if (useRegion) full_url += `&region=${getRegion()}`;
+        if (useRegion) full_url += `®ion=${getRegion()}`;
         console.log('Сформований URL:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
@@ -401,7 +401,7 @@
         var filter;
         var moreButton;
         var last;
-        var visibleCards = light ? 6 : 10; // Кількість видимих карток (збігається з youtube1.js)
+        var visibleCards = light ? 6 : 10; // Кількість видимих карток
         var loadedIndex = 0; // Індекс останньої завантаженої картки
         var isLoading = false; // Флаг для запобігання одночасного завантаження
 
@@ -448,10 +448,14 @@
             });
 
             moreButton = $('<div class="items-line__more selector">' + Lampa.Lang.translate('trailers_more') + '</div>');
-            moreButton.on('hover:enter', function () {
+            // Очищаємо попередні обробники подій перед прив’язкою
+            moreButton.off('hover:enter');
+            // Додаємо дебонсинг для обробника кнопки ЩЕ
+            var debouncedLoadMore = debounce(function () {
                 console.log('More button clicked:', data.title);
                 loadMoreCards();
-            });
+            }, 200);
+            moreButton.on('hover:enter', debouncedLoadMore);
 
             content.find('.items-line__title').after(filter);
             filter.after(moreButton);
@@ -745,7 +749,7 @@
         var last;
         var waitload = false;
         var visibleCards = light ? 6 : 12; // Кількість видимих карток
-        var loadedIndex = 0; // Інд ontdekken останньої завантаженої картки
+        var loadedIndex = 0; // Індекс останньої завантаженої картки
         var isLoading = false; // Флаг для запобігання одночасного завантаження
 
         this.create = function () {
