@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.07.5 Виправлено відображення карток на trailers_full (12 або 6 карток, прокрутка працює), оптимізовано запити до API (лише для основної мови: uk → uk,ua,en; ru → ru,en; викликаються при фокусуванні), збережено вертикальний зсув карток, поведінку кнопки та картки ЩЕ (відкривають trailers_full), виправлення стрілки вниз, подвійного кліку, відповідність youtube1.js для visibleCards у рядку, автоматичне прокручування, всі попередні виправлення (_this is undefined, debounce, ліниве завантаження, рекурсія)
+    // Версія 1.07.6 Виправлено подвійні запити до API (додано перевірку кешу та стану запиту), виправлено прокрутку на trailers_full (зменшено end_ratio, додано додаткову перевірку скролу), збережено відображення 12 або 6 карток, оптимізацію запитів (лише для основної мови: uk → uk,ua,en; ru → ru,en; викликаються при фокусуванні), вертикальний зсув карток, поведінку кнопки та картки ЩЕ, виправлення стрілки вниз, подвійного кліку, відповідність youtube1.js, автоматичне прокручування, всі попередні виправлення (_this is undefined, debounce, ліниве завантаження, рекурсія)
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -18,6 +18,7 @@
     var tmdb_api_key = Lampa.TMDB.key();
     var tmdb_base_url = 'https://api.themoviedb.org/3';
     var trailerCache = {}; // Кеш для зберігання результатів запитів
+    var activeRequests = new Set(); // Відстеження активних запитів
 
     function getFormattedDate(daysAgo) {
         var today = new Date();
@@ -128,14 +129,18 @@
             return;
         }
 
+        var requestKey = `${type}-${id}`;
+        if (activeRequests.has(requestKey)) {
+            console.log('Request already in progress for id:', id);
+            return;
+        }
+        activeRequests.add(requestKey);
+
         var url = `${tmdb_base_url}/${type}/${id}/videos?api_key=${tmdb_api_key}`;
         var preferredLangs = getPreferredLanguage();
 
-        function tryFetch(langIndex, noLang) {
-            var fetchUrl = url;
-            if (!noLang && langIndex < preferredLangs.length) {
-                fetchUrl += `&language=${preferredLangs[langIndex]}`;
-            }
+        function tryFetch(langIndex) {
+            var fetchUrl = url + `&language=${preferredLangs[langIndex]}`;
             console.log('Videos request:', fetchUrl);
             network.silent(fetchUrl, function (result) {
                 console.log('Videos result:', result);
@@ -146,23 +151,25 @@
                     trailerCache[id] = result;
                     oncomplite(result);
                 } else if (langIndex < preferredLangs.length - 1) {
-                    tryFetch(langIndex + 1, false);
+                    tryFetch(langIndex + 1);
                 } else {
                     trailerCache[id] = { results: [] };
                     onerror();
                 }
+                activeRequests.delete(requestKey);
             }, function (error) {
                 console.log('Videos error:', error);
                 if (langIndex < preferredLangs.length - 1) {
-                    tryFetch(langIndex + 1, false);
+                    tryFetch(langIndex + 1);
                 } else {
                     trailerCache[id] = { results: [] };
                     onerror();
                 }
+                activeRequests.delete(requestKey);
             });
         }
 
-        tryFetch(0, false);
+        tryFetch(0);
     }
 
     function clear() {
@@ -184,6 +191,7 @@
             this.is_youtube = params.type === 'rating';
             this.rating = data.vote_average ? data.vote_average.toFixed(1) : '';
             this.trailer_lang = '';
+            this.isLoadingTrailer = false; // Флаг для запобігання подвійного виклику
 
             if (!this.is_youtube) {
                 var create = ((data.release_date || data.first_air_date || '0000') + '').slice(0, 4);
@@ -219,7 +227,8 @@
 
         this.loadTrailerInfo = function () {
             var _this = this;
-            if (!this.is_youtube && !this.trailer_lang) {
+            if (!this.is_youtube && !this.trailer_lang && !this.isLoadingTrailer) {
+                this.isLoadingTrailer = true;
                 Api.videos(data, function (videos) {
                     var trailers = videos.results ? videos.results.filter(function (v) {
                         return v.type === 'Trailer';
@@ -232,8 +241,10 @@
                     if (_this.trailer_lang) {
                         _this.card.find('.card__trailer-lang').text(_this.trailer_lang.toUpperCase());
                     }
+                    _this.isLoadingTrailer = false;
                 }, function () {
                     console.log('Failed to load trailer info');
+                    _this.isLoadingTrailer = false;
                 });
             }
         };
@@ -267,7 +278,7 @@
             this.card.on('hover:focus', function (e, is_mouse) {
                 Lampa.Background.change(_this2.cardImgBackground(data));
                 _this2.onFocus(e.target, data, is_mouse);
-                _this2.loadTrailerInfo(); // Завантажуємо мову трейлера лише при фокусуванні
+                _this2.loadTrailerInfo();
             }).on('hover:enter', function () {
                 if (_this2.is_youtube) {
                     _this2.play(data.id);
@@ -395,7 +406,7 @@
         var filter;
         var moreButton;
         var last;
-        var visibleCards = light ? 6 : 10; // Кількість видимих карток у рядку (збігається з youtube1.js)
+        var visibleCards = light ? 6 : 10;
         var loadedIndex = 0;
         var isLoading = false;
 
@@ -733,7 +744,7 @@
     }
 
     function Component(object) {
-        var scroll = new Lampa.Scroll({ mask: true, over: true, step: 250, end_ratio: 2 });
+        var scroll = new Lampa.Scroll({ mask: true, over: true, step: 250, end_ratio: 1.5 });
         var items = [];
         var html = $('<div></div>');
         var body = $('<div class="category-full category-full--trailers"></div>');
@@ -848,6 +859,7 @@
                         else if (active > 0) Navigator.move('up');
                     };
                     var debouncedLoad = debounce(function () {
+                        console.log('Scroll position checked, isEnd:', scroll.isEnd());
                         if (scroll.isEnd() && !isLoading) {
                             console.log('Scroll end reached, triggering next page');
                             _this3.next();
