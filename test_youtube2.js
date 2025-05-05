@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.06 Додано автоматичне прокручування рядка карток при навігації стрілками, збережено всі попередні виправлення (_this is undefined, debounce, ліниве завантаження, рекурсія)
+    // Версія 1.07 Змінено поведінку картки "ЩЕ" для відкриття нової сторінки (trailers_full), збережено автоматичне прокручування рядка карток, всі попередні виправлення (_this is undefined, debounce, ліниве завантаження, рекурсія)
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -42,7 +42,7 @@
         var lang = Lampa.Storage.get('language', 'ru');
         var full_url = `${tmdb_base_url}${url}?api_key=${tmdb_api_key}&page=${page}`;
         if (!noLang) full_url += `&language=${lang}`;
-        if (useRegion) full_url += `&region=${getRegion()}`;
+        if (useRegion) full_url += `®ion=${getRegion()}`;
         console.log('Сформований URL:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
@@ -526,7 +526,13 @@
             more.addClass('more--trailers');
             more.on('hover:enter', function () {
                 console.log('More card clicked:', data.title);
-                loadMoreCards();
+                Lampa.Activity.push({
+                    url: data.url,
+                    title: data.title,
+                    component: 'trailers_full',
+                    type: data.type,
+                    page: Math.floor(loadedIndex / visibleCards) + 2
+                });
             });
             more.on('hover:focus', function (e) {
                 last = e.target;
@@ -1104,6 +1110,7 @@
             .category-full--trailers .card {
                 margin-bottom: 1.5em;
             }
+            .card.card--trailer,
             .category-full--trailers .card {
                 width: 33.3%;
             }
