@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.07.3 Змінено кнопку ЩЕ (відкриває trailers_full замість додавання карток у рядок), картка ЩЕ відкриває trailers_full, на сторінці trailers_full картки додаються по мірі прокручування (12 або 6 за раз), збережено виправлення стрілки вниз, подвійного кліку, відповідність youtube1.js для visibleCards, автоматичне прокручування, всі попередні виправлення (_this is undefined, debounce, ліниве завантаження, рекурсія)
+    // Версія 1.07.4 Виправлено вертикальний зсув карток на trailers_full (картки зміщуються по вертикалі при прокручуванні, як на trailers_main по горизонталі), збережено поведінку кнопки та картки ЩЕ (відкривають trailers_full), картки додаються по мірі прокручування (12 або 6 за раз), збережено виправлення стрілки вниз, подвійного кліку, відповідність youtube1.js для visibleCards у рядку, автоматичне прокручування, всі попередні виправлення (_this is undefined, debounce, ліниве завантаження, рекурсія)
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -42,7 +42,7 @@
         var lang = Lampa.Storage.get('language', 'ru');
         var full_url = `${tmdb_base_url}${url}?api_key=${tmdb_api_key}&page=${page}`;
         if (!noLang) full_url += `&language=${lang}`;
-        if (useRegion) full_url += `&region=${getRegion()}`;
+        if (useRegion) full_url += `®ion=${getRegion()}`;
         console.log('Сформований URL:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
@@ -825,6 +825,7 @@
                     card.onFocus = function (target, card_data) {
                         last = target;
                         if (_this2.onFocus) _this2.onFocus(card_data);
+                        console.log('Card focused:', card_data.title || card_data.name);
                     };
                     body.append(card.render());
                     items.push(card);
@@ -832,6 +833,8 @@
                 });
                 loadedIndex += cardsToLoad.length;
                 Lampa.Layer.update();
+                scroll.update(body, true); // Оновлюємо скрол після додавання карток
+                Lampa.Controller.collectionFocus(last || false, scroll.render()); // Оновлюємо фокус
                 console.log('Appended cards:', cardsToLoad.length, 'Total items:', items.length);
             } else {
                 console.log('No more cards to load on this page');
@@ -911,6 +914,7 @@
                 toggle: function () {
                     Lampa.Controller.collectionSet(scroll.render());
                     Lampa.Controller.collectionFocus(last || false, scroll.render());
+                    console.log('Toggled content, focused on:', last ? 'last card' : 'none');
                 },
                 left: function () {
                     if (Navigator.canmove('left')) Navigator.move('left');
