@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.07.6 Виправлено подвійні запити до API (додано перевірку кешу та стану запиту), виправлено прокрутку на trailers_full (зменшено end_ratio, додано додаткову перевірку скролу), збережено відображення 12 або 6 карток, оптимізацію запитів (лише для основної мови: uk → uk,ua,en; ru → ru,en; викликаються при фокусуванні), вертикальний зсув карток, поведінку кнопки та картки ЩЕ, виправлення стрілки вниз, подвійного кліку, відповідність youtube1.js, автоматичне прокручування, всі попередні виправлення (_this is undefined, debounce, ліниве завантаження, рекурсія)
+    // Версія 1.07.7 Адаптовано логіку підвантаження з youtube1.js (картки додаються по 6 за раз при прокручуванні вниз, без скидання loadedIndex), мова трейлера завантажується одразу при фокусуванні, збережено виправлення подвійних запитів, прокрутки (end_ratio 1.5), відображення 12 або 6 карток, оптимізацію запитів (uk → uk,ua,en; ru → ru,en), вертикальний зсув карток, поведінку кнопки та картки ЩЕ, виправлення стрілки вниз, подвійного кліку, відповідність youtube1.js, автоматичне прокручування, всі попередні виправлення (_this is undefined, debounce, ліниве завантаження, рекурсія)
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -17,8 +17,8 @@
     var network = new Lampa.Reguest();
     var tmdb_api_key = Lampa.TMDB.key();
     var tmdb_base_url = 'https://api.themoviedb.org/3';
-    var trailerCache = {}; // Кеш для зберігання результатів запитів
-    var activeRequests = new Set(); // Відстеження активних запитів
+    var trailerCache = {};
+    var activeRequests = new Set();
 
     function getFormattedDate(daysAgo) {
         var today = new Date();
@@ -43,7 +43,7 @@
         var lang = Lampa.Storage.get('language', 'ru');
         var full_url = `${tmdb_base_url}${url}?api_key=${tmdb_api_key}&page=${page}`;
         if (!noLang) full_url += `&language=${lang}`;
-        if (useRegion) full_url += `®ion=${getRegion()}`;
+        if (useRegion) full_url += `&region=${getRegion()}`;
         console.log('Сформований URL:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
@@ -191,7 +191,7 @@
             this.is_youtube = params.type === 'rating';
             this.rating = data.vote_average ? data.vote_average.toFixed(1) : '';
             this.trailer_lang = '';
-            this.isLoadingTrailer = false; // Флаг для запобігання подвійного виклику
+            this.isLoadingTrailer = false;
 
             if (!this.is_youtube) {
                 var create = ((data.release_date || data.first_air_date || '0000') + '').slice(0, 4);
@@ -461,7 +461,7 @@
                     title: data.title,
                     component: 'trailers_full',
                     type: data.type,
-                    page: Math.floor(loadedIndex / visibleCards) + 2
+                    page: 1
                 });
             }, 200);
             moreButton.on('hover:enter', debouncedOpenFull);
@@ -480,7 +480,7 @@
                         title: data.title,
                         component: 'trailers_full',
                         type: data.type,
-                        page: Math.floor(loadedIndex / visibleCards) + 2
+                        page: 1
                     });
                 }
             }, 200);
@@ -543,7 +543,7 @@
                     title: data.title,
                     component: 'trailers_full',
                     type: data.type,
-                    page: Math.floor(loadedIndex / visibleCards) + 2
+                    page: 1
                 });
             });
             more.on('hover:focus', function (e) {
@@ -753,9 +753,10 @@
         var total_pages = 0;
         var last;
         var waitload = false;
-        var visibleCards = light ? 6 : 12;
+        var batchSize = 6;
         var loadedIndex = 0;
         var isLoading = false;
+        var currentData = null;
 
         this.create = function () {
             Api.full(object, this.build.bind(this), this.empty.bind(this));
@@ -774,6 +775,12 @@
         this.next = function () {
             var _this = this;
             if (waitload || isLoading) return;
+
+            if (currentData && loadedIndex < currentData.results.length) {
+                this.append(currentData, true);
+                return;
+            }
+
             if (object.page < 30 && object.page < total_pages) {
                 isLoading = true;
                 waitload = true;
@@ -781,6 +788,7 @@
                 console.log('Loading next page:', object.page);
                 Api.full(object, function (result) {
                     if (result.results && result.results.length) {
+                        currentData = result;
                         loadedIndex = 0;
                         _this.append(result, true);
                         console.log('Added cards for page:', object.page, 'Count:', result.results.length);
@@ -813,13 +821,15 @@
 
         this.append = function (data, append) {
             var _this2 = this;
-            console.log('Appending cards, available results:', data.results.length);
-            var cardsToLoad = data.results.slice(loadedIndex, loadedIndex + visibleCards);
+            console.log('Appending cards, available results:', data.results.length, 'loadedIndex:', loadedIndex);
+            var cardsToLoad = data.results.slice(loadedIndex, loadedIndex + batchSize);
             if (cardsToLoad.length > 0) {
                 cardsToLoad.forEach(function (element) {
                     var card = new Trailer(element, { type: object.type });
                     card.create();
-                    card.visible();
+                    if (scroll.visible(card.render())) {
+                        card.visible();
+                    }
                     card.onFocus = function (target, card_data) {
                         last = target;
                         if (_this2.onFocus) _this2.onFocus(card_data);
@@ -833,7 +843,7 @@
                 Lampa.Layer.update();
                 scroll.update(body, true, true);
                 Lampa.Controller.collectionFocus(last || false, scroll.render());
-                console.log('Appended cards:', cardsToLoad.length, 'Total items:', items.length, 'visibleCards:', visibleCards);
+                console.log('Appended cards:', cardsToLoad.length, 'Total items:', items.length, 'batchSize:', batchSize);
             } else {
                 console.log('No more cards to load on this page');
             }
@@ -844,11 +854,13 @@
             console.log('Building full view with data:', data);
             if (data.results && data.results.length) {
                 total_pages = data.total_pages || 1;
+                currentData = data;
+                loadedIndex = 0;
                 scroll.minus();
                 html.append(scroll.render());
                 this.append(data);
                 if (light && items.length) this.back();
-                if (total_pages > data.page && items.length) this.more();
+                if (total_pages > data.page || loadedIndex < data.results.length) this.more();
                 scroll.append(body);
                 scroll.update(body, true, true);
                 if (newlampa) {
@@ -1175,15 +1187,15 @@
                     page: 1
                 });
             });
-            $('.menu .menu__list').eq(0).append(button);
+            $('.menu .menu__list').eq(0).prepend(button);
+
             $('body').append(Lampa.Template.get('trailer_style', {}, true));
         }
 
-        if (window.appready) add();
-        else {
-            Lampa.Listener.follow('app', function (e) {
-                if (e.type === 'ready') add();
-            });
+        if (Lampa.Platform.is('webos') || Lampa.Platform.is('android') || Lampa.Platform.is('tizen') || Lampa.Platform.is('orsay')) {
+            add();
+        } else {
+            setTimeout(add, 100);
         }
     }
 
