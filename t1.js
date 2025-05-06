@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.08 Змінено поведінку кнопки "ЩЕ" для перенаправлення на сторінку trailers_full, як у картці "ЩЕ", збережено автоматичне прокручування рядка карток, всі попередні виправлення (_this is undefined, debounce, ліниве завантаження, рекурсія). Мова JavaScript ES5
+    // Версія 1.09 Виправлено підвантаження карток на сторінці trailers_full: тепер усі картки з поточної сторінки API завантажуються порціями по visibleCards, додаткові сторінки API завантажуються автоматично при скролінгу. Збережено однакову поведінку кнопки та картки "ЩЕ", усі попередні виправлення (_this is undefined, debounce, ліниве завантаження, рекурсія). Мова JavaScript ES5
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -42,7 +42,7 @@
         var lang = Lampa.Storage.get('language', 'ru');
         var full_url = tmdb_base_url + url + '?api_key=' + tmdb_api_key + '&page=' + page;
         if (!noLang) full_url += '&language=' + lang;
-        if (useRegion) full_url += '&region=' + getRegion();
+        if (useRegion) full_url += '®ion=' + getRegion();
         console.log('Сформований URL:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
@@ -282,7 +282,7 @@
                         var trailers = videos.results ? videos.results.filter(function (v) {
                             return v.type === 'Trailer';
                         }) : [];
-                        var video = trailers.find(function (v) {
+                        var video = trailers.find(function ( Malgré v) {
                             return preferredLangs.includes(v.iso_639_1);
                         }) || trailers[0];
 
@@ -412,7 +412,7 @@
             filter = $('<div class="items-line__more selector"><svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg></div>');
             filter.css({
                 display: 'inline-block',
-                lege: '10px',
+                marginLeft: '10px',
                 cursor: 'pointer',
                 padding: '0.5em',
                 background: 'transparent',
@@ -420,7 +420,7 @@
             });
             filter.on('hover:enter', function () {
                 var items = [
-                    { title: Lampa.Lang.translate('trailers_filter_today'), value: 'day', selected: Lampa.Storage.get('trailers_' + data.type + '_prepend_filter', 'day') === 'day' },
+                    { title: Lampa.Lang.translate('trailers_filter_today'), value: 'day', selected: Lampa.Storage.get('trailers_' + data.type + '_filter', 'day') === 'day' },
                     { title: Lampa.Lang.translate('trailers_filter_week'), value: 'week', selected: Lampa.Storage.get('trailers_' + data.type + '_filter', 'day') === 'week' },
                     { title: Lampa.Lang.translate('trailers_filter_month'), value: 'month', selected: Lampa.Storage.get('trailers_' + data.type + '_filter', 'day') === 'month' },
                     { title: Lampa.Lang.translate('trailers_filter_year'), value: 'year', selected: Lampa.Storage.get('trailers_' + data.type + '_filter', 'day') === 'year' }
@@ -736,7 +736,7 @@
     }
 
     function Component(object) {
-        var scroll = new Lampa.Scroll({ mask: true, over: true, step: 250, end_ratio: 2 });
+        var scroll = new Lampa.Scroll({ mask: true, over: true, step: 250, end_ratio: 1.5 }); // Зменшено end_ratio для швидшого спрацьовування
         var items = [];
         var html = $('<div></div>');
         var body = $('<div class="category-full category-full--trailers"></div>');
@@ -748,6 +748,7 @@
         var visibleCards = light ? 6 : 12;
         var loadedIndex = 0;
         var isLoading = false;
+        var currentResults = []; // Зберігаємо поточні результати для підвантаження
 
         this.create = function () {
             Api.full(object, this.build.bind(this), this.empty.bind(this));
@@ -763,6 +764,32 @@
             this.activity.toggle();
         };
 
+        this.loadMoreCards = function () {
+            if (isLoading) return;
+            isLoading = true;
+
+            var cardsToLoad = currentResults.slice(loadedIndex, loadedIndex + visibleCards);
+            if (cardsToLoad.length > 0) {
+                cardsToLoad.forEach(function (element) {
+                    var card = new Trailer(element, { type: object.type });
+                    card.create();
+                    card.visible();
+                    card.onFocus = function (target, card_data) {
+                        last = target;
+                        if (this.onFocus) this.onFocus(card_data);
+                    }.bind(this);
+                    body.append(card.render());
+                    items.push(card);
+                    Lampa.Controller.collectionAppend(card.render());
+                });
+                loadedIndex += cardsToLoad.length;
+                Lampa.Layer.update();
+                isLoading = false;
+            } else {
+                this.next();
+            }
+        };
+
         this.next = function () {
             var _this = this;
             if (waitload || isLoading) return;
@@ -772,18 +799,23 @@
                 object.page++;
                 Api.full(object, function (result) {
                     if (result.results && result.results.length) {
+                        currentResults = result.results;
                         loadedIndex = 0;
-                        _this.append(result, true);
+                        _this.loadMoreCards();
                     } else {
                         Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
+                        isLoading = false;
+                        waitload = false;
                     }
-                    isLoading = false;
-                    waitload = false;
                 }, function () {
                     Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
                     isLoading = false;
                     waitload = false;
                 });
+            } else {
+                isLoading = false;
+                waitload = false;
+                console.log('No more pages to load');
             }
         };
 
@@ -798,26 +830,9 @@
         };
 
         this.append = function (data, append) {
-            var _this2 = this;
-            var cardsToLoad = data.results.slice(loadedIndex, loadedIndex + visibleCards);
-            if (cardsToLoad.length > 0) {
-                cardsToLoad.forEach(function (element) {
-                    var card = new Trailer(element, { type: object.type });
-                    card.create();
-                    card.visible();
-                    card.onFocus = function (target, card_data) {
-                        last = target;
-                        if (_this2.onFocus) _this2.onFocus(card_data);
-                    };
-                    body.append(card.render());
-                    items.push(card);
-                    if (append) Lampa.Controller.collectionAppend(card.render());
-                });
-                loadedIndex += cardsToLoad.length;
-                Lampa.Layer.update();
-            } else {
-                console.log('No more cards to load on this page');
-            }
+            currentResults = data.results;
+            loadedIndex = 0;
+            this.loadMoreCards();
         };
 
         this.build = function (data) {
@@ -840,9 +855,9 @@
                     };
                     var debouncedLoad = debounce(function () {
                         if (scroll.isEnd() && !isLoading) {
-                            _this3.next();
+                            _this3.loadMoreCards();
                         }
-                    }, 200);
+                    }, 100); // Зменшено затримку для швидшого реагування
                     scroll.render().on('scroll', debouncedLoad);
                 }
                 this.activity.loader(false);
