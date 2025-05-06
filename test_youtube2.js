@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.0.3: Кнопка "Ще" додається завжди після карток, замінено "N/A" на "-"
+    // Версія 1.0.4: Виправлено відображення кнопки "Ще", пріоритет мови трейлерів, стиль прочерку, стабільність після перезавантаження
 
     var network = new Lampa.Reguest();
     var tmdb_api_key = Lampa.TMDB.key();
@@ -160,9 +160,7 @@
                         return v.type === 'Trailer';
                     }) : [];
                     var video = trailers.find(function (v) {
-                        return v.iso_639_1 === userLang || v.iso_639_1 === 'ua';
-                    }) || trailers.find(function (v) {
-                        return v.iso_639_1 === 'ru';
+                        return v.iso_639_1 === userLang || (userLang === 'uk' && v.iso_639_1 === 'ua');
                     }) || trailers.find(function (v) {
                         return v.iso_639_1 === 'en';
                     }) || trailers[0];
@@ -219,9 +217,7 @@
                             return v.type === 'Trailer';
                         });
                         var video = trailers.find(function (v) {
-                            return v.iso_639_1 === userLang || v.iso_639_1 === 'ua';
-                        }) || trailers.find(function (v) {
-                            return v.iso_639_1 === 'ru';
+                            return v.iso_639_1 === userLang || (userLang === 'uk' && v.iso_639_1 === 'ua');
                         }) || trailers.find(function (v) {
                             return v.iso_639_1 === 'en';
                         }) || trailers[0];
@@ -264,7 +260,7 @@
                                     items.push({
                                         title: video.name || 'Trailer',
                                         id: video.key,
-                                        subtitle: video.iso_639_1 === userLang || video.iso_639_1 === 'ua' ? 'Local' : video.iso_639_1
+                                        subtitle: video.iso_639_1 === userLang || (userLang === 'uk' && video.iso_639_1 === 'ua') ? 'Local' : video.iso_639_1
                                     });
                                 }
                             });
@@ -384,7 +380,7 @@
 
         this.bind = function () {
             data.results.forEach(this.append.bind(this));
-            this.more(); // Завжди додаємо кнопку "Ще"
+            this.more();
             Lampa.Layer.update();
         };
 
@@ -414,7 +410,7 @@
         };
 
         this.more = function () {
-            more = Lampa.Template.get('more');
+            more = Lampa.Template.get('button_more', {});
             more.addClass('more--trailers');
             more.on('hover:enter', function () {
                 Lampa.Activity.push({
@@ -852,6 +848,14 @@
             </div>
         `);
 
+        Lampa.Template.add('button_more', `
+            <div class="selector more">
+                <div class="more__box">
+                    <div class="more__text">Ще</div>
+                </div>
+            </div>
+        `);
+
         Lampa.Template.add('trailer_style', `
             <style>
             .card.card--trailer,
@@ -899,9 +903,15 @@
                 border-radius: 3px;
                 text-transform: uppercase;
                 color: #fff;
+                font-weight: bold; /* Товстіший прочерк */
             }
-            .card-more.more--trailers .card-more__box {
-                padding-bottom: 56%;
+            .more--trailers .more__box {
+                padding-bottom: 0;
+                background: #333;
+                color: #fff;
+                text-align: center;
+                padding: 10px;
+                cursor: pointer;
             }
             .category-full--trailers .card {
                 margin-bottom: 1.5em;
@@ -957,11 +967,13 @@
 
         Lampa.Listener.follow('app', function (e) {
             if (e.type === 'ready') {
-                setTimeout(add, 100);
+                if (!$('.menu__item:contains(' + Lampa.Lang.translate('title_trailers') + ')').length) {
+                    setTimeout(add, 100);
+                }
             }
         });
 
-        if (window.appready) {
+        if (window.appready && !$('.menu__item:contains(' + Lampa.Lang.translate('title_trailers') + ')').length) {
             setTimeout(add, 100);
         }
     }
