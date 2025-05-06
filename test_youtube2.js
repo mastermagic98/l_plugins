@@ -1,11 +1,11 @@
 (function () {
     'use strict';
+    // Версія 1.0.1: Залишено лише категорію "Популярні фільми", додано кнопку "Ще", оцінку в правому нижньому кутку картки, мову трейлера у верхньому правому кутку
 
     var network = new Lampa.Reguest();
-    var tmdb_api_key = Lampa.TMDB.key(); // Отримуємо ключ API TMDB із Lampa
+    var tmdb_api_key = Lampa.TMDB.key();
     var tmdb_base_url = 'https://api.themoviedb.org/3';
 
-    // Функція для форматування дати у форматі YYYY-MM-DD
     function getFormattedDate(daysAgo) {
         var today = new Date();
         if (daysAgo) today.setDate(today.getDate() - daysAgo);
@@ -15,37 +15,34 @@
         return `${year}-${month}-${day}`;
     }
 
-    // Визначення регіону залежно від мови
     function getRegion() {
         var lang = Lampa.Storage.get('language', 'ru');
         return lang === 'uk' ? 'UA' : lang === 'ru' ? 'RU' : 'US';
     }
 
-    // Основна функція для запитів до TMDB
     function get(url, page, resolve, reject, useRegion) {
         var lang = Lampa.Storage.get('language', 'ru');
         var full_url = `${tmdb_base_url}${url}&api_key=${tmdb_api_key}&language=${lang}&page=${page}`;
         if (useRegion) full_url += `®ion=${getRegion()}`;
-        console.log('API Request:', full_url); // Діагностика
+        console.log('API Request:', full_url);
         network.silent(full_url, function (result) {
-            console.log('API Result:', url, result); // Діагностика
+            console.log('API Result:', url, result);
             resolve(result);
         }, function (error) {
-            console.log('API Error:', url, error); // Діагностика
+            console.log('API Error:', url, error);
             reject(error);
         });
     }
 
-    // Головна функція для отримання списку "Популярні фільми"
     function main(oncomplite, onerror) {
-        var status = new Lampa.Status(1); // Тільки одна категорія
+        var status = new Lampa.Status(1);
 
         status.onComplite = function () {
             var fulldata = [];
             if (status.data.popular && status.data.popular.results.length) {
                 fulldata.push(status.data.popular);
             }
-            console.log('Main completed:', fulldata); // Діагностика
+            console.log('Main completed:', fulldata);
             if (fulldata.length) oncomplite(fulldata);
             else onerror();
         };
@@ -63,42 +60,38 @@
                          popularFilter === 'month' ? `/discover/movie?sort_by=popularity.desc&release_date.gte=${getFormattedDate(30)}` :
                          `/discover/movie?sort_by=popularity.desc&release_date.gte=${getFormattedDate(365)}`;
 
-        // Запит лише для "Популярне"
         get(popularUrl, 1, function (json) {
             append(Lampa.Lang.translate('trailers_popular'), 'popular', popularUrl, json.results.length ? json : { results: [] });
         }, function () {
-            // Резервний запит для "Популярне"
             get('/discover/movie?sort_by=popularity.desc', 1, function (json) {
                 append(Lampa.Lang.translate('trailers_popular'), 'popular', '/discover/movie?sort_by=popularity.desc', json);
             }, status.error.bind(status));
         }, false);
     }
 
-    // Функція для отримання повного списку для пагінації
     function full(params, oncomplite, onerror) {
         get(params.url, params.page, function (result) {
             if (result && result.results && result.results.length) {
                 oncomplite(result);
             } else {
-                console.log('Full: No results for', params.url); // Діагностика
+                console.log('Full: No results for', params.url);
                 onerror();
             }
         }, function (error) {
-            console.log('Full error:', params.url, error); // Діагностика
+            console.log('Full error:', params.url, error);
             onerror();
         }, false);
     }
 
-    // Функція для отримання трейлерів із пріоритетом мови
     function videos(card, oncomplite, onerror) {
         var type = card.name ? 'tv' : 'movie';
-        var url = `${tmdb_base_url}/${type}/${card.id}/videos?api_key=${tmdb_api_key}`; // Без language, щоб отримати всі трейлери
-        console.log('Videos request:', url); // Діагностика
+        var url = `${tmdb_base_url}/${type}/${card.id}/videos?api_key=${tmdb_api_key}`;
+        console.log('Videos request:', url);
         network.silent(url, function (result) {
-            console.log('Videos result:', result); // Діагностика
+            console.log('Videos result:', result);
             oncomplite(result);
         }, function (error) {
-            console.log('Videos error:', error); // Діагностика
+            console.log('Videos error:', error);
             onerror();
         });
     }
@@ -120,11 +113,16 @@
             this.card = Lampa.Template.get('trailer', data);
             this.img = this.card.find('img')[0];
             this.is_youtube = params.type === 'rating';
+            this.rating = data.vote_average ? data.vote_average.toFixed(1) : '';
+            this.trailer_lang = '';
+            this.isLoadingTrailer = false;
 
             if (!this.is_youtube) {
                 var create = ((data.release_date || data.first_air_date || '0000') + '').slice(0, 4);
                 this.card.find('.card__title').text(data.title || data.name);
                 this.card.find('.card__details').text(create + ' - ' + (data.original_title || data.original_name));
+                this.card.find('.card__view').append(`<div class="card__rating">${this.rating}</div>`);
+                this.card.find('.card__view').append(`<div class="card__trailer-lang"></div>`);
             } else {
                 this.card.find('.card__title').text(data.name);
                 this.card.find('.card__details').remove();
@@ -151,12 +149,40 @@
             };
         };
 
+        this.loadTrailerInfo = function () {
+            var _this = this;
+            if (!this.is_youtube && !this.trailer_lang && !this.isLoadingTrailer) {
+                this.isLoadingTrailer = true;
+                Api.videos(data, function (videos) {
+                    var userLang = Lampa.Storage.get('language', 'ru');
+                    var trailers = videos.results ? videos.results.filter(function (v) {
+                        return v.type === 'Trailer';
+                    }) : [];
+                    var video = trailers.find(function (v) {
+                        return v.iso_639_1 === userLang || v.iso_639_1 === 'ua';
+                    }) || trailers.find(function (v) {
+                        return v.iso_639_1 === 'ru';
+                    }) || trailers.find(function (v) {
+                        return v.iso_639_1 === 'en';
+                    }) || trailers[0];
+                    _this.trailer_lang = video ? video.iso_639_1 : '';
+                    if (_this.trailer_lang) {
+                        _this.card.find('.card__trailer-lang').text(_this.trailer_lang.toUpperCase());
+                    }
+                    _this.isLoadingTrailer = false;
+                }, function () {
+                    console.log('Failed to load trailer info');
+                    _this.isLoadingTrailer = false;
+                });
+            }
+        };
+
         this.play = function (id) {
             if (!id) {
                 Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
                 return;
             }
-            console.log('Playing video ID:', id); // Діагностика
+            console.log('Playing video ID:', id);
             if (Lampa.Manifest.app_digital >= 183) {
                 var item = {
                     title: Lampa.Utils.shortText(data.title || data.name, 50),
@@ -179,6 +205,7 @@
             this.card.on('hover:focus', function (e, is_mouse) {
                 Lampa.Background.change(_this2.cardImgBackground(data));
                 _this2.onFocus(e.target, data, is_mouse);
+                _this2.loadTrailerInfo();
             }).on('hover:enter', function () {
                 if (_this2.is_youtube) {
                     _this2.play(data.id);
@@ -188,7 +215,6 @@
                         var trailers = videos.results.filter(function (v) {
                             return v.type === 'Trailer';
                         });
-                        // Пріоритет: uk/ua → ru → en
                         var video = trailers.find(function (v) {
                             return v.iso_639_1 === userLang || v.iso_639_1 === 'ua';
                         }) || trailers.find(function (v) {
@@ -309,12 +335,12 @@
         var more;
         var filter;
         var last;
+        var visibleCards = light ? 6 : 10; // Обмеження кількості карток на екрані
 
         this.create = function () {
             scroll.render().find('.scroll__body').addClass('items-cards');
             content.find('.items-line__title').text(data.title);
 
-            // Додаємо кнопку фільтра для категорії "Популярне"
             if (data.type === 'popular') {
                 filter = $('<div class="items-line__filter selector"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg></div>');
                 filter.on('hover:enter', function () {
@@ -353,8 +379,12 @@
         };
 
         this.bind = function () {
-            data.results.slice(0, light ? 6 : data.results.length).forEach(this.append.bind(this));
-            this.more();
+            // Завантажуємо лише видиму кількість карток
+            data.results.slice(0, visibleCards).forEach(this.append.bind(this));
+            // Додаємо кнопку "Ще", якщо є більше даних
+            if (data.results.length > visibleCards) {
+                this.more();
+            }
             Lampa.Layer.update();
         };
 
@@ -844,6 +874,24 @@
             .card.card--trailer .card__play img {
                 width: 0.9em;
                 height: 1em;
+            }
+            .card.card--trailer .card__rating {
+                position: absolute;
+                bottom: 0.5em;
+                right: 0.5em;
+                background: #000000b8;
+                padding: 0.2em 0.5em;
+                border-radius: 3px;
+                font-size: 1.2em;
+            }
+            .card.card--trailer .card__trailer-lang {
+                position: absolute;
+                top: 0.5em;
+                right: 0.5em;
+                background: #000000b8;
+                padding: 0.2em 0.5em;
+                border-radius: 3px;
+                text-transform: uppercase;
             }
             .card-more.more--trailers .card-more__box {
                 padding-bottom: 56%;
