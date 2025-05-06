@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.0.2: Виправлено відображення кнопки "Ще", оцінки, мови трейлера та проблему з ініціалізацією після перезавантаження Lampa
+    // Версія 1.0.3: Кнопка "Ще" додається завжди після карток, замінено "N/A" на "-"
 
     var network = new Lampa.Reguest();
     var tmdb_api_key = Lampa.TMDB.key();
@@ -51,7 +51,7 @@
             json.title = title;
             json.type = name;
             json.url = url;
-            json.total_pages = json.total_pages || 1; // Додаємо total_pages для пагінації
+            json.total_pages = json.total_pages || 1;
             status.append(name, json);
         };
 
@@ -114,7 +114,7 @@
             this.card = Lampa.Template.get('trailer', data);
             this.img = this.card.find('img')[0];
             this.is_youtube = params.type === 'rating';
-            this.rating = data.vote_average ? data.vote_average.toFixed(1) : 'N/A';
+            this.rating = data.vote_average ? data.vote_average.toFixed(1) : '-';
             this.trailer_lang = '';
             this.isLoadingTrailer = false;
 
@@ -122,8 +122,8 @@
                 var create = ((data.release_date || data.first_air_date || '0000') + '').slice(0, 4);
                 this.card.find('.card__title').text(data.title || data.name);
                 this.card.find('.card__details').text(create + ' - ' + (data.original_title || data.original_name));
-                this.card.find('.card__view').append(`<div class="card__rating">${this.rating}</div>`);
-                this.card.find('.card__view').append(`<div class="card__trailer-lang"></div>`);
+                this.card.find('.card__rating').text(this.rating);
+                this.card.find('.card__trailer-lang').text(this.trailer_lang || '-');
             } else {
                 this.card.find('.card__title').text(data.name);
                 this.card.find('.card__details').remove();
@@ -166,14 +166,14 @@
                     }) || trailers.find(function (v) {
                         return v.iso_639_1 === 'en';
                     }) || trailers[0];
-                    _this.trailer_lang = video ? video.iso_639_1 : 'N/A';
+                    _this.trailer_lang = video ? video.iso_639_1 : '-';
                     if (_this.trailer_lang) {
                         _this.card.find('.card__trailer-lang').text(_this.trailer_lang.toUpperCase());
                     }
                     _this.isLoadingTrailer = false;
                 }, function () {
                     console.log('Failed to load trailer info');
-                    _this.trailer_lang = 'N/A';
+                    _this.trailer_lang = '-';
                     _this.card.find('.card__trailer-lang').text(_this.trailer_lang);
                     _this.isLoadingTrailer = false;
                 });
@@ -384,9 +384,7 @@
 
         this.bind = function () {
             data.results.forEach(this.append.bind(this));
-            if (current_page < total_pages) {
-                this.more();
-            }
+            this.more(); // Завжди додаємо кнопку "Ще"
             Lampa.Layer.update();
         };
 
@@ -832,11 +830,9 @@
     function startPlugin() {
         window.plugin_trailers_ready = true;
 
-        // Додаємо компоненти
         Lampa.Component.add('trailers_main', Component$1);
         Lampa.Component.add('trailers_full', Component);
 
-        // Додаємо шаблони
         Lampa.Template.add('trailer', `
             <div class="card selector card--trailer layer--render layer--visible">
                 <div class="card__view">
@@ -959,14 +955,12 @@
             $('body').append(Lampa.Template.get('trailer_style', {}, true));
         }
 
-        // Гарантуємо ініціалізацію після повного завантаження Lampa
         Lampa.Listener.follow('app', function (e) {
             if (e.type === 'ready') {
-                setTimeout(add, 100); // Додаємо затримку для стабільності
+                setTimeout(add, 100);
             }
         });
 
-        // Якщо Lampa вже готова, викликаємо add
         if (window.appready) {
             setTimeout(add, 100);
         }
