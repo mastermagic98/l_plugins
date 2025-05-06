@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.0.1: Залишено лише категорію "Популярні фільми", додано кнопку "Ще", оцінку в правому нижньому кутку картки, мову трейлера у верхньому правому кутку
+    // Версія 1.0.2: Виправлено відображення кнопки "Ще", оцінки, мови трейлера та проблему з ініціалізацією після перезавантаження Lampa
 
     var network = new Lampa.Reguest();
     var tmdb_api_key = Lampa.TMDB.key();
@@ -23,7 +23,7 @@
     function get(url, page, resolve, reject, useRegion) {
         var lang = Lampa.Storage.get('language', 'ru');
         var full_url = `${tmdb_base_url}${url}&api_key=${tmdb_api_key}&language=${lang}&page=${page}`;
-        if (useRegion) full_url += `®ion=${getRegion()}`;
+        if (useRegion) full_url += `&region=${getRegion()}`;
         console.log('API Request:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
@@ -51,6 +51,7 @@
             json.title = title;
             json.type = name;
             json.url = url;
+            json.total_pages = json.total_pages || 1; // Додаємо total_pages для пагінації
             status.append(name, json);
         };
 
@@ -113,7 +114,7 @@
             this.card = Lampa.Template.get('trailer', data);
             this.img = this.card.find('img')[0];
             this.is_youtube = params.type === 'rating';
-            this.rating = data.vote_average ? data.vote_average.toFixed(1) : '';
+            this.rating = data.vote_average ? data.vote_average.toFixed(1) : 'N/A';
             this.trailer_lang = '';
             this.isLoadingTrailer = false;
 
@@ -165,13 +166,15 @@
                     }) || trailers.find(function (v) {
                         return v.iso_639_1 === 'en';
                     }) || trailers[0];
-                    _this.trailer_lang = video ? video.iso_639_1 : '';
+                    _this.trailer_lang = video ? video.iso_639_1 : 'N/A';
                     if (_this.trailer_lang) {
                         _this.card.find('.card__trailer-lang').text(_this.trailer_lang.toUpperCase());
                     }
                     _this.isLoadingTrailer = false;
                 }, function () {
                     console.log('Failed to load trailer info');
+                    _this.trailer_lang = 'N/A';
+                    _this.card.find('.card__trailer-lang').text(_this.trailer_lang);
                     _this.isLoadingTrailer = false;
                 });
             }
@@ -335,7 +338,8 @@
         var more;
         var filter;
         var last;
-        var visibleCards = light ? 6 : 10; // Обмеження кількості карток на екрані
+        var total_pages = data.total_pages || 1;
+        var current_page = 1;
 
         this.create = function () {
             scroll.render().find('.scroll__body').addClass('items-cards');
@@ -379,10 +383,8 @@
         };
 
         this.bind = function () {
-            // Завантажуємо лише видиму кількість карток
-            data.results.slice(0, visibleCards).forEach(this.append.bind(this));
-            // Додаємо кнопку "Ще", якщо є більше даних
-            if (data.results.length > visibleCards) {
+            data.results.forEach(this.append.bind(this));
+            if (current_page < total_pages) {
                 this.more();
             }
             Lampa.Layer.update();
@@ -422,7 +424,7 @@
                     title: data.title,
                     component: 'trailers_full',
                     type: data.type,
-                    page: 2
+                    page: current_page + 1
                 });
             });
             more.on('hover:focus', function (e) {
@@ -829,8 +831,12 @@
 
     function startPlugin() {
         window.plugin_trailers_ready = true;
+
+        // Додаємо компоненти
         Lampa.Component.add('trailers_main', Component$1);
         Lampa.Component.add('trailers_full', Component);
+
+        // Додаємо шаблони
         Lampa.Template.add('trailer', `
             <div class="card selector card--trailer layer--render layer--visible">
                 <div class="card__view">
@@ -841,12 +847,15 @@
                         </div>
                         <div class="card__details"></div>
                     </div>
+                    <div class="card__rating"></div>
+                    <div class="card__trailer-lang"></div>
                 </div>
                 <div class="card__play">
                     <img src="./img/icons/player/play.svg">
                 </div>
             </div>
         `);
+
         Lampa.Template.add('trailer_style', `
             <style>
             .card.card--trailer,
@@ -883,6 +892,7 @@
                 padding: 0.2em 0.5em;
                 border-radius: 3px;
                 font-size: 1.2em;
+                color: #fff;
             }
             .card.card--trailer .card__trailer-lang {
                 position: absolute;
@@ -892,6 +902,7 @@
                 padding: 0.2em 0.5em;
                 border-radius: 3px;
                 text-transform: uppercase;
+                color: #fff;
             }
             .card-more.more--trailers .card-more__box {
                 padding-bottom: 56%;
@@ -948,11 +959,16 @@
             $('body').append(Lampa.Template.get('trailer_style', {}, true));
         }
 
-        if (window.appready) add();
-        else {
-            Lampa.Listener.follow('app', function (e) {
-                if (e.type === 'ready') add();
-            });
+        // Гарантуємо ініціалізацію після повного завантаження Lampa
+        Lampa.Listener.follow('app', function (e) {
+            if (e.type === 'ready') {
+                setTimeout(add, 100); // Додаємо затримку для стабільності
+            }
+        });
+
+        // Якщо Lampa вже готова, викликаємо add
+        if (window.appready) {
+            setTimeout(add, 100);
         }
     }
 
