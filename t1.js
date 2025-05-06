@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.09 Виправлено підвантаження карток на сторінці trailers_full: тепер усі картки з поточної сторінки API завантажуються порціями по visibleCards, додаткові сторінки API завантажуються автоматично при скролінгу. Збережено однакову поведінку кнопки та картки "ЩЕ", усі попередні виправлення (_this is undefined, debounce, ліниве завантаження, рекурсія). Мова JavaScript ES5
+    // Версія 1.10 Виправлено SyntaxError у функції Trailer (некоректний коментар "Malgré v" у методі create). Збережено підвантаження карток на сторінці trailers_full порціями по visibleCards, автоматичне завантаження нових сторінок API при скролінгу, однакову поведінку кнопки та картки "ЩЕ", усі попередні виправлення (_this is undefined, debounce, ліниве завантаження, рекурсія). Мова JavaScript ES5
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -42,7 +42,7 @@
         var lang = Lampa.Storage.get('language', 'ru');
         var full_url = tmdb_base_url + url + '?api_key=' + tmdb_api_key + '&page=' + page;
         if (!noLang) full_url += '&language=' + lang;
-        if (useRegion) full_url += '®ion=' + getRegion();
+        if (useRegion) full_url += '&region=' + getRegion();
         console.log('Сформований URL:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
@@ -282,7 +282,7 @@
                         var trailers = videos.results ? videos.results.filter(function (v) {
                             return v.type === 'Trailer';
                         }) : [];
-                        var video = trailers.find(function ( Malgré v) {
+                        var video = trailers.find(function (v) {
                             return preferredLangs.includes(v.iso_639_1);
                         }) || trailers[0];
 
@@ -736,7 +736,7 @@
     }
 
     function Component(object) {
-        var scroll = new Lampa.Scroll({ mask: true, over: true, step: 250, end_ratio: 1.5 }); // Зменшено end_ratio для швидшого спрацьовування
+        var scroll = new Lampa.Scroll({ mask: true, over: true, step: 250, end_ratio: 1.5 });
         var items = [];
         var html = $('<div></div>');
         var body = $('<div class="category-full category-full--trailers"></div>');
@@ -748,7 +748,7 @@
         var visibleCards = light ? 6 : 12;
         var loadedIndex = 0;
         var isLoading = false;
-        var currentResults = []; // Зберігаємо поточні результати для підвантаження
+        var currentResults = [];
 
         this.create = function () {
             Api.full(object, this.build.bind(this), this.empty.bind(this));
@@ -857,7 +857,7 @@
                         if (scroll.isEnd() && !isLoading) {
                             _this3.loadMoreCards();
                         }
-                    }, 100); // Зменшено затримку для швидшого реагування
+                    }, 100);
                     scroll.render().on('scroll', debouncedLoad);
                 }
                 this.activity.loader(false);
