@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.10 Виправлено SyntaxError у функції Trailer (некоректний коментар "Malgré v" у методі create). Збережено підвантаження карток на сторінці trailers_full порціями по visibleCards, автоматичне завантаження нових сторінок API при скролінгу, однакову поведінку кнопки та картки "ЩЕ", усі попередні виправлення (_this is undefined, debounce, ліниве завантаження, рекурсія). Мова JavaScript ES5
+    // Версія 1.11 Адаптовано механізм підвантаження карток із наданої версії: усі картки з data.results відображаються одразу, нові сторінки API підвантажуються при прокручуванні через scroll.onEnd. Видалено обмеження visibleCards. Збережено виправлення SyntaxError у Trailer, однакову поведінку кнопки та картки "ЩЕ", усі попередні виправлення (_this is undefined, debounce, ліниве завантаження, рекурсія). Використано end_ratio: 2 для чутливого прокручування. Мова JavaScript ES5
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -736,7 +736,7 @@
     }
 
     function Component(object) {
-        var scroll = new Lampa.Scroll({ mask: true, over: true, step: 250, end_ratio: 1.5 });
+        var scroll = new Lampa.Scroll({ mask: true, over: true, step: 250, end_ratio: 2 });
         var items = [];
         var html = $('<div></div>');
         var body = $('<div class="category-full category-full--trailers"></div>');
@@ -745,10 +745,6 @@
         var total_pages = 0;
         var last;
         var waitload = false;
-        var visibleCards = light ? 6 : 12;
-        var loadedIndex = 0;
-        var isLoading = false;
-        var currentResults = [];
 
         this.create = function () {
             Api.full(object, this.build.bind(this), this.empty.bind(this));
@@ -764,57 +760,24 @@
             this.activity.toggle();
         };
 
-        this.loadMoreCards = function () {
-            if (isLoading) return;
-            isLoading = true;
-
-            var cardsToLoad = currentResults.slice(loadedIndex, loadedIndex + visibleCards);
-            if (cardsToLoad.length > 0) {
-                cardsToLoad.forEach(function (element) {
-                    var card = new Trailer(element, { type: object.type });
-                    card.create();
-                    card.visible();
-                    card.onFocus = function (target, card_data) {
-                        last = target;
-                        if (this.onFocus) this.onFocus(card_data);
-                    }.bind(this);
-                    body.append(card.render());
-                    items.push(card);
-                    Lampa.Controller.collectionAppend(card.render());
-                });
-                loadedIndex += cardsToLoad.length;
-                Lampa.Layer.update();
-                isLoading = false;
-            } else {
-                this.next();
-            }
-        };
-
         this.next = function () {
             var _this = this;
-            if (waitload || isLoading) return;
+            if (waitload) return;
             if (object.page < 30 && object.page < total_pages) {
-                isLoading = true;
                 waitload = true;
                 object.page++;
                 Api.full(object, function (result) {
                     if (result.results && result.results.length) {
-                        currentResults = result.results;
-                        loadedIndex = 0;
-                        _this.loadMoreCards();
+                        _this.append(result, true);
                     } else {
                         Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
-                        isLoading = false;
-                        waitload = false;
                     }
+                    waitload = false;
                 }, function () {
                     Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
-                    isLoading = false;
                     waitload = false;
                 });
             } else {
-                isLoading = false;
-                waitload = false;
                 console.log('No more pages to load');
             }
         };
@@ -830,9 +793,20 @@
         };
 
         this.append = function (data, append) {
-            currentResults = data.results;
-            loadedIndex = 0;
-            this.loadMoreCards();
+            var _this2 = this;
+            data.results.forEach(function (element) {
+                var card = new Trailer(element, { type: object.type });
+                card.create();
+                card.visible();
+                card.onFocus = function (target, card_data) {
+                    last = target;
+                    scroll.update(card.render(), true);
+                    if (!light && !newlampa && scroll.isEnd()) _this2.next();
+                };
+                body.append(card.render());
+                items.push(card);
+                if (append) Lampa.Controller.collectionAppend(card.render());
+            });
         };
 
         this.build = function (data) {
@@ -854,8 +828,9 @@
                         else if (active > 0) Navigator.move('up');
                     };
                     var debouncedLoad = debounce(function () {
-                        if (scroll.isEnd() && !isLoading) {
-                            _this3.loadMoreCards();
+                        console.log('Scroll event: isEnd=', scroll.isEnd(), 'waitload=', waitload);
+                        if (scroll.isEnd() && !waitload) {
+                            _this3.next();
                         }
                     }, 100);
                     scroll.render().on('scroll', debouncedLoad);
@@ -1057,7 +1032,7 @@
         Lampa.Component.add('trailers_main', Component$1);
         Lampa.Component.add('trailers_full', Component);
         Lampa.Template.add('trailer', '<div class="card selector card--trailer layer--render layer--visible"><div class="card__view"><img src="./img/img_load.svg" class="card__img"><div class="card__promo"><div class="card__promo-text"><div class="card__title"></div></div><div class="card__details"></div></div></div><div class="card__play"><img src="./img/icons/player/play.svg"></div></div>');
-        Lampa.Template.add('trailer_style', '<style>.card.card--trailer,.card-more.more--trailers{width:25.7em}.card.card--trailer .card__view{padding-bottom:56%;margin-bottom:0}.card.card--trailer .card__details{margin-top:0.8em}.card.card--trailer .card__play{position:absolute;top:50%;transform:translateY(-50%);left:1.5em;background:#000000b8;width:2.2em;height:2.2em;border-radius:100%;text-align:center;padding-top:0.6em}.card.card--trailer .card__play img{width:0.9em;height:1em}.card.card--trailer .card__rating{position:absolute;bottom:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.card.card--trailer .card__trailer-lang{position:absolute;top:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;text-transform:uppercase}.card-more.more--trailers .card-more__box{padding-bottom:56%}.category-full--trailers .card{margin-bottom:1.5em}.card.card--trailer,.category-full--trailers .card{width:33.3%}.items-line__more{display:inline-block;margin-left:10px;cursor:pointer;padding:0.5em 1em}@media screen and (max-width:767px){.category-full--trailers .card{width:50%}}@media screen and (max-width:400px){.category-full--trailers .card{width:100%}}</style>');
+        Lampa.Template.add('trailer_style', '<style>.card.card--trailer,.card-more.more--trailers{width:25.7em}.card.card--trRisailer .card__view{padding-bottom:56%;margin-bottom:0}.card.card--trailer .card__details{margin-top:0.8em}.card.card--trailer .card__play{position:absolute;top:50%;transform:translateY(-50%);left:1.5em;background:#000000b8;width:2.2em;height:2.2em;border-radius:100%;text-align:center;padding-top:0.6em}.card.card--trailer .card__play img{width:0.9em;height:1em}.card.card--trailer .card__rating{position:absolute;bottom:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.card.card--trailer .card__trailer-lang{position:absolute;top:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;text-transform:uppercase}.card-more.more--trailers .card-more__box{padding-bottom:56%}.category-full--trailers .card{margin-bottom:1.5em}.card.card--trailer,.category-full--trailers .card{width:33.3%}.items-line__more{display:inline-block;margin-left:10px;cursor:pointer;padding:0.5em 1em}@media screen and (max-width:767px){.category-full--trailers .card{width:50%}}@media screen and (max-width:400px){.category-full--trailers .card{width:100%}}</style>');
 
         function add() {
             var button = $('<li class="menu__item selector"><div class="menu__ico"><svg height="70" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/></svg></div><div class="menu__text">' + Lampa.Lang.translate('title_trailers') + '</div></li>');
