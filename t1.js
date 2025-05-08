@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.13 Відновлено розмір карток на trailers_full до width: 33.3% із адаптивністю (50% <767px, 100% <400px), як у версії 1.11. Додано padding-bottom: 56% для пропорції 16:9. Збережено підвантаження карток, дебонсинг, виправлення SyntaxError у Trailer, однакову поведінку кнопки та картки ЩЕ. Використано end_ratio: 2. Мова JavaScript ES5
+    // Версія 1.14 Оптимізовані запити до API TMDB /videos: додана коректна робота кешу, уникнення дублювання запитів, правильне визначення типу (movie/tv). Збережено підвантаження карток, дебонсинг, виправлення SyntaxError у Trailer, розмір карток 33.3% із адаптивністю. Мова JavaScript ES5
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -119,55 +119,55 @@
     }
 
     function videos(card, oncomplite, onerror) {
-        var type = card.name ? 'tv' : 'movie';
+        var type = card.name ? 'tv' : 'movie'; // Визначення типу на основі наявності поля name
         var id = card.id;
 
-        if (trailerCache[id]) {
-            console.log('Using cached trailer data for id:', id);
-            oncomplite(trailerCache[id]);
+        // Перевірка кешу з урахуванням типу
+        var cacheKey = type + '_' + id;
+        if (trailerCache[cacheKey]) {
+            console.log('Using cached trailer data for ' + cacheKey + ':', trailerCache[cacheKey]);
+            oncomplite(trailerCache[cacheKey]);
             return;
         }
 
         var url = tmdb_base_url + '/' + type + '/' + id + '/videos?api_key=' + tmdb_api_key;
         var preferredLangs = getPreferredLanguage();
+        var attempts = 0;
+        var maxAttempts = preferredLangs.length + 1; // Додаємо спробу без мови
 
-        function tryFetch(langIndex, noLang) {
+        function tryFetch(langIndex) {
+            if (attempts >= maxAttempts) {
+                console.log('Max attempts reached for ' + cacheKey + ', no trailers found');
+                trailerCache[cacheKey] = { id: id, results: [] };
+                onerror();
+                return;
+            }
+
             var fetchUrl = url;
-            if (!noLang && langIndex < preferredLangs.length) {
+            if (langIndex < preferredLangs.length) {
                 fetchUrl += '&language=' + preferredLangs[langIndex];
             }
-            console.log('Videos request:', fetchUrl);
+            console.log('Videos request for ' + cacheKey + ':', fetchUrl);
             network.silent(fetchUrl, function (result) {
-                console.log('Videos result:', result);
+                console.log('Videos result for ' + cacheKey + ':', result);
                 var trailers = result.results ? result.results.filter(function (v) {
                     return v.type === 'Trailer';
                 }) : [];
                 if (trailers.length) {
-                    trailerCache[id] = result;
+                    trailerCache[cacheKey] = result;
                     oncomplite(result);
-                } else if (langIndex < preferredLangs.length - 1) {
-                    tryFetch(langIndex + 1, false);
-                } else if (!noLang) {
-                    tryFetch(0, true);
                 } else {
-                    console.log('No trailers found');
-                    trailerCache[id] = { results: [] };
-                    onerror();
+                    attempts++;
+                    tryFetch(langIndex + 1);
                 }
             }, function (error) {
-                console.log('Videos error:', error);
-                if (langIndex < preferredLangs.length - 1) {
-                    tryFetch(langIndex + 1, false);
-                } else if (!noLang) {
-                    tryFetch(0, true);
-                } else {
-                    trailerCache[id] = { results: [] };
-                    onerror();
-                }
+                console.log('Videos error for ' + cacheKey + ':', error);
+                attempts++;
+                tryFetch(langIndex + 1);
             });
         }
 
-        tryFetch(0, false);
+        tryFetch(0);
     }
 
     function clear() {
@@ -238,7 +238,7 @@
                         _this.card.find('.card__trailer-lang').text(_this.trailer_lang.toUpperCase());
                     }
                 }, function () {
-                    console.log('Failed to load trailer info');
+                    console.log('Failed to load trailer info for ' + data.id);
                 });
             }
         };
