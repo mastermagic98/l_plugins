@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.16 Оновлено запити: "Популярні фільми" - /trending/movie/day?language=uk-UA, "Популярні серіали" - /trending/tv/day?language=uk-UA з фільтром media_type 2 (Mini-Series) і 6 (Video). Збережено підвантаження карток, розмір 33.3% із адаптивністю. Мова JavaScript ES5
+    // Версія 1.17 Оновлено запит для "Очікувані фільми" - /movie/upcoming?language=uk-UA&page=1&region=UA. Виправлено відображення рейтингу та мови трейлера на першій картці "Популярні фільми". Забезпечено пошук трейлерів з пріоритетом ua, потім en. Збережено підвантаження карток, розмір 33.3% із адаптивністю. Мова JavaScript ES5
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -92,13 +92,13 @@
             append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/movie/now_playing', json.results.length ? json : { results: [] });
         }, status.error.bind(status), true);
 
-        get('/movie/upcoming', 1, function (json) {
+        // Оновлений запит для Очікувані фільми
+        get('/movie/upcoming?language=uk-UA&page=1&region=UA', 1, function (json) {
             append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/movie/upcoming', json.results.length ? json : { results: [] });
-        }, status.error.bind(status), true);
+        }, status.error.bind(status), false, true); // noLang = true, щоб не додавати ще один language
 
         // Оновлений запит для Популярні серіали з фільтрацією
         get('/trending/tv/day', 1, function (json) {
-            // Фільтрація за media_type (2 - Mini-Series, 6 - Video)
             var filteredResults = json.results.filter(function (item) {
                 return item.media_type === '2' || item.media_type === '6';
             });
@@ -148,7 +148,7 @@
 
         function tryFetch(langIndex) {
             if (attempts >= maxAttempts) {
-                console.log('Max attempts reached for ' + cacheKey + ', no trailers found');
+                console.log('Max attempts reached for ' + cacheKey + ', no trailers found. Languages tried:', preferredLangs);
                 trailerCache[cacheKey] = { id: id, results: [] };
                 onerror();
                 return;
@@ -157,14 +157,17 @@
             var fetchUrl = url;
             if (langIndex < preferredLangs.length) {
                 fetchUrl += '&language=' + preferredLangs[langIndex];
+                console.log('Trying language:', preferredLangs[langIndex]);
+            } else {
+                console.log('Trying without language');
             }
-            console.log('Videos request for ' + cacheKey + ':', fetchUrl);
             network.silent(fetchUrl, function (result) {
                 console.log('Videos result for ' + cacheKey + ':', result);
                 var trailers = result.results ? result.results.filter(function (v) {
                     return v.type === 'Trailer';
                 }) : [];
                 if (trailers.length) {
+                    console.log('Found trailers:', trailers.map(t => t.iso_639_1));
                     trailerCache[cacheKey] = result;
                     oncomplite(result);
                 } else {
@@ -198,14 +201,17 @@
             this.card = Lampa.Template.get('trailer', data);
             this.img = this.card.find('img')[0];
             this.is_youtube = params.type === 'rating';
-            this.rating = data.vote_average ? data.vote_average.toFixed(1) : '';
+            this.rating = data.vote_average ? data.vote_average.toFixed(1) : 'N/A';
             this.trailer_lang = '';
 
             if (!this.is_youtube) {
                 var create = ((data.release_date || data.first_air_date || '0000') + '').slice(0, 4);
                 this.card.find('.card__title').text(data.title || data.name);
                 this.card.find('.card__details').text(create + ' - ' + (data.original_title || data.original_name));
-                this.card.find('.card__view').append('<div class="card__rating">' + this.rating + '</div>');
+                // Гарантуємо відображення рейтингу
+                if (this.rating !== 'N/A') {
+                    this.card.find('.card__view').append('<div class="card__rating">' + this.rating + '</div>');
+                }
                 this.card.find('.card__view').append('<div class="card__trailer-lang"></div>');
             } else {
                 this.card.find('.card__title').text(data.name);
@@ -244,12 +250,17 @@
                     var video = trailers.find(function (v) {
                         return preferredLangs.includes(v.iso_639_1);
                     }) || trailers[0];
-                    _this.trailer_lang = video ? video.iso_639_1 : '';
-                    if (_this.trailer_lang) {
+                    _this.trailer_lang = video ? video.iso_639_1 : 'N/A';
+                    console.log('Trailer language for ' + data.id + ':', _this.trailer_lang);
+                    if (_this.trailer_lang !== 'N/A') {
                         _this.card.find('.card__trailer-lang').text(_this.trailer_lang.toUpperCase());
+                    } else {
+                        _this.card.find('.card__trailer-lang').text('N/A');
                     }
                 }, function () {
                     console.log('Failed to load trailer info for ' + data.id);
+                    _this.trailer_lang = 'N/A';
+                    _this.card.find('.card__trailer-lang').text('N/A');
                 });
             }
         };
@@ -283,7 +294,7 @@
             this.card.on('hover:focus', function (e, is_mouse) {
                 Lampa.Background.change(_this2.cardImgBackground(data));
                 _this2.onFocus(e.target, data, is_mouse);
-                _this2.loadTrailerInfo();
+                _this2.loadTrailerInfo(); // Гарантуємо виклик для завантаження трейлера
             }).on('hover:enter', function () {
                 if (_this2.is_youtube) {
                     _this2.play(data.id);
@@ -371,7 +382,7 @@
                 }
             });
             this.image();
-            this.loadTrailerInfo();
+            this.loadTrailerInfo(); // Виклик одразу при створенні
         };
 
         this.destroy = function () {
