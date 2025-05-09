@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.36: Виправлено мову заголовків, додано дату релізу для майбутніх серіалів і нових сезонів
+    // Версія 1.37: Виправлено мову заголовків для всіх категорій
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -57,9 +57,8 @@
         }
     }
 
-    function get(url, page, resolve, reject, noLang) {
-        var full_url = tmdb_base_url + url + '&api_key=' + tmdb_api_key + '&page=' + page;
-        if (!noLang) full_url += '&language=' + getInterfaceLanguage();
+    function get(url, page, resolve, reject) {
+        var full_url = tmdb_base_url + url + '&api_key=' + tmdb_api_key + '&page=' + page + '&language=' + getInterfaceLanguage();
         console.log('Сформований URL:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
@@ -176,7 +175,7 @@
         }, function (error) {
             console.log('Помилка для Очікувані фільми:', error);
             append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/discover/movie?primary_release_date.gte=' + today + '&primary_release_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc', { results: [] });
-        }, false, true);
+        });
 
         // Популярні серіали
         get('/discover/tv?sort_by=popularity.desc&vote_count.gte=1', 1, function (json) {
@@ -202,7 +201,7 @@
         }, function (error) {
             console.log('Помилка для Нові сезони серіалів:', error);
             append(Lampa.Lang.translate('trailers_new_series_seasons'), 'new_series_seasons', '/discover/tv?air_date.gte=' + threeMonthsAgo + '&air_date.lte=' + threeMonthsLater + '&sort_by=popularity.desc', { results: [] });
-        }, false, true);
+        });
 
         // Очікувані серіали
         get('/discover/tv?first_air_date.gte=' + today + '&first_air_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc&vote_count.gte=1', 1, function (json) {
@@ -216,7 +215,7 @@
         }, function (error) {
             console.log('Помилка для Очікувані серіали:', error);
             append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/discover/tv?first_air_date.gte=' + today + '&first_air_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc', { results: [] });
-        }, false, true);
+        });
     }
 
     function full(params, oncomplite, onerror) {
@@ -250,7 +249,7 @@
             }, function (error) {
                 console.log('Full error for new_series_seasons:', params.url, error, 'Full Error:', JSON.stringify(error));
                 onerror();
-            }, false, true);
+            });
         } else if (params.type === 'upcoming_series') {
             var today = getFormattedDate(0);
             var sixMonthsLater = getFormattedDate(-180);
@@ -268,7 +267,7 @@
             }, function (error) {
                 console.log('Full error for upcoming_series:', params.url, error, 'Full Error:', JSON.stringify(error));
                 onerror();
-            }, false, true);
+            });
         } else {
             get(params.url, params.page, function (result) {
                 if (result && result.results && result.results.length) {
