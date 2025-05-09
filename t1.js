@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.17 Оновлено запит для "Очікувані фільми" - /movie/upcoming?language=uk-UA&page=1&region=UA. Виправлено відображення рейтингу та мови трейлера на першій картці "Популярні фільми". Забезпечено пошук трейлерів з пріоритетом ua, потім en. Збережено підвантаження карток, розмір 33.3% із адаптивністю. Мова JavaScript ES5
+    // Версія 1.18 Додано розширене логування для трейлерів, щоб перевірити наявність ua. Замінено N/A на ---. Для серіалів змінено запит на /discover/tv із with_type=2 (Miniseries), виключено типи 0,1,3,4,5. Збережено підвантаження карток, розмір 33.3% із адаптивністю. Мова JavaScript ES5
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -47,7 +47,7 @@
     function get(url, page, resolve, reject, useRegion, noLang) {
         var full_url = tmdb_base_url + url + '?api_key=' + tmdb_api_key + '&page=' + page;
         if (!noLang) full_url += '&language=uk-UA'; // Використовуємо uk-UA для всіх запитів, де не вказано інше
-        if (useRegion) full_url += '&region=' + getRegion();
+        if (useRegion) full_url += '®ion=' + getRegion();
         console.log('Сформований URL:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
@@ -83,7 +83,7 @@
             status.append(name, json);
         };
 
-        // Оновлений запит для Популярні фільми
+        // Запит для Популярні фільми
         get('/trending/movie/day', 1, function (json) {
             append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/trending/movie/day', json.results.length ? { results: json.results } : { results: [] });
         }, status.error.bind(status), false);
@@ -92,17 +92,19 @@
             append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/movie/now_playing', json.results.length ? json : { results: [] });
         }, status.error.bind(status), true);
 
-        // Оновлений запит для Очікувані фільми
-        get('/movie/upcoming?language=uk-UA&page=1&region=UA', 1, function (json) {
+        // Запит для Очікувані фільми
+        get('/movie/upcoming?language=uk-UA&page=1®ion=UA', 1, function (json) {
             append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/movie/upcoming', json.results.length ? json : { results: [] });
-        }, status.error.bind(status), false, true); // noLang = true, щоб не додавати ще один language
+        }, status.error.bind(status), false, true);
 
-        // Оновлений запит для Популярні серіали з фільтрацією
-        get('/trending/tv/day', 1, function (json) {
+        // Оновлений запит для Популярні серіали: лише Miniseries (with_type=2), виключено 0,1,3,4,5
+        get('/discover/tv?sort_by=popularity.desc&with_type=2', 1, function (json) {
+            // Додаткова фільтрація, якщо типи все ж повертаються
             var filteredResults = json.results.filter(function (item) {
-                return item.media_type === '2' || item.media_type === '6';
+                // Отримуємо тип через додатковий запит, якщо потрібно, але тут спираємося на with_type
+                return true; // with_type=2 уже фільтрує Miniseries, додаткова перевірка не потрібна
             });
-            append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', '/trending/tv/day', filteredResults.length ? { results: filteredResults } : { results: [] });
+            append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', '/discover/tv?with_type=2', filteredResults.length ? { results: filteredResults } : { results: [] });
         }, status.error.bind(status), false);
 
         get('/tv/on_the_air', 1, function (json) {
@@ -157,9 +159,9 @@
             var fetchUrl = url;
             if (langIndex < preferredLangs.length) {
                 fetchUrl += '&language=' + preferredLangs[langIndex];
-                console.log('Trying language:', preferredLangs[langIndex]);
+                console.log('Trying language for ' + cacheKey + ':', preferredLangs[langIndex]);
             } else {
-                console.log('Trying without language');
+                console.log('Trying without language for ' + cacheKey);
             }
             network.silent(fetchUrl, function (result) {
                 console.log('Videos result for ' + cacheKey + ':', result);
@@ -167,7 +169,7 @@
                     return v.type === 'Trailer';
                 }) : [];
                 if (trailers.length) {
-                    console.log('Found trailers:', trailers.map(t => t.iso_639_1));
+                    console.log('Found trailers for ' + cacheKey + ':', trailers.map(t => ({ language: t.iso_639_1, name: t.name })));
                     trailerCache[cacheKey] = result;
                     oncomplite(result);
                 } else {
@@ -201,7 +203,7 @@
             this.card = Lampa.Template.get('trailer', data);
             this.img = this.card.find('img')[0];
             this.is_youtube = params.type === 'rating';
-            this.rating = data.vote_average ? data.vote_average.toFixed(1) : 'N/A';
+            this.rating = data.vote_average ? data.vote_average.toFixed(1) : '---'; // Замінено N/A на ---
             this.trailer_lang = '';
 
             if (!this.is_youtube) {
@@ -209,8 +211,10 @@
                 this.card.find('.card__title').text(data.title || data.name);
                 this.card.find('.card__details').text(create + ' - ' + (data.original_title || data.original_name));
                 // Гарантуємо відображення рейтингу
-                if (this.rating !== 'N/A') {
+                if (this.rating !== '---') {
                     this.card.find('.card__view').append('<div class="card__rating">' + this.rating + '</div>');
+                } else {
+                    this.card.find('.card__view').append('<div class="card__rating">---</div>');
                 }
                 this.card.find('.card__view').append('<div class="card__trailer-lang"></div>');
             } else {
@@ -250,17 +254,17 @@
                     var video = trailers.find(function (v) {
                         return preferredLangs.includes(v.iso_639_1);
                     }) || trailers[0];
-                    _this.trailer_lang = video ? video.iso_639_1 : 'N/A';
-                    console.log('Trailer language for ' + data.id + ':', _this.trailer_lang);
-                    if (_this.trailer_lang !== 'N/A') {
+                    _this.trailer_lang = video ? video.iso_639_1 : '---'; // Замінено N/A на ---
+                    console.log('Trailer info for ' + data.id + ': Available languages:', trailers.map(t => t.iso_639_1), 'Selected language:', _this.trailer_lang);
+                    if (_this.trailer_lang !== '---') {
                         _this.card.find('.card__trailer-lang').text(_this.trailer_lang.toUpperCase());
                     } else {
-                        _this.card.find('.card__trailer-lang').text('N/A');
+                        _this.card.find('.card__trailer-lang').text('---');
                     }
                 }, function () {
                     console.log('Failed to load trailer info for ' + data.id);
-                    _this.trailer_lang = 'N/A';
-                    _this.card.find('.card__trailer-lang').text('N/A');
+                    _this.trailer_lang = '---';
+                    _this.card.find('.card__trailer-lang').text('---');
                 });
             }
         };
