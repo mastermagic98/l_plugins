@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.39: Обмеження "У прокаті" до 45 днів, сортування за датою релізу на всіх сторінках
+    // Версія 1.40: Виправлення порожніх блоків при підвантаженні карток після "Ще"
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -280,42 +280,63 @@
 
     function full(params, oncomplite, onerror) {
         if (params.type === 'in_theaters') {
-            getLocalMoviesInTheaters(params.page, function (result) {
-                if (result && result.results && result.results.length) {
-                    console.log('Full results for in_theaters:', result);
-                    // Фільтруємо та сортуємо перед передачею
-                    var region = getRegion();
-                    var today = new Date();
-                    var daysThreshold = 45;
-                    var startDate = new Date(today.getTime() - daysThreshold * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            // Допоміжна функція для завантаження сторінок, доки не отримаємо достатньо карток
+            var region = getRegion();
+            var today = new Date();
+            var daysThreshold = 45;
+            var startDate = new Date(today.getTime() - daysThreshold * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            var targetCards = 20; // Кількість карток на сторінці (можна налаштувати)
+            var accumulatedResults = [];
+            var currentPage = params.page;
 
-                    var filteredResults = result.results.filter(function (m) {
-                        if (m.release_details && m.release_details.results) {
-                            var regionRelease = m.release_details.results.find(function (r) {
-                                return r.iso_3166_1 === region;
-                            });
-                            if (regionRelease && regionRelease.release_dates && regionRelease.release_dates.length) {
-                                var releaseDate = new Date(regionRelease.release_dates[0].release_date);
-                                return releaseDate >= new Date(startDate) && releaseDate <= today;
+            function fetchNextPage() {
+                getLocalMoviesInTheaters(currentPage, function (result) {
+                    if (result && result.results && result.results.length) {
+                        console.log('Full results for in_theaters, page ' + currentPage + ':', result);
+
+                        // Фільтруємо та сортуємо результати
+                        var filteredResults = result.results.filter(function (m) {
+                            if (m.release_details && m.release_details.results) {
+                                var regionRelease = m.release_details.results.find(function (r) {
+                                    return r.iso_3166_1 === region;
+                                });
+                                if (regionRelease && regionRelease.release_dates && regionRelease.release_dates.length) {
+                                    var releaseDate = new Date(regionRelease.release_dates[0].release_date);
+                                    return releaseDate >= new Date(startDate) && releaseDate <= today;
+                                }
                             }
+                            return false;
+                        });
+
+                        filteredResults.sort(function (a, b) {
+                            var dateA = a.release_details.results.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date;
+                            var dateB = b.release_details.results.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date;
+                            return new Date(dateB) - new Date(dateA);
+                        });
+
+                        accumulatedResults = accumulatedResults.concat(filteredResults);
+
+                        // Якщо зібрали достатньо карток або більше немає сторінок
+                        if (accumulatedResults.length >= targetCards || currentPage >= result.total_pages) {
+                            result.results = accumulatedResults.slice(0, targetCards);
+                            result.total_pages = Math.ceil(accumulatedResults.length / targetCards); // Оновлюємо загальну кількість сторінок
+                            oncomplite(result);
+                        } else {
+                            currentPage++;
+                            fetchNextPage();
                         }
-                        return false;
-                    });
-                    filteredResults.sort(function (a, b) {
-                        var dateA = a.release_details.results.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date;
-                        var dateB = b.release_details.results.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date;
-                        return new Date(dateB) - new Date(dateA);
-                    });
-                    result.results = filteredResults;
-                    oncomplite(result);
-                } else {
-                    console.log('Full: No results for in_theaters, page:', params.page);
+                    } else {
+                        console.log('Full: No results for in_theaters, page:', currentPage);
+                        result.results = accumulatedResults.slice(0, targetCards);
+                        oncomplite(result);
+                    }
+                }, function (error) {
+                    console.log('Full error for in_theaters:', params.url, error, 'Full Error:', JSON.stringify(error));
                     onerror();
-                }
-            }, function (error) {
-                console.log('Full error for in_theaters:', params.url, error, 'Full Error:', JSON.stringify(error));
-                onerror();
-            });
+                });
+            }
+
+            fetchNextPage();
         } else if (params.type === 'new_series_seasons') {
             var threeMonthsAgo = getFormattedDate(90);
             var threeMonthsLater = getFormattedDate(-90);
