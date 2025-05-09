@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.27: Використання лише TMDB для пошуку трейлерів
+    // Версія 1.28: Додано відображення всіх категорій, включаючи Очікувані фільми, Очікувані серіали, Нові сезони серіалів
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -59,12 +59,13 @@
     }
 
     function main(oncomplite, onerror) {
-        var status = new Lampa.Status(6);
+        var status = new Lampa.Status(6); // 6 категорій
         status.onComplite = function () {
             var fulldata = [];
             var keys = ['popular_movies', 'in_theaters', 'upcoming_movies', 'popular_series', 'new_series_seasons', 'upcoming_series'];
             keys.forEach(function (key) {
-                if (status.data[key] && status.data[key].results && status.data[key].results.length) {
+                // Додаємо категорію, навіть якщо results порожній, щоб відобразити її
+                if (status.data[key]) {
                     fulldata.push(status.data[key]);
                 }
             });
@@ -107,7 +108,7 @@
             append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', '/trending/tv/day', filteredResults.length ? { results: filteredResults } : { results: [] });
         }, status.error.bind(status), false);
 
-        // Нові серіали/сезони
+        // Нові сезони серіалів
         get('/tv/airing_today?without_genres=99,10763,10764&without_keywords=210024&with_original_language!=ja', 1, function (json) {
             append(Lampa.Lang.translate('trailers_new_series_seasons'), 'new_series_seasons', '/tv/airing_today', json.results.length ? json : { results: [] });
         }, status.error.bind(status), true);
@@ -318,7 +319,7 @@
         this.create = function () {
             var _this2 = this;
             this.build();
-            this.card.on('hover:focus', function (e, is_mouse) {
+            this.card.on('hover:focus', function;font-size: 16px; (e, is_mouse) {
                 Lampa.Background.change(_this2.cardImgBackground(data));
                 _this2.onFocus(e.target, data, is_mouse);
                 _this2.loadTrailerInfo();
