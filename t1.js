@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.23: Покращено пошук трейлерів на YouTube та відтворення
+    // Версія 1.24: Додано логіку пошуку англійського трейлера на TMDB, якщо YouTube не має україномовного
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -180,10 +180,11 @@
         var preferredLangs = getPreferredLanguage();
         var attempts = 0;
         var maxAttempts = preferredLangs.length + 1;
+        var tmdbTrailers = []; // Зберігаємо всі трейлери з TMDB
 
         function tryFetch(langIndex) {
             if (attempts >= maxAttempts) {
-                console.log('Max attempts reached for ' + cacheKey + ', no TMDB trailers found. Languages tried:', preferredLangs);
+                console.log('Max attempts reached for ' + cacheKey + ', no TMDB trailers found in preferred languages. Languages tried:', preferredLangs);
                 if (preferredLangs[0] === 'uk') {
                     console.log('Attempting YouTube search for Ukrainian trailer:', { title: title, year: year, season: season });
                     searchYouTubeTrailer(title, year, season, function (youtubeResult) {
@@ -192,13 +193,34 @@
                         oncomplite({ id: id, results: [youtubeResult] });
                     }, function () {
                         console.log('No YouTube trailer found for ' + cacheKey);
-                        trailerCache[cacheKey] = { id: id, results: [] };
-                        onerror();
+                        // Якщо на YouTube немає трейлера, шукаємо англійський на TMDB
+                        var englishTrailer = tmdbTrailers.find(function (v) {
+                            return v.iso_639_1 === 'en';
+                        });
+                        if (englishTrailer) {
+                            console.log('Found English trailer on TMDB:', englishTrailer);
+                            trailerCache[cacheKey] = { id: id, results: [englishTrailer] };
+                            oncomplite({ id: id, results: [englishTrailer] });
+                        } else {
+                            console.log('No English trailer found on TMDB for ' + cacheKey);
+                            trailerCache[cacheKey] = { id: id, results: [] };
+                            onerror();
+                        }
                     });
                 } else {
                     console.log('No Ukrainian localization, skipping YouTube search for ' + cacheKey);
-                    trailerCache[cacheKey] = { id: id, results: [] };
-                    onerror();
+                    var englishTrailer = tmdbTrailers.find(function (v) {
+                        return v.iso_639_1 === 'en';
+                    });
+                    if (englishTrailer) {
+                        console.log('Found English trailer on TMDB:', englishTrailer);
+                        trailerCache[cacheKey] = { id: id, results: [englishTrailer] };
+                        oncomplite({ id: id, results: [englishTrailer] });
+                    } else {
+                        console.log('No English trailer found on TMDB for ' + cacheKey);
+                        trailerCache[cacheKey] = { id: id, results: [] };
+                        onerror();
+                    }
                 }
                 return;
             }
@@ -215,10 +237,15 @@
                 var trailers = result.results ? result.results.filter(function (v) {
                     return v.type === 'Trailer';
                 }) : [];
-                if (trailers.length) {
-                    console.log('Found TMDB trailers for ' + cacheKey + ':', trailers.map(t => ({ language: t.iso_639_1, name: t.name })));
-                    trailerCache[cacheKey] = result;
-                    oncomplite(result);
+                // Зберігаємо всі трейлери для подальшого використання
+                tmdbTrailers = tmdbTrailers.concat(trailers);
+                var preferredTrailer = trailers.find(function (v) {
+                    return preferredLangs.includes(v.iso_639_1);
+                });
+                if (preferredTrailer) {
+                    console.log('Found TMDB trailer in preferred language for ' + cacheKey + ':', preferredTrailer);
+                    trailerCache[cacheKey] = { id: id, results: [preferredTrailer] };
+                    oncomplite({ id: id, results: [preferredTrailer] });
                 } else {
                     attempts++;
                     tryFetch(langIndex + 1);
@@ -367,7 +394,7 @@
 
                         var video = trailers.find(function (v) {
                             return preferredLangs.includes(v.iso_639_1);
-                        }) || trailers[0]; // Вибираємо перший трейлер, якщо немає потрібної мови
+                        }) || trailers[0];
 
                         if (video && video.key) {
                             console.log('Selected trailer:', video);
