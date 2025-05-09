@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.35: Змінено розмір дати, розташування дати під мовою, виправлено порожню сторінку при "Ще"
+    // Версія 1.36: Виправлено мову заголовків, додано дату релізу для майбутніх серіалів і нових сезонів
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -42,6 +42,10 @@
         return lang === 'uk' ? 'UA' : lang === 'ru' ? 'RU' : 'US';
     }
 
+    function getInterfaceLanguage() {
+        return Lampa.Storage.get('language', 'ru');
+    }
+
     function getPreferredLanguage() {
         var lang = Lampa.Storage.get('language', 'ru');
         if (lang === 'uk') {
@@ -55,7 +59,7 @@
 
     function get(url, page, resolve, reject, noLang) {
         var full_url = tmdb_base_url + url + '&api_key=' + tmdb_api_key + '&page=' + page;
-        if (!noLang) full_url += '&language=en';
+        if (!noLang) full_url += '&language=' + getInterfaceLanguage();
         console.log('Сформований URL:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
@@ -68,7 +72,7 @@
 
     function getLocalMoviesInTheaters(page, resolve, reject) {
         var region = getRegion();
-        var language = 'en';
+        var language = getInterfaceLanguage();
         var now_playing_url = `${tmdb_base_url}/movie/now_playing?api_key=${tmdb_api_key}&language=${language}&page=${page}®ion=${region}`;
         console.log('Сформований URL для У прокаті:', now_playing_url);
 
@@ -154,7 +158,7 @@
         }, function (error) {
             console.log('Помилка для Популярні фільми:', error);
             append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/discover/movie?sort_by=popularity.desc', { results: [] });
-        }, false);
+        });
 
         // У прокаті
         getLocalMoviesInTheaters(1, function (json) {
@@ -184,11 +188,16 @@
         }, function (error) {
             console.log('Помилка для Популярні серіали:', error);
             append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', '/discover/tv?sort_by=popularity.desc', { results: [] });
-        }, false);
+        });
 
         // Нові сезони серіалів
         get('/discover/tv?air_date.gte=' + threeMonthsAgo + '&air_date.lte=' + threeMonthsLater + '&sort_by=popularity.desc&vote_count.gte=1', 1, function (json) {
             console.log('Нові сезони серіалів results:', json.results);
+            if (json.results) {
+                json.results.forEach(function (series) {
+                    series.release_details = { first_air_date: series.first_air_date };
+                });
+            }
             append(Lampa.Lang.translate('trailers_new_series_seasons'), 'new_series_seasons', '/discover/tv?air_date.gte=' + threeMonthsAgo + '&air_date.lte=' + threeMonthsLater + '&sort_by=popularity.desc', { results: json.results || [] });
         }, function (error) {
             console.log('Помилка для Нові сезони серіалів:', error);
@@ -198,6 +207,11 @@
         // Очікувані серіали
         get('/discover/tv?first_air_date.gte=' + today + '&first_air_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc&vote_count.gte=1', 1, function (json) {
             console.log('Очікувані серіали results:', json.results);
+            if (json.results) {
+                json.results.forEach(function (series) {
+                    series.release_details = { first_air_date: series.first_air_date };
+                });
+            }
             append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/discover/tv?first_air_date.gte=' + today + '&first_air_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc', { results: json.results || [] });
         }, function (error) {
             console.log('Помилка для Очікувані серіали:', error);
@@ -219,6 +233,42 @@
                 console.log('Full error for in_theaters:', params.url, error, 'Full Error:', JSON.stringify(error));
                 onerror();
             });
+        } else if (params.type === 'new_series_seasons') {
+            var threeMonthsAgo = getFormattedDate(90);
+            var threeMonthsLater = getFormattedDate(-90);
+            get('/discover/tv?air_date.gte=' + threeMonthsAgo + '&air_date.lte=' + threeMonthsLater + '&sort_by=popularity.desc&vote_count.gte=1', params.page, function (result) {
+                if (result && result.results && result.results.length) {
+                    result.results.forEach(function (series) {
+                        series.release_details = { first_air_date: series.first_air_date };
+                    });
+                    console.log('Full results for new_series_seasons:', result);
+                    oncomplite(result);
+                } else {
+                    console.log('Full: No results for new_series_seasons, page:', params.page);
+                    onerror();
+                }
+            }, function (error) {
+                console.log('Full error for new_series_seasons:', params.url, error, 'Full Error:', JSON.stringify(error));
+                onerror();
+            }, false, true);
+        } else if (params.type === 'upcoming_series') {
+            var today = getFormattedDate(0);
+            var sixMonthsLater = getFormattedDate(-180);
+            get('/discover/tv?first_air_date.gte=' + today + '&first_air_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc&vote_count.gte=1', params.page, function (result) {
+                if (result && result.results && result.results.length) {
+                    result.results.forEach(function (series) {
+                        series.release_details = { first_air_date: series.first_air_date };
+                    });
+                    console.log('Full results for upcoming_series:', result);
+                    oncomplite(result);
+                } else {
+                    console.log('Full: No results for upcoming_series, page:', params.page);
+                    onerror();
+                }
+            }, function (error) {
+                console.log('Full error for upcoming_series:', params.url, error, 'Full Error:', JSON.stringify(error));
+                onerror();
+            }, false, true);
         } else {
             get(params.url, params.page, function (result) {
                 if (result && result.results && result.results.length) {
@@ -231,7 +281,7 @@
             }, function (error) {
                 console.log('Full error:', params.url, error, 'Full Error:', JSON.stringify(error));
                 onerror();
-            }, false);
+            });
         }
     }
 
@@ -328,7 +378,8 @@
 
             if (!this.is_youtube) {
                 var create = ((data.release_date || data.first_air_date || '0000') + '').slice(0, 4);
-                this.card.find('.card__title').text(data.title || data.name);
+                var title = data.title || data.name || data.original_title || data.original_name;
+                this.card.find('.card__title').text(title);
                 this.card.find('.card__details').text(create + ' - ' + (data.original_title || data.original_name));
                 if (this.rating !== '-') {
                     this.card.find('.card__view').append('<div class="card__rating">' + this.rating + '</div>');
@@ -382,15 +433,23 @@
                         _this.card.find('.card__trailer-lang').text('-');
                     }
 
-                    // Визначаємо дату прокату для регіону
-                    if (data.release_details && data.release_details.results) {
-                        var region = getRegion();
-                        var releaseInfo = data.release_details.results.find(function (r) {
-                            return r.iso_3166_1 === region;
-                        });
-                        if (releaseInfo && releaseInfo.release_dates && releaseInfo.release_dates.length) {
-                            var releaseDate = releaseInfo.release_dates[0].release_date;
-                            _this.release_date = formatDateToDDMMYYYY(releaseDate);
+                    // Визначаємо дату для відображення
+                    if (params.type === 'in_theaters') {
+                        // Для фільмів "У прокаті" використовуємо release_dates
+                        if (data.release_details && data.release_details.results) {
+                            var region = getRegion();
+                            var releaseInfo = data.release_details.results.find(function (r) {
+                                return r.iso_3166_1 === region;
+                            });
+                            if (releaseInfo && releaseInfo.release_dates && releaseInfo.release_dates.length) {
+                                var releaseDate = releaseInfo.release_dates[0].release_date;
+                                _this.release_date = formatDateToDDMMYYYY(releaseDate);
+                            }
+                        }
+                    } else if (params.type === 'new_series_seasons' || params.type === 'upcoming_series') {
+                        // Для серіалів використовуємо first_air_date
+                        if (data.release_details && data.release_details.first_air_date) {
+                            _this.release_date = formatDateToDDMMYYYY(data.release_details.first_air_date);
                         }
                     }
                     _this.card.find('.card__release-date').text(_this.release_date);
