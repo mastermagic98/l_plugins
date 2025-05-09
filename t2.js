@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.37: Виправлено мову заголовків для всіх категорій
+    // Версія 1.38: Фільтри для "У прокаті" - лише з датою релізу, сортування за спаданням дати
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -89,6 +89,23 @@
                             movie.release_details = release_data;
                             completedRequests++;
                             if (completedRequests === totalRequests) {
+                                // Фільтруємо лише фільми з валідною датою релізу
+                                var filteredResults = data.results.filter(function (m) {
+                                    if (m.release_details && m.release_details.results) {
+                                        var regionRelease = m.release_details.results.find(function (r) {
+                                            return r.iso_3166_1 === region;
+                                        });
+                                        return regionRelease && regionRelease.release_dates && regionRelease.release_dates.length && regionRelease.release_dates[0].release_date;
+                                    }
+                                    return false;
+                                });
+                                // Сортуємо за спаданням дати релізу
+                                filteredResults.sort(function (a, b) {
+                                    var dateA = a.release_details.results.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date;
+                                    var dateB = b.release_details.results.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date;
+                                    return new Date(dateB) - new Date(dateA);
+                                });
+                                data.results = filteredResults;
                                 resolve(data);
                             }
                         }, function (error) {
@@ -96,6 +113,21 @@
                             movie.release_details = { results: [] };
                             completedRequests++;
                             if (completedRequests === totalRequests) {
+                                var filteredResults = data.results.filter(function (m) {
+                                    if (m.release_details && m.release_details.results) {
+                                        var regionRelease = m.release_details.results.find(function (r) {
+                                            return r.iso_3166_1 === region;
+                                        });
+                                        return regionRelease && regionRelease.release_dates && regionRelease.release_dates.length && regionRelease.release_dates[0].release_date;
+                                    }
+                                    return false;
+                                });
+                                filteredResults.sort(function (a, b) {
+                                    var dateA = a.release_details.results.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date;
+                                    var dateB = b.release_details.results.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date;
+                                    return new Date(dateB) - new Date(dateA);
+                                });
+                                data.results = filteredResults;
                                 resolve(data);
                             }
                         });
@@ -103,6 +135,21 @@
                         movie.release_details = { results: [] };
                         completedRequests++;
                         if (completedRequests === totalRequests) {
+                            var filteredResults = data.results.filter(function (m) {
+                                if (m.release_details && m.release_details.results) {
+                                    var regionRelease = m.release_details.results.find(function (r) {
+                                        return r.iso_3166_1 === region;
+                                    });
+                                    return regionRelease && regionRelease.release_dates && regionRelease.release_dates.length && regionRelease.release_dates[0].release_date;
+                                }
+                                return false;
+                            });
+                            filteredResults.sort(function (a, b) {
+                                var dateA = a.release_details.results.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date;
+                                var dateB = b.release_details.results.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date;
+                                return new Date(dateB) - new Date(dateA);
+                            });
+                            data.results = filteredResults;
                             resolve(data);
                         }
                     }
@@ -223,6 +270,23 @@
             getLocalMoviesInTheaters(params.page, function (result) {
                 if (result && result.results && result.results.length) {
                     console.log('Full results for in_theaters:', result);
+                    // Фільтруємо та сортуємо перед передачею
+                    var region = getRegion();
+                    var filteredResults = result.results.filter(function (m) {
+                        if (m.release_details && m.release_details.results) {
+                            var regionRelease = m.release_details.results.find(function (r) {
+                                return r.iso_3166_1 === region;
+                            });
+                            return regionRelease && regionRelease.release_dates && regionRelease.release_dates.length && regionRelease.release_dates[0].release_date;
+                        }
+                        return false;
+                    });
+                    filteredResults.sort(function (a, b) {
+                        var dateA = a.release_details.results.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date;
+                        var dateB = b.release_details.results.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date;
+                        return new Date(dateB) - new Date(dateA);
+                    });
+                    result.results = filteredResults;
                     oncomplite(result);
                 } else {
                     console.log('Full: No results for in_theaters, page:', params.page);
