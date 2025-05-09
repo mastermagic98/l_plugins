@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.19: Замінено --- на -, додано підтримку uk як альтернативи ua для трейлерів, розширено логування для аналізу мов
+    // Версія 1.20: Виправлено пошук українських трейлерів (uk замість ua), додано фільтрацію для серіалів (без документальних, новин, ток-шоу, реаліті, аніме)
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -35,8 +35,8 @@
 
     function getPreferredLanguage() {
         var lang = Lampa.Storage.get('language', 'ru');
-        if (lang === 'uk' || lang === 'ua') {
-            return ['ua', 'uk', 'en']; // Додано 'uk' як альтернативу 'ua'
+        if (lang === 'uk') {
+            return ['uk', 'en']; // Змінено: uk першим, ua прибрано, оскільки TMDB використовує uk
         } else if (lang === 'ru') {
             return ['ru', 'en'];
         } else {
@@ -47,7 +47,7 @@
     function get(url, page, resolve, reject, useRegion, noLang) {
         var full_url = tmdb_base_url + url + '?api_key=' + tmdb_api_key + '&page=' + page;
         if (!noLang) full_url += '&language=uk-UA'; // Використовуємо uk-UA для всіх запитів, де не вказано інше
-        if (useRegion) full_url += '&region=' + getRegion();
+        if (useRegion) full_url += '®ion=' + getRegion();
         console.log('Сформований URL:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
@@ -91,22 +91,25 @@
             append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/movie/now_playing', json.results.length ? json : { results: [] });
         }, status.error.bind(status), true);
 
-        get('/movie/upcoming?language=uk-UA&page=1&region=UA', 1, function (json) {
+        get('/movie/upcoming?language=uk-UA&page=1®ion=UA', 1, function (json) {
             append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/movie/upcoming', json.results.length ? json : { results: [] });
         }, status.error.bind(status), false, true);
 
-        get('/discover/tv?sort_by=popularity.desc&with_type=2', 1, function (json) {
+        // Популярні серіали (виключаємо документальні, новинні, ток-шоу, реаліті, аніме)
+        get('/discover/tv?sort_by=popularity.desc&with_type=2&without_genres=99,10763,10764&without_keywords=210024&with_original_language!=ja', 1, function (json) {
             var filteredResults = json.results.filter(function (item) {
-                return true; // with_type=2 уже фільтрує Miniseries
+                return true; // with_type=2 уже фільтрує Miniseries, додаткова фільтрація через URL
             });
             append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', '/discover/tv?with_type=2', filteredResults.length ? { results: filteredResults } : { results: [] });
         }, status.error.bind(status), false);
 
-        get('/tv/on_the_air', 1, function (json) {
+        // Нові сезони серіалів (виключаємо документальні, новинні, ток-шоу, реаліті, аніме)
+        get('/tv/on_the_air?without_genres=99,10763,10764&without_keywords=210024&with_original_language!=ja', 1, function (json) {
             append(Lampa.Lang.translate('trailers_upcoming_seasons'), 'upcoming_seasons', '/tv/on_the_air', json.results.length ? json : { results: [] });
         }, status.error.bind(status), true);
 
-        get('/tv/airing_today', 1, function (json) {
+        // Нові серіали (виключаємо документальні, новинні, ток-шоу, реаліті, аніме)
+        get('/tv/airing_today?without_genres=99,10763,10764&without_keywords=210024&with_original_language!=ja', 1, function (json) {
             append(Lampa.Lang.translate('trailers_upcoming_new_series'), 'upcoming_new_series', '/tv/airing_today', json.results.length ? json : { results: [] });
         }, status.error.bind(status), true);
     }
@@ -197,7 +200,7 @@
             this.card = Lampa.Template.get('trailer', data);
             this.img = this.card.find('img')[0];
             this.is_youtube = params.type === 'rating';
-            this.rating = data.vote_average ? data.vote_average.toFixed(1) : '-'; // Замінено --- на -
+            this.rating = data.vote_average ? data.vote_average.toFixed(1) : '-';
             this.trailer_lang = '';
 
             if (!this.is_youtube) {
@@ -247,7 +250,7 @@
                     var video = trailers.find(function (v) {
                         return preferredLangs.includes(v.iso_639_1);
                     }) || trailers[0];
-                    _this.trailer_lang = video ? video.iso_639_1 : '-'; // Замінено --- на -
+                    _this.trailer_lang = video ? video.iso_639_1 : '-';
                     console.log('Trailer info for ' + data.id + ': Available languages:', trailers.map(t => t.iso_639_1), 'Selected language:', _this.trailer_lang);
                     if (_this.trailer_lang !== '-') {
                         _this.card.find('.card__trailer-lang').text(_this.trailer_lang.toUpperCase());
@@ -306,7 +309,7 @@
                         });
 
                         if (video && video.key) {
-                            if (preferredLangs[0] === 'ua' && !['ua', 'uk'].includes(video.iso_639_1) && video.iso_639_1 !== 'en') {
+                            if (preferredLangs[0] === 'uk' && video.iso_639_1 !== 'uk' && video.iso_639_1 !== 'en') {
                                 Lampa.Noty.show(Lampa.Lang.translate('trailers_no_ua_trailer'));
                             } else if (preferredLangs[0] === 'ru' && video.iso_639_1 !== 'ru' && video.iso_639_1 !== 'en') {
                                 Lampa.Noty.show(Lampa.Lang.translate('trailers_no_ru_trailer'));
