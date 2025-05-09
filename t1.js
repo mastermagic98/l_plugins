@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.20: Виправлено пошук українських трейлерів (uk замість ua), додано фільтрацію для серіалів (без документальних, новин, ток-шоу, реаліті, аніме)
+    // Версія 1.21: Виправлено категорії: Очікувані фільми, Популярні серіали (тренди TMDB), Нові серіали/сезони, Додано Очікувані серіали
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -36,7 +36,7 @@
     function getPreferredLanguage() {
         var lang = Lampa.Storage.get('language', 'ru');
         if (lang === 'uk') {
-            return ['uk', 'en']; // Змінено: uk першим, ua прибрано, оскільки TMDB використовує uk
+            return ['uk', 'en']; // Українська локалізація
         } else if (lang === 'ru') {
             return ['ru', 'en'];
         } else {
@@ -46,7 +46,7 @@
 
     function get(url, page, resolve, reject, useRegion, noLang) {
         var full_url = tmdb_base_url + url + '?api_key=' + tmdb_api_key + '&page=' + page;
-        if (!noLang) full_url += '&language=uk-UA'; // Використовуємо uk-UA для всіх запитів, де не вказано інше
+        if (!noLang) full_url += '&language=uk-UA';
         if (useRegion) full_url += '®ion=' + getRegion();
         console.log('Сформований URL:', full_url);
         network.silent(full_url, function (result) {
@@ -62,7 +62,7 @@
         var status = new Lampa.Status(6);
         status.onComplite = function () {
             var fulldata = [];
-            var keys = ['popular_movies', 'in_theaters', 'upcoming_movies', 'popular_series', 'upcoming_seasons', 'upcoming_new_series'];
+            var keys = ['popular_movies', 'in_theaters', 'upcoming_movies', 'popular_series', 'new_series_seasons', 'upcoming_series'];
             keys.forEach(function (key) {
                 if (status.data[key] && status.data[key].results && status.data[key].results.length) {
                     fulldata.push(status.data[key]);
@@ -83,34 +83,38 @@
             status.append(name, json);
         };
 
+        // Популярні фільми
         get('/trending/movie/day', 1, function (json) {
             append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/trending/movie/day', json.results.length ? { results: json.results } : { results: [] });
         }, status.error.bind(status), false);
 
+        // У прокаті
         get('/movie/now_playing', 1, function (json) {
             append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/movie/now_playing', json.results.length ? json : { results: [] });
         }, status.error.bind(status), true);
 
+        // Очікувані фільми
         get('/movie/upcoming?language=uk-UA&page=1®ion=UA', 1, function (json) {
+            console.log('Upcoming movies data:', json.results); // Додано логування
             append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/movie/upcoming', json.results.length ? json : { results: [] });
         }, status.error.bind(status), false, true);
 
-        // Популярні серіали (виключаємо документальні, новинні, ток-шоу, реаліті, аніме)
-        get('/discover/tv?sort_by=popularity.desc&with_type=2&without_genres=99,10763,10764&without_keywords=210024&with_original_language!=ja', 1, function (json) {
+        // Популярні серіали (тренди TMDB)
+        get('/trending/tv/day', 1, function (json) {
             var filteredResults = json.results.filter(function (item) {
-                return true; // with_type=2 уже фільтрує Miniseries, додаткова фільтрація через URL
+                return !item.genre_ids.includes(99) && !item.genre_ids.includes(10763) && !item.genre_ids.includes(10764) && item.original_language !== 'ja';
             });
-            append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', '/discover/tv?with_type=2', filteredResults.length ? { results: filteredResults } : { results: [] });
+            append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', '/trending/tv/day', filteredResults.length ? { results: filteredResults } : { results: [] });
         }, status.error.bind(status), false);
 
-        // Нові сезони серіалів (виключаємо документальні, новинні, ток-шоу, реаліті, аніме)
-        get('/tv/on_the_air?without_genres=99,10763,10764&without_keywords=210024&with_original_language!=ja', 1, function (json) {
-            append(Lampa.Lang.translate('trailers_upcoming_seasons'), 'upcoming_seasons', '/tv/on_the_air', json.results.length ? json : { results: [] });
+        // Нові серіали/сезони
+        get('/tv/airing_today?without_genres=99,10763,10764&without_keywords=210024&with_original_language!=ja', 1, function (json) {
+            append(Lampa.Lang.translate('trailers_new_series_seasons'), 'new_series_seasons', '/tv/airing_today', json.results.length ? json : { results: [] });
         }, status.error.bind(status), true);
 
-        // Нові серіали (виключаємо документальні, новинні, ток-шоу, реаліті, аніме)
-        get('/tv/airing_today?without_genres=99,10763,10764&without_keywords=210024&with_original_language!=ja', 1, function (json) {
-            append(Lampa.Lang.translate('trailers_upcoming_new_series'), 'upcoming_new_series', '/tv/airing_today', json.results.length ? json : { results: [] });
+        // Очікувані серіали (використано on_the_air як наближену заміну)
+        get('/tv/on_the_air?without_genres=99,10763,10764&without_keywords=210024&with_original_language!=ja', 1, function (json) {
+            append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/tv/on_the_air', json.results.length ? json : { results: [] });
         }, status.error.bind(status), true);
     }
 
@@ -126,7 +130,7 @@
         }, function (error) {
             console.log('Full error:', params.url, error);
             onerror();
-        }, params.type === 'in_theaters' || params.type === 'upcoming_movies' || params.type === 'upcoming_seasons' || params.type === 'upcoming_new_series', false);
+        }, params.type === 'in_theaters' || params.type === 'upcoming_movies' || params.type === 'new_series_seasons' || params.type === 'upcoming_series', false);
     }
 
     function videos(card, oncomplite, onerror) {
@@ -143,7 +147,7 @@
         var url = tmdb_base_url + '/' + type + '/' + id + '/videos?api_key=' + tmdb_api_key;
         var preferredLangs = getPreferredLanguage();
         var attempts = 0;
-        var maxAttempts = preferredLangs.length + 1; // Додаємо спробу без мови
+        var maxAttempts = preferredLangs.length + 1;
 
         function tryFetch(langIndex) {
             if (attempts >= maxAttempts) {
@@ -953,25 +957,25 @@
             uk: 'В прокаті',
             en: 'In Theaters'
         },
-        trailers_upcoming: {
-            ru: 'Ожидаемое',
-            uk: 'Очікуване',
-            en: 'Upcoming'
+        trailers_upcoming_movies: {
+            ru: 'Ожидаемые фильмы',
+            uk: 'Очікувані фільми',
+            en: 'Upcoming Movies'
         },
         trailers_popular_series: {
             ru: 'Популярные сериалы',
             uk: 'Популярні серіали',
             en: 'Popular Series'
         },
-        trailers_upcoming_new: {
-            ru: 'Ожидаемые новые сериалы',
-            uk: 'Очікувані нові серіали',
-            en: 'Upcoming New Series'
+        trailers_new_series_seasons: {
+            ru: 'Новые сериалы и сезоны',
+            uk: 'Нові серіали та сезони',
+            en: 'New Series and Seasons'
         },
-        trailers_upcoming_seasons: {
-            ru: 'Ожидаемые новые сезоны сериалов',
-            uk: 'Очікувані нові сезони серіалів',
-            en: 'Upcoming New Seasons'
+        trailers_upcoming_series: {
+            ru: 'Ожидаемые сериалы',
+            uk: 'Очікувані серіали',
+            en: 'Upcoming Series'
         },
         trailers_no_trailers: {
             ru: 'Нет трейлеров',
@@ -1037,21 +1041,6 @@
             ru: 'Ещё',
             uk: 'Ще',
             en: 'More'
-        },
-        trailers_popular_movies: {
-            ru: 'Популярные фильмы',
-            uk: 'Популярні фільми',
-            en: 'Popular Movies'
-        },
-        trailers_upcoming_movies: {
-            ru: 'Ожидаемые фильмы',
-            uk: 'Очікувані фільми',
-            en: 'Upcoming Movies'
-        },
-        trailers_upcoming_new_series: {
-            ru: 'Новые сериали',
-            uk: 'Нові серіали',
-            en: 'New Series'
         }
     });
 
