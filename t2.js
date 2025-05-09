@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.38: Фільтри для "У прокаті" - лише з датою релізу, сортування за спаданням дати
+    // Версія 1.39: Обмеження "У прокаті" до 45 днів, сортування за датою релізу на всіх сторінках
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -72,7 +72,11 @@
     function getLocalMoviesInTheaters(page, resolve, reject) {
         var region = getRegion();
         var language = getInterfaceLanguage();
-        var now_playing_url = `${tmdb_base_url}/movie/now_playing?api_key=${tmdb_api_key}&language=${language}&page=${page}®ion=${region}`;
+        var today = new Date();
+        var daysThreshold = 45; // Обмеження до 45 днів
+        var startDate = new Date(today.getTime() - daysThreshold * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+        var now_playing_url = `${tmdb_base_url}/movie/now_playing?api_key=${tmdb_api_key}&language=${language}&page=${page}®ion=${region}&primary_release_date.gte=${startDate}`;
         console.log('Сформований URL для У прокаті:', now_playing_url);
 
         network.silent(now_playing_url, function (data) {
@@ -89,13 +93,16 @@
                             movie.release_details = release_data;
                             completedRequests++;
                             if (completedRequests === totalRequests) {
-                                // Фільтруємо лише фільми з валідною датою релізу
+                                // Фільтруємо лише фільми з валідною датою релізу в регіоні та в межах 45 днів
                                 var filteredResults = data.results.filter(function (m) {
                                     if (m.release_details && m.release_details.results) {
                                         var regionRelease = m.release_details.results.find(function (r) {
                                             return r.iso_3166_1 === region;
                                         });
-                                        return regionRelease && regionRelease.release_dates && regionRelease.release_dates.length && regionRelease.release_dates[0].release_date;
+                                        if (regionRelease && regionRelease.release_dates && regionRelease.release_dates.length) {
+                                            var releaseDate = new Date(regionRelease.release_dates[0].release_date);
+                                            return releaseDate >= new Date(startDate) && releaseDate <= today;
+                                        }
                                     }
                                     return false;
                                 });
@@ -118,7 +125,10 @@
                                         var regionRelease = m.release_details.results.find(function (r) {
                                             return r.iso_3166_1 === region;
                                         });
-                                        return regionRelease && regionRelease.release_dates && regionRelease.release_dates.length && regionRelease.release_dates[0].release_date;
+                                        if (regionRelease && regionRelease.release_dates && regionRelease.release_dates.length) {
+                                            var releaseDate = new Date(regionRelease.release_dates[0].release_date);
+                                            return releaseDate >= new Date(startDate) && releaseDate <= today;
+                                        }
                                     }
                                     return false;
                                 });
@@ -140,7 +150,10 @@
                                     var regionRelease = m.release_details.results.find(function (r) {
                                         return r.iso_3166_1 === region;
                                     });
-                                    return regionRelease && regionRelease.release_dates && regionRelease.release_dates.length && regionRelease.release_dates[0].release_date;
+                                    if (regionRelease && regionRelease.release_dates && regionRelease.release_dates.length) {
+                                        var releaseDate = new Date(regionRelease.release_dates[0].release_date);
+                                        return releaseDate >= new Date(startDate) && releaseDate <= today;
+                                    }
                                 }
                                 return false;
                             });
@@ -272,12 +285,19 @@
                     console.log('Full results for in_theaters:', result);
                     // Фільтруємо та сортуємо перед передачею
                     var region = getRegion();
+                    var today = new Date();
+                    var daysThreshold = 45;
+                    var startDate = new Date(today.getTime() - daysThreshold * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
                     var filteredResults = result.results.filter(function (m) {
                         if (m.release_details && m.release_details.results) {
                             var regionRelease = m.release_details.results.find(function (r) {
                                 return r.iso_3166_1 === region;
                             });
-                            return regionRelease && regionRelease.release_dates && regionRelease.release_dates.length && regionRelease.release_dates[0].release_date;
+                            if (regionRelease && regionRelease.release_dates && regionRelease.release_dates.length) {
+                                var releaseDate = new Date(regionRelease.release_dates[0].release_date);
+                                return releaseDate >= new Date(startDate) && releaseDate <= today;
+                            }
                         }
                         return false;
                     });
