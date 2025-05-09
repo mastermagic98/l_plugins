@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.22: Додано пошук україномовних трейлерів на YouTube, якщо TMDB не повертає
+    // Версія 1.22: Додано пошук україномовних трейлерів на YouTube із API ключем
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -17,7 +17,7 @@
     var network = new Lampa.Reguest();
     var tmdb_api_key = Lampa.TMDB.key();
     var tmdb_base_url = 'https://api.themoviedb.org/3';
-    var youtube_api_key = 'YOUR_YOUTUBE_API_KEY'; // Замініть на ваш YouTube API ключ
+    var youtube_api_key = 'AIzaSyDPe5ZuSEuDl-Ux7viX9zY0rA_SDTLghNo'; // Ваш YouTube API ключ
     var youtube_base_url = 'https://www.googleapis.com/youtube/v3';
     var trailerCache = {}; // Кеш для зберігання результатів запитів
 
