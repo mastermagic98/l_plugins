@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.15 Оновлено пріоритетність мов для трейлерів: для ua - ua, en (без ru); для ru - ru, en (без ua). Оптимізовані запити до API TMDB /videos з коректним кешем. Збережено підвантаження карток, розмір 33.3% із адаптивністю. Мова JavaScript ES5
+    // Версія 1.16 Оновлено запити: "Популярні фільми" - /trending/movie/day?language=uk-UA, "Популярні серіали" - /trending/tv/day?language=uk-UA з фільтром media_type 2 (Mini-Series) і 6 (Video). Збережено підвантаження карток, розмір 33.3% із адаптивністю. Мова JavaScript ES5
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -45,10 +45,9 @@
     }
 
     function get(url, page, resolve, reject, useRegion, noLang) {
-        var lang = Lampa.Storage.get('language', 'ru');
         var full_url = tmdb_base_url + url + '?api_key=' + tmdb_api_key + '&page=' + page;
-        if (!noLang) full_url += '&language=' + lang;
-        if (useRegion) full_url += '®ion=' + getRegion();
+        if (!noLang) full_url += '&language=uk-UA'; // Використовуємо uk-UA для всіх запитів, де не вказано інше
+        if (useRegion) full_url += '&region=' + getRegion();
         console.log('Сформований URL:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
@@ -84,8 +83,9 @@
             status.append(name, json);
         };
 
+        // Оновлений запит для Популярні фільми
         get('/trending/movie/day', 1, function (json) {
-            append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/trending/movie/day', json.results.length ? json : { results: [] });
+            append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/trending/movie/day', json.results.length ? { results: json.results } : { results: [] });
         }, status.error.bind(status), false);
 
         get('/movie/now_playing', 1, function (json) {
@@ -96,8 +96,13 @@
             append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/movie/upcoming', json.results.length ? json : { results: [] });
         }, status.error.bind(status), true);
 
+        // Оновлений запит для Популярні серіали з фільтрацією
         get('/trending/tv/day', 1, function (json) {
-            append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', '/trending/tv/day', json.results.length ? json : { results: [] });
+            // Фільтрація за media_type (2 - Mini-Series, 6 - Video)
+            var filteredResults = json.results.filter(function (item) {
+                return item.media_type === '2' || item.media_type === '6';
+            });
+            append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', '/trending/tv/day', filteredResults.length ? { results: filteredResults } : { results: [] });
         }, status.error.bind(status), false);
 
         get('/tv/on_the_air', 1, function (json) {
@@ -1033,7 +1038,7 @@
             en: 'Upcoming Movies'
         },
         trailers_upcoming_new_series: {
-            ru: 'Новые сериалы',
+            ru: 'Новые сериали',
             uk: 'Нові серіали',
             en: 'New Series'
         }
