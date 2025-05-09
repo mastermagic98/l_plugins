@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.28: Додано відображення всіх категорій, включаючи Очікувані фільми, Очікувані серіали, Нові сезони серіалів
+    // Версія 1.29: Виправлено синтаксичну помилку (видалено CSS-стиль font-size)
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -64,7 +64,6 @@
             var fulldata = [];
             var keys = ['popular_movies', 'in_theaters', 'upcoming_movies', 'popular_series', 'new_series_seasons', 'upcoming_series'];
             keys.forEach(function (key) {
-                // Додаємо категорію, навіть якщо results порожній, щоб відобразити її
                 if (status.data[key]) {
                     fulldata.push(status.data[key]);
                 }
@@ -319,7 +318,7 @@
         this.create = function () {
             var _this2 = this;
             this.build();
-            this.card.on('hover:focus', function;font-size: 16px; (e, is_mouse) {
+            this.card.on('hover:focus', function (e, is_mouse) {
                 Lampa.Background.change(_this2.cardImgBackground(data));
                 _this2.onFocus(e.target, data, is_mouse);
                 _this2.loadTrailerInfo();
