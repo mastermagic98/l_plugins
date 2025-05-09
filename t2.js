@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.30: Адаптовано запити для категорій "Очікувані фільми", "Очікувані серіали", "Нові сезони серіалів"
+    // Версія 1.31: Виправлено відображення всіх категорій, виправлено параметр region, послаблено фільтри
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -47,7 +47,7 @@
     function get(url, page, resolve, reject, useRegion, noLang) {
         var full_url = tmdb_base_url + url + '&api_key=' + tmdb_api_key + '&page=' + page;
         if (!noLang) full_url += '&language=uk-UA';
-        if (useRegion) full_url += '&region=' + getRegion(); // Виправлено: замінено ®ion на &region
+        if (useRegion) full_url += '&region=' + getRegion(); // Виправлено: використовуємо коректний параметр region
         console.log('Сформований URL:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
@@ -64,14 +64,17 @@
             var fulldata = [];
             var keys = ['popular_movies', 'in_theaters', 'upcoming_movies', 'popular_series', 'new_series_seasons', 'upcoming_series'];
             keys.forEach(function (key) {
-                if (status.data[key]) {
+                if (status.data[key] && status.data[key].results && status.data[key].results.length) {
                     fulldata.push(status.data[key]);
+                } else {
+                    console.log('No results for category:', key);
                 }
             });
             console.log('Main completed:', fulldata);
-            if (fulldata.length) oncomplite(fulldata);
-            else {
-                console.log('No data to display');
+            if (fulldata.length) {
+                oncomplite(fulldata);
+            } else {
+                console.log('No data to display for any category');
                 onerror();
             }
         };
@@ -80,6 +83,7 @@
             json.title = title;
             json.type = name;
             json.url = url;
+            // Завжди додаємо категорію, навіть якщо результатів немає
             status.append(name, json);
         };
 
@@ -91,39 +95,60 @@
 
         // Популярні фільми
         get('/trending/movie/day', 1, function (json) {
-            append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/trending/movie/day', json.results.length ? { results: json.results } : { results: [] });
-        }, status.error.bind(status), false);
+            console.log('Популярні фільми results:', json.results);
+            append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/trending/movie/day', { results: json.results || [] });
+        }, function (error) {
+            console.log('Помилка для Популярні фільми:', error);
+            append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/trending/movie/day', { results: [] });
+        }, false);
 
         // У прокаті
         get('/movie/now_playing', 1, function (json) {
-            append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/movie/now_playing', json.results.length ? json : { results: [] });
-        }, status.error.bind(status), true);
+            console.log('У прокаті results:', json.results);
+            append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/movie/now_playing', { results: json.results || [] });
+        }, function (error) {
+            console.log('Помилка для У прокаті:', error);
+            append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/movie/now_playing', { results: [] });
+        }, true);
 
         // Очікувані фільми (використовуємо /discover/movie)
-        get('/discover/movie?primary_release_date.gte=' + today + '&primary_release_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc&popularity.gte=5&vote_count.gte=10', 1, function (json) {
-            console.log('Upcoming movies data:', json.results);
-            append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/discover/movie?primary_release_date.gte=' + today + '&primary_release_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc', json.results.length ? json : { results: [] });
-        }, status.error.bind(status), true, true);
+        get('/discover/movie?primary_release_date.gte=' + today + '&primary_release_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc&popularity.gte=1&vote_count.gte=1', 1, function (json) {
+            console.log('Очікувані фільми results:', json.results);
+            append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/discover/movie?primary_release_date.gte=' + today + '&primary_release_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc', { results: json.results || [] });
+        }, function (error) {
+            console.log('Помилка для Очікувані фільми:', error);
+            append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/discover/movie?primary_release_date.gte=' + today + '&primary_release_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc', { results: [] });
+        }, false, true);
 
         // Популярні серіали (тренди TMDB)
         get('/trending/tv/day', 1, function (json) {
-            var filteredResults = json.results.filter(function (item) {
-                return !item.genre_ids.includes(99) && !item.genre_ids.includes(10763) && !item.genre_ids.includes(10764) && item.original_language !== 'ja';
-            });
-            append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', '/trending/tv/day', filteredResults.length ? { results: filteredResults } : { results: [] });
-        }, status.error.bind(status), false);
+            console.log('Популярні серіали results:', json.results);
+            var filteredResults = json.results ? json.results.filter(function (item) {
+                return !item.genre_ids.includes(99) && !item.genre_ids.includes(10763) && !item.genre_ids.includes(10764);
+            }) : [];
+            append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', '/trending/tv/day', { results: filteredResults });
+        }, function (error) {
+            console.log('Помилка для Популярні серіали:', error);
+            append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', '/trending/tv/day', { results: [] });
+        }, false);
 
         // Нові сезони серіалів (використовуємо /discover/tv із air_date)
-        get('/discover/tv?air_date.gte=' + threeMonthsAgo + '&air_date.lte=' + threeMonthsLater + '&sort_by=popularity.desc&popularity.gte=5&vote_count.gte=10&with_original_language!=ja', 1, function (json) {
-            console.log('New series seasons data:', json.results);
-            append(Lampa.Lang.translate('trailers_new_series_seasons'), 'new_series_seasons', '/discover/tv?air_date.gte=' + threeMonthsAgo + '&air_date.lte=' + threeMonthsLater + '&sort_by=popularity.desc', json.results.length ? json : { results: [] });
-        }, status.error.bind(status), true, true);
+        get('/discover/tv?air_date.gte=' + threeMonthsAgo + '&air_date.lte=' + threeMonthsLater + '&sort_by=popularity.desc&popularity.gte=1&vote_count.gte=1', 1, function (json) {
+            console.log('Нові сезони серіалів results:', json.results);
+            append(Lampa.Lang.translate('trailers_new_series_seasons'), 'new_series_seasons', '/discover/tv?air_date.gte=' + threeMonthsAgo + '&air_date.lte=' + threeMonthsLater + '&sort_by=popularity.desc', { results: json.results || [] });
+        }, function (error) {
+            console.log('Помилка для Нові сезони серіалів:', error);
+            append(Lampa.Lang.translate('trailers_new_series_seasons'), 'new_series_seasons', '/discover/tv?air_date.gte=' + threeMonthsAgo + '&air_date.lte=' + threeMonthsLater + '&sort_by=popularity.desc', { results: [] });
+        }, false, true);
 
         // Очікувані серіали (використовуємо /discover/tv із first_air_date)
-        get('/discover/tv?first_air_date.gte=' + today + '&first_air_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc&popularity.gte=5&vote_count.gte=10&with_original_language!=ja', 1, function (json) {
-            console.log('Upcoming series data:', json.results);
-            append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/discover/tv?first_air_date.gte=' + today + '&first_air_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc', json.results.length ? json : { results: [] });
-        }, status.error.bind(status), true, true);
+        get('/discover/tv?first_air_date.gte=' + today + '&first_air_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc&popularity.gte=1&vote_count.gte=1', 1, function (json) {
+            console.log('Очікувані серіали results:', json.results);
+            append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/discover/tv?first_air_date.gte=' + today + '&first_air_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc', { results: json.results || [] });
+        }, function (error) {
+            console.log('Помилка для Очікувані серіали:', error);
+            append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/discover/tv?first_air_date.gte=' + today + '&first_air_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc', { results: [] });
+        }, false, true);
     }
 
     function full(params, oncomplite, onerror) {
