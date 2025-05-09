@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.24: Додано логіку пошуку англійського трейлера на TMDB, якщо YouTube не має україномовного
+    // Версія 1.25: Додано кешування YouTube та обробку помилки квоти
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -19,7 +19,8 @@
     var tmdb_base_url = 'https://api.themoviedb.org/3';
     var youtube_api_key = 'AIzaSyDPe5ZuSEuDl-Ux7viX9zY0rA_SDTLghNo'; // Ваш YouTube API ключ
     var youtube_base_url = 'https://www.googleapis.com/youtube/v3';
-    var trailerCache = {}; // Кеш для зберігання результатів запитів
+    var trailerCache = {}; // Кеш для TMDB
+    var youtubeCache = {}; // Кеш для YouTube
 
     function getFormattedDate(daysAgo) {
         var today = new Date();
@@ -61,6 +62,17 @@
     }
 
     function searchYouTubeTrailer(title, year, season, onSuccess, onError) {
+        var cacheKey = title + (year ? '_' + year : '') + (season ? '_' + season : '');
+        if (youtubeCache[cacheKey]) {
+            console.log('Using cached YouTube result for:', cacheKey, youtubeCache[cacheKey]);
+            if (youtubeCache[cacheKey].videoId) {
+                onSuccess(youtubeCache[cacheKey]);
+            } else {
+                onError();
+            }
+            return;
+        }
+
         var query = encodeURIComponent(
             title +
             (year ? ' ' + year : '') +
@@ -75,14 +87,21 @@
             if (result.items && result.items.length > 0) {
                 var videoId = result.items[0].id.videoId;
                 var videoTitle = result.items[0].snippet.title;
-                console.log('Found YouTube trailer:', { videoId: videoId, title: videoTitle });
-                onSuccess({ key: videoId, name: videoTitle, iso_639_1: 'uk' });
+                var youtubeResult = { key: videoId, name: videoTitle, iso_639_1: 'uk' };
+                youtubeCache[cacheKey] = youtubeResult; // Кешуємо успішний результат
+                console.log('Found YouTube trailer:', youtubeResult);
+                onSuccess(youtubeResult);
             } else {
                 console.log('No YouTube trailers found for:', title);
+                youtubeCache[cacheKey] = {}; // Кешуємо порожній результат
                 onError();
             }
         }, function (error) {
             console.log('YouTube Search Error:', error);
+            if (error && error.error && error.error.code === 403 && error.error.reason === 'quotaExceeded') {
+                Lampa.Noty.show('Перевищено квоту YouTube API. Спробуйте пізніше.');
+            }
+            youtubeCache[cacheKey] = {}; // Кешуємо помилку
             onError();
         });
     }
@@ -192,8 +211,7 @@
                         trailerCache[cacheKey] = { id: id, results: [youtubeResult] };
                         oncomplite({ id: id, results: [youtubeResult] });
                     }, function () {
-                        console.log('No YouTube trailer found for ' + cacheKey);
-                        // Якщо на YouTube немає трейлера, шукаємо англійський на TMDB
+                        console.log('No YouTube trailer found for ' + cacheKey + ', checking English on TMDB');
                         var englishTrailer = tmdbTrailers.find(function (v) {
                             return v.iso_639_1 === 'en';
                         });
@@ -237,7 +255,6 @@
                 var trailers = result.results ? result.results.filter(function (v) {
                     return v.type === 'Trailer';
                 }) : [];
-                // Зберігаємо всі трейлери для подальшого використання
                 tmdbTrailers = tmdbTrailers.concat(trailers);
                 var preferredTrailer = trailers.find(function (v) {
                     return preferredLangs.includes(v.iso_639_1);
@@ -262,6 +279,8 @@
 
     function clear() {
         network.clear();
+        trailerCache = {};
+        youtubeCache = {}; // Очищаємо кеш при виклику clear
     }
 
     var Api = {
