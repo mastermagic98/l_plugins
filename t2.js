@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.41: Виправлення дублювання карток і порожніх блоків при підвантаженні
+    // Версія 1.42: Виправлення порожнього блоку на позиції 17 та оптимізація завантаження карток
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -73,7 +73,7 @@
         var region = getRegion();
         var language = getInterfaceLanguage();
         var today = new Date();
-        var daysThreshold = 45; // Обмеження до 45 днів
+        var daysThreshold = 45;
         var startDate = new Date(today.getTime() - daysThreshold * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
         var now_playing_url = `${tmdb_base_url}/movie/now_playing?api_key=${tmdb_api_key}&language=${language}&page=${page}®ion=${region}&primary_release_date.gte=${startDate}`;
@@ -93,7 +93,6 @@
                             movie.release_details = release_data;
                             completedRequests++;
                             if (completedRequests === totalRequests) {
-                                // Фільтруємо лише фільми з валідною датою релізу в регіоні та в межах 45 днів
                                 var filteredResults = data.results.filter(function (m) {
                                     if (m.release_details && m.release_details.results) {
                                         var regionRelease = m.release_details.results.find(function (r) {
@@ -106,7 +105,6 @@
                                     }
                                     return false;
                                 });
-                                // Сортуємо за спаданням дати релізу
                                 filteredResults.sort(function (a, b) {
                                     var dateA = a.release_details.results.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date;
                                     var dateB = b.release_details.results.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date;
@@ -177,7 +175,7 @@
     }
 
     function main(oncomplite, onerror) {
-        var status = new Lampa.Status(6); // 6 категорій
+        var status = new Lampa.Status(6);
         status.onComplite = function () {
             var fulldata = [];
             var keys = ['popular_movies', 'in_theaters', 'upcoming_movies', 'popular_series', 'new_series_seasons', 'upcoming_series'];
@@ -204,13 +202,11 @@
             status.append(name, json);
         };
 
-        // Дати для фільтрації
         var today = getFormattedDate(0);
-        var sixMonthsLater = getFormattedDate(-180); // 6 місяців вперед
-        var threeMonthsAgo = getFormattedDate(90);   // 3 місяці назад
-        var threeMonthsLater = getFormattedDate(-90); // 3 місяці вперед
+        var sixMonthsLater = getFormattedDate(-180);
+        var threeMonthsAgo = getFormattedDate(90);
+        var threeMonthsLater = getFormattedDate(-90);
 
-        // Популярні фільми
         get('/discover/movie?sort_by=popularity.desc&vote_count.gte=1', 1, function (json) {
             console.log('Популярні фільми results:', json.results);
             append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/discover/movie?sort_by=popularity.desc', { results: json.results || [] });
@@ -219,7 +215,6 @@
             append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/discover/movie?sort_by=popularity.desc', { results: [] });
         });
 
-        // У прокаті
         getLocalMoviesInTheaters(1, function (json) {
             console.log('У прокаті results:', json.results);
             append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/movie/now_playing', { results: json.results || [] });
@@ -228,7 +223,6 @@
             append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/movie/now_playing', { results: [] });
         });
 
-        // Очікувані фільми
         get('/discover/movie?primary_release_date.gte=' + today + '&primary_release_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc&vote_count.gte=1', 1, function (json) {
             console.log('Очікувані фільми results:', json.results);
             append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/discover/movie?primary_release_date.gte=' + today + '&primary_release_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc', { results: json.results || [] });
@@ -237,7 +231,6 @@
             append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/discover/movie?primary_release_date.gte=' + today + '&primary_release_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc', { results: [] });
         });
 
-        // Популярні серіали
         get('/discover/tv?sort_by=popularity.desc&vote_count.gte=1', 1, function (json) {
             console.log('Популярні серіали results:', json.results);
             var filteredResults = json.results ? json.results.filter(function (item) {
@@ -249,7 +242,6 @@
             append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', '/discover/tv?sort_by=popularity.desc', { results: [] });
         });
 
-        // Нові сезони серіалів
         get('/discover/tv?air_date.gte=' + threeMonthsAgo + '&air_date.lte=' + threeMonthsLater + '&sort_by=popularity.desc&vote_count.gte=1', 1, function (json) {
             console.log('Нові сезони серіалів results:', json.results);
             if (json.results) {
@@ -263,7 +255,6 @@
             append(Lampa.Lang.translate('trailers_new_series_seasons'), 'new_series_seasons', '/discover/tv?air_date.gte=' + threeMonthsAgo + '&air_date.lte=' + threeMonthsLater + '&sort_by=popularity.desc', { results: [] });
         });
 
-        // Очікувані серіали
         get('/discover/tv?first_air_date.gte=' + today + '&first_air_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc&vote_count.gte=1', 1, function (json) {
             console.log('Очікувані серіали results:', json.results);
             if (json.results) {
@@ -284,24 +275,26 @@
             var today = new Date();
             var daysThreshold = 45;
             var startDate = new Date(today.getTime() - daysThreshold * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-            var targetCards = 20; // Кількість карток на сторінці
+            var targetCards = 20;
             var accumulatedResults = [];
-            var loadedPages = new Set(); // Відстежуємо завантажені сторінки
+            var loadedPages = new Set();
             var currentPage = params.page;
 
             function fetchNextPage() {
-                if (loadedPages.has(currentPage) || currentPage > 30) { // Обмеження на 30 сторінок
+                if (loadedPages.has(currentPage) || currentPage > 30 || accumulatedResults.length >= params.page * targetCards) {
                     console.log('All relevant pages loaded or limit reached, finalizing with:', accumulatedResults.length, 'cards');
-                    var finalResults = [...new Set(accumulatedResults.map(JSON.stringify))].map(JSON.parse); // Уникнення дублів
+                    var finalResults = [...new Set(accumulatedResults.map(JSON.stringify))].map(JSON.parse);
                     finalResults.sort(function (a, b) {
                         var dateA = a.release_details.results.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date;
                         var dateB = b.release_details.results.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date;
                         return new Date(dateB) - new Date(dateA);
                     });
+                    var startIdx = (params.page - 1) * targetCards;
+                    var endIdx = params.page * targetCards;
                     var result = {
                         dates: { maximum: today.toISOString().split('T')[0], minimum: startDate },
                         page: params.page,
-                        results: finalResults.slice((params.page - 1) * targetCards, params.page * targetCards),
+                        results: finalResults.slice(startIdx, endIdx),
                         total_pages: Math.ceil(finalResults.length / targetCards),
                         total_results: finalResults.length
                     };
@@ -314,7 +307,6 @@
                     if (result && result.results && result.results.length) {
                         console.log('Full results for in_theaters, page ' + currentPage + ':', result);
 
-                        // Фільтруємо та додаємо результати
                         var filteredResults = result.results.filter(function (m) {
                             if (m.release_details && m.release_details.results) {
                                 var regionRelease = m.release_details.results.find(function (r) {
@@ -330,7 +322,6 @@
 
                         accumulatedResults = accumulatedResults.concat(filteredResults);
 
-                        // Перевіряємо, чи зібрано достатньо карток для поточної сторінки
                         if (accumulatedResults.length >= params.page * targetCards || currentPage >= result.total_pages) {
                             var finalResults = [...new Set(accumulatedResults.map(JSON.stringify))].map(JSON.parse);
                             finalResults.sort(function (a, b) {
@@ -338,10 +329,12 @@
                                 var dateB = b.release_details.results.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date;
                                 return new Date(dateB) - new Date(dateA);
                             });
+                            var startIdx = (params.page - 1) * targetCards;
+                            var endIdx = params.page * targetCards;
                             var result = {
                                 dates: { maximum: today.toISOString().split('T')[0], minimum: startDate },
                                 page: params.page,
-                                results: finalResults.slice((params.page - 1) * targetCards, params.page * targetCards),
+                                results: finalResults.slice(startIdx, endIdx),
                                 total_pages: Math.ceil(finalResults.length / targetCards),
                                 total_results: finalResults.length
                             };
@@ -358,10 +351,12 @@
                             var dateB = b.release_details.results.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date;
                             return new Date(dateB) - new Date(dateA);
                         });
+                        var startIdx = (params.page - 1) * targetCards;
+                        var endIdx = params.page * targetCards;
                         var result = {
                             dates: { maximum: today.toISOString().split('T')[0], minimum: startDate },
                             page: params.page,
-                            results: finalResults.slice((params.page - 1) * targetCards, params.page * targetCards),
+                            results: finalResults.slice(startIdx, endIdx),
                             total_pages: Math.ceil(finalResults.length / targetCards),
                             total_results: finalResults.length
                         };
@@ -574,9 +569,7 @@
                         _this.card.find('.card__trailer-lang').text('-');
                     }
 
-                    // Визначаємо дату для відображення
                     if (params.type === 'in_theaters') {
-                        // Для фільмів "У прокаті" використовуємо release_dates
                         if (data.release_details && data.release_details.results) {
                             var region = getRegion();
                             var releaseInfo = data.release_details.results.find(function (r) {
@@ -588,7 +581,6 @@
                             }
                         }
                     } else if (params.type === 'new_series_seasons' || params.type === 'upcoming_series') {
-                        // Для серіалів використовуємо first_air_date
                         if (data.release_details && data.release_details.first_air_date) {
                             _this.release_date = formatDateToDDMMYYYY(data.release_details.first_air_date);
                         }
@@ -1181,12 +1173,11 @@
                 };
                 body.append(card.render());
                 items.push(card);
-                if (append) Lampa.Controller.collectionAppend(card.render());
             });
-            // Видаляємо зайві порожні блоки, якщо їх кількість не кратна 3 (для flex-розмітки)
+            // Обрізаємо розмітку до реальної кількості карток
             var cardCount = body.find('.card').length;
-            if (cardCount % 3 !== 0) {
-                body.find('.card:gt(' + (Math.floor(cardCount / 3) * 3 - 1) + ')').remove();
+            if (cardCount < 20) {
+                body.find('.card:gt(' + (cardCount - 1) + ')').remove();
             }
         };
 
