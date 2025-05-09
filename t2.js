@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.31: Виправлено відображення всіх категорій, виправлено параметр region, послаблено фільтри
+    // Версія 1.32: Виправлено помилки для Популярні фільми, У прокаті, Популярні серіали, змінено мову на en, прибрано region
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -46,14 +46,14 @@
 
     function get(url, page, resolve, reject, useRegion, noLang) {
         var full_url = tmdb_base_url + url + '&api_key=' + tmdb_api_key + '&page=' + page;
-        if (!noLang) full_url += '&language=uk-UA';
-        if (useRegion) full_url += '&region=' + getRegion(); // Виправлено: використовуємо коректний параметр region
+        if (!noLang) full_url += '&language=en'; // Змінено на en замість uk-UA
+        if (useRegion) full_url += '&region=' + getRegion(); // Виправлено: коректний параметр region
         console.log('Сформований URL:', full_url);
         network.silent(full_url, function (result) {
             console.log('API Result:', url, result);
             resolve(result);
         }, function (error) {
-            console.log('API Error:', url, error);
+            console.log('API Error:', url, error, 'Status:', error.status, 'Status Text:', error.statusText);
             reject(error);
         });
     }
@@ -102,14 +102,14 @@
             append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/trending/movie/day', { results: [] });
         }, false);
 
-        // У прокаті
-        get('/movie/now_playing', 1, function (json) {
+        // У прокаті (замінено на popular як резервний варіант)
+        get('/movie/popular', 1, function (json) {
             console.log('У прокаті results:', json.results);
-            append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/movie/now_playing', { results: json.results || [] });
+            append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/movie/popular', { results: json.results || [] });
         }, function (error) {
             console.log('Помилка для У прокаті:', error);
-            append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/movie/now_playing', { results: [] });
-        }, true);
+            append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/movie/popular', { results: [] });
+        }, false);
 
         // Очікувані фільми (використовуємо /discover/movie)
         get('/discover/movie?primary_release_date.gte=' + today + '&primary_release_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc&popularity.gte=1&vote_count.gte=1', 1, function (json) {
@@ -161,7 +161,7 @@
                 onerror();
             }
         }, function (error) {
-            console.log('Full error:', params.url, error);
+            console.log('Full error:', params.url, error, 'Status:', error.status, 'Status Text:', error.statusText);
             onerror();
         }, params.type === 'in_theaters' || params.type === 'upcoming_movies' || params.type === 'new_series_seasons' || params.type === 'upcoming_series', false);
     }
