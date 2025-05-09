@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.21: Виправлено категорії: Очікувані фільми, Популярні серіали (тренди TMDB), Нові серіали/сезони, Додано Очікувані серіали
+    // Версія 1.22: Додано пошук україномовних трейлерів на YouTube, якщо TMDB не повертає
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -17,6 +17,8 @@
     var network = new Lampa.Reguest();
     var tmdb_api_key = Lampa.TMDB.key();
     var tmdb_base_url = 'https://api.themoviedb.org/3';
+    var youtube_api_key = 'YOUR_YOUTUBE_API_KEY'; // Замініть на ваш YouTube API ключ
+    var youtube_base_url = 'https://www.googleapis.com/youtube/v3';
     var trailerCache = {}; // Кеш для зберігання результатів запитів
 
     function getFormattedDate(daysAgo) {
@@ -36,7 +38,7 @@
     function getPreferredLanguage() {
         var lang = Lampa.Storage.get('language', 'ru');
         if (lang === 'uk') {
-            return ['uk', 'en']; // Українська локалізація
+            return ['uk', 'en'];
         } else if (lang === 'ru') {
             return ['ru', 'en'];
         } else {
@@ -55,6 +57,28 @@
         }, function (error) {
             console.log('API Error:', url, error);
             reject(error);
+        });
+    }
+
+    function searchYouTubeTrailer(title, onSuccess, onError) {
+        var query = encodeURIComponent(title + ' ukrainian trailer трейлер українською');
+        var url = youtube_base_url + '/search?part=snippet&type=video&maxResults=1&q=' + query + '&key=' + youtube_api_key;
+        console.log('YouTube Search URL:', url);
+
+        network.silent(url, function (result) {
+            console.log('YouTube Search Result:', result);
+            if (result.items && result.items.length > 0) {
+                var videoId = result.items[0].id.videoId;
+                var videoTitle = result.items[0].snippet.title;
+                console.log('Found YouTube trailer:', { videoId: videoId, title: videoTitle });
+                onSuccess({ key: videoId, name: videoTitle, iso_639_1: 'uk' });
+            } else {
+                console.log('No YouTube trailers found for:', title);
+                onError();
+            }
+        }, function (error) {
+            console.log('YouTube Search Error:', error);
+            onError();
         });
     }
 
@@ -95,7 +119,7 @@
 
         // Очікувані фільми
         get('/movie/upcoming?language=uk-UA&page=1®ion=UA', 1, function (json) {
-            console.log('Upcoming movies data:', json.results); // Додано логування
+            console.log('Upcoming movies data:', json.results);
             append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/movie/upcoming', json.results.length ? json : { results: [] });
         }, status.error.bind(status), false, true);
 
@@ -112,7 +136,7 @@
             append(Lampa.Lang.translate('trailers_new_series_seasons'), 'new_series_seasons', '/tv/airing_today', json.results.length ? json : { results: [] });
         }, status.error.bind(status), true);
 
-        // Очікувані серіали (використано on_the_air як наближену заміну)
+        // Очікувані серіали
         get('/tv/on_the_air?without_genres=99,10763,10764&without_keywords=210024&with_original_language!=ja', 1, function (json) {
             append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/tv/on_the_air', json.results.length ? json : { results: [] });
         }, status.error.bind(status), true);
@@ -136,6 +160,7 @@
     function videos(card, oncomplite, onerror) {
         var type = card.name ? 'tv' : 'movie';
         var id = card.id;
+        var title = card.title || card.name;
 
         var cacheKey = type + '_' + id;
         if (trailerCache[cacheKey]) {
@@ -151,9 +176,21 @@
 
         function tryFetch(langIndex) {
             if (attempts >= maxAttempts) {
-                console.log('Max attempts reached for ' + cacheKey + ', no trailers found. Languages tried:', preferredLangs);
-                trailerCache[cacheKey] = { id: id, results: [] };
-                onerror();
+                console.log('Max attempts reached for ' + cacheKey + ', no TMDB trailers found. Languages tried:', preferredLangs);
+                // Якщо це українська локалізація, шукаємо на YouTube
+                if (preferredLangs[0] === 'uk') {
+                    console.log('Attempting YouTube search for Ukrainian trailer:', title);
+                    searchYouTubeTrailer(title, function (youtubeResult) {
+                        trailerCache[cacheKey] = { id: id, results: [youtubeResult] };
+                        oncomplite({ id: id, results: [youtubeResult] });
+                    }, function () {
+                        trailerCache[cacheKey] = { id: id, results: [] };
+                        onerror();
+                    });
+                } else {
+                    trailerCache[cacheKey] = { id: id, results: [] };
+                    onerror();
+                }
                 return;
             }
 
@@ -170,7 +207,7 @@
                     return v.type === 'Trailer';
                 }) : [];
                 if (trailers.length) {
-                    console.log('Found trailers for ' + cacheKey + ':', trailers.map(t => ({ language: t.iso_639_1, name: t.name })));
+                    console.log('Found TMDB trailers for ' + cacheKey + ':', trailers.map(t => ({ language: t.iso_639_1, name: t.name })));
                     trailerCache[cacheKey] = result;
                     oncomplite(result);
                 } else {
@@ -1041,6 +1078,11 @@
             ru: 'Ещё',
             uk: 'Ще',
             en: 'More'
+        },
+        trailers_popular_movies: {
+            ru: 'Популярные фильмы',
+            uk: 'Популярні фільми',
+            en: 'Popular Movies'
         }
     });
 
