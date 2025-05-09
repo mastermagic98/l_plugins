@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.14 Оптимізовані запити до API TMDB /videos: додана коректна робота кешу, уникнення дублювання запитів, правильне визначення типу (movie/tv). Збережено підвантаження карток, дебонсинг, виправлення SyntaxError у Trailer, розмір карток 33.3% із адаптивністю. Мова JavaScript ES5
+    // Версія 1.15 Оновлено пріоритетність мов для трейлерів: для ua - ua, en (без ru); для ru - ru, en (без ua). Оптимізовані запити до API TMDB /videos з коректним кешем. Збережено підвантаження карток, розмір 33.3% із адаптивністю. Мова JavaScript ES5
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -35,7 +35,13 @@
 
     function getPreferredLanguage() {
         var lang = Lampa.Storage.get('language', 'ru');
-        return lang === 'uk' ? ['uk', 'ua', 'ru', 'en'] : lang === 'ru' ? ['ru', 'uk', 'ua', 'en'] : ['en', 'ru', 'uk', 'ua'];
+        if (lang === 'uk' || lang === 'ua') {
+            return ['ua', 'en']; // Пріоритет для ua: ua, en (без ru)
+        } else if (lang === 'ru') {
+            return ['ru', 'en']; // Пріоритет для ru: ru, en (без ua)
+        } else {
+            return ['en']; // За замовчуванням: тільки en
+        }
     }
 
     function get(url, page, resolve, reject, useRegion, noLang) {
@@ -133,7 +139,7 @@
         var url = tmdb_base_url + '/' + type + '/' + id + '/videos?api_key=' + tmdb_api_key;
         var preferredLangs = getPreferredLanguage();
         var attempts = 0;
-        var maxAttempts = preferredLangs.length + 1; // Додаємо спробу без мови
+        var maxAttempts = preferredLangs.length + 1; // Додаємо спробу без мови (як резерв)
 
         function tryFetch(langIndex) {
             if (attempts >= maxAttempts) {
@@ -287,8 +293,10 @@
                         }) || trailers[0];
 
                         if (video && video.key) {
-                            if (preferredLangs[0] === 'uk' && video.iso_639_1 !== 'uk' && video.iso_639_1 !== 'ua') {
-                                Lampa.Noty.show(Lampa.Lang.translate('trailers_no_uk_trailer'));
+                            if (preferredLangs[0] === 'ua' && video.iso_639_1 !== 'ua' && video.iso_639_1 !== 'en') {
+                                Lampa.Noty.show(Lampa.Lang.translate('trailers_no_ua_trailer'));
+                            } else if (preferredLangs[0] === 'ru' && video.iso_639_1 !== 'ru' && video.iso_639_1 !== 'en') {
+                                Lampa.Noty.show(Lampa.Lang.translate('trailers_no_ru_trailer'));
                             }
                             _this2.play(video.key);
                         } else {
@@ -320,11 +328,11 @@
                                 separator: true
                             });
                             trailers.forEach(function (video) {
-                                if (video.key) {
+                                if (video.key && preferredLangs.includes(video.iso_639_1)) {
                                     items.push({
                                         title: video.name || 'Trailer',
                                         id: video.key,
-                                        subtitle: preferredLangs.includes(video.iso_639_1) ? 'Local' : video.iso_639_1
+                                        subtitle: video.iso_639_1
                                     });
                                 }
                             });
@@ -954,10 +962,15 @@
             uk: 'Немає трейлерів',
             en: 'No trailers'
         },
-        trailers_no_uk_trailer: {
+        trailers_no_ua_trailer: {
             ru: 'Нет украинского трейлера',
             uk: 'Немає українського трейлера',
             en: 'No Ukrainian trailer'
+        },
+        trailers_no_ru_trailer: {
+            ru: 'Нет русского трейлера',
+            uk: 'Немає російського трейлера',
+            en: 'No Russian trailer'
         },
         trailers_view: {
             ru: 'Подробнее',
