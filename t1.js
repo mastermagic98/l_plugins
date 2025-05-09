@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.22: Додано пошук україномовних трейлерів на YouTube із API ключем
+    // Версія 1.23: Покращено пошук трейлерів на YouTube та відтворення
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -60,8 +60,13 @@
         });
     }
 
-    function searchYouTubeTrailer(title, onSuccess, onError) {
-        var query = encodeURIComponent(title + ' ukrainian trailer трейлер українською');
+    function searchYouTubeTrailer(title, year, season, onSuccess, onError) {
+        var query = encodeURIComponent(
+            title +
+            (year ? ' ' + year : '') +
+            (season ? ' season ' + season : '') +
+            ' ukrainian trailer трейлер українською'
+        );
         var url = youtube_base_url + '/search?part=snippet&type=video&maxResults=1&q=' + query + '&key=' + youtube_api_key;
         console.log('YouTube Search URL:', url);
 
@@ -161,6 +166,8 @@
         var type = card.name ? 'tv' : 'movie';
         var id = card.id;
         var title = card.title || card.name;
+        var year = card.release_date ? card.release_date.slice(0, 4) : card.first_air_date ? card.first_air_date.slice(0, 4) : '';
+        var season = card.season_number || '';
 
         var cacheKey = type + '_' + id;
         if (trailerCache[cacheKey]) {
@@ -177,17 +184,19 @@
         function tryFetch(langIndex) {
             if (attempts >= maxAttempts) {
                 console.log('Max attempts reached for ' + cacheKey + ', no TMDB trailers found. Languages tried:', preferredLangs);
-                // Якщо це українська локалізація, шукаємо на YouTube
                 if (preferredLangs[0] === 'uk') {
-                    console.log('Attempting YouTube search for Ukrainian trailer:', title);
-                    searchYouTubeTrailer(title, function (youtubeResult) {
+                    console.log('Attempting YouTube search for Ukrainian trailer:', { title: title, year: year, season: season });
+                    searchYouTubeTrailer(title, year, season, function (youtubeResult) {
+                        console.log('YouTube trailer found, caching and completing:', youtubeResult);
                         trailerCache[cacheKey] = { id: id, results: [youtubeResult] };
                         oncomplite({ id: id, results: [youtubeResult] });
                     }, function () {
+                        console.log('No YouTube trailer found for ' + cacheKey);
                         trailerCache[cacheKey] = { id: id, results: [] };
                         onerror();
                     });
                 } else {
+                    console.log('No Ukrainian localization, skipping YouTube search for ' + cacheKey);
                     trailerCache[cacheKey] = { id: id, results: [] };
                     onerror();
                 }
@@ -312,20 +321,27 @@
                 Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
                 return;
             }
-            console.log('Playing video ID:', id);
-            if (Lampa.Manifest.app_digital >= 183) {
-                var item = {
-                    title: Lampa.Utils.shortText(data.title || data.name, 50),
-                    id: id,
-                    youtube: true,
-                    url: 'https://www.youtube.com/watch?v=' + id,
-                    icon: '<img class="size-youtube" src="https://img.youtube.com/vi/' + id + '/default.jpg" />',
-                    template: 'selectbox_icon'
-                };
-                Lampa.Player.play(item);
-                Lampa.Player.playlist([item]);
-            } else {
-                Lampa.YouTube.play(id);
+            console.log('Attempting to play video ID:', id);
+            try {
+                if (Lampa.Manifest.app_digital >= 183) {
+                    var item = {
+                        title: Lampa.Utils.shortText(data.title || data.name, 50),
+                        id: id,
+                        youtube: true,
+                        url: 'https://www.youtube.com/watch?v=' + id,
+                        icon: '<img class="size-youtube" src="https://img.youtube.com/vi/' + id + '/default.jpg" />',
+                        template: 'selectbox_icon'
+                    };
+                    console.log('Playing via Lampa.Player:', item);
+                    Lampa.Player.play(item);
+                    Lampa.Player.playlist([item]);
+                } else {
+                    console.log('Playing via Lampa.YouTube:', id);
+                    Lampa.YouTube.play(id);
+                }
+            } catch (e) {
+                console.error('Error playing video:', e);
+                Lampa.Noty.show('Помилка відтворення трейлера: ' + e.message);
             }
         };
 
@@ -338,18 +354,23 @@
                 _this2.loadTrailerInfo();
             }).on('hover:enter', function () {
                 if (_this2.is_youtube) {
+                    console.log('Playing YouTube card directly:', data.id);
                     _this2.play(data.id);
                 } else {
+                    console.log('Fetching videos for card:', data.id);
                     Api.videos(data, function (videos) {
                         var preferredLangs = getPreferredLanguage();
                         var trailers = videos.results ? videos.results.filter(function (v) {
                             return v.type === 'Trailer';
                         }) : [];
+                        console.log('Filtered trailers:', trailers);
+
                         var video = trailers.find(function (v) {
                             return preferredLangs.includes(v.iso_639_1);
-                        });
+                        }) || trailers[0]; // Вибираємо перший трейлер, якщо немає потрібної мови
 
                         if (video && video.key) {
+                            console.log('Selected trailer:', video);
                             if (preferredLangs[0] === 'uk' && video.iso_639_1 !== 'uk' && video.iso_639_1 !== 'en') {
                                 Lampa.Noty.show(Lampa.Lang.translate('trailers_no_ua_trailer'));
                             } else if (preferredLangs[0] === 'ru' && video.iso_639_1 !== 'ru' && video.iso_639_1 !== 'en') {
@@ -357,9 +378,11 @@
                             }
                             _this2.play(video.key);
                         } else {
+                            console.log('No playable trailer found');
                             Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
                         }
                     }, function () {
+                        console.log('Failed to fetch videos for card:', data.id);
                         Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
                     });
                 }
