@@ -1,6 +1,6 @@
-(function () {
+(function () {ь
     'use strict';
-    // Версія 1.43: Виправлення порожньої сторінки, порожнього блоку на позиції 19, додавання кешування
+    // Версія 1.44: Виправлення пагінації для категорії "У прокаті", щоб завантажувати до 30 сторінок із TMDB
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -282,10 +282,11 @@
             var today = new Date();
             var daysThreshold = 45;
             var startDate = new Date(today.getTime() - daysThreshold * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-            var targetCards = 20;
+            var targetCards = 20; // Кількість карток на сторінку
             var accumulatedResults = [];
             var loadedPages = new Set();
             var currentPage = params.page;
+            var maxPages = 30; // Максимальна кількість сторінок із TMDB
 
             // Перевіряємо кеш
             var cachedData = categoryCache['in_theaters'] || Lampa.Storage.get('trailer_category_cache_in_theaters', null);
@@ -307,7 +308,7 @@
             }
 
             function fetchNextPage() {
-                if (loadedPages.has(currentPage) || currentPage > 30 || accumulatedResults.length >= params.page * targetCards) {
+                if (loadedPages.has(currentPage) || currentPage > maxPages) {
                     console.log('All relevant pages loaded or limit reached, finalizing with:', accumulatedResults.length, 'cards');
                     var finalResults = [...new Set(accumulatedResults.map(JSON.stringify))].map(JSON.parse);
                     finalResults.sort(function (a, b) {
@@ -354,7 +355,8 @@
 
                         accumulatedResults = accumulatedResults.concat(filteredResults);
 
-                        if (accumulatedResults.length >= params.page * targetCards || currentPage >= result.total_pages) {
+                        // Перевіряємо, чи є ще сторінки для завантаження
+                        if (currentPage >= result.total_pages || currentPage >= maxPages) {
                             var finalResults = [...new Set(accumulatedResults.map(JSON.stringify))].map(JSON.parse);
                             finalResults.sort(function (a, b) {
                                 var dateA = a.release_details.results.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date;
@@ -1259,7 +1261,7 @@
         var total_pages = 0;
         var last;
         var waitload = false;
-        var active = 0; // Оголошено active на рівні класу
+        var active = 0;
 
         this.create = function () {
             Api.full(object, this.build.bind(this), this.empty.bind(this));
@@ -1355,7 +1357,7 @@
                         if (!Lampa.Controller.own(_this3)) _this3.start();
                         if (step > 0) Navigator.move('down');
                         else if (active > 0) Navigator.move('up');
-                    }.bind(this); // Прив’язка контексту
+                    }.bind(this);
                     var debouncedLoad = debounce(function () {
                         console.log('Scroll event: isEnd=', scroll.isEnd(), 'waitload=', waitload);
                         if (scroll.isEnd() && !waitload) {
