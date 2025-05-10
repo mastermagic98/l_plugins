@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.42: Інтеграція адаптивного формату карток із версії 1.25, горизонтальний скрол першого рядка
+    // Версія 1.43: Виправлення порожньої сторінки, порожнього блоку на позиції 19, додавання кешування
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -182,6 +182,7 @@
             var keys = ['popular_movies', 'in_theaters', 'upcoming_movies', 'popular_series', 'new_series_seasons', 'upcoming_series'];
             keys.forEach(function (key) {
                 if (status.data[key] && status.data[key].results && status.data[key].results.length) {
+                    // Зберігаємо в кеш
                     categoryCache[key] = {
                         results: status.data[key].results,
                         timestamp: Date.now()
@@ -286,17 +287,17 @@
             var loadedPages = new Set();
             var currentPage = params.page;
 
+            // Перевіряємо кеш
             var cachedData = categoryCache['in_theaters'] || Lampa.Storage.get('trailer_category_cache_in_theaters', null);
             if (cachedData && cachedData.results) {
                 accumulatedResults = cachedData.results;
-                var initialCards = params.page === 1 ? 0 : 7;
-                var startIdx = initialCards + (params.page - 2) * targetCards;
-                var endIdx = initialCards + (params.page - 1) * targetCards;
+                var startIdx = (params.page - 1) * targetCards;
+                var endIdx = params.page * targetCards;
                 var result = {
                     dates: { maximum: today.toISOString().split('T')[0], minimum: startDate },
                     page: params.page,
-                    results: accumulatedResults.slice(Math.max(0, startIdx), endIdx),
-                    total_pages: Math.ceil((accumulatedResults.length - initialCards) / targetCards) + 1,
+                    results: accumulatedResults.slice(startIdx, endIdx),
+                    total_pages: Math.ceil(accumulatedResults.length / targetCards),
                     total_results: accumulatedResults.length
                 };
                 if (result.results.length > 0) {
@@ -306,7 +307,7 @@
             }
 
             function fetchNextPage() {
-                if (loadedPages.has(currentPage) || currentPage > 30 || accumulatedResults.length >= (params.page * targetCards) + 7) {
+                if (loadedPages.has(currentPage) || currentPage > 30 || accumulatedResults.length >= params.page * targetCards) {
                     console.log('All relevant pages loaded or limit reached, finalizing with:', accumulatedResults.length, 'cards');
                     var finalResults = [...new Set(accumulatedResults.map(JSON.stringify))].map(JSON.parse);
                     finalResults.sort(function (a, b) {
@@ -314,16 +315,16 @@
                         var dateB = b.release_details.results.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date;
                         return new Date(dateB) - new Date(dateA);
                     });
-                    var initialCards = params.page === 1 ? 0 : 7;
-                    var startIdx = initialCards + (params.page - 2) * targetCards;
-                    var endIdx = initialCards + (params.page - 1) * targetCards;
+                    var startIdx = (params.page - 1) * targetCards;
+                    var endIdx = params.page * targetCards;
                     var result = {
                         dates: { maximum: today.toISOString().split('T')[0], minimum: startDate },
                         page: params.page,
-                        results: finalResults.slice(Math.max(0, startIdx), endIdx),
-                        total_pages: Math.ceil((finalResults.length - initialCards) / targetCards) + 1,
+                        results: finalResults.slice(startIdx, endIdx),
+                        total_pages: Math.ceil(finalResults.length / targetCards),
                         total_results: finalResults.length
                     };
+                    // Зберігаємо в кеш
                     categoryCache['in_theaters'] = {
                         results: finalResults,
                         timestamp: Date.now()
@@ -353,23 +354,23 @@
 
                         accumulatedResults = accumulatedResults.concat(filteredResults);
 
-                        if (accumulatedResults.length >= (params.page * targetCards) + 7 || currentPage >= result.total_pages) {
+                        if (accumulatedResults.length >= params.page * targetCards || currentPage >= result.total_pages) {
                             var finalResults = [...new Set(accumulatedResults.map(JSON.stringify))].map(JSON.parse);
                             finalResults.sort(function (a, b) {
                                 var dateA = a.release_details.results.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date;
                                 var dateB = b.release_details.results.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date;
                                 return new Date(dateB) - new Date(dateA);
                             });
-                            var initialCards = params.page === 1 ? 0 : 7;
-                            var startIdx = initialCards + (params.page - 2) * targetCards;
-                            var endIdx = initialCards + (params.page - 1) * targetCards;
+                            var startIdx = (params.page - 1) * targetCards;
+                            var endIdx = params.page * targetCards;
                             var result = {
                                 dates: { maximum: today.toISOString().split('T')[0], minimum: startDate },
                                 page: params.page,
-                                results: finalResults.slice(Math.max(0, startIdx), endIdx),
-                                total_pages: Math.ceil((finalResults.length - initialCards) / targetCards) + 1,
+                                results: finalResults.slice(startIdx, endIdx),
+                                total_pages: Math.ceil(finalResults.length / targetCards),
                                 total_results: finalResults.length
                             };
+                            // Зберігаємо в кеш
                             categoryCache['in_theaters'] = {
                                 results: finalResults,
                                 timestamp: Date.now()
@@ -388,16 +389,16 @@
                             var dateB = b.release_details.results.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date;
                             return new Date(dateB) - new Date(dateA);
                         });
-                        var initialCards = params.page === 1 ? 0 : 7;
-                        var startIdx = initialCards + (params.page - 2) * targetCards;
-                        var endIdx = initialCards + (params.page - 1) * targetCards;
+                        var startIdx = (params.page - 1) * targetCards;
+                        var endIdx = params.page * targetCards;
                         var result = {
                             dates: { maximum: today.toISOString().split('T')[0], minimum: startDate },
                             page: params.page,
-                            results: finalResults.slice(Math.max(0, startIdx), endIdx),
-                            total_pages: Math.ceil((finalResults.length - initialCards) / targetCards) + 1,
+                            results: finalResults.slice(startIdx, endIdx),
+                            total_pages: Math.ceil(finalResults.length / targetCards),
                             total_results: finalResults.length
                         };
+                        // Зберігаємо в кеш
                         categoryCache['in_theaters'] = {
                             results: finalResults,
                             timestamp: Date.now()
@@ -416,6 +417,7 @@
             var threeMonthsAgo = getFormattedDate(90);
             var threeMonthsLater = getFormattedDate(-90);
 
+            // Перевіряємо кеш
             var cachedData = categoryCache['new_series_seasons'] || Lampa.Storage.get('trailer_category_cache_new_series_seasons', null);
             if (cachedData && cachedData.results) {
                 var targetCards = 20;
@@ -438,6 +440,7 @@
                     result.results.forEach(function (series) {
                         series.release_details = { first_air_date: series.first_air_date };
                     });
+                    // Зберігаємо в кеш
                     if (params.page === 1) {
                         categoryCache['new_series_seasons'] = {
                             results: result.results,
@@ -464,6 +467,7 @@
             var today = getFormattedDate(0);
             var sixMonthsLater = getFormattedDate(-180);
 
+            // Перевіряємо кеш
             var cachedData = categoryCache['upcoming_series'] || Lampa.Storage.get('trailer_category_cache_upcoming_series', null);
             if (cachedData && cachedData.results) {
                 var targetCards = 20;
@@ -486,6 +490,7 @@
                     result.results.forEach(function (series) {
                         series.release_details = { first_air_date: series.first_air_date };
                     });
+                    // Зберігаємо в кеш
                     if (params.page === 1) {
                         categoryCache['upcoming_series'] = {
                             results: result.results,
@@ -509,6 +514,7 @@
                 onerror();
             });
         } else {
+            // Перевіряємо кеш для інших категорій
             var cachedData = categoryCache[params.type] || Lampa.Storage.get('trailer_category_cache_' + params.type, null);
             if (cachedData && cachedData.results) {
                 var targetCards = 20;
@@ -528,6 +534,7 @@
 
             get(params.url, params.page, function (result) {
                 if (result && result.results && result.results.length) {
+                    // Зберігаємо в кеш
                     if (params.page === 1) {
                         categoryCache[params.type] = {
                             results: result.results,
@@ -626,6 +633,7 @@
         network.clear();
         trailerCache = {};
         categoryCache = {};
+        // Очищаємо кеш у сховищі
         ['popular_movies', 'in_theaters', 'upcoming_movies', 'popular_series', 'new_series_seasons', 'upcoming_series'].forEach(function (key) {
             Lampa.Storage.set('trailer_category_cache_' + key, null);
         });
@@ -933,7 +941,7 @@
                     title: Lampa.Lang.translate('trailers_filter'),
                     items: items,
                     onSelect: function (item) {
-                        Lampa.Storage.set('trailer_category_cache_' + data.type, null);
+                        Lampa.Storage.set('trailer_category_cache_' + data.type, null); // Очищаємо кеш при зміні фільтра
                         categoryCache[data.type] = null;
                         Lampa.Storage.set('trailers_' + data.type + '_filter', item.value);
                         Lampa.Activity.push({
@@ -1106,7 +1114,6 @@
     }
 
     function Component$1(object) {
-        var _this = this;
         var scroll = new Lampa.Scroll({ mask: true, over: true, scroll_by_item: true });
         var items = [];
         var html = $('<div></div>');
@@ -1129,6 +1136,7 @@
         };
 
         this.build = function (data) {
+            var _this = this;
             console.log('Building with data:', data);
             scroll.minus();
             html.append(scroll.render());
@@ -1205,7 +1213,7 @@
                 toggle: function () {
                     if (items.length) {
                         _this2.detach();
-                        items[_this2.active].toggle();
+                        items[active].toggle();
                     }
                 },
                 left: function () {
@@ -1242,7 +1250,7 @@
     }
 
     function Component(object) {
-        var scroll = new Lampa.Scroll({ horizontal: true, mask: true, over: true, step: 250 });
+        var scroll = new Lampa.Scroll({ mask: true, over: true, step: 250, end_ratio: 2 });
         var items = [];
         var html = $('<div></div>');
         var body = $('<div class="category-full category-full--trailers"></div>');
@@ -1251,8 +1259,6 @@
         var total_pages = 0;
         var last;
         var waitload = false;
-        var loadedIndex = 0;
-        var visibleCards = light ? 6 : 10;
 
         this.create = function () {
             Api.full(object, this.build.bind(this), this.empty.bind(this));
@@ -1303,31 +1309,26 @@
 
         this.append = function (data, append) {
             var _this2 = this;
-            if (!append) body.empty();
-            var cardsPerRow = Math.floor((window.innerWidth - 20) / (25.7 * 16)); // Розрахунок кількості карток на рядок (ширина картки 25.7em ≈ 410px при 16px базовому розмірі шрифту)
-            var totalCards = data.results.length;
-            var cardsToAdd = Math.min(totalCards, cardsPerRow); // Обмежуємо першим рядком
-
-            // Додаємо лише картки першого рядка
-            data.results.slice(0, cardsToAdd).forEach(function (element) {
+            body.empty(); // Очищаємо body перед додаванням нових карток
+            data.results.forEach(function (element) {
                 var card = new Trailer(element, { type: object.type });
                 card.create();
                 card.visible();
                 card.onFocus = function (target, card_data) {
                     last = target;
                     scroll.update(card.render(), true);
+                    if (!light && !newlampa && scroll.isEnd()) _this2.next();
                 };
                 body.append(card.render());
                 items.push(card);
             });
-
-            // Додаємо заповнювачі для першого рядка, якщо потрібно
-            var placeholdersNeeded = cardsPerRow - (totalCards % cardsPerRow) || 0;
-            if (placeholdersNeeded === cardsPerRow) placeholdersNeeded = 0;
-            for (var i = 0; i < placeholdersNeeded && items.length < cardsPerRow; i++) {
-                var placeholder = $('<div class="card card--placeholder selector"></div>');
-                body.append(placeholder);
-                items.push({ render: function () { return placeholder; }, destroy: function () { placeholder.remove(); } });
+            // Додаємо заповнювачі, якщо карток менше 20
+            var cardCount = data.results.length;
+            if (cardCount < 20) {
+                for (var i = cardCount; i < 20; i++) {
+                    var placeholder = $('<div class="card card--placeholder" style="width: 33.3%; margin-bottom: 1.5em; visibility: hidden;"></div>');
+                    body.append(placeholder);
+                }
             }
         };
 
@@ -1340,11 +1341,22 @@
                 html.append(scroll.render());
                 this.append(data);
                 if (light && items.length) this.back();
-                if (total_pages > data.page && items.length) this.more();
+                if (total_pages > data.page && items.length) {
+                    this.more();
+                } else {
+                    console.log('No more pages available, hiding more button');
+                    // Не додаємо кнопку "Ще", якщо немає більше сторінок
+                }
                 scroll.append(body);
                 if (newlampa) {
                     scroll.onEnd = this.next.bind(this);
+                    scroll.onWheel = function (step) {
+                        if (!Lampa.Controller.own(_this3)) _this3.start();
+                        if (step > 0) Navigator.move('down');
+                        else if (active > 0) Navigator.move('up');
+                    };
                     var debouncedLoad = debounce(function () {
+                        console.log('Scroll event: isEnd=', scroll.isEnd(), 'waitload=', waitload);
                         if (scroll.isEnd() && !waitload) {
                             _this3.next();
                         }
@@ -1361,8 +1373,7 @@
 
         this.more = function () {
             var _this = this;
-            var more = Lampa.Template.get('more');
-            more.addClass('more--trailers');
+            var more = $('<div class="selector" style="width: 100%; height: 5px"></div>');
             more.on('hover:enter', function () {
                 var next = Lampa.Arrays.clone(object);
                 delete next.activity;
@@ -1375,16 +1386,12 @@
                     page: next.page
                 });
             });
-            more.on('hover:focus', function (e) {
-                last = e.target;
-                scroll.update(more, true);
-            });
             body.append(more);
         };
 
         this.back = function () {
             last = items[0].render()[0];
-            var more = $('<div class="selector" style="width: 25.7em; height: 5px"></div>');
+            var more = $('<div class="selector" style="width: 100%; height: 5px"></div>');
             more.on('hover:enter', function () {
                 if (object.page > 1) {
                     Lampa.Activity.backward();
@@ -1408,7 +1415,7 @@
                     else Lampa.Controller.toggle('menu');
                 },
                 right: function () {
-                    if (Navigator.canmove('right')) Navigator.move('right');
+                    Navigator.move('right');
                 },
                 up: function () {
                     if (Navigator.canmove('up')) Navigator.move('up');
@@ -1547,17 +1554,16 @@
         }
     });
 
-    Lampa.Template.add('trailer', '<div class="card selector card--trailer layer--render layer--visible"><div class="card__view"><img src="./img/img_load.svg" class="card__img"><div class="card__promo"><div class="card__promo-text"><div class="card__title"></div></div><div class="card__details"></div></div></div><div class="card__play"><img src="./img/icons/player/play.svg"></div></div>');
-    Lampa.Template.add('trailer_style', '<style>.card.card--trailer,.card-more.more--trailers{width:25.7em}.card.card--trailer .card__view{padding-bottom:56%;margin-bottom:0}.card.card--trailer .card__details{margin-top:0.8em}.card.card--trailer .card__play{position:absolute;top:50%;transform:translateY(-50%);left:1.5em;background:#000000b8;width:2.2em;height:2.2em;border-radius:100%;text-align:center;padding-top:0.6em}.card.card--trailer .card__play img{width:0.9em;height:1em}.card.card--trailer .card__rating{position:absolute;bottom:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.card.card--trailer .card__trailer-lang{position:absolute;top:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;text-transform:uppercase;font-size:1.2em}.card.card--trailer .card__release-date{position:absolute;top:2em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.card--placeholder{width:25.7em;height:14.4072em;background:#1d1d1d}.items-line__more{display:inline-block;margin-left:10px;cursor:pointer;padding:0.5em 1em}.category-full--trailers{display:flex}.category-full--trailers .card{margin-right:1em}@media screen and (max-width:767px){.category-full--trailers .card{width:50%}}@media screen and (max-width:400px){.category-full--trailers .card{width:100%}}</style>');
-
     function startPlugin() {
         if (window.plugin_trailers_ready) return;
         window.plugin_trailers_ready = true;
         Lampa.Component.add('trailers_main', Component$1);
         Lampa.Component.add('trailers_full', Component);
+        Lampa.Template.add('trailer', '<div class="card selector card--trailer layer--render layer--visible"><div class="card__view"><img src="./img/img_load.svg" class="card__img"><div class="card__promo"><div class="card__promo-text"><div class="card__title"></div></div><div class="card__details"></div></div></div><div class="card__play"><img src="./img/icons/player/play.svg"></div></div>');
+        Lampa.Template.add('trailer_style', '<style>.card.card--trailer,.card-more.more--trailers{width:25.7em}.card.card--trailer .card__view{padding-bottom:56%;margin-bottom:0}.card.card--trailer .card__details{margin-top:0.8em}.card.card--trailer .card__play{position:absolute;top:50%;transform:translateY(-50%);left:1.5em;background:#000000b8;width:2.2em;height:2.2em;border-radius:100%;text-align:center;padding-top:0.6em}.card.card--trailer .card__play img{width:0.9em;height:1em}.card.card--trailer .card__rating{position:absolute;bottom:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.card.card--trailer .card__trailer-lang{position:absolute;top:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;text-transform:uppercase;font-size:1.2em}.card.card--trailer .card__release-date{position:absolute;top:2em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.card-more.more--trailers .card-more__box{padding-bottom:56%}.category-full--trailers{display:flex;flex-wrap:wrap;justify-content:space-between}.category-full--trailers .card{width:33.3%;margin-bottom:1.5em}.category-full--trailers .card .card__view{padding-bottom:56%;margin-bottom:0}.items-line__more{display:inline-block;margin-left:10px;cursor:pointer;padding:0.5em 1em}@media screen and (max-width:767px){.category-full--trailers .card{width:50%}}@media screen and (max-width:400px){.category-full--trailers .card{width:100%}}</style>');
 
         function add() {
-            var button = $('<li class="menu__item selector"><div class="menu__ico"><svg height="70" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.30255 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.30255 3.2397 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.8333 35L30 20V50L55.8333 35Z" fill="currentColor"/></svg></div><div class="menu__text">' + Lampa.Lang.translate('title_trailers') + '</div></li>');
+            var button = $('<li class="menu__item selector"><div class="menu__ico"><svg height="70" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/></svg></div><div class="menu__text">' + Lampa.Lang.translate('title_trailers') + '</div></li>');
             button.on('hover:enter', function () {
                 Lampa.Activity.push({
                     url: '',
@@ -1567,19 +1573,13 @@
                 });
             });
             $('.menu .menu__list').eq(0).append(button);
+            $('body').append(Lampa.Template.get('trailer_style', {}, true));
         }
 
         if (window.appready) add();
         else {
             Lampa.Listener.follow('app', function (e) {
-                if (e.type === 'ready') {
-                    add();
-                    setTimeout(function () {
-                        if ($('.menu__item.active').length) {
-                            $('.menu__item.active').trigger('hover:enter');
-                        }
-                    }, 10);
-                }
+                if (e.type === 'ready') add();
             });
         }
     }
