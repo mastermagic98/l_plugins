@@ -1313,7 +1313,7 @@
 
         this.append = function (data, append) {
             var _this2 = this;
-            body.empty(); // Очищаємо body перед додаванням нових карток
+            if (!append) body.empty(); // Очищаємо body лише якщо не додаємо нові картки
             data.results.forEach(function (element) {
                 var card = new Trailer(element, { type: object.type });
                 card.create();
@@ -1326,9 +1326,9 @@
                 body.append(card.render());
                 items.push(card);
             });
-            // Додаємо заповнювачі лише якщо кількість карток на поточній сторінці менша за 20
+            // Додаємо заповнювачі лише якщо кількість карток на поточній сторінці менша за 20 і це не остання сторінка
             var cardCount = data.results.length;
-            if (cardCount < 20 && items.length % 20 !== 0) {
+            if (cardCount < 20 && object.page < total_pages) {
                 for (var i = cardCount; i < 20; i++) {
                     var placeholder = $('<div class="card card--placeholder" style="width: 33.3%; margin-bottom: 1.5em; visibility: hidden;"></div>');
                     body.append(placeholder);
@@ -1567,4 +1567,32 @@
         Lampa.Template.add('trailer_style', '<style>.card.card--trailer,.card-more.more--trailers{width:25.7em}.card.card--trailer .card__view{padding-bottom:56%;margin-bottom:0}.card.card--trailer .card__details{margin-top:0.8em}.card.card--trailer .card__play{position:absolute;top:50%;transform:translateY(-50%);left:1.5em;background:#000000b8;width:2.2em;height:2.2em;border-radius:100%;text-align:center;padding-top:0.6em}.card.card--trailer .card__play img{width:0.9em;height:1em}.card.card--trailer .card__rating{position:absolute;bottom:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.card.card--trailer .card__trailer-lang{position:absolute;top:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;text-transform:uppercase;font-size:1.2em}.card.card--trailer .card__release-date{position:absolute;top:2em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.card-more.more--trailers .card-more__box{padding-bottom:56%}.category-full--trailers{display:flex;flex-wrap:wrap;justify-content:space-between}.category-full--trailers .card{width:33.3%;margin-bottom:1.5em}.category-full--trailers .card .card__view{padding-bottom:56%;margin-bottom:0}.items-line__more{display:inline-block;margin-left:10px;cursor:pointer;padding:0.5em 1em}@media screen and (max-width:767px){.category-full--trailers .card{width:50%}}@media screen and (max-width:400px){.category-full--trailers .card{width:100%}}</style>');
 
         function add() {
-            var button = $('<li class="menu__item selector"><div class="menu__ico"><svg height="70" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.
+            var button = $('<li class="menu__item selector"><div class="menu__ico"><svg height="70" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.30255 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.30255 3.2397 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.8333 35L30 20V50L55.8333 35Z" fill="currentColor"/></svg></div><div class="menu__text">' + Lampa.Lang.translate('title_trailers') + '</div></li>');
+            button.on('hover:enter', function () {
+                Lampa.Activity.push({
+                    url: '',
+                    title: Lampa.Lang.translate('title_trailers'),
+                    component: 'trailers_main',
+                    page: 1
+                });
+            });
+            $('.menu .menu__list').eq(0).append(button);
+        }
+
+        if (window.appready) add();
+        else {
+            Lampa.Listener.follow('app', function (e) {
+                if (e.type === 'ready') {
+                    add();
+                    setTimeout(function () {
+                        if ($('.menu__item.active').length) {
+                            $('.menu__item.active').trigger('hover:enter');
+                        }
+                    }, 10);
+                }
+            });
+        }
+    }
+
+    if (!window.plugin_trailers_ready) startPlugin();
+})();
