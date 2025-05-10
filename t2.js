@@ -1,6 +1,6 @@
-(function () {
+(function () {фільмів, що 
     'use strict';
-    // Версія 1.49: Виправлення відображення карток на сторінці "Ще в прокаті"
+    // Версія 1.50: Виправлення накопичення даних для сторінки "Ще в прокаті"
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -299,13 +299,13 @@
             var targetCards = 20; // Кількість карток на сторінку
             var accumulatedResults = [];
             var loadedPages = new Set();
-            var currentPage = 1; // Завжди починаємо з першої сторінки, якщо кеш не містить потрібних даних
+            var currentPage = 1; // Завжди починаємо з першої сторінки
             var maxPages = 30; // Максимальна кількість сторінок із TMDB
             var totalPagesFromFirstResponse = 0;
 
             // Перевіряємо кеш
             var cachedData = categoryCache['in_theaters'] || Lampa.Storage.get('trailer_category_cache_in_theaters', null);
-            if (cachedData && cachedData.results) {
+            if (cachedData && cachedData.results && cachedData.results.length > 0) {
                 accumulatedResults = cachedData.results;
                 var startIdx = (params.page - 1) * targetCards;
                 var endIdx = Math.min(params.page * targetCards, accumulatedResults.length);
@@ -318,17 +318,16 @@
                     total_results: accumulatedResults.length
                 };
                 // Якщо в кеші достатньо даних для запитуваної сторінки, повертаємо результат
-                if (accumulatedResults.length >= startIdx) {
+                if (accumulatedResults.length >= startIdx + 1 && pageResults.length > 0) {
                     console.log(`Використовуємо кеш для сторінки ${params.page}:`, result);
                     oncomplite(result);
                     return;
                 }
-                // Якщо даних у кеші недостатньо, починаємо завантаження з останньої завантаженої сторінки
+                // Починаємо з наступної сторінки після кешу
                 currentPage = Math.ceil(accumulatedResults.length / targetCards) + 1;
             }
 
             function fetchNextPage() {
-                // Перевіряємо, чи потрібно завантажувати наступну сторінку
                 if (loadedPages.has(currentPage) || currentPage > maxPages || (totalPagesFromFirstResponse && currentPage > totalPagesFromFirstResponse)) {
                     console.log('All relevant pages loaded or limit reached, finalizing with:', accumulatedResults.length, 'cards');
                     finalizeResults();
@@ -339,7 +338,7 @@
                 getLocalMoviesInTheaters(currentPage, function (result) {
                     if (result && result.results && result.results.length) {
                         console.log('Full results for in_theaters, page ' + currentPage + ':', result);
-                        accumulatedResults = accumulatedResults.concat(result.results); // Додаємо нові результати
+                        accumulatedResults = accumulatedResults.concat(result.results); // Накопичуємо всі результати
                         if (currentPage === 1) {
                             totalPagesFromFirstResponse = result.total_pages || maxPages;
                         }
@@ -381,7 +380,7 @@
                 var result = {
                     dates: { maximum: today.toISOString().split('T')[0], minimum: startDate },
                     page: params.page,
-                    results: pageResults,
+                    results: pageResults.length > 0 ? pageResults : finalResults.slice(0, targetCards), // Повертаємо перші картки, якщо зріз порожній
                     total_pages: Math.ceil(finalResults.length / targetCards) || 1,
                     total_results: finalResults.length
                 };
