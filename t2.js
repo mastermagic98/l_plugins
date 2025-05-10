@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.46: Зняття прив'язки до регіону та виправлення пагінації для "У прокаті"
+    // Версія 1.47: Виправлення пагінації для "У прокаті" при натисканні "Ще"
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -324,13 +324,8 @@
                     total_pages: Math.ceil(accumulatedResults.length / targetCards) || 1,
                     total_results: accumulatedResults.length
                 };
-                if (pageResults.length > 0) {
+                if (pageResults.length > 0 || params.page <= Math.ceil(accumulatedResults.length / targetCards)) {
                     console.log(`Використовуємо кеш для сторінки ${params.page}:`, result);
-                    oncomplite(result);
-                    return;
-                } else if (params.page <= Math.ceil(accumulatedResults.length / targetCards)) {
-                    // Якщо сторінка існує, але результатів немає, це означає, що ми вже на останній сторінці
-                    console.log('Досягнуто кінця кешованих даних на сторінці:', params.page);
                     oncomplite(result);
                     return;
                 }
@@ -356,9 +351,7 @@
                         // Перевіряємо, чи достатньо карток для поточної сторінки
                         var startIdx = (params.page - 1) * targetCards;
                         var endIdx = params.page * targetCards;
-                        if (accumulatedResults.length >= startIdx) {
-                            finalizeResults();
-                        } else if (currentPage >= totalPagesFromFirstResponse || currentPage >= maxPages) {
+                        if (accumulatedResults.length >= startIdx + 1 || currentPage >= totalPagesFromFirstResponse || currentPage >= maxPages) {
                             finalizeResults();
                         } else {
                             currentPage++;
@@ -387,7 +380,7 @@
                     return new Date(dateB) - new Date(dateA);
                 });
                 var startIdx = (params.page - 1) * targetCards;
-                var endIdx = params.page * targetCards;
+                var endIdx = Math.min(params.page * targetCards, finalResults.length); // Обмежуємо endIdx кількістю доступних карток
                 var pageResults = finalResults.slice(startIdx, endIdx);
                 var result = {
                     dates: { maximum: today.toISOString().split('T')[0], minimum: startDate },
