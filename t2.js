@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.44: Виправлення порожнього блоку на позиції 20, корекція кількості карток при натисканні "Ще"
+    // Версія 1.45: Повернення горизонтального формату карток, виправлення помилки з active у scroll.onWheel
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -1118,10 +1118,11 @@
     }
 
     function Component$1(object) {
+        var _this = this; // Додаємо _this для доступу до методів і змінних
         var scroll = new Lampa.Scroll({ mask: true, over: true, scroll_by_item: true });
         var items = [];
         var html = $('<div></div>');
-        var active = 0;
+        _this.active = 0; // Змінна active тепер є частиною об’єкта
         var light = Lampa.Storage.field('light_version') && window.innerWidth >= 767;
 
         this.create = function () {
@@ -1140,7 +1141,6 @@
         };
 
         this.build = function (data) {
-            var _this = this;
             console.log('Building with data:', data);
             scroll.minus();
             html.append(scroll.render());
@@ -1163,7 +1163,7 @@
             item.onUp = this.up.bind(this);
             item.onBack = this.back.bind(this);
             item.onToggle = function () {
-                active = items.indexOf(item);
+                _this.active = items.indexOf(item);
             };
             item.wrap = $('<div></div>');
             if (light) {
@@ -1183,31 +1183,31 @@
                 items.forEach(function (item) {
                     item.render().detach();
                 });
-                items.slice(active, active + 2).forEach(function (item) {
+                items.slice(_this.active, _this.active + 2).forEach(function (item) {
                     item.wrap.append(item.render());
                 });
             }
         };
 
         this.down = function () {
-            active++;
-            active = Math.min(active, items.length - 1);
+            _this.active++;
+            _this.active = Math.min(_this.active, items.length - 1);
             this.detach();
-            items[active].toggle();
-            scroll.update(items[active].render());
+            items[_this.active].toggle();
+            scroll.update(items[_this.active].render());
         };
 
         this.up = function () {
-            active--;
-            if (active < 0) {
-                active = 0;
+            _this.active--;
+            if (_this.active < 0) {
+                _this.active = 0;
                 this.detach();
                 Lampa.Controller.toggle('head');
             } else {
                 this.detach();
-                items[active].toggle();
+                items[_this.active].toggle();
             }
-            scroll.update(items[active].render());
+            scroll.update(items[_this.active].render());
         };
 
         this.start = function () {
@@ -1217,7 +1217,7 @@
                 toggle: function () {
                     if (items.length) {
                         _this2.detach();
-                        items[active].toggle();
+                        items[_this2.active].toggle();
                     }
                 },
                 left: function () {
@@ -1254,7 +1254,7 @@
     }
 
     function Component(object) {
-        var scroll = new Lampa.Scroll({ mask: true, over: true, step: 250, end_ratio: 2 });
+        var scroll = new Lampa.Scroll({ mask: true, over: true, step: 600, horizontal: true }); // Додаємо horizontal: true для горизонтального скролу
         var items = [];
         var html = $('<div></div>');
         var body = $('<div class="category-full category-full--trailers"></div>');
@@ -1263,6 +1263,8 @@
         var total_pages = 0;
         var last;
         var waitload = false;
+        var loadedIndex = 0;
+        var visibleCards = light ? 6 : 10;
 
         this.create = function () {
             Api.full(object, this.build.bind(this), this.empty.bind(this));
@@ -1326,14 +1328,6 @@
                 body.append(card.render());
                 items.push(card);
             });
-            // Додаємо заповнювачі лише якщо кількість карток на поточній сторінці менша за 20 і це не остання сторінка
-            var cardCount = data.results.length;
-            if (cardCount < 20 && object.page < total_pages) {
-                for (var i = cardCount; i < 20; i++) {
-                    var placeholder = $('<div class="card card--placeholder" style="width: 33.3%; margin-bottom: 1.5em; visibility: hidden;"></div>');
-                    body.append(placeholder);
-                }
-            }
         };
 
         this.build = function (data) {
@@ -1343,21 +1337,21 @@
                 total_pages = data.total_pages || 1;
                 scroll.minus();
                 html.append(scroll.render());
+                scroll.render().find('.scroll__body').addClass('items-cards'); // Додаємо клас для горизонтального вигляду
                 this.append(data);
                 if (light && items.length) this.back();
                 if (total_pages > data.page && items.length) {
                     this.more();
                 } else {
                     console.log('No more pages available, hiding more button');
-                    // Не додаємо кнопку "Ще", якщо немає більше сторінок
                 }
                 scroll.append(body);
                 if (newlampa) {
                     scroll.onEnd = this.next.bind(this);
                     scroll.onWheel = function (step) {
                         if (!Lampa.Controller.own(_this3)) _this3.start();
-                        if (step > 0) Navigator.move('down');
-                        else if (active > 0) Navigator.move('up');
+                        if (step > 0) Navigator.move('right'); // Змінено з down на right для горизонтального скролу
+                        else Navigator.move('left'); // Змінено з up на left
                     };
                     var debouncedLoad = debounce(function () {
                         console.log('Scroll event: isEnd=', scroll.isEnd(), 'waitload=', waitload);
@@ -1377,7 +1371,8 @@
 
         this.more = function () {
             var _this = this;
-            var more = $('<div class="selector" style="width: 100%; height: 5px"></div>');
+            var more = Lampa.Template.get('more');
+            more.addClass('more--trailers');
             more.on('hover:enter', function () {
                 var next = Lampa.Arrays.clone(object);
                 delete next.activity;
@@ -1390,12 +1385,16 @@
                     page: next.page
                 });
             });
+            more.on('hover:focus', function (e) {
+                last = e.target;
+                scroll.update(more, true);
+            });
             body.append(more);
         };
 
         this.back = function () {
             last = items[0].render()[0];
-            var more = $('<div class="selector" style="width: 100%; height: 5px"></div>');
+            var more = $('<div class="selector" style="width: 25.7em; height: 5px"></div>'); // Задаємо ширину як у карток
             more.on('hover:enter', function () {
                 if (object.page > 1) {
                     Lampa.Activity.backward();
@@ -1419,14 +1418,13 @@
                     else Lampa.Controller.toggle('menu');
                 },
                 right: function () {
-                    Navigator.move('right');
+                    if (Navigator.canmove('right')) Navigator.move('right');
                 },
                 up: function () {
-                    if (Navigator.canmove('up')) Navigator.move('up');
-                    else Lampa.Controller.toggle('head');
+                    Lampa.Controller.toggle('head');
                 },
                 down: function () {
-                    if (Navigator.canmove('down')) Navigator.move('down');
+                    Lampa.Controller.toggle('head');
                 },
                 back: function () {
                     Lampa.Activity.backward();
@@ -1558,13 +1556,14 @@
         }
     });
 
+    Lampa.Template.add('trailer', '<div class="card selector card--trailer layer--render layer--visible"><div class="card__view"><img src="./img/img_load.svg" class="card__img"><div class="card__promo"><div class="card__promo-text"><div class="card__title"></div></div><div class="card__details"></div></div></div><div class="card__play"><img src="./img/icons/player/play.svg"></div></div>');
+    Lampa.Template.add('trailer_style', '<style>.card.card--trailer,.card-more.more--trailers{width:25.7em}.card.card--trailer .card__view{padding-bottom:56%;margin-bottom:0}.card.card--trailer .card__details{margin-top:0.8em}.card.card--trailer .card__play{position:absolute;top:50%;transform:translateY(-50%);left:1.5em;background:#000000b8;width:2.2em;height:2.2em;border-radius:100%;text-align:center;padding-top:0.6em}.card.card--trailer .card__play img{width:0.9em;height:1em}.card.card--trailer .card__rating{position:absolute;bottom:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.card.card--trailer .card__trailer-lang{position:absolute;top:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;text-transform:uppercase;font-size:1.2em}.card.card--trailer .card__release-date{position:absolute;top:2em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.card-more.more--trailers .card-more__box{padding-bottom:56%}.category-full--trailers .card{display:inline-block;margin-right:1em}.items-line__more{display:inline-block;margin-left:10px;cursor:pointer;padding:0.5em 1em}</style>');
+
     function startPlugin() {
         if (window.plugin_trailers_ready) return;
         window.plugin_trailers_ready = true;
         Lampa.Component.add('trailers_main', Component$1);
         Lampa.Component.add('trailers_full', Component);
-        Lampa.Template.add('trailer', '<div class="card selector card--trailer layer--render layer--visible"><div class="card__view"><img src="./img/img_load.svg" class="card__img"><div class="card__promo"><div class="card__promo-text"><div class="card__title"></div></div><div class="card__details"></div></div></div><div class="card__play"><img src="./img/icons/player/play.svg"></div></div>');
-        Lampa.Template.add('trailer_style', '<style>.card.card--trailer,.card-more.more--trailers{width:25.7em}.card.card--trailer .card__view{padding-bottom:56%;margin-bottom:0}.card.card--trailer .card__details{margin-top:0.8em}.card.card--trailer .card__play{position:absolute;top:50%;transform:translateY(-50%);left:1.5em;background:#000000b8;width:2.2em;height:2.2em;border-radius:100%;text-align:center;padding-top:0.6em}.card.card--trailer .card__play img{width:0.9em;height:1em}.card.card--trailer .card__rating{position:absolute;bottom:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.card.card--trailer .card__trailer-lang{position:absolute;top:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;text-transform:uppercase;font-size:1.2em}.card.card--trailer .card__release-date{position:absolute;top:2em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.card-more.more--trailers .card-more__box{padding-bottom:56%}.category-full--trailers{display:flex;flex-wrap:wrap;justify-content:space-between}.category-full--trailers .card{width:33.3%;margin-bottom:1.5em}.category-full--trailers .card .card__view{padding-bottom:56%;margin-bottom:0}.items-line__more{display:inline-block;margin-left:10px;cursor:pointer;padding:0.5em 1em}@media screen and (max-width:767px){.category-full--trailers .card{width:50%}}@media screen and (max-width:400px){.category-full--trailers .card{width:100%}}</style>');
 
         function add() {
             var button = $('<li class="menu__item selector"><div class="menu__ico"><svg height="70" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.30255 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.30255 3.2397 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.8333 35L30 20V50L55.8333 35Z" fill="currentColor"/></svg></div><div class="menu__text">' + Lampa.Lang.translate('title_trailers') + '</div></li>');
