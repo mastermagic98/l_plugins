@@ -1259,6 +1259,7 @@
         var total_pages = 0;
         var last;
         var waitload = false;
+        var active = 0; // Оголошено active на рівні класу
 
         this.create = function () {
             Api.full(object, this.build.bind(this), this.empty.bind(this));
@@ -1354,7 +1355,7 @@
                         if (!Lampa.Controller.own(_this3)) _this3.start();
                         if (step > 0) Navigator.move('down');
                         else if (active > 0) Navigator.move('up');
-                    };
+                    }.bind(this); // Прив’язка контексту
                     var debouncedLoad = debounce(function () {
                         console.log('Scroll event: isEnd=', scroll.isEnd(), 'waitload=', waitload);
                         if (scroll.isEnd() && !waitload) {
