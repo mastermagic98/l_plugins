@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.41: Повернення горизонтального формату карток з прокручуванням лише в першому рядку
+    // Версія 1.42: Інтеграція адаптивного формату карток із версії 1.25, горизонтальний скрол першого рядка
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -1304,13 +1304,11 @@
         this.append = function (data, append) {
             var _this2 = this;
             if (!append) body.empty();
-            var cardsPerRow = Math.floor((window.innerWidth - 20) / 260);
+            var cardsPerRow = Math.floor((window.innerWidth - 20) / (25.7 * 16)); // Розрахунок кількості карток на рядок (ширина картки 25.7em ≈ 410px при 16px базовому розмірі шрифту)
             var totalCards = data.results.length;
-            var placeholdersNeeded = cardsPerRow - (totalCards % cardsPerRow) || 0;
-            if (placeholdersNeeded === cardsPerRow) placeholdersNeeded = 0;
+            var cardsToAdd = Math.min(totalCards, cardsPerRow); // Обмежуємо першим рядком
 
-            // Обмежуємо додавання карток лише першим рядком
-            var cardsToAdd = Math.min(data.results.length, cardsPerRow);
+            // Додаємо лише картки першого рядка
             data.results.slice(0, cardsToAdd).forEach(function (element) {
                 var card = new Trailer(element, { type: object.type });
                 card.create();
@@ -1323,7 +1321,9 @@
                 items.push(card);
             });
 
-            // Додаємо заповнювачі для першого рядка
+            // Додаємо заповнювачі для першого рядка, якщо потрібно
+            var placeholdersNeeded = cardsPerRow - (totalCards % cardsPerRow) || 0;
+            if (placeholdersNeeded === cardsPerRow) placeholdersNeeded = 0;
             for (var i = 0; i < placeholdersNeeded && items.length < cardsPerRow; i++) {
                 var placeholder = $('<div class="card card--placeholder selector"></div>');
                 body.append(placeholder);
@@ -1340,11 +1340,7 @@
                 html.append(scroll.render());
                 this.append(data);
                 if (light && items.length) this.back();
-                if (total_pages > data.page && items.length) {
-                    this.more();
-                } else {
-                    console.log('No more pages available, hiding more button');
-                }
+                if (total_pages > data.page && items.length) this.more();
                 scroll.append(body);
                 if (newlampa) {
                     scroll.onEnd = this.next.bind(this);
@@ -1552,7 +1548,7 @@
     });
 
     Lampa.Template.add('trailer', '<div class="card selector card--trailer layer--render layer--visible"><div class="card__view"><img src="./img/img_load.svg" class="card__img"><div class="card__promo"><div class="card__promo-text"><div class="card__title"></div></div><div class="card__details"></div></div></div><div class="card__play"><img src="./img/icons/player/play.svg"></div></div>');
-    Lampa.Template.add('trailer_style', '<style>.card.card--trailer,.card-more.more--trailers{width:25.7em}.card.card--trailer .card__view{padding-bottom:56%;margin-bottom:0}.card.card--trailer .card__details{margin-top:0.8em}.card.card--trailer .card__play{position:absolute;top:50%;transform:translateY(-50%);left:1.5em;background:#000000b8;width:2.2em;height:2.2em;border-radius:100%;text-align:center;padding-top:0.6em}.card.card--trailer .card__play img{width:0.9em;height:1em}.card.card--trailer .card__rating{position:absolute;bottom:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.card.card--trailer .card__trailer-lang{position:absolute;top:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;text-transform:uppercase;font-size:1.2em}.card.card--trailer .card__release-date{position:absolute;top:2em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.card--placeholder{width:25.7em;height:14.4072em;background:#1d1d1d}.items-line__more{display:inline-block;margin-left:10px;cursor:pointer;padding:0.5em 1em}.category-full--trailers{display:flex}.category-full--trailers .card{margin-right:1em}</style>');
+    Lampa.Template.add('trailer_style', '<style>.card.card--trailer,.card-more.more--trailers{width:25.7em}.card.card--trailer .card__view{padding-bottom:56%;margin-bottom:0}.card.card--trailer .card__details{margin-top:0.8em}.card.card--trailer .card__play{position:absolute;top:50%;transform:translateY(-50%);left:1.5em;background:#000000b8;width:2.2em;height:2.2em;border-radius:100%;text-align:center;padding-top:0.6em}.card.card--trailer .card__play img{width:0.9em;height:1em}.card.card--trailer .card__rating{position:absolute;bottom:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.card.card--trailer .card__trailer-lang{position:absolute;top:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;text-transform:uppercase;font-size:1.2em}.card.card--trailer .card__release-date{position:absolute;top:2em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.card--placeholder{width:25.7em;height:14.4072em;background:#1d1d1d}.items-line__more{display:inline-block;margin-left:10px;cursor:pointer;padding:0.5em 1em}.category-full--trailers{display:flex}.category-full--trailers .card{margin-right:1em}@media screen and (max-width:767px){.category-full--trailers .card{width:50%}}@media screen and (max-width:400px){.category-full--trailers .card{width:100%}}</style>');
 
     function startPlugin() {
         if (window.plugin_trailers_ready) return;
