@@ -987,6 +987,11 @@
                         active = items.indexOf(card);
                         if (_this.onFocus) _this.onFocus(card_data);
                         scroll.update(card.render(), true);
+                        // Перевіряємо, чи це остання картка
+                        if (items.length > 0 && items.indexOf(card) === items.length - 1) {
+                            var message = Lampa.Lang.translate('trailers_last_movie').replace('[title]', card_data.title || card_data.name);
+                            Lampa.Noty.show(message);
+                        }
                     };
                     scroll.append(card.render());
                     items.push(card);
@@ -1304,6 +1309,11 @@
                     last = target;
                     scroll.update(card.render(), true);
                     if (!light && !newlampa && scroll.isEnd()) _this2.next();
+                    // Перевіряємо, чи це остання картка
+                    if (items.length > 0 && items.indexOf(card) === items.length - 1) {
+                        var message = Lampa.Lang.translate('trailers_last_movie').replace('[title]', card_data.title || card_data.name);
+                        Lampa.Noty.show(message);
+                    }
                 };
                 body.append(card.render());
                 items.push(card);
@@ -1531,6 +1541,11 @@
             ru: 'Популярные фильмы',
             uk: 'Популярні фільми',
             en: 'Popular Movies'
+        },
+        trailers_last_movie: {
+            ru: 'Это последний фильм: [title]',
+            uk: 'Це останній фільм: [title]',
+            en: 'This is the last movie: [title]'
         },
         trailers_no_more_data: {
             ru: 'Больше нет данных для загрузки',
