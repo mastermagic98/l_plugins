@@ -190,35 +190,6 @@
         });
     }
 
-    function getUpcomingMovies(page, resolve, reject) {
-        var today = new Date();
-        var sixMonthsLater = new Date(today.getTime() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-        var language = getInterfaceLanguage();
-
-        var upcoming_url = `${tmdb_base_url}/discover/movie?primary_release_date.gte=${getFormattedDate(0)}&primary_release_date.lte=${sixMonthsLater}&sort_by=primary_release_date.asc&vote_count.gte=1&language=${language}`;
-        console.log('Сформований URL для Очікуваних фільмів:', upcoming_url);
-
-        network.silent(upcoming_url, function (data) {
-            console.log('Дані для Очікуваних фільмів:', data);
-            if (data.results && data.results.length) {
-                var filteredResults = data.results.filter(function (m) {
-                    return m.release_date && new Date(m.release_date) >= today && new Date(m.release_date) <= new Date(sixMonthsLater);
-                });
-                filteredResults.sort(function (a, b) {
-                    return new Date(a.release_date) - new Date(b.release_date);
-                });
-                data.results = filteredResults;
-                console.log(`Відфільтровано ${filteredResults.length} фільмів із ${data.results.length} на сторінці ${page}`);
-                resolve(data);
-            } else {
-                resolve(data);
-            }
-        }, function (error) {
-            console.log('Помилка для Очікуваних фільмів:', error);
-            reject(error);
-        });
-    }
-
     function main(oncomplite, onerror) {
         var status = new Lampa.Status(6);
         status.onComplite = function () {
@@ -273,12 +244,12 @@
             append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/movie/now_playing', { results: [] });
         });
 
-        getUpcomingMovies(1, function (json) {
+        get('/discover/movie?primary_release_date.gte=' + today + '&primary_release_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc&vote_count.gte=1', 1, function (json) {
             console.log('Очікувані фільми results:', json.results);
-            append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/discover/movie?primary_release_date.gte=' + today + '&primary_release_date.lte=' + sixMonthsLater + '&sort_by=primary_release_date.asc', { results: json.results || [] });
+            append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/discover/movie?primary_release_date.gte=' + today + '&primary_release_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc', { results: json.results || [] });
         }, function (error) {
-            console.log('Помилка для Очікуваних фільми:', error);
-            append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/discover/movie?primary_release_date.gte=' + today + '&primary_release_date.lte=' + sixMonthsLater + '&sort_by=primary_release_date.asc', { results: [] });
+            console.log('Помилка для Очікувані фільми:', error);
+            append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/discover/movie?primary_release_date.gte=' + today + '&primary_release_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc', { results: [] });
         });
 
         get('/discover/tv?sort_by=popularity.desc&vote_count.gte=1', 1, function (json) {
@@ -325,13 +296,14 @@
             var today = new Date();
             var daysThreshold = 45;
             var startDate = new Date(today.getTime() - daysThreshold * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-            var targetCards = 20;
+            var targetCards = 20; // Кількість карток на сторінку
             var accumulatedResults = [];
             var loadedPages = new Set();
-            var currentPage = 1;
-            var maxPages = 30;
+            var currentPage = 1; // Завжди починаємо з першої сторінки
+            var maxPages = 30; // Максимальна кількість сторінок із TMDB
             var totalPagesFromFirstResponse = 0;
 
+            // Перевіряємо кеш
             var cachedData = categoryCache['in_theaters'] || Lampa.Storage.get('trailer_category_cache_in_theaters', null);
             if (cachedData && cachedData.results && cachedData.results.length > 0) {
                 accumulatedResults = cachedData.results;
@@ -345,11 +317,13 @@
                     total_pages: Math.ceil(accumulatedResults.length / targetCards) || 1,
                     total_results: accumulatedResults.length
                 };
+                // Якщо в кеші достатньо даних для запитуваної сторінки, повертаємо результат
                 if (accumulatedResults.length >= startIdx + 1 && pageResults.length > 0) {
                     console.log(`Використовуємо кеш для сторінки ${params.page}:`, result);
                     oncomplite(result);
                     return;
                 }
+                // Починаємо з наступної сторінки після кешу
                 currentPage = Math.ceil(accumulatedResults.length / targetCards) + 1;
             }
 
@@ -364,11 +338,12 @@
                 getLocalMoviesInTheaters(currentPage, function (result) {
                     if (result && result.results && result.results.length) {
                         console.log('Full results for in_theaters, page ' + currentPage + ':', result);
-                        accumulatedResults = accumulatedResults.concat(result.results);
+                        accumulatedResults = accumulatedResults.concat(result.results); // Накопичуємо всі результати
                         if (currentPage === 1) {
                             totalPagesFromFirstResponse = result.total_pages || maxPages;
                         }
 
+                        // Перевіряємо, чи достатньо карток для запитуваної сторінки
                         var startIdx = (params.page - 1) * targetCards;
                         var endIdx = Math.min(params.page * targetCards, accumulatedResults.length);
                         if (accumulatedResults.length >= startIdx + 1 || currentPage >= totalPagesFromFirstResponse || currentPage >= maxPages) {
@@ -405,10 +380,11 @@
                 var result = {
                     dates: { maximum: today.toISOString().split('T')[0], minimum: startDate },
                     page: params.page,
-                    results: pageResults.length > 0 ? pageResults : finalResults.slice(0, targetCards),
+                    results: pageResults.length > 0 ? pageResults : finalResults.slice(0, targetCards), // Повертаємо перші картки, якщо зріз порожній
                     total_pages: Math.ceil(finalResults.length / targetCards) || 1,
                     total_results: finalResults.length
                 };
+                // Зберігаємо в кеш
                 categoryCache['in_theaters'] = {
                     results: finalResults,
                     timestamp: Date.now()
@@ -419,105 +395,11 @@
             }
 
             fetchNextPage();
-        } else if (params.type === 'upcoming_movies') {
-            var today = new Date();
-            var sixMonthsLater = new Date(today.getTime() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-            var targetCards = 20;
-            var accumulatedResults = [];
-            var loadedPages = new Set();
-            var currentPage = 1;
-            var maxPages = 30;
-            var totalPagesFromFirstResponse = 0;
-
-            var cachedData = categoryCache['upcoming_movies'] || Lampa.Storage.get('trailer_category_cache_upcoming_movies', null);
-            if (cachedData && cachedData.results && cachedData.results.length > 0) {
-                accumulatedResults = cachedData.results;
-                var startIdx = (params.page - 1) * targetCards;
-                var endIdx = Math.min(params.page * targetCards, accumulatedResults.length);
-                var pageResults = accumulatedResults.slice(startIdx, endIdx);
-                var result = {
-                    dates: { maximum: sixMonthsLater, minimum: getFormattedDate(0) },
-                    page: params.page,
-                    results: pageResults,
-                    total_pages: Math.ceil(accumulatedResults.length / targetCards) || 1,
-                    total_results: accumulatedResults.length
-                };
-                if (accumulatedResults.length >= startIdx + 1 && pageResults.length > 0) {
-                    console.log(`Використовуємо кеш для сторінки ${params.page}:`, result);
-                    oncomplite(result);
-                    return;
-                }
-                currentPage = Math.ceil(accumulatedResults.length / targetCards) + 1;
-            }
-
-            function fetchNextPage() {
-                if (loadedPages.has(currentPage) || currentPage > maxPages || (totalPagesFromFirstResponse && currentPage > totalPagesFromFirstResponse)) {
-                    console.log('All relevant pages loaded or limit reached, finalizing with:', accumulatedResults.length, 'cards');
-                    finalizeResults();
-                    return;
-                }
-
-                loadedPages.add(currentPage);
-                getUpcomingMovies(currentPage, function (result) {
-                    if (result && result.results && result.results.length) {
-                        console.log('Full results for upcoming_movies, page ' + currentPage + ':', result);
-                        accumulatedResults = accumulatedResults.concat(result.results);
-                        if (currentPage === 1) {
-                            totalPagesFromFirstResponse = result.total_pages || maxPages;
-                        }
-
-                        var startIdx = (params.page - 1) * targetCards;
-                        var endIdx = Math.min(params.page * targetCards, accumulatedResults.length);
-                        if (accumulatedResults.length >= startIdx + 1 || currentPage >= totalPagesFromFirstResponse || currentPage >= maxPages) {
-                            finalizeResults();
-                        } else {
-                            currentPage++;
-                            fetchNextPage();
-                        }
-                    } else {
-                        console.log('Full: No results for upcoming_movies, page:', currentPage, 'but continuing to next page if within limits');
-                        if (currentPage < totalPagesFromFirstResponse && currentPage < maxPages) {
-                            currentPage++;
-                            fetchNextPage();
-                        } else {
-                            finalizeResults();
-                        }
-                    }
-                }, function (error) {
-                    console.log('Full error for upcoming_movies:', params.url, error, 'Full Error:', JSON.stringify(error));
-                    onerror();
-                });
-            }
-
-            function finalizeResults() {
-                var finalResults = [...new Set(accumulatedResults.map(JSON.stringify))].map(JSON.parse);
-                finalResults.sort(function (a, b) {
-                    return new Date(a.release_date) - new Date(b.release_date);
-                });
-                var startIdx = (params.page - 1) * targetCards;
-                var endIdx = Math.min(params.page * targetCards, finalResults.length);
-                var pageResults = finalResults.slice(startIdx, endIdx);
-                var result = {
-                    dates: { maximum: sixMonthsLater, minimum: getFormattedDate(0) },
-                    page: params.page,
-                    results: pageResults.length > 0 ? pageResults : finalResults.slice(0, targetCards),
-                    total_pages: Math.ceil(finalResults.length / targetCards) || 1,
-                    total_results: finalResults.length
-                };
-                categoryCache['upcoming_movies'] = {
-                    results: finalResults,
-                    timestamp: Date.now()
-                };
-                Lampa.Storage.set('trailer_category_cache_upcoming_movies', categoryCache['upcoming_movies']);
-                console.log(`Фіналізовано для сторінки ${params.page}:`, result);
-                oncomplite(result);
-            }
-
-            fetchNextPage();
         } else if (params.type === 'new_series_seasons') {
             var threeMonthsAgo = getFormattedDate(90);
             var threeMonthsLater = getFormattedDate(-90);
 
+            // Перевіряємо кеш
             var cachedData = categoryCache['new_series_seasons'] || Lampa.Storage.get('trailer_category_cache_new_series_seasons', null);
             if (cachedData && cachedData.results) {
                 var targetCards = 20;
@@ -540,6 +422,7 @@
                     result.results.forEach(function (series) {
                         series.release_details = { first_air_date: series.first_air_date };
                     });
+                    // Зберігаємо в кеш
                     if (params.page === 1) {
                         categoryCache['new_series_seasons'] = {
                             results: result.results,
@@ -566,6 +449,7 @@
             var today = getFormattedDate(0);
             var sixMonthsLater = getFormattedDate(-180);
 
+            // Перевіряємо кеш
             var cachedData = categoryCache['upcoming_series'] || Lampa.Storage.get('trailer_category_cache_upcoming_series', null);
             if (cachedData && cachedData.results) {
                 var targetCards = 20;
@@ -588,6 +472,7 @@
                     result.results.forEach(function (series) {
                         series.release_details = { first_air_date: series.first_air_date };
                     });
+                    // Зберігаємо в кеш
                     if (params.page === 1) {
                         categoryCache['upcoming_series'] = {
                             results: result.results,
@@ -611,6 +496,7 @@
                 onerror();
             });
         } else {
+            // Перевіряємо кеш для інших категорій
             var cachedData = categoryCache[params.type] || Lampa.Storage.get('trailer_category_cache_' + params.type, null);
             if (cachedData && cachedData.results) {
                 var targetCards = 20;
@@ -630,6 +516,7 @@
 
             get(params.url, params.page, function (result) {
                 if (result && result.results && result.results.length) {
+                    // Зберігаємо в кеш
                     if (params.page === 1) {
                         categoryCache[params.type] = {
                             results: result.results,
@@ -822,25 +709,17 @@
                         } else if (data.release_date) {
                             _this.release_date = formatDateToDDMMYYYY(data.release_date);
                         }
-                    } else if (params.type === 'upcoming_movies') {
-                        if (data.release_date) {
-                            _this.release_date = formatDateToDDMMYYYY(data.release_date);
-                        }
                     } else if (params.type === 'new_series_seasons' || params.type === 'upcoming_series') {
                         if (data.release_details && data.release_details.first_air_date) {
                             _this.release_date = formatDateToDDMMYYYY(data.release_details.first_air_date);
                         }
                     }
-                    if (_this.release_date !== '-') {
-                        _this.card.find('.card__release-date').text(_this.release_date);
-                    } else {
-                        _this.card.find('.card__release-date').text('');
-                    }
+                    _this.card.find('.card__release-date').text(_this.release_date);
                 }, function () {
                     console.log('Failed to load trailer info for ' + data.id);
                     _this.trailer_lang = '-';
                     _this.card.find('.card__trailer-lang').text('-');
-                    _this.card.find('.card__release-date').text('');
+                    _this.card.find('.card__release-date').text('-');
                 });
             }
         };
@@ -1047,7 +926,7 @@
                     title: Lampa.Lang.translate('trailers_filter'),
                     items: items,
                     onSelect: function (item) {
-                        Lampa.Storage.set('trailer_category_cache_' + data.type, null);
+                        Lampa.Storage.set('trailer_category_cache_' + data.type, null); // Очищаємо кеш при зміні фільтра
                         categoryCache[data.type] = null;
                         Lampa.Storage.set('trailers_' + data.type + '_filter', item.value);
                         Lampa.Activity.push({
@@ -1108,6 +987,7 @@
                         active = items.indexOf(card);
                         if (_this.onFocus) _this.onFocus(card_data);
                         scroll.update(card.render(), true);
+                        // Перевіряємо, чи це остання картка
                         if (items.length > 0 && items.indexOf(card) === items.length - 1) {
                             var message = Lampa.Lang.translate('trailers_last_movie').replace('[title]', card_data.title || card_data.name);
                             Lampa.Noty.show(message);
@@ -1420,7 +1300,7 @@
 
         this.append = function (data, append) {
             var _this2 = this;
-            if (!append) body.empty();
+            if (!append) body.empty(); // Очищаємо body лише якщо не додаємо
             data.results.forEach(function (element) {
                 var card = new Trailer(element, { type: object.type });
                 card.create();
@@ -1429,6 +1309,7 @@
                     last = target;
                     scroll.update(card.render(), true);
                     if (!light && !newlampa && scroll.isEnd()) _this2.next();
+                    // Перевіряємо, чи це остання картка
                     if (items.length > 0 && items.indexOf(card) === items.length - 1) {
                         var message = Lampa.Lang.translate('trailers_last_movie').replace('[title]', card_data.title || card_data.name);
                         Lampa.Noty.show(message);
@@ -1437,6 +1318,7 @@
                 body.append(card.render());
                 items.push(card);
             });
+            // Додаємо заповнювачі, якщо карток менше 20
             var cardCount = data.results.length;
             if (cardCount < 20) {
                 for (var i = cardCount; i < 20; i++) {
@@ -1681,25 +1563,45 @@
         Lampa.Template.add('trailer_style', '<style>.card.card--trailer,.card-more.more--trailers{width:25.7em}.card.card--trailer .card__view{padding-bottom:56%;margin-bottom:0}.card.card--trailer .card__details{margin-top:0.8em}.card.card--trailer .card__play{position:absolute;top:50%;transform:translateY(-50%);left:1.5em;background:#000000b8;width:2.2em;height:2.2em;border-radius:100%;text-align:center;padding-top:0.6em}.card.card--trailer .card__play img{width:0.9em;height:1em}.card.card--trailer .card__rating{position:absolute;bottom:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.card.card--trailer .card__trailer-lang{position:absolute;top:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;text-transform:uppercase;font-size:1.2em}.card.card--trailer .card__release-date{position:absolute;top:2em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.card-more.more--trailers .card-more__box{padding-bottom:56%}.category-full--trailers{display:flex;flex-wrap:wrap;justify-content:space-between}.category-full--trailers .card{width:33.3%;margin-bottom:1.5em}.category-full--trailers .card .card__view{padding-bottom:56%;margin-bottom:0}.items-line__more{display:inline-block;margin-left:10px;cursor:pointer;padding:0.5em 1em}@media screen and (max-width:767px){.category-full--trailers .card{width:50%}}@media screen and (max-width:400px){.category-full--trailers .card{width:100%}}</style>');
 
         function add() {
-            var button = $('<li class="menu__item selector"><div class="menu__ico"><svg height="70" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM11 16H13V18H11V16ZM11 6H13V14H11V6Z" fill="currentColor"/></svg></div><div class="menu__text">Трейлеры</div></li>');
+            var button = $('<li class="menu__item selector"><div class="menu__ico"><svg height="70" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/></svg></div><div class="menu__text">' + Lampa.Lang.translate('title_trailers') + '</div></li>');
             button.on('hover:enter', function () {
                 Lampa.Activity.push({
                     url: '',
-                    title: 'Трейлеры',
+                    title: Lampa.Lang.translate('title_trailers'),
                     component: 'trailers_main',
                     page: 1
                 });
             });
-            $('.menu .menu__list').append(button);
+            $('.menu .menu__list').eq(0).append(button);
+
+            // Додаємо стилі
+            $('body').append(Lampa.Template.get('trailer_style', {}, true));
+
+            // Очищення кешу при зміні мови
+            Lampa.Storage.listener.follow('change', function (event) {
+                if (event.name === 'language') {
+                    Api.clear();
+                }
+            });
         }
 
-        if (window.appready) add();
-        else {
-            Lampa.Listener.follow('app', function (e) {
-                if (e.type == 'ready') add();
-            });
+        // Ініціалізація плагіна
+        if (Lampa.TMDB && Lampa.TMDB.key()) {
+            add();
+        } else {
+            console.log('TMDB API key is not available');
+            Lampa.Noty.show('TMDB API key is missing. Trailers plugin cannot be loaded.');
         }
     }
 
-    startPlugin();
+    // Запуск плагіна після завантаження сторінки
+    if (!window.appready) {
+        Lampa.Listener.follow('app', function (e) {
+            if (e.type === 'ready') {
+                startPlugin();
+            }
+        });
+    } else {
+        startPlugin();
+    }
 })();
