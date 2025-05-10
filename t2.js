@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.41: Повернення вертикального формату карток з flex і wrap
+    // Версія 1.41: Повернення горизонтального формату карток з прокручуванням лише в першому рядку
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -182,7 +182,6 @@
             var keys = ['popular_movies', 'in_theaters', 'upcoming_movies', 'popular_series', 'new_series_seasons', 'upcoming_series'];
             keys.forEach(function (key) {
                 if (status.data[key] && status.data[key].results && status.data[key].results.length) {
-                    // Зберігаємо в кеш
                     categoryCache[key] = {
                         results: status.data[key].results,
                         timestamp: Date.now()
@@ -287,11 +286,10 @@
             var loadedPages = new Set();
             var currentPage = params.page;
 
-            // Перевіряємо кеш
             var cachedData = categoryCache['in_theaters'] || Lampa.Storage.get('trailer_category_cache_in_theaters', null);
             if (cachedData && cachedData.results) {
                 accumulatedResults = cachedData.results;
-                var initialCards = params.page === 1 ? 0 : 7; // Припускаємо, що на головній сторінці вже 7 карток
+                var initialCards = params.page === 1 ? 0 : 7;
                 var startIdx = initialCards + (params.page - 2) * targetCards;
                 var endIdx = initialCards + (params.page - 1) * targetCards;
                 var result = {
@@ -326,7 +324,6 @@
                         total_pages: Math.ceil((finalResults.length - initialCards) / targetCards) + 1,
                         total_results: finalResults.length
                     };
-                    // Зберігаємо в кеш
                     categoryCache['in_theaters'] = {
                         results: finalResults,
                         timestamp: Date.now()
@@ -373,7 +370,6 @@
                                 total_pages: Math.ceil((finalResults.length - initialCards) / targetCards) + 1,
                                 total_results: finalResults.length
                             };
-                            // Зберігаємо в кеш
                             categoryCache['in_theaters'] = {
                                 results: finalResults,
                                 timestamp: Date.now()
@@ -402,7 +398,6 @@
                             total_pages: Math.ceil((finalResults.length - initialCards) / targetCards) + 1,
                             total_results: finalResults.length
                         };
-                        // Зберігаємо в кеш
                         categoryCache['in_theaters'] = {
                             results: finalResults,
                             timestamp: Date.now()
@@ -421,7 +416,6 @@
             var threeMonthsAgo = getFormattedDate(90);
             var threeMonthsLater = getFormattedDate(-90);
 
-            // Перевіряємо кеш
             var cachedData = categoryCache['new_series_seasons'] || Lampa.Storage.get('trailer_category_cache_new_series_seasons', null);
             if (cachedData && cachedData.results) {
                 var targetCards = 20;
@@ -444,7 +438,6 @@
                     result.results.forEach(function (series) {
                         series.release_details = { first_air_date: series.first_air_date };
                     });
-                    // Зберігаємо в кеш
                     if (params.page === 1) {
                         categoryCache['new_series_seasons'] = {
                             results: result.results,
@@ -471,7 +464,6 @@
             var today = getFormattedDate(0);
             var sixMonthsLater = getFormattedDate(-180);
 
-            // Перевіряємо кеш
             var cachedData = categoryCache['upcoming_series'] || Lampa.Storage.get('trailer_category_cache_upcoming_series', null);
             if (cachedData && cachedData.results) {
                 var targetCards = 20;
@@ -494,7 +486,6 @@
                     result.results.forEach(function (series) {
                         series.release_details = { first_air_date: series.first_air_date };
                     });
-                    // Зберігаємо в кеш
                     if (params.page === 1) {
                         categoryCache['upcoming_series'] = {
                             results: result.results,
@@ -518,7 +509,6 @@
                 onerror();
             });
         } else {
-            // Перевіряємо кеш для інших категорій
             var cachedData = categoryCache[params.type] || Lampa.Storage.get('trailer_category_cache_' + params.type, null);
             if (cachedData && cachedData.results) {
                 var targetCards = 20;
@@ -538,7 +528,6 @@
 
             get(params.url, params.page, function (result) {
                 if (result && result.results && result.results.length) {
-                    // Зберігаємо в кеш
                     if (params.page === 1) {
                         categoryCache[params.type] = {
                             results: result.results,
@@ -637,7 +626,6 @@
         network.clear();
         trailerCache = {};
         categoryCache = {};
-        // Очищаємо кеш у сховищі
         ['popular_movies', 'in_theaters', 'upcoming_movies', 'popular_series', 'new_series_seasons', 'upcoming_series'].forEach(function (key) {
             Lampa.Storage.set('trailer_category_cache_' + key, null);
         });
@@ -945,7 +933,7 @@
                     title: Lampa.Lang.translate('trailers_filter'),
                     items: items,
                     onSelect: function (item) {
-                        Lampa.Storage.set('trailer_category_cache_' + data.type, null); // Очищаємо кеш при зміні фільтра
+                        Lampa.Storage.set('trailer_category_cache_' + data.type, null);
                         categoryCache[data.type] = null;
                         Lampa.Storage.set('trailers_' + data.type + '_filter', item.value);
                         Lampa.Activity.push({
@@ -1254,7 +1242,7 @@
     }
 
     function Component(object) {
-        var scroll = new Lampa.Scroll({ mask: true, over: true, step: 250 });
+        var scroll = new Lampa.Scroll({ horizontal: true, mask: true, over: true, step: 250 });
         var items = [];
         var html = $('<div></div>');
         var body = $('<div class="category-full category-full--trailers"></div>');
@@ -1315,27 +1303,28 @@
 
         this.append = function (data, append) {
             var _this2 = this;
-            if (!append) body.empty(); // Очищаємо body лише якщо не додаємо нові картки
-            var cardsPerRow = Math.floor((window.innerWidth - 20) / 260); // Враховуємо ширину картки (250px) + відступи
+            if (!append) body.empty();
+            var cardsPerRow = Math.floor((window.innerWidth - 20) / 260);
             var totalCards = data.results.length;
             var placeholdersNeeded = cardsPerRow - (totalCards % cardsPerRow) || 0;
             if (placeholdersNeeded === cardsPerRow) placeholdersNeeded = 0;
 
-            data.results.forEach(function (element) {
+            // Обмежуємо додавання карток лише першим рядком
+            var cardsToAdd = Math.min(data.results.length, cardsPerRow);
+            data.results.slice(0, cardsToAdd).forEach(function (element) {
                 var card = new Trailer(element, { type: object.type });
                 card.create();
                 card.visible();
                 card.onFocus = function (target, card_data) {
                     last = target;
                     scroll.update(card.render(), true);
-                    if (!light && !newlampa && scroll.isEnd()) _this2.next();
                 };
                 body.append(card.render());
                 items.push(card);
             });
 
-            // Додаємо заповнювачі, якщо потрібно
-            for (var i = 0; i < placeholdersNeeded; i++) {
+            // Додаємо заповнювачі для першого рядка
+            for (var i = 0; i < placeholdersNeeded && items.length < cardsPerRow; i++) {
                 var placeholder = $('<div class="card card--placeholder selector"></div>');
                 body.append(placeholder);
                 items.push({ render: function () { return placeholder; }, destroy: function () { placeholder.remove(); } });
@@ -1359,13 +1348,7 @@
                 scroll.append(body);
                 if (newlampa) {
                     scroll.onEnd = this.next.bind(this);
-                    scroll.onWheel = function (step) {
-                        if (!Lampa.Controller.own(_this3)) _this3.start();
-                        if (step > 0) Navigator.move('down');
-                        else Navigator.move('up');
-                    };
                     var debouncedLoad = debounce(function () {
-                        console.log('Scroll event: isEnd=', scroll.isEnd(), 'waitload=', waitload);
                         if (scroll.isEnd() && !waitload) {
                             _this3.next();
                         }
@@ -1569,7 +1552,7 @@
     });
 
     Lampa.Template.add('trailer', '<div class="card selector card--trailer layer--render layer--visible"><div class="card__view"><img src="./img/img_load.svg" class="card__img"><div class="card__promo"><div class="card__promo-text"><div class="card__title"></div></div><div class="card__details"></div></div></div><div class="card__play"><img src="./img/icons/player/play.svg"></div></div>');
-    Lampa.Template.add('trailer_style', '<style>.card.card--trailer,.card-more.more--trailers{width:25.7em}.card.card--trailer .card__view{padding-bottom:56%;margin-bottom:0}.card.card--trailer .card__details{margin-top:0.8em}.card.card--trailer .card__play{position:absolute;top:50%;transform:translateY(-50%);left:1.5em;background:#000000b8;width:2.2em;height:2.2em;border-radius:100%;text-align:center;padding-top:0.6em}.card.card--trailer .card__play img{width:0.9em;height:1em}.card.card--trailer .card__rating{position:absolute;bottom:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.card.card--trailer .card__trailer-lang{position:absolute;top:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;text-transform:uppercase;font-size:1.2em}.card.card--trailer .card__release-date{position:absolute;top:2em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.card-more.more--trailers .card-more__box{padding-bottom:56%}.category-full--trailers{display:flex;flex-wrap:wrap}.category-full--trailers .card{margin:0 1em 1em 0}.card--placeholder{width:25.7em;height:14.4072em;background:#1d1d1d}.items-line__more{display:inline-block;margin-left:10px;cursor:pointer;padding:0.5em 1em}</style>');
+    Lampa.Template.add('trailer_style', '<style>.card.card--trailer,.card-more.more--trailers{width:25.7em}.card.card--trailer .card__view{padding-bottom:56%;margin-bottom:0}.card.card--trailer .card__details{margin-top:0.8em}.card.card--trailer .card__play{position:absolute;top:50%;transform:translateY(-50%);left:1.5em;background:#000000b8;width:2.2em;height:2.2em;border-radius:100%;text-align:center;padding-top:0.6em}.card.card--trailer .card__play img{width:0.9em;height:1em}.card.card--trailer .card__rating{position:absolute;bottom:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.card.card--trailer .card__trailer-lang{position:absolute;top:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;text-transform:uppercase;font-size:1.2em}.card.card--trailer .card__release-date{position:absolute;top:2em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.card--placeholder{width:25.7em;height:14.4072em;background:#1d1d1d}.items-line__more{display:inline-block;margin-left:10px;cursor:pointer;padding:0.5em 1em}.category-full--trailers{display:flex}.category-full--trailers .card{margin-right:1em}</style>');
 
     function startPlugin() {
         if (window.plugin_trailers_ready) return;
