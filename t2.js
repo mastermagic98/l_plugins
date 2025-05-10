@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.45: Повернення горизонтального формату карток, виправлення помилки з active у scroll.onWheel
+    // Версія 1.41: Повернення вертикального формату карток з flex і wrap
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -316,7 +316,7 @@
                         var dateB = b.release_details.results.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date;
                         return new Date(dateB) - new Date(dateA);
                     });
-                    var initialCards = params.page === 1 ? 0 : 7; // Враховуємо 7 карток з головної сторінки
+                    var initialCards = params.page === 1 ? 0 : 7;
                     var startIdx = initialCards + (params.page - 2) * targetCards;
                     var endIdx = initialCards + (params.page - 1) * targetCards;
                     var result = {
@@ -1118,11 +1118,11 @@
     }
 
     function Component$1(object) {
-        var _this = this; // Додаємо _this для доступу до методів і змінних
+        var _this = this;
         var scroll = new Lampa.Scroll({ mask: true, over: true, scroll_by_item: true });
         var items = [];
         var html = $('<div></div>');
-        _this.active = 0; // Змінна active тепер є частиною об’єкта
+        var active = 0;
         var light = Lampa.Storage.field('light_version') && window.innerWidth >= 767;
 
         this.create = function () {
@@ -1163,7 +1163,7 @@
             item.onUp = this.up.bind(this);
             item.onBack = this.back.bind(this);
             item.onToggle = function () {
-                _this.active = items.indexOf(item);
+                active = items.indexOf(item);
             };
             item.wrap = $('<div></div>');
             if (light) {
@@ -1183,31 +1183,31 @@
                 items.forEach(function (item) {
                     item.render().detach();
                 });
-                items.slice(_this.active, _this.active + 2).forEach(function (item) {
+                items.slice(active, active + 2).forEach(function (item) {
                     item.wrap.append(item.render());
                 });
             }
         };
 
         this.down = function () {
-            _this.active++;
-            _this.active = Math.min(_this.active, items.length - 1);
+            active++;
+            active = Math.min(active, items.length - 1);
             this.detach();
-            items[_this.active].toggle();
-            scroll.update(items[_this.active].render());
+            items[active].toggle();
+            scroll.update(items[active].render());
         };
 
         this.up = function () {
-            _this.active--;
-            if (_this.active < 0) {
-                _this.active = 0;
+            active--;
+            if (active < 0) {
+                active = 0;
                 this.detach();
                 Lampa.Controller.toggle('head');
             } else {
                 this.detach();
-                items[_this.active].toggle();
+                items[active].toggle();
             }
-            scroll.update(items[_this.active].render());
+            scroll.update(items[active].render());
         };
 
         this.start = function () {
@@ -1254,7 +1254,7 @@
     }
 
     function Component(object) {
-        var scroll = new Lampa.Scroll({ mask: true, over: true, step: 600, horizontal: true }); // Додаємо horizontal: true для горизонтального скролу
+        var scroll = new Lampa.Scroll({ mask: true, over: true, step: 250 });
         var items = [];
         var html = $('<div></div>');
         var body = $('<div class="category-full category-full--trailers"></div>');
@@ -1316,6 +1316,11 @@
         this.append = function (data, append) {
             var _this2 = this;
             if (!append) body.empty(); // Очищаємо body лише якщо не додаємо нові картки
+            var cardsPerRow = Math.floor((window.innerWidth - 20) / 260); // Враховуємо ширину картки (250px) + відступи
+            var totalCards = data.results.length;
+            var placeholdersNeeded = cardsPerRow - (totalCards % cardsPerRow) || 0;
+            if (placeholdersNeeded === cardsPerRow) placeholdersNeeded = 0;
+
             data.results.forEach(function (element) {
                 var card = new Trailer(element, { type: object.type });
                 card.create();
@@ -1328,6 +1333,13 @@
                 body.append(card.render());
                 items.push(card);
             });
+
+            // Додаємо заповнювачі, якщо потрібно
+            for (var i = 0; i < placeholdersNeeded; i++) {
+                var placeholder = $('<div class="card card--placeholder selector"></div>');
+                body.append(placeholder);
+                items.push({ render: function () { return placeholder; }, destroy: function () { placeholder.remove(); } });
+            }
         };
 
         this.build = function (data) {
@@ -1337,7 +1349,6 @@
                 total_pages = data.total_pages || 1;
                 scroll.minus();
                 html.append(scroll.render());
-                scroll.render().find('.scroll__body').addClass('items-cards'); // Додаємо клас для горизонтального вигляду
                 this.append(data);
                 if (light && items.length) this.back();
                 if (total_pages > data.page && items.length) {
@@ -1350,8 +1361,8 @@
                     scroll.onEnd = this.next.bind(this);
                     scroll.onWheel = function (step) {
                         if (!Lampa.Controller.own(_this3)) _this3.start();
-                        if (step > 0) Navigator.move('right'); // Змінено з down на right для горизонтального скролу
-                        else Navigator.move('left'); // Змінено з up на left
+                        if (step > 0) Navigator.move('down');
+                        else Navigator.move('up');
                     };
                     var debouncedLoad = debounce(function () {
                         console.log('Scroll event: isEnd=', scroll.isEnd(), 'waitload=', waitload);
@@ -1394,7 +1405,7 @@
 
         this.back = function () {
             last = items[0].render()[0];
-            var more = $('<div class="selector" style="width: 25.7em; height: 5px"></div>'); // Задаємо ширину як у карток
+            var more = $('<div class="selector" style="width: 25.7em; height: 5px"></div>');
             more.on('hover:enter', function () {
                 if (object.page > 1) {
                     Lampa.Activity.backward();
@@ -1421,10 +1432,11 @@
                     if (Navigator.canmove('right')) Navigator.move('right');
                 },
                 up: function () {
-                    Lampa.Controller.toggle('head');
+                    if (Navigator.canmove('up')) Navigator.move('up');
+                    else Lampa.Controller.toggle('head');
                 },
                 down: function () {
-                    Lampa.Controller.toggle('head');
+                    if (Navigator.canmove('down')) Navigator.move('down');
                 },
                 back: function () {
                     Lampa.Activity.backward();
@@ -1557,7 +1569,7 @@
     });
 
     Lampa.Template.add('trailer', '<div class="card selector card--trailer layer--render layer--visible"><div class="card__view"><img src="./img/img_load.svg" class="card__img"><div class="card__promo"><div class="card__promo-text"><div class="card__title"></div></div><div class="card__details"></div></div></div><div class="card__play"><img src="./img/icons/player/play.svg"></div></div>');
-    Lampa.Template.add('trailer_style', '<style>.card.card--trailer,.card-more.more--trailers{width:25.7em}.card.card--trailer .card__view{padding-bottom:56%;margin-bottom:0}.card.card--trailer .card__details{margin-top:0.8em}.card.card--trailer .card__play{position:absolute;top:50%;transform:translateY(-50%);left:1.5em;background:#000000b8;width:2.2em;height:2.2em;border-radius:100%;text-align:center;padding-top:0.6em}.card.card--trailer .card__play img{width:0.9em;height:1em}.card.card--trailer .card__rating{position:absolute;bottom:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.card.card--trailer .card__trailer-lang{position:absolute;top:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;text-transform:uppercase;font-size:1.2em}.card.card--trailer .card__release-date{position:absolute;top:2em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.card-more.more--trailers .card-more__box{padding-bottom:56%}.category-full--trailers .card{display:inline-block;margin-right:1em}.items-line__more{display:inline-block;margin-left:10px;cursor:pointer;padding:0.5em 1em}</style>');
+    Lampa.Template.add('trailer_style', '<style>.card.card--trailer,.card-more.more--trailers{width:25.7em}.card.card--trailer .card__view{padding-bottom:56%;margin-bottom:0}.card.card--trailer .card__details{margin-top:0.8em}.card.card--trailer .card__play{position:absolute;top:50%;transform:translateY(-50%);left:1.5em;background:#000000b8;width:2.2em;height:2.2em;border-radius:100%;text-align:center;padding-top:0.6em}.card.card--trailer .card__play img{width:0.9em;height:1em}.card.card--trailer .card__rating{position:absolute;bottom:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.card.card--trailer .card__trailer-lang{position:absolute;top:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;text-transform:uppercase;font-size:1.2em}.card.card--trailer .card__release-date{position:absolute;top:2em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.card-more.more--trailers .card-more__box{padding-bottom:56%}.category-full--trailers{display:flex;flex-wrap:wrap}.category-full--trailers .card{margin:0 1em 1em 0}.card--placeholder{width:25.7em;height:14.4072em;background:#1d1d1d}.items-line__more{display:inline-block;margin-left:10px;cursor:pointer;padding:0.5em 1em}</style>');
 
     function startPlugin() {
         if (window.plugin_trailers_ready) return;
