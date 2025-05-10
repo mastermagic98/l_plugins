@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.45: Виправлення пагінації та оптимізація фільтрації для категорії "У прокаті"
+    // Версія 1.46: Зняття прив'язки до регіону та виправлення пагінації для "У прокаті"
 
     // Власна функція debounce для обробки подій із затримкою
     function debounce(func, wait) {
@@ -95,6 +95,7 @@
                             completedRequests++;
                             if (completedRequests === totalRequests) {
                                 var filteredResults = data.results.filter(function (m) {
+                                    // Спочатку перевіряємо регіональні дати
                                     if (m.release_details && m.release_details.results) {
                                         var regionRelease = m.release_details.results.find(function (r) {
                                             return r.iso_3166_1 === region;
@@ -104,11 +105,17 @@
                                             return releaseDate >= new Date(startDate) && releaseDate <= today;
                                         }
                                     }
+                                    // Запасний варіант: якщо регіональних даних немає, перевіряємо глобальну дату
+                                    if (m.release_date) {
+                                        var globalReleaseDate = new Date(m.release_date);
+                                        return globalReleaseDate >= new Date(startDate) && globalReleaseDate <= today;
+                                    }
                                     return false;
                                 });
                                 filteredResults.sort(function (a, b) {
-                                    var dateA = a.release_details.results.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date;
-                                    var dateB = b.release_details.results.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date;
+                                    // Сортуємо за регіональною датою, якщо є, або за глобальною
+                                    var dateA = a.release_details?.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date || a.release_date;
+                                    var dateB = b.release_details?.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date || b.release_date;
                                     return new Date(dateB) - new Date(dateA);
                                 });
                                 console.log(`Відфільтровано ${filteredResults.length} фільмів із ${data.results.length} на сторінці ${page}`);
@@ -121,6 +128,7 @@
                             completedRequests++;
                             if (completedRequests === totalRequests) {
                                 var filteredResults = data.results.filter(function (m) {
+                                    // Спочатку перевіряємо регіональні дати
                                     if (m.release_details && m.release_details.results) {
                                         var regionRelease = m.release_details.results.find(function (r) {
                                             return r.iso_3166_1 === region;
@@ -130,11 +138,16 @@
                                             return releaseDate >= new Date(startDate) && releaseDate <= today;
                                         }
                                     }
+                                    // Запасний варіант: якщо регіональних даних немає, перевіряємо глобальну дату
+                                    if (m.release_date) {
+                                        var globalReleaseDate = new Date(m.release_date);
+                                        return globalReleaseDate >= new Date(startDate) && globalReleaseDate <= today;
+                                    }
                                     return false;
                                 });
                                 filteredResults.sort(function (a, b) {
-                                    var dateA = a.release_details.results.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date;
-                                    var dateB = b.release_details.results.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date;
+                                    var dateA = a.release_details?.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date || a.release_date;
+                                    var dateB = b.release_details?.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date || b.release_date;
                                     return new Date(dateB) - new Date(dateA);
                                 });
                                 console.log(`Відфільтровано ${filteredResults.length} фільмів із ${data.results.length} на сторінці ${page} (з помилкою)`);
@@ -147,6 +160,7 @@
                         completedRequests++;
                         if (completedRequests === totalRequests) {
                             var filteredResults = data.results.filter(function (m) {
+                                // Спочатку перевіряємо регіональні дати
                                 if (m.release_details && m.release_details.results) {
                                     var regionRelease = m.release_details.results.find(function (r) {
                                         return r.iso_3166_1 === region;
@@ -156,11 +170,16 @@
                                         return releaseDate >= new Date(startDate) && releaseDate <= today;
                                     }
                                 }
+                                // Запасний варіант: якщо регіональних даних немає, перевіряємо глобальну дату
+                                if (m.release_date) {
+                                    var globalReleaseDate = new Date(m.release_date);
+                                    return globalReleaseDate >= new Date(startDate) && globalReleaseDate <= today;
+                                }
                                 return false;
                             });
                             filteredResults.sort(function (a, b) {
-                                var dateA = a.release_details.results.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date;
-                                var dateB = b.release_details.results.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date;
+                                var dateA = a.release_details?.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date || a.release_date;
+                                var dateB = b.release_details?.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date || b.release_date;
                                 return new Date(dateB) - new Date(dateA);
                             });
                             console.log(`Відфільтровано ${filteredResults.length} фільмів із ${data.results.length} на сторінці ${page} (без ID)`);
@@ -287,7 +306,7 @@
             var targetCards = 20; // Кількість карток на сторінку
             var accumulatedResults = [];
             var loadedPages = new Set();
-            var currentPage = params.page || 1;
+            var currentPage = 1; // Починаємо з першої сторінки
             var maxPages = 30; // Максимальна кількість сторінок із TMDB
             var totalPagesFromFirstResponse = 0;
 
@@ -297,44 +316,31 @@
                 accumulatedResults = cachedData.results;
                 var startIdx = (params.page - 1) * targetCards;
                 var endIdx = params.page * targetCards;
+                var pageResults = accumulatedResults.slice(startIdx, endIdx);
                 var result = {
                     dates: { maximum: today.toISOString().split('T')[0], minimum: startDate },
                     page: params.page,
-                    results: accumulatedResults.slice(startIdx, endIdx),
-                    total_pages: Math.ceil(accumulatedResults.length / targetCards),
+                    results: pageResults,
+                    total_pages: Math.ceil(accumulatedResults.length / targetCards) || 1,
                     total_results: accumulatedResults.length
                 };
-                if (result.results.length > 0) {
+                if (pageResults.length > 0) {
+                    console.log(`Використовуємо кеш для сторінки ${params.page}:`, result);
+                    oncomplite(result);
+                    return;
+                } else if (params.page <= Math.ceil(accumulatedResults.length / targetCards)) {
+                    // Якщо сторінка існує, але результатів немає, це означає, що ми вже на останній сторінці
+                    console.log('Досягнуто кінця кешованих даних на сторінці:', params.page);
                     oncomplite(result);
                     return;
                 }
+                // Якщо кеш не містить достатньо даних для сторінки, переходимо до завантаження
             }
 
             function fetchNextPage() {
                 if (loadedPages.has(currentPage) || currentPage > maxPages || (totalPagesFromFirstResponse && currentPage > totalPagesFromFirstResponse)) {
                     console.log('All relevant pages loaded or limit reached, finalizing with:', accumulatedResults.length, 'cards');
-                    var finalResults = [...new Set(accumulatedResults.map(JSON.stringify))].map(JSON.parse);
-                    finalResults.sort(function (a, b) {
-                        var dateA = a.release_details.results.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date;
-                        var dateB = b.release_details.results.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date;
-                        return new Date(dateB) - new Date(dateA);
-                    });
-                    var startIdx = (params.page - 1) * targetCards;
-                    var endIdx = params.page * targetCards;
-                    var result = {
-                        dates: { maximum: today.toISOString().split('T')[0], minimum: startDate },
-                        page: params.page,
-                        results: finalResults.slice(startIdx, endIdx),
-                        total_pages: Math.ceil(finalResults.length / targetCards) || 1,
-                        total_results: finalResults.length
-                    };
-                    // Зберігаємо в кеш
-                    categoryCache['in_theaters'] = {
-                        results: finalResults,
-                        timestamp: Date.now()
-                    };
-                    Lampa.Storage.set('trailer_category_cache_in_theaters', categoryCache['in_theaters']);
-                    oncomplite(result);
+                    finalizeResults();
                     return;
                 }
 
@@ -346,8 +352,14 @@
                         if (currentPage === 1) {
                             totalPagesFromFirstResponse = result.total_pages || maxPages;
                         }
-                        if (currentPage >= totalPagesFromFirstResponse || currentPage >= maxPages) {
-                            fetchNextPage();
+
+                        // Перевіряємо, чи достатньо карток для поточної сторінки
+                        var startIdx = (params.page - 1) * targetCards;
+                        var endIdx = params.page * targetCards;
+                        if (accumulatedResults.length >= startIdx) {
+                            finalizeResults();
+                        } else if (currentPage >= totalPagesFromFirstResponse || currentPage >= maxPages) {
+                            finalizeResults();
                         } else {
                             currentPage++;
                             fetchNextPage();
@@ -358,34 +370,40 @@
                             currentPage++;
                             fetchNextPage();
                         } else {
-                            var finalResults = [...new Set(accumulatedResults.map(JSON.stringify))].map(JSON.parse);
-                            finalResults.sort(function (a, b) {
-                                var dateA = a.release_details.results.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date;
-                                var dateB = b.release_details.results.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date;
-                                return new Date(dateB) - new Date(dateA);
-                            });
-                            var startIdx = (params.page - 1) * targetCards;
-                            var endIdx = params.page * targetCards;
-                            var result = {
-                                dates: { maximum: today.toISOString().split('T')[0], minimum: startDate },
-                                page: params.page,
-                                results: finalResults.slice(startIdx, endIdx),
-                                total_pages: Math.ceil(finalResults.length / targetCards) || 1,
-                                total_results: finalResults.length
-                            };
-                            // Зберігаємо в кеш
-                            categoryCache['in_theaters'] = {
-                                results: finalResults,
-                                timestamp: Date.now()
-                            };
-                            Lampa.Storage.set('trailer_category_cache_in_theaters', categoryCache['in_theaters']);
-                            oncomplite(result);
+                            finalizeResults();
                         }
                     }
                 }, function (error) {
                     console.log('Full error for in_theaters:', params.url, error, 'Full Error:', JSON.stringify(error));
                     onerror();
                 });
+            }
+
+            function finalizeResults() {
+                var finalResults = [...new Set(accumulatedResults.map(JSON.stringify))].map(JSON.parse);
+                finalResults.sort(function (a, b) {
+                    var dateA = a.release_details?.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date || a.release_date;
+                    var dateB = b.release_details?.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date || b.release_date;
+                    return new Date(dateB) - new Date(dateA);
+                });
+                var startIdx = (params.page - 1) * targetCards;
+                var endIdx = params.page * targetCards;
+                var pageResults = finalResults.slice(startIdx, endIdx);
+                var result = {
+                    dates: { maximum: today.toISOString().split('T')[0], minimum: startDate },
+                    page: params.page,
+                    results: pageResults,
+                    total_pages: Math.ceil(finalResults.length / targetCards) || 1,
+                    total_results: finalResults.length
+                };
+                // Зберігаємо в кеш
+                categoryCache['in_theaters'] = {
+                    results: finalResults,
+                    timestamp: Date.now()
+                };
+                Lampa.Storage.set('trailer_category_cache_in_theaters', categoryCache['in_theaters']);
+                console.log(`Фіналізовано для сторінки ${params.page}:`, result);
+                oncomplite(result);
             }
 
             fetchNextPage();
@@ -697,7 +715,12 @@
                             if (releaseInfo && releaseInfo.release_dates && releaseInfo.release_dates.length) {
                                 var releaseDate = releaseInfo.release_dates[0].release_date;
                                 _this.release_date = formatDateToDDMMYYYY(releaseDate);
+                            } else if (data.release_date) {
+                                // Запасний варіант: використовуємо глобальну дату
+                                _this.release_date = formatDateToDDMMYYYY(data.release_date);
                             }
+                        } else if (data.release_date) {
+                            _this.release_date = formatDateToDDMMYYYY(data.release_date);
                         }
                     } else if (params.type === 'new_series_seasons' || params.type === 'upcoming_series') {
                         if (data.release_details && data.release_details.first_air_date) {
