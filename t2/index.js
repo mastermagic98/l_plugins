@@ -1,4 +1,4 @@
-// тест 1111
+// тест 2222
 // l_plugins/t2/index.js
 import { Trailer } from './trailer.js';
 import { Line } from './line.js';
