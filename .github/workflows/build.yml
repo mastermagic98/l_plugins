@@ -37,10 +37,12 @@ jobs:
       run: |
         git config --global user.name "GitHub Action"
         git config --global user.email "action@github.com"
+        mkdir -p dist || echo "dist directory already exists"
         ls -la dist/ || echo "dist/ directory not found"
         cat dist/t2.js || echo "t2.js not found or empty"
-        git add dist/t2.js
-        git commit -m "Auto-generate t2.js" || echo "No changes to commit"
-        git push --force origin HEAD:auto-build
+        git add dist/
+        git commit -m "Auto-generate dist/t2.js" || echo "No changes to commit"
+        git pull --rebase origin main || echo "Pull failed, proceeding with push"
+        git push origin main
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
