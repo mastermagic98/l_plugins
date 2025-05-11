@@ -9,7 +9,7 @@ on:
       - main
 
 permissions:
-  contents: write # Додаємо права на запис у репозиторій
+  contents: write
 
 jobs:
   build:
@@ -24,6 +24,9 @@ jobs:
       with:
         node-version: '18'
 
+    - name: Clear npm cache
+      run: npm cache clean --force
+
     - name: Install dependencies
       run: npm install
 
@@ -36,6 +39,7 @@ jobs:
         git config --global user.email "action@github.com"
         git add dist/t2.js
         git commit -m "Auto-generate t2.js" || echo "No changes to commit"
+        git pull --rebase origin main
         git push
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
