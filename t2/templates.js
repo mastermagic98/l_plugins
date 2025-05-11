@@ -1,4 +1,5 @@
 // l_plugins/t2/templates.js
+// ипгшрпгшгршршршг
 export function initTemplates() {
     Lampa.Template.add('trailer', [
         '<div class="card card--trailer selector">',
