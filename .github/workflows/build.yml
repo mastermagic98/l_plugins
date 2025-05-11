@@ -41,6 +41,8 @@ jobs:
         cat dist/t2.js || echo "t2.js not found or empty"
         git add dist/t2.js
         git commit -m "Auto-generate t2.js" || echo "No changes to commit"
+        git fetch origin auto-build || echo "auto-build branch not found"
+        git pull --rebase origin auto-build || echo "Pull failed, proceeding with push"
         git push origin HEAD:auto-build
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
