@@ -1,4 +1,4 @@
-// тест 2   
+// тест 2   3
 // l_plugins/t2/index.js
 import { Trailer } from './trailer.js';
 import { Line } from './line.js';
