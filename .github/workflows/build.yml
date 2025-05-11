@@ -8,6 +8,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write # Додаємо права на запис у репозиторій
+
 jobs:
   build:
     runs-on: ubuntu-latest
