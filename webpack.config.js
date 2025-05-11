@@ -1,7 +1,7 @@
 const path = require('path');
 
 module.exports = {
-    entry: './l_plugins/t2/index.js',
+    entry: './t2/index.js', // Змінено шлях
     output: {
         path: path.resolve(__dirname, 'dist'),
         filename: 't2.js'
