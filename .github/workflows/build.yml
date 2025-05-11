@@ -34,12 +34,12 @@ jobs:
       run: npm run build
 
     - name: Commit and push t2.js
-  run: |
-    git config --global user.name "GitHub Action"
-    git config --global user.email "action@github.com"
-    git add dist/t2.js
-    git commit -m "Auto-generate t2.js" || echo "No changes to commit"
-    git pull --rebase origin main
-    git push --force
-  env:
-    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        git config --global user.name "GitHub Action"
+        git config --global user.email "action@github.com"
+        git add dist/t2.js
+        git commit -m "Auto-generate t2.js" || echo "No changes to commit"
+        git pull --rebase origin main
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
