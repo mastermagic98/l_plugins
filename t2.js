@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Версія 1.53: Виключено фільми без дати релізу в upcoming_movies, виправлено відображення на сторінці "Ще Очікувані фільми"
+    // Версія 1.54: Виправлено відображення на сторінці "Ще Очікувані фільми", послаблено фільтрацію для upcoming_movies
 
     function debounce(func, wait) {
         var timeout;
@@ -146,15 +146,7 @@
 
                 function finalizeResults() {
                     var filteredResults = data.results.filter(function (m) {
-                        if (m.release_details && m.release_details.results) {
-                            var regionRelease = m.release_details.results.find(function (r) {
-                                return r.iso_3166_1 === region;
-                            });
-                            if (regionRelease && regionRelease.release_dates && regionRelease.release_dates.length) {
-                                return true; // Має регіональну дату релізу
-                            }
-                        }
-                        return !!m.release_date; // Має глобальну дату релізу
+                        return !!m.release_date; // Включаємо лише фільми з глобальною датою релізу
                     });
                     filteredResults.sort(function (a, b) {
                         var dateA = a.release_details?.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date || a.release_date;
@@ -162,6 +154,7 @@
                         return new Date(dateA) - new Date(dateB);
                     });
                     data.results = filteredResults;
+                    data.total_results = filteredResults.length;
                     resolve(data);
                 }
 
@@ -375,70 +368,90 @@
             var today = getFormattedDate(0);
             var sixMonthsLater = getFormattedDate(-180);
             var targetCards = 20;
+            var accumulatedResults = [];
+            var loadedPages = new Set();
+            var currentPage = params.page;
+            var maxPages = 5; // Обмежуємо кількість сторінок для накопичення
 
             var cachedData = categoryCache['upcoming_movies'] || Lampa.Storage.get('trailer_category_cache_upcoming_movies', null);
             if (cachedData && cachedData.results && cachedData.results.length > 0) {
-                var filteredResults = cachedData.results.filter(function (m) {
-                    if (m.release_details && m.release_details.results) {
-                        var regionRelease = m.release_details.results.find(function (r) {
-                            return r.iso_3166_1 === getRegion();
-                        });
-                        if (regionRelease && regionRelease.release_dates && regionRelease.release_dates.length) {
-                            return true;
-                        }
-                    }
-                    return !!m.release_date;
+                accumulatedResults = cachedData.results.filter(function (m) {
+                    return !!m.release_date; // Фільтруємо лише фільми з глобальною датою релізу
                 });
                 var startIdx = (params.page - 1) * targetCards;
-                var endIdx = Math.min(params.page * targetCards, filteredResults.length);
-                var pageResults = filteredResults.slice(startIdx, endIdx);
+                var endIdx = Math.min(params.page * targetCards, accumulatedResults.length);
+                var pageResults = accumulatedResults.slice(startIdx, endIdx);
                 var result = {
                     page: params.page,
                     results: pageResults,
-                    total_pages: Math.ceil(filteredResults.length / targetCards) || 1,
-                    total_results: filteredResults.length
+                    total_pages: Math.ceil(accumulatedResults.length / targetCards) || 1,
+                    total_results: accumulatedResults.length
                 };
-                if (pageResults.length > 0) {
+                if (pageResults.length > 0 && accumulatedResults.length >= startIdx + 1) {
                     oncomplite(result);
                     return;
                 }
             }
 
-            getUpcomingMovies(params.page, function (result) {
-                if (result && result.results && result.results.length) {
-                    var filteredResults = result.results.filter(function (m) {
-                        if (m.release_details && m.release_details.results) {
-                            var regionRelease = m.release_details.results.find(function (r) {
-                                return r.iso_3166_1 === getRegion();
-                            });
-                            if (regionRelease && regionRelease.release_dates && regionRelease.release_dates.length) {
-                                return true;
-                            }
-                        }
-                        return !!m.release_date;
-                    });
-                    result.results = filteredResults;
-                    result.total_results = filteredResults.length;
-                    result.total_pages = Math.ceil(filteredResults.length / targetCards) || 1;
-
-                    if (params.page === 1) {
-                        categoryCache['upcoming_movies'] = {
-                            results: filteredResults,
-                            timestamp: Date.now()
-                        };
-                        Lampa.Storage.set('trailer_category_cache_upcoming_movies', categoryCache['upcoming_movies']);
-                    } else {
-                        var existingCache = categoryCache['upcoming_movies'] || Lampa.Storage.get('trailer_category_cache_upcoming_movies', { results: [] });
-                        existingCache.results = existingCache.results.concat(filteredResults);
-                        existingCache.results = [...new Set(existingCache.results.map(JSON.stringify))].map(JSON.parse);
-                        categoryCache['upcoming_movies'] = existingCache;
-                        Lampa.Storage.set('trailer_category_cache_upcoming_movies', existingCache);
-                    }
-                    oncomplite(result);
-                } else {
-                    onerror();
+            function fetchNextPage() {
+                if (loadedPages.has(currentPage) || currentPage > maxPages) {
+                    finalizeResults();
+                    return;
                 }
-            }, onerror);
+
+                loadedPages.add(currentPage);
+                getUpcomingMovies(currentPage, function (result) {
+                    if (result && result.results && result.results.length) {
+                        accumulatedResults = accumulatedResults.concat(result.results);
+                        var startIdx = (params.page - 1) * targetCards;
+                        var endIdx = Math.min(params.page * targetCards, accumulatedResults.length);
+                        if (accumulatedResults.length >= endIdx || currentPage >= maxPages) {
+                            finalizeResults();
+                        } else {
+                            currentPage++;
+                            fetchNextPage();
+                        }
+                    } else {
+                        finalizeResults();
+                    }
+                }, function () {
+                    if (currentPage < maxPages) {
+                        currentPage++;
+                        fetchNextPage();
+                    } else {
+                        finalizeResults();
+                    }
+                });
+            }
+
+            function finalizeResults() {
+                var finalResults = [...new Set(accumulatedResults.map(JSON.stringify))].map(JSON.parse);
+                finalResults = finalResults.filter(function (m) {
+                    return !!m.release_date; // Фільтруємо лише фільми з глобальною датою релізу
+                });
+                finalResults.sort(function (a, b) {
+                    var dateA = a.release_details?.results?.find(function (r) { return r.iso_3166_1 === getRegion(); })?.release_dates[0]?.release_date || a.release_date;
+                    var dateB = b.release_details?.results?.find(function (r) { return r.iso_3166_1 === getRegion(); })?.release_dates[0]?.release_date || b.release_date;
+                    return new Date(dateA) - new Date(dateB);
+                });
+                var startIdx = (params.page - 1) * targetCards;
+                var endIdx = Math.min(params.page * targetCards, finalResults.length);
+                var pageResults = finalResults.slice(startIdx, endIdx);
+                var result = {
+                    page: params.page,
+                    results: pageResults.length > 0 ? pageResults : finalResults.slice(0, targetCards),
+                    total_pages: Math.ceil(finalResults.length / targetCards) || 1,
+                    total_results: finalResults.length
+                };
+                categoryCache['upcoming_movies'] = {
+                    results: finalResults,
+                    timestamp: Date.now()
+                };
+                Lampa.Storage.set('trailer_category_cache_upcoming_movies', categoryCache['upcoming_movies']);
+                oncomplite(result);
+            }
+
+            fetchNextPage();
         } else if (params.type === 'new_series_seasons') {
             var threeMonthsAgo = getFormattedDate(90);
             var threeMonthsLater = getFormattedDate(-90);
