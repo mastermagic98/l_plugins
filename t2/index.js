@@ -1,4 +1,4 @@
-// // Test3
+// // Update for build
 // l_plugins/t2/index.js
 import { Trailer } from './trailer.js';
 import { Line } from './line.js';
