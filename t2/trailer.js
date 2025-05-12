@@ -1,26 +1,20 @@
-// l_plugins/t2/trailer.js
+import { Api, getPreferredLanguage } from './api.js';
+import { formatDateToDDMMYYYY, getRegion } from './utils.js';
+
 export function Trailer(data, params) {
     this.build = function () {
-        var safeData = {
-            title: data.title || data.name || data.original_title || data.original_name || 'Без назви',
-            release_date: data.release_date || data.first_air_date || '0000',
-            vote_average: data.vote_average || 0,
-            original_title: data.original_title || data.original_name || '',
-            backdrop_path: data.backdrop_path || '',
-            poster_path: data.poster_path || ''
-        };
-
-        this.card = Lampa.Template.get('trailer', safeData);
+        this.card = Lampa.Template.get('trailer', data);
         this.img = this.card.find('img')[0];
         this.is_youtube = params.type === 'rating';
-        this.rating = safeData.vote_average ? safeData.vote_average.toFixed(1) : '-';
+        this.rating = data.vote_average ? data.vote_average.toFixed(1) : '-';
         this.trailer_lang = '';
         this.release_date = '-';
 
         if (!this.is_youtube) {
-            var create = (safeData.release_date + '').slice(0, 4);
-            this.card.find('.card__title').text(safeData.title);
-            this.card.find('.card__details').text(create + ' - ' + safeData.original_title);
+            var create = ((data.release_date || data.first_air_date || '0000') + '').slice(0, 4);
+            var title = data.title || data.name || data.original_title || data.original_name;
+            this.card.find('.card__title').text(title);
+            this.card.find('.card__details').text(create + ' - ' + (data.original_title || data.original_name));
             if (this.rating !== '-') {
                 this.card.find('.card__view').append('<div class="card__rating">' + this.rating + '</div>');
             } else {
@@ -29,7 +23,7 @@ export function Trailer(data, params) {
             this.card.find('.card__view').append('<div class="card__trailer-lang"></div>');
             this.card.find('.card__view').append('<div class="card__release-date"></div>');
         } else {
-            this.card.find('.card__title').text(safeData.title);
+            this.card.find('.card__title').text(data.name);
             this.card.find('.card__details').remove();
         }
     };
