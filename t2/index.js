@@ -1,245 +1,56 @@
-import { Api, getPreferredLanguage } from './api.js';
-import { formatDateToDDMMYYYY, getRegion } from './utils.js';
+import { Trailer } from './trailer.js';
+import { Line } from './line.js';
+import { Component, Component$1 } from './component.js';
+import { Api } from './api.js';
+import { initTemplates, translations } from './templates.js';
 
-export function Trailer(data, params) {
-    this.build = function () {
-        this.card = Lampa.Template.get('trailer', data);
-        this.img = this.card.find('img')[0];
-        this.is_youtube = params.type === 'rating';
-        this.rating = data.vote_average ? data.vote_average.toFixed(1) : '-';
-        this.trailer_lang = '';
-        this.release_date = '-';
+function startPlugin() {
+    if (window.plugin_trailers_ready) return;
+    window.plugin_trailers_ready = true;
 
-        if (!this.is_youtube) {
-            var create = ((data.release_date || data.first_air_date || '0000') + '').slice(0, 4);
-            var title = data.title || data.name || data.original_title || data.original_name;
-            this.card.find('.card__title').text(title);
-            this.card.find('.card__details').text(create + ' - ' + (data.original_title || data.original_name));
-            if (this.rating !== '-') {
-                this.card.find('.card__view').append('<div class="card__rating">' + this.rating + '</div>');
-            } else {
-                this.card.find('.card__view').append('<div class="card__rating">-</div>');
-            }
-            this.card.find('.card__view').append('<div class="card__trailer-lang"></div>');
-            this.card.find('.card__view').append('<div class="card__release-date"></div>');
-        } else {
-            this.card.find('.card__title').text(data.name);
-            this.card.find('.card__details').remove();
-        }
-    };
+    // Додаємо переклади
+    Lampa.Lang.add(translations);
 
-    this.cardImgBackground = function (card_data) {
-        if (Lampa.Storage.field('background')) {
-            if (Lampa.Storage.get('background_type', 'complex') === 'poster' && window.innerWidth > 790) {
-                return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'original') : this.is_youtube ? 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg' : '';
-            }
-            return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'w500') : this.is_youtube ? 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg' : '';
-        }
-        return '';
-    };
+    // Реєструємо компоненти
+    Lampa.Component.add('trailers_main', Component$1);
+    Lampa.Component.add('trailers_full', Component);
 
-    this.image = function () {
-        var _this = this;
-        this.img.onload = function () {
-            _this.card.addClass('card--loaded');
-        };
-        this.img.onerror = function () {
-            _this.img.src = './img/img_broken.svg';
-        };
-    };
+    // Додаємо шаблони та стилі
+    initTemplates();
 
-    this.loadTrailerInfo = function () {
-        var _this = this;
-        if (!this.is_youtube && !this.trailer_lang) {
-            Api.videos(data, function (videos) {
-                var trailers = videos.results ? videos.results.filter(function (v) {
-                    return v.type === 'Trailer';
-                }) : [];
-                var preferredLangs = getPreferredLanguage();
-                var video = trailers.find(function (v) {
-                    return preferredLangs.includes(v.iso_639_1);
-                }) || trailers[0];
-                _this.trailer_lang = video ? video.iso_639_1 : '-';
-                if (_this.trailer_lang !== '-') {
-                    _this.card.find('.card__trailer-lang').text(_this.trailer_lang.toUpperCase());
-                } else {
-                    _this.card.find('.card__trailer-lang').text('-');
-                }
-
-                if (params.type === 'in_theaters' || params.type === 'upcoming_movies') {
-                    if (data.release_details && data.release_details.results) {
-                        var region = getRegion();
-                        var releaseInfo = data.release_details.results.find(function (r) {
-                            return r.iso_3166_1 === region;
-                        });
-                        if (releaseInfo && releaseInfo.release_dates && releaseInfo.release_dates.length) {
-                            var releaseDate = releaseInfo.release_dates[0].release_date;
-                            _this.release_date = formatDateToDDMMYYYY(releaseDate);
-                        } else if (data.release_date) {
-                            _this.release_date = formatDateToDDMMYYYY(data.release_date);
-                        }
-                    } else if (data.release_date) {
-                        _this.release_date = formatDateToDDMMYYYY(data.release_date);
-                    }
-                } else if (params.type === 'new_series_seasons' || params.type === 'upcoming_series') {
-                    if (data.release_details && data.release_details.first_air_date) {
-                        _this.release_date = formatDateToDDMMYYYY(data.release_details.first_air_date);
-                    }
-                }
-                _this.card.find('.card__release-date').text(_this.release_date);
-            }, function () {
-                _this.trailer_lang = '-';
-                _this.card.find('.card__trailer-lang').text('-');
-                _this.card.find('.card__release-date').text('-');
+    function add() {
+        var button = $('<li class="menu__item selector"><div class="menu__ico"><svg height="70" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/></svg></div><div class="menu__text">' + Lampa.Lang.translate('title_trailers') + '</div></li>');
+        button.on('hover:enter', function () {
+            Lampa.Activity.push({
+                url: '',
+                title: Lampa.Lang.translate('title_trailers'),
+                component: 'trailers_main',
+                page: 1
             });
-        }
-    };
-
-    this.play = function (id) {
-        if (!id) {
-            Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
-            return;
-        }
-        try {
-            if (Lampa.Manifest.app_digital >= 183) {
-                var item = {
-                    title: Lampa.Utils.shortText(data.title || data.name, 50),
-                    id: id,
-                    youtube: true,
-                    url: 'https://www.youtube.com/watch?v=' + id,
-                    icon: '<img class="size-youtube" src="https://img.youtube.com/vi/' + id + '/default.jpg" />',
-                    template: 'selectbox_icon'
-                };
-                Lampa.Player.play(item);
-                Lampa.Player.playlist([item]);
-            } else {
-                Lampa.YouTube.play(id);
-            }
-        } catch (e) {
-            Lampa.Noty.show('Помилка відтворення трейлера: ' + e.message);
-        }
-    };
-
-    this.create = function () {
-        var _this2 = this;
-        this.build();
-        this.card.on('hover:focus', function (e, is_mouse) {
-            Lampa.Background.change(_this2.cardImgBackground(data));
-            _this2.onFocus(e.target, data, is_mouse);
-            _this2.loadTrailerInfo();
-        }).on('hover:enter', function () {
-            if (_this2.is_youtube) {
-                _this2.play(data.id);
-            } else {
-                Api.videos(data, function (videos) {
-                    var preferredLangs = getPreferredLanguage();
-                    var trailers = videos.results ? videos.results.filter(function (v) {
-                        return v.type === 'Trailer';
-                    }) : [];
-                    var video = trailers.find(function (v) {
-                        return preferredLangs.includes(v.iso_639_1);
-                    }) || trailers[0];
-                    if (video && video.key) {
-                        if (preferredLangs[0] === 'uk' && video.iso_639_1 !== 'uk' && video.iso_639_1 !== 'en') {
-                            Lampa.Noty.show(Lampa.Lang.translate('trailers_no_ua_trailer'));
-                        } else if (preferredLangs[0] === 'ru' && video.iso_639_1 !== 'ru' && video.iso_639_1 !== 'en') {
-                            Lampa.Noty.show(Lampa.Lang.translate('trailers_no_ru_trailer'));
-                        }
-                        _this2.play(video.key);
-                    } else {
-                        Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
-                    }
-                }, function () {
-                    Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
-                });
-            }
-        }).on('hover:long', function () {
-            if (!_this2.is_youtube) {
-                var items = [{
-                    title: Lampa.Lang.translate('trailers_view'),
-                    view: true
-                }];
-                Lampa.Loading.start(function () {
-                    Api.clear();
-                    Lampa.Loading.stop();
-                });
-                Api.videos(data, function (videos) {
-                    Lampa.Loading.stop();
-                    var preferredLangs = getPreferredLanguage();
-                    var trailers = videos.results ? videos.results.filter(function (v) {
-                        return v.type === 'Trailer';
-                    }) : [];
-                    if (trailers.length) {
-                        items.push({
-                            title: Lampa.Lang.translate('title_trailers'),
-                            separator: true
-                        });
-                        trailers.forEach(function (video) {
-                            if (video.key && preferredLangs.includes(video.iso_639_1)) {
-                                items.push({
-                                    title: video.name || 'Trailer',
-                                    id: video.key,
-                                    subtitle: video.iso_639_1
-                                });
-                            }
-                        });
-                    }
-                    Lampa.Select.show({
-                        title: Lampa.Lang.translate('title_action'),
-                        items: items,
-                        onSelect: function (item) {
-                            Lampa.Controller.toggle('content');
-                            if (item.view) {
-                                Lampa.Activity.push({
-                                    url: '',
-                                    component: 'full',
-                                    id: data.id,
-                                    method: data.name ? 'tv' : 'movie',
-                                    card: data,
-                                    source: 'tmdb'
-                                });
-                            } else {
-                                _this2.play(item.id);
-                            }
-                        },
-                        onBack: function () {
-                            Lampa.Controller.toggle('content');
-                        }
-                    });
-                }, function () {
-                    Lampa.Loading.stop();
-                    Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
-                });
+        });
+        $('.menu .menu__list').eq(0).append(button);
+        $('body').append(Lampa.Template.get('trailer_style', {}, true));
+        Lampa.Storage.listener.follow('change', function (event) {
+            if (event.name === 'language') {
+                Api.clear();
             }
         });
-        this.image();
-        this.loadTrailerInfo();
-    };
+    }
 
-    this.destroy = function () {
-        this.img.onerror = null;
-        this.img.onload = null;
-        this.img.src = '';
-        this.card.remove();
-        this.card = null;
-        this.img = null;
-    };
+    if (Lampa.TMDB && Lampa.TMDB.key()) {
+        add();
+    } else {
+        Lampa.Noty.show('TMDB API key is missing. Trailers plugin cannot be loaded.');
+    }
+}
 
-    this.visible = function () {
-        if (this.visibled) return;
-        if (params.type === 'rating') {
-            this.img.src = 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg';
-        } else if (data.backdrop_path) {
-            this.img.src = Lampa.Api.img(data.backdrop_path, 'w500');
-        } else if (data.poster_path) {
-            this.img.src = Lampa.Api.img(data.poster_path);
-        } else {
-            this.img.src = './img/img_broken.svg';
+// Запускаємо плагін
+if (!window.appready) {
+    Lampa.Listener.follow('app', function (e) {
+        if (e.type === 'ready') {
+            startPlugin();
         }
-        this.visibled = true;
-    };
-
-    this.render = function () {
-        return this.card;
-    };
+    });
+} else {
+    startPlugin();
 }
