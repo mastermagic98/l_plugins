@@ -8,7 +8,7 @@ function startPlugin() {
     if (window.plugin_trailers_ready) return;
     window.plugin_trailers_ready = true;
 
-    // Додаємо переклади
+    // Додаємо переклади 
     Lampa.Lang.add(translations);
 
     // Реєструємо компоненти
