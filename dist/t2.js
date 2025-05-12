@@ -825,9 +825,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./api.js */ "./t2/api.js");
 /* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./utils.js */ "./t2/utils.js");
+// Клас для створення картки трейлера
 
 
 function Trailer(data, params) {
+  // Створення DOM-структури картки
   this.build = function () {
     this.card = Lampa.Template.get('trailer', data);
     this.img = this.card.find('img')[0];
@@ -852,6 +854,8 @@ function Trailer(data, params) {
       this.card.find('.card__details').remove();
     }
   };
+
+  // Встановлення фонового зображення картки
   this.cardImgBackground = function (card_data) {
     if (Lampa.Storage.field('background')) {
       if (Lampa.Storage.get('background_type', 'complex') === 'poster' && window.innerWidth > 790) {
@@ -861,6 +865,8 @@ function Trailer(data, params) {
     }
     return '';
   };
+
+  // Обробка завантаження зображення
   this.image = function () {
     var _this = this;
     this.img.onload = function () {
@@ -870,6 +876,8 @@ function Trailer(data, params) {
       _this.img.src = './img/img_broken.svg';
     };
   };
+
+  // Завантаження інформації про трейлер
   this.loadTrailerInfo = function () {
     var _this = this;
     if (!this.is_youtube && !this.trailer_lang) {
@@ -915,6 +923,8 @@ function Trailer(data, params) {
       });
     }
   };
+
+  // Відтворення трейлера
   this.play = function (id) {
     if (!id) {
       Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
@@ -939,6 +949,8 @@ function Trailer(data, params) {
       Lampa.Noty.show('Помилка відтворення трейлера: ' + e.message);
     }
   };
+
+  // Ініціалізація картки
   this.create = function () {
     var _this2 = this;
     this.build();
@@ -1034,6 +1046,8 @@ function Trailer(data, params) {
     this.image();
     this.loadTrailerInfo();
   };
+
+  // Очищення ресурсів
   this.destroy = function () {
     this.img.onerror = null;
     this.img.onload = null;
@@ -1042,6 +1056,8 @@ function Trailer(data, params) {
     this.card = null;
     this.img = null;
   };
+
+  // Відображення зображення картки
   this.visible = function () {
     if (this.visibled) return;
     if (params.type === 'rating') {
@@ -1055,10 +1071,13 @@ function Trailer(data, params) {
     }
     this.visibled = true;
   };
+
+  // Повернення DOM-елемента картки
   this.render = function () {
     return this.card;
   };
 }
+
 
 /***/ }),
 
