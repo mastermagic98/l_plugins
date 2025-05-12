@@ -1,1 +1,1156 @@
-(()=>{var e={430:()=>{}},t={};function a(r){var i=t[r];if(void 0!==i)return i.exports;var n=t[r]={exports:{}};return e[r](n,n.exports,a),n.exports}(()=>{"use strict";var e=a(430);function t(e){if(!e)return"-";var t=new Date(e);return String(t.getDate()).padStart(2,"0")+"."+String(t.getMonth()+1).padStart(2,"0")+"."+t.getFullYear()}function r(a,r){this.build=function(){if(this.card=Lampa.Template.get("trailer",a),this.img=this.card.find("img")[0],this.is_youtube="rating"===r.type,this.rating=a.vote_average?a.vote_average.toFixed(1):"-",this.trailer_lang="",this.release_date="-",this.is_youtube)this.card.find(".card__title").text(a.name),this.card.find(".card__details").remove();else{var e=((a.release_date||a.first_air_date||"0000")+"").slice(0,4),t=a.title||a.name||a.original_title||a.original_name;this.card.find(".card__title").text(t),this.card.find(".card__details").text(e+" - "+(a.original_title||a.original_name)),"-"!==this.rating?this.card.find(".card__view").append('<div class="card__rating">'+this.rating+"</div>"):this.card.find(".card__view").append('<div class="card__rating">-</div>'),this.card.find(".card__view").append('<div class="card__trailer-lang"></div>'),this.card.find(".card__view").append('<div class="card__release-date"></div>')}},this.cardImgBackground=function(e){return Lampa.Storage.field("background")?"poster"===Lampa.Storage.get("background_type","complex")&&window.innerWidth>790?e.backdrop_path?Lampa.Api.img(e.backdrop_path,"original"):this.is_youtube?"https://img.youtube.com/vi/"+a.id+"/hqdefault.jpg":"":e.backdrop_path?Lampa.Api.img(e.backdrop_path,"w500"):this.is_youtube?"https://img.youtube.com/vi/"+a.id+"/hqdefault.jpg":"":""},this.image=function(){var e=this;this.img.onload=function(){e.card.addClass("card--loaded")},this.img.onerror=function(){e.img.src="./img/img_broken.svg"}},this.loadTrailerInfo=function(){var i=this;this.is_youtube||this.trailer_lang||e.Api.videos(a,(function(n){var o,l=n.results?n.results.filter((function(e){return"Trailer"===e.type})):[],s=(0,e.getPreferredLanguage)(),d=l.find((function(e){return s.includes(e.iso_639_1)}))||l[0];if(i.trailer_lang=d?d.iso_639_1:"-","-"!==i.trailer_lang?i.card.find(".card__trailer-lang").text(i.trailer_lang.toUpperCase()):i.card.find(".card__trailer-lang").text("-"),"in_theaters"===r.type||"upcoming_movies"===r.type)if(a.release_details&&a.release_details.results){var p="uk"===(o=Lampa.Storage.get("language","ru"))?"UA":"ru"===o?"RU":"US",c=a.release_details.results.find((function(e){return e.iso_3166_1===p}));if(c&&c.release_dates&&c.release_dates.length){var u=c.release_dates[0].release_date;i.release_date=t(u)}else a.release_date&&(i.release_date=t(a.release_date))}else a.release_date&&(i.release_date=t(a.release_date));else"new_series_seasons"!==r.type&&"upcoming_series"!==r.type||a.release_details&&a.release_details.first_air_date&&(i.release_date=t(a.release_details.first_air_date));i.card.find(".card__release-date").text(i.release_date)}),(function(){i.trailer_lang="-",i.card.find(".card__trailer-lang").text("-"),i.card.find(".card__release-date").text("-")}))},this.play=function(e){if(e)try{if(Lampa.Manifest.app_digital>=183){var t={title:Lampa.Utils.shortText(a.title||a.name,50),id:e,youtube:!0,url:"https://www.youtube.com/watch?v="+e,icon:'<img class="size-youtube" src="https://img.youtube.com/vi/'+e+'/default.jpg" />',template:"selectbox_icon"};Lampa.Player.play(t),Lampa.Player.playlist([t])}else Lampa.YouTube.play(e)}catch(e){Lampa.Noty.show("Помилка відтворення трейлера: "+e.message)}else Lampa.Noty.show(Lampa.Lang.translate("trailers_no_trailers"))},this.create=function(){var t=this;this.build(),this.card.on("hover:focus",(function(e,r){Lampa.Background.change(t.cardImgBackground(a)),t.onFocus(e.target,a,r),t.loadTrailerInfo()})).on("hover:enter",(function(){t.is_youtube?t.play(a.id):e.Api.videos(a,(function(a){var r=(0,e.getPreferredLanguage)(),i=a.results?a.results.filter((function(e){return"Trailer"===e.type})):[],n=i.find((function(e){return r.includes(e.iso_639_1)}))||i[0];n&&n.key?("uk"===r[0]&&"uk"!==n.iso_639_1&&"en"!==n.iso_639_1?Lampa.Noty.show(Lampa.Lang.translate("trailers_no_ua_trailer")):"ru"===r[0]&&"ru"!==n.iso_639_1&&"en"!==n.iso_639_1&&Lampa.Noty.show(Lampa.Lang.translate("trailers_no_ru_trailer")),t.play(n.key)):Lampa.Noty.show(Lampa.Lang.translate("trailers_no_trailers"))}),(function(){Lampa.Noty.show(Lampa.Lang.translate("trailers_no_trailers"))}))})).on("hover:long",(function(){if(!t.is_youtube){var r=[{title:Lampa.Lang.translate("trailers_view"),view:!0}];Lampa.Loading.start((function(){e.Api.clear(),Lampa.Loading.stop()})),e.Api.videos(a,(function(i){Lampa.Loading.stop();var n=(0,e.getPreferredLanguage)(),o=i.results?i.results.filter((function(e){return"Trailer"===e.type})):[];o.length&&(r.push({title:Lampa.Lang.translate("title_trailers"),separator:!0}),o.forEach((function(e){e.key&&n.includes(e.iso_639_1)&&r.push({title:e.name||"Trailer",id:e.key,subtitle:e.iso_639_1})}))),Lampa.Select.show({title:Lampa.Lang.translate("title_action"),items:r,onSelect:function(e){Lampa.Controller.toggle("content"),e.view?Lampa.Activity.push({url:"",component:"full",id:a.id,method:a.name?"tv":"movie",card:a,source:"tmdb"}):t.play(e.id)},onBack:function(){Lampa.Controller.toggle("content")}})}),(function(){Lampa.Loading.stop(),Lampa.Noty.show(Lampa.Lang.translate("trailers_no_trailers"))}))}})),this.image(),this.loadTrailerInfo()},this.destroy=function(){this.img.onerror=null,this.img.onload=null,this.img.src="",this.card.remove(),this.card=null,this.img=null},this.visible=function(){this.visibled||("rating"===r.type?this.img.src="https://img.youtube.com/vi/"+a.id+"/hqdefault.jpg":a.backdrop_path?this.img.src=Lampa.Api.img(a.backdrop_path,"w500"):a.poster_path?this.img.src=Lampa.Api.img(a.poster_path):this.img.src="./img/img_broken.svg",this.visibled=!0)},this.render=function(){return this.card}}function i(e){var t,a,i,n,o=this,l=Lampa.Template.get("items_line",{title:e.title}),s=l.find(".items-line__body"),d=new Lampa.Scroll({horizontal:!0,step:600}),p=Lampa.Storage.field("light_version")&&window.innerWidth>=767,c=[],u=p?6:10,m=0,g=!1;function h(){if(!g){g=!0;var t=e.results.slice(m,m+u);t.length>0?(t.forEach((function(t){var a=new r(t,{type:e.type});a.create(),a.visible(),a.onFocus=function(e,t,r){if(n=e,c.indexOf(a),o.onFocus&&o.onFocus(t),d.update(a.render(),!0),c.length>0&&c.indexOf(a)===c.length-1){var i=Lampa.Lang.translate("trailers_last_movie").replace("[title]",t.title||t.name);Lampa.Noty.show(i)}},d.append(a.render()),c.push(a)})),m+=t.length,Lampa.Layer.update(),g=!1):(Lampa.Activity.push({url:e.url,title:e.title,component:"trailers_full",type:e.type,page:Math.floor(m/u)+2}),g=!1)}}this.create=function(){d.render().find(".scroll__body").addClass("items-cards"),l.find(".items-line__title").text(e.title),(a=$('<div class="items-line__more selector"><svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg></div>')).css({display:"inline-block",marginLeft:"10px",cursor:"pointer",padding:"0.5em",background:"transparent",border:"none"}),a.on("hover:enter",(function(){var t=[{title:Lampa.Lang.translate("trailers_filter_today"),value:"day",selected:"day"===Lampa.Storage.get("trailers_"+e.type+"_filter","day")},{title:Lampa.Lang.translate("trailers_filter_week"),value:"week",selected:"week"===Lampa.Storage.get("trailers_"+e.type+"_filter","day")},{title:Lampa.Lang.translate("trailers_filter_month"),value:"month",selected:"month"===Lampa.Storage.get("trailers_"+e.type+"_filter","day")},{title:Lampa.Lang.translate("trailers_filter_year"),value:"year",selected:"year"===Lampa.Storage.get("trailers_"+e.type+"_filter","day")}];Lampa.Select.show({title:Lampa.Lang.translate("trailers_filter"),items:t,onSelect:function(t){Lampa.Storage.set("trailer_category_cache_"+e.type,null),categoryCache[e.type]=null,Lampa.Storage.set("trailers_"+e.type+"_filter",t.value),Lampa.Activity.push({url:"day"===t.value||"week"===t.value?"/discover/"+(e.type.includes("movie")?"movie":"tv")+"?sort_by=popularity.desc":"month"===t.value?"/discover/"+(e.type.includes("movie")?"movie":"tv")+"?sort_by=popularity.desc&release_date.gte="+getFormattedDate(30):"/discover/"+(e.type.includes("movie")?"movie":"tv")+"?sort_by=popularity.desc&release_date.gte="+getFormattedDate(365),title:e.title,component:"trailers_main",type:e.type,page:1})},onBack:function(){Lampa.Controller.toggle("content")}})})),(i=$('<div class="items-line__more selector">'+Lampa.Lang.translate("trailers_more")+"</div>")).on("hover:enter",(function(){Lampa.Activity.push({url:e.url,title:e.title,component:"trailers_full",type:e.type,page:Math.floor(m/u)+2})})),l.find(".items-line__title").after(a),a.after(i),this.bind(),s.append(d.render());var t,r,n=(t=function(){d.isEnd()&&!g&&h()},function(){var e=this,a=arguments;clearTimeout(r),r=setTimeout((function(){t.apply(e,a)}),200)});d.render().on("scroll",n)},this.bind=function(){h(),this.more(),Lampa.Layer.update()},this.cardImgBackground=function(e){return Lampa.Storage.field("background")?"poster"===Lampa.Storage.get("background_type","complex")&&window.innerWidth>790?e.backdrop_path?Lampa.Api.img(e.backdrop_path,"original"):"":e.backdrop_path?Lampa.Api.img(e.backdrop_path,"w500"):"":""},this.more=function(){(t=Lampa.Template.get("more")).addClass("more--trailers"),t.on("hover:enter",(function(){Lampa.Activity.push({url:e.url,title:e.title,component:"trailers_full",type:e.type,page:Math.floor(m/u)+2})})),t.on("hover:focus",(function(e){n=e.target,d.update(t,!0)})),d.append(t)},this.toggle=function(){var e=this;Lampa.Controller.add("items_line",{toggle:function(){Lampa.Controller.collectionSet(d.render()),Lampa.Controller.collectionFocus(!!c.length&&n,d.render()),n&&c.length&&d.update($(n),!0)},right:function(){Navigator.canmove("right")&&(Navigator.move("right"),n&&c.length&&d.update($(n),!0)),Lampa.Controller.enable("items_line")},left:function(){Navigator.canmove("left")?(Navigator.move("left"),n&&c.length&&d.update($(n),!0)):e.onLeft?e.onLeft():Lampa.Controller.toggle("menu")},down:this.onDown,up:this.onUp,gone:function(){},back:this.onBack}),Lampa.Controller.toggle("items_line")},this.render=function(){return l},this.destroy=function(){Lampa.Arrays.destroy(c),d.destroy(),l.remove(),t&&t.remove(),a&&a.remove(),i&&i.remove(),c=[]}}function n(t){var a=new Lampa.Scroll({mask:!0,over:!0,scroll_by_item:!0}),r=[],n=$("<div></div>"),o=0,l=Lampa.Storage.field("light_version")&&window.innerWidth>=767;this.create=function(){return e.Api.main(this.build.bind(this),this.empty.bind(this)),this.render()},this.empty=function(){var e=new Lampa.Empty;n.append(e.render()),this.start=e.start,this.activity.loader(!1),this.activity.toggle()},this.build=function(e){var t=this;a.minus(),n.append(a.render()),e.forEach(this.append.bind(this)),l&&(a.onWheel=function(e){e>0?t.down():t.up()}),this.activity.loader(!1),this.activity.toggle()},this.append=function(e){var t=new i(e);t.create(),t.onDown=this.down.bind(this),t.onUp=this.up.bind(this),t.onBack=this.back.bind(this),t.onToggle=function(){o=r.indexOf(t)},t.wrap=$("<div></div>"),l?a.append(t.wrap):a.append(t.render()),r.push(t)},this.back=function(){Lampa.Activity.backward()},this.detach=function(){l&&(r.forEach((function(e){e.render().detach()})),r.slice(o,o+2).forEach((function(e){e.wrap.append(e.render())})))},this.down=function(){o++,o=Math.min(o,r.length-1),this.detach(),r[o].toggle(),a.update(r[o].render())},this.up=function(){--o<0?(o=0,this.detach(),Lampa.Controller.toggle("head")):(this.detach(),r[o].toggle()),a.update(r[o].render())},this.start=function(){var e=this;Lampa.Activity.active().activity===this.activity&&(Lampa.Controller.add("content",{toggle:function(){r.length&&(e.detach(),r[o].toggle())},left:function(){Navigator.canmove("left")?Navigator.move("left"):Lampa.Controller.toggle("menu")},right:function(){Navigator.move("right")},up:function(){Navigator.canmove("up")?Navigator.move("up"):Lampa.Controller.toggle("head")},down:function(){Navigator.canmove("down")&&Navigator.move("down")},back:this.back}),Lampa.Controller.toggle("content"))},this.pause=function(){},this.stop=function(){},this.render=function(){return n},this.destroy=function(){Lampa.Arrays.destroy(r),a.destroy(),n.remove(),r=[]}}function o(t){var a,i=new Lampa.Scroll({mask:!0,over:!0,step:250,end_ratio:2}),n=[],o=$("<div></div>"),l=$('<div class="category-full category-full--trailers"></div>'),s=Lampa.Manifest.app_digital>=166,d=!s&&Lampa.Storage.field("light_version")&&window.innerWidth>=767,p=0,c=!1;this.create=function(){return e.Api.full(t,this.build.bind(this),this.empty.bind(this)),this.render()},this.empty=function(){var e=new Lampa.Empty;i.append(e.render()),this.start=e.start,this.activity.loader(!1),this.activity.toggle()},this.next=function(){var a=this;c||(t.page<p&&t.page<30?(c=!0,t.page++,e.Api.full(t,(function(e){e.results&&e.results.length?a.append(e,!0):Lampa.Noty.show(Lampa.Lang.translate("trailers_no_trailers")),c=!1}),(function(){Lampa.Noty.show(Lampa.Lang.translate("trailers_no_trailers")),c=!1}))):Lampa.Noty.show(Lampa.Lang.translate("trailers_no_more_data")))},this.cardImgBackground=function(e){return Lampa.Storage.field("background")?"poster"===Lampa.Storage.get("background_type","complex")&&window.innerWidth>790?e.backdrop_path?Lampa.Api.img(e.backdrop_path,"original"):"":e.backdrop_path?Lampa.Api.img(e.backdrop_path,"w500"):"":""},this.append=function(e,o){var p=this;o||l.empty(),e.results.forEach((function(e){var o=new r(e,{type:t.type});o.create(),o.visible(),o.onFocus=function(e,t){if(a=e,i.update(o.render(),!0),d||s||!i.isEnd()||p.next(),n.length>0&&n.indexOf(o)===n.length-1){var r=Lampa.Lang.translate("trailers_last_movie").replace("[title]",t.title||t.name);Lampa.Noty.show(r)}},l.append(o.render()),n.push(o)}));var c=e.results.length;if(c<20)for(var u=c;u<20;u++){var m=$('<div class="card card--placeholder" style="width: 33.3%; margin-bottom: 1.5em; visibility: hidden;"></div>');l.append(m)}},this.build=function(e){var t=this;if(e.results&&e.results.length){if(p=e.total_pages||1,i.minus(),o.append(i.render()),this.append(e),d&&n.length&&this.back(),p>e.page&&n.length&&this.more(),i.append(l),s){i.onEnd=this.next.bind(this),i.onWheel=function(e){Lampa.Controller.own(t)||t.start(),e>0&&Navigator.move("down")}.bind(this);var a=debounce((function(){i.isEnd()&&!c&&t.next()}),100);i.render().on("scroll",a)}this.activity.loader(!1),this.activity.toggle()}else o.append(i.render()),this.empty()},this.more=function(){var e=$('<div class="selector" style="width: 100%; height: 5px"></div>');e.on("hover:enter",(function(){var e=Lampa.Arrays.clone(t);delete e.activity,e.page=(e.page||1)+1,Lampa.Activity.push({url:e.url,title:t.title||Lampa.Lang.translate("title_trailers"),component:"trailers_full",type:e.type,page:e.page})})),l.append(e)},this.back=function(){a=n[0].render()[0];var e=$('<div class="selector" style="width: 100%; height: 5px"></div>');e.on("hover:enter",(function(){t.page>1?Lampa.Activity.backward():Lampa.Controller.toggle("head")})),l.prepend(e)},this.start=function(){Lampa.Activity.active().activity===this.activity&&(Lampa.Controller.add("content",{link:this,toggle:function(){Lampa.Controller.collectionSet(i.render()),Lampa.Controller.collectionFocus(a||!1,i.render())},left:function(){Navigator.canmove("left")?Navigator.move("left"):Lampa.Controller.toggle("menu")},right:function(){Navigator.move("right")},up:function(){Navigator.canmove("up")?Navigator.move("up"):Lampa.Controller.toggle("head")},down:function(){Navigator.canmove("down")&&Navigator.move("down")},back:function(){Lampa.Activity.backward()}}),Lampa.Controller.toggle("content"))},this.pause=function(){},this.stop=function(){},this.render=function(){return o},this.destroy=function(){Lampa.Arrays.destroy(n),i.destroy(),o.remove(),l.remove(),n=[]}}var l={trailers_popular:{ru:"Популярное",uk:"Популярне",en:"Popular"},trailers_in_theaters:{ru:"В прокате",uk:"В прокаті",en:"In Theaters"},trailers_upcoming_movies:{ru:"Ожидаемые фильмы",uk:"Очікувані фільми",en:"Upcoming Movies"},trailers_popular_series:{ru:"Популярные сериалы",uk:"Популярні серіали",en:"Popular Series"},trailers_new_series_seasons:{ru:"Новые сериалы и сезоны",uk:"Нові серіали та сезони",en:"New Series and Seasons"},trailers_upcoming_series:{ru:"Ожидаемые сериалы",uk:"Очікувані серіали",en:"Upcoming Series"},trailers_no_trailers:{ru:"Нет трейлеров",uk:"Немає трейлерів",en:"No trailers"},trailers_no_ua_trailer:{ru:"Нет украинского трейлера",uk:"Немає українського трейлера",en:"No Ukrainian trailer"},trailers_no_ru_trailer:{ru:"Нет русского трейлера",uk:"Немає російського трейлера",en:"No Russian trailer"},trailers_view:{ru:"Подробнее",uk:"Докладніше",en:"More"},title_trailers:{ru:"Трейлеры",uk:"Трейлери",en:"Trailers"},trailers_filter:{ru:"Фильтр",uk:"Фільтр",en:"Filter"},trailers_filter_today:{ru:"Сегодня",uk:"Сьогодні",en:"Today"},trailers_filter_week:{ru:"Неделя",uk:"Тиждень",en:"Week"},trailers_filter_month:{ru:"Месяц",uk:"Місяць",en:"Month"},trailers_filter_year:{ru:"Год",uk:"Рік",en:"Year"},trailers_movies:{ru:"Фильмы",uk:"Фільми",en:"Movies"},trailers_series:{ru:"Сериалы",uk:"Серіали",en:"Series"},trailers_more:{ru:"Ещё",uk:"Ще",en:"More"},trailers_popular_movies:{ru:"Популярные фильмы",uk:"Популярні фільми",en:"Popular Movies"},trailers_last_movie:{ru:"Это последний фильм: [title]",uk:"Це останній фільм: [title]",en:"This is the last movie: [title]"},trailers_no_more_data:{ru:"Больше нет данных для загрузки",uk:"Більше немає даних для завантаження",en:"No more data to load"}};function s(){var t;window.plugin_trailers_ready||(window.plugin_trailers_ready=!0,Lampa.Lang.add(l),Lampa.Component.add("trailers_main",n),Lampa.Component.add("trailers_full",o),Lampa.Template.add("trailer",'<div class="card selector card--trailer layer--render layer--visible"><div class="card__view"><img src="./img/img_load.svg" class="card__img"><div class="card__promo"><div class="card__promo-text"><div class="card__title"></div></div><div class="card__details"></div></div></div><div class="card__play"><img src="./img/icons/player/play.svg"></div></div>'),Lampa.Template.add("trailer_style","<style>.card.card--trailer,.card-more.more--trailers{width:25.7em}.card.card--trailer .card__view{padding-bottom:56%;margin-bottom:0}.card.card--trailer .card__details{margin-top:0.8em}.card.card--trailer .card__play{position:absolute;top:50%;transform:translateY(-50%);left:1.5em;background:#000000b8;width:2.2em;height:2.2em;border-radius:100%;text-align:center;padding-top:0.6em}.card.card--trailer .card__play img{width:0.9em;height:1em}.card.card--trailer .card__rating{position:absolute;bottom:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.card.card--trailer .card__trailer-lang{position:absolute;top:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;text-transform:uppercase;font-size:1.2em}.card.card--trailer .card__release-date{position:absolute;top:2em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.card-more.more--trailers .card-more__box{padding-bottom:56%}.category-full--trailers{display:flex;flex-wrap:wrap;justify-content:space-between}.category-full--trailers .card{width:33.3%;margin-bottom:1.5em}.category-full--trailers .card .card__view{padding-bottom:56%;margin-bottom:0}.items-line__more{display:inline-block;margin-left:10px;cursor:pointer;padding:0.5em 1em}@media screen and (max-width:767px){.category-full--trailers .card{width:50%}}@media screen and (max-width:400px){.category-full--trailers .card{width:100%}}</style>"),Lampa.TMDB&&Lampa.TMDB.key()?((t=$('<li class="menu__item selector"><div class="menu__ico"><svg height="70" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/></svg></div><div class="menu__text">'+Lampa.Lang.translate("title_trailers")+"</div></li>")).on("hover:enter",(function(){Lampa.Activity.push({url:"",title:Lampa.Lang.translate("title_trailers"),component:"trailers_main",page:1})})),$(".menu .menu__list").eq(0).append(t),$("body").append(Lampa.Template.get("trailer_style",{},!0)),Lampa.Storage.listener.follow("change",(function(t){"language"===t.name&&e.Api.clear()}))):Lampa.Noty.show("TMDB API key is missing. Trailers plugin cannot be loaded."))}window.appready?s():Lampa.Listener.follow("app",(function(e){"ready"===e.type&&s()}))})()})();
+/******/ (() => { // webpackBootstrap
+/******/ 	var __webpack_modules__ = ({
+
+/***/ "./t2/api.js":
+/*!*******************!*\
+  !*** ./t2/api.js ***!
+  \*******************/
+/***/ (() => {
+
+
+
+/***/ }),
+
+/***/ "./t2/component.js":
+/*!*************************!*\
+  !*** ./t2/component.js ***!
+  \*************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Component: () => (/* binding */ Component),
+/* harmony export */   Component$1: () => (/* binding */ Component$1)
+/* harmony export */ });
+/* harmony import */ var _line_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./line.js */ "./t2/line.js");
+/* harmony import */ var _trailer_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./trailer.js */ "./t2/trailer.js");
+/* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./api.js */ "./t2/api.js");
+/* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_api_js__WEBPACK_IMPORTED_MODULE_2__);
+
+
+
+function Component$1(object) {
+  var scroll = new Lampa.Scroll({
+    mask: true,
+    over: true,
+    scroll_by_item: true
+  });
+  var items = [];
+  var html = $('<div></div>');
+  var active = 0;
+  var light = Lampa.Storage.field('light_version') && window.innerWidth >= 767;
+  this.create = function () {
+    _api_js__WEBPACK_IMPORTED_MODULE_2__.Api.main(this.build.bind(this), this.empty.bind(this));
+    return this.render();
+  };
+  this.empty = function () {
+    var empty = new Lampa.Empty();
+    html.append(empty.render());
+    this.start = empty.start;
+    this.activity.loader(false);
+    this.activity.toggle();
+  };
+  this.build = function (data) {
+    var _this = this;
+    scroll.minus();
+    html.append(scroll.render());
+    data.forEach(this.append.bind(this));
+    if (light) {
+      scroll.onWheel = function (step) {
+        if (step > 0) _this.down();else _this.up();
+      };
+    }
+    this.activity.loader(false);
+    this.activity.toggle();
+  };
+  this.append = function (element) {
+    var item = new _line_js__WEBPACK_IMPORTED_MODULE_0__.Line(element);
+    item.create();
+    item.onDown = this.down.bind(this);
+    item.onUp = this.up.bind(this);
+    item.onBack = this.back.bind(this);
+    item.onToggle = function () {
+      active = items.indexOf(item);
+    };
+    item.wrap = $('<div></div>');
+    if (light) {
+      scroll.append(item.wrap);
+    } else {
+      scroll.append(item.render());
+    }
+    items.push(item);
+  };
+  this.back = function () {
+    Lampa.Activity.backward();
+  };
+  this.detach = function () {
+    if (light) {
+      items.forEach(function (item) {
+        item.render().detach();
+      });
+      items.slice(active, active + 2).forEach(function (item) {
+        item.wrap.append(item.render());
+      });
+    }
+  };
+  this.down = function () {
+    active++;
+    active = Math.min(active, items.length - 1);
+    this.detach();
+    items[active].toggle();
+    scroll.update(items[active].render());
+  };
+  this.up = function () {
+    active--;
+    if (active < 0) {
+      active = 0;
+      this.detach();
+      Lampa.Controller.toggle('head');
+    } else {
+      this.detach();
+      items[active].toggle();
+    }
+    scroll.update(items[active].render());
+  };
+  this.start = function () {
+    var _this2 = this;
+    if (Lampa.Activity.active().activity !== this.activity) return;
+    Lampa.Controller.add('content', {
+      toggle: function toggle() {
+        if (items.length) {
+          _this2.detach();
+          items[active].toggle();
+        }
+      },
+      left: function left() {
+        if (Navigator.canmove('left')) Navigator.move('left');else Lampa.Controller.toggle('menu');
+      },
+      right: function right() {
+        Navigator.move('right');
+      },
+      up: function up() {
+        if (Navigator.canmove('up')) Navigator.move('up');else Lampa.Controller.toggle('head');
+      },
+      down: function down() {
+        if (Navigator.canmove('down')) Navigator.move('down');
+      },
+      back: this.back
+    });
+    Lampa.Controller.toggle('content');
+  };
+  this.pause = function () {};
+  this.stop = function () {};
+  this.render = function () {
+    return html;
+  };
+  this.destroy = function () {
+    Lampa.Arrays.destroy(items);
+    scroll.destroy();
+    html.remove();
+    items = [];
+  };
+}
+function Component(object) {
+  var scroll = new Lampa.Scroll({
+    mask: true,
+    over: true,
+    step: 250,
+    end_ratio: 2
+  });
+  var items = [];
+  var html = $('<div></div>');
+  var body = $('<div class="category-full category-full--trailers"></div>');
+  var newlampa = Lampa.Manifest.app_digital >= 166;
+  var light = newlampa ? false : Lampa.Storage.field('light_version') && window.innerWidth >= 767;
+  var total_pages = 0;
+  var last;
+  var waitload = false;
+  var active = 0;
+  this.create = function () {
+    _api_js__WEBPACK_IMPORTED_MODULE_2__.Api.full(object, this.build.bind(this), this.empty.bind(this));
+    return this.render();
+  };
+  this.empty = function () {
+    var empty = new Lampa.Empty();
+    scroll.append(empty.render());
+    this.start = empty.start;
+    this.activity.loader(false);
+    this.activity.toggle();
+  };
+  this.next = function () {
+    var _this = this;
+    if (waitload) return;
+    if (object.page < total_pages && object.page < 30) {
+      waitload = true;
+      object.page++;
+      _api_js__WEBPACK_IMPORTED_MODULE_2__.Api.full(object, function (result) {
+        if (result.results && result.results.length) {
+          _this.append(result, true);
+        } else {
+          Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
+        }
+        waitload = false;
+      }, function () {
+        Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
+        waitload = false;
+      });
+    } else {
+      Lampa.Noty.show(Lampa.Lang.translate('trailers_no_more_data'));
+    }
+  };
+  this.cardImgBackground = function (card_data) {
+    if (Lampa.Storage.field('background')) {
+      if (Lampa.Storage.get('background_type', 'complex') === 'poster' && window.innerWidth > 790) {
+        return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'original') : '';
+      }
+      return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'w500') : '';
+    }
+    return '';
+  };
+  this.append = function (data, append) {
+    var _this2 = this;
+    if (!append) body.empty();
+    data.results.forEach(function (element) {
+      var card = new _trailer_js__WEBPACK_IMPORTED_MODULE_1__.Trailer(element, {
+        type: object.type
+      });
+      card.create();
+      card.visible();
+      card.onFocus = function (target, card_data) {
+        last = target;
+        scroll.update(card.render(), true);
+        if (!light && !newlampa && scroll.isEnd()) _this2.next();
+        if (items.length > 0 && items.indexOf(card) === items.length - 1) {
+          var message = Lampa.Lang.translate('trailers_last_movie').replace('[title]', card_data.title || card_data.name);
+          Lampa.Noty.show(message);
+        }
+      };
+      body.append(card.render());
+      items.push(card);
+    });
+    var cardCount = data.results.length;
+    if (cardCount < 20) {
+      for (var i = cardCount; i < 20; i++) {
+        var placeholder = $('<div class="card card--placeholder" style="width: 33.3%; margin-bottom: 1.5em; visibility: hidden;"></div>');
+        body.append(placeholder);
+      }
+    }
+  };
+  this.build = function (data) {
+    var _this3 = this;
+    if (data.results && data.results.length) {
+      total_pages = data.total_pages || 1;
+      scroll.minus();
+      html.append(scroll.render());
+      this.append(data);
+      if (light && items.length) this.back();
+      if (total_pages > data.page && items.length) {
+        this.more();
+      }
+      scroll.append(body);
+      if (newlampa) {
+        scroll.onEnd = this.next.bind(this);
+        scroll.onWheel = function (step) {
+          if (!Lampa.Controller.own(_this3)) _this3.start();
+          if (step > 0) Navigator.move('down');else if (active > 0) Navigator.move('up');
+        }.bind(this);
+        var debouncedLoad = debounce(function () {
+          if (scroll.isEnd() && !waitload) {
+            _this3.next();
+          }
+        }, 100);
+        scroll.render().on('scroll', debouncedLoad);
+      }
+      this.activity.loader(false);
+      this.activity.toggle();
+    } else {
+      html.append(scroll.render());
+      this.empty();
+    }
+  };
+  this.more = function () {
+    var _this = this;
+    var more = $('<div class="selector" style="width: 100%; height: 5px"></div>');
+    more.on('hover:enter', function () {
+      var next = Lampa.Arrays.clone(object);
+      delete next.activity;
+      next.page = (next.page || 1) + 1;
+      Lampa.Activity.push({
+        url: next.url,
+        title: object.title || Lampa.Lang.translate('title_trailers'),
+        component: 'trailers_full',
+        type: next.type,
+        page: next.page
+      });
+    });
+    body.append(more);
+  };
+  this.back = function () {
+    last = items[0].render()[0];
+    var more = $('<div class="selector" style="width: 100%; height: 5px"></div>');
+    more.on('hover:enter', function () {
+      if (object.page > 1) {
+        Lampa.Activity.backward();
+      } else {
+        Lampa.Controller.toggle('head');
+      }
+    });
+    body.prepend(more);
+  };
+  this.start = function () {
+    if (Lampa.Activity.active().activity !== this.activity) return;
+    Lampa.Controller.add('content', {
+      link: this,
+      toggle: function toggle() {
+        Lampa.Controller.collectionSet(scroll.render());
+        Lampa.Controller.collectionFocus(last || false, scroll.render());
+      },
+      left: function left() {
+        if (Navigator.canmove('left')) Navigator.move('left');else Lampa.Controller.toggle('menu');
+      },
+      right: function right() {
+        Navigator.move('right');
+      },
+      up: function up() {
+        if (Navigator.canmove('up')) Navigator.move('up');else Lampa.Controller.toggle('head');
+      },
+      down: function down() {
+        if (Navigator.canmove('down')) Navigator.move('down');
+      },
+      back: function back() {
+        Lampa.Activity.backward();
+      }
+    });
+    Lampa.Controller.toggle('content');
+  };
+  this.pause = function () {};
+  this.stop = function () {};
+  this.render = function () {
+    return html;
+  };
+  this.destroy = function () {
+    Lampa.Arrays.destroy(items);
+    scroll.destroy();
+    html.remove();
+    body.remove();
+    items = [];
+  };
+}
+
+/***/ }),
+
+/***/ "./t2/line.js":
+/*!********************!*\
+  !*** ./t2/line.js ***!
+  \********************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Line: () => (/* binding */ Line)
+/* harmony export */ });
+/* harmony import */ var _trailer_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./trailer.js */ "./t2/trailer.js");
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./utils.js */ "./t2/utils.js");
+
+
+function Line(data) {
+  var _this = this;
+  var content = Lampa.Template.get('items_line', {
+    title: data.title
+  });
+  var body = content.find('.items-line__body');
+  var scroll = new Lampa.Scroll({
+    horizontal: true,
+    step: 600
+  });
+  var light = Lampa.Storage.field('light_version') && window.innerWidth >= 767;
+  var items = [];
+  var active = 0;
+  var more;
+  var filter;
+  var moreButton;
+  var last;
+  var visibleCards = light ? 6 : 10;
+  var loadedIndex = 0;
+  var isLoading = false;
+  this.create = function () {
+    scroll.render().find('.scroll__body').addClass('items-cards');
+    content.find('.items-line__title').text(data.title);
+    filter = $('<div class="items-line__more selector"><svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg></div>');
+    filter.css({
+      display: 'inline-block',
+      marginLeft: '10px',
+      cursor: 'pointer',
+      padding: '0.5em',
+      background: 'transparent',
+      border: 'none'
+    });
+    filter.on('hover:enter', function () {
+      var items = [{
+        title: Lampa.Lang.translate('trailers_filter_today'),
+        value: 'day',
+        selected: Lampa.Storage.get('trailers_' + data.type + '_filter', 'day') === 'day'
+      }, {
+        title: Lampa.Lang.translate('trailers_filter_week'),
+        value: 'week',
+        selected: Lampa.Storage.get('trailers_' + data.type + '_filter', 'day') === 'week'
+      }, {
+        title: Lampa.Lang.translate('trailers_filter_month'),
+        value: 'month',
+        selected: Lampa.Storage.get('trailers_' + data.type + '_filter', 'day') === 'month'
+      }, {
+        title: Lampa.Lang.translate('trailers_filter_year'),
+        value: 'year',
+        selected: Lampa.Storage.get('trailers_' + data.type + '_filter', 'day') === 'year'
+      }];
+      Lampa.Select.show({
+        title: Lampa.Lang.translate('trailers_filter'),
+        items: items,
+        onSelect: function onSelect(item) {
+          Lampa.Storage.set('trailer_category_cache_' + data.type, null);
+          categoryCache[data.type] = null;
+          Lampa.Storage.set('trailers_' + data.type + '_filter', item.value);
+          Lampa.Activity.push({
+            url: item.value === 'day' ? '/discover/' + (data.type.includes('movie') ? 'movie' : 'tv') + '?sort_by=popularity.desc' : item.value === 'week' ? '/discover/' + (data.type.includes('movie') ? 'movie' : 'tv') + '?sort_by=popularity.desc' : item.value === 'month' ? '/discover/' + (data.type.includes('movie') ? 'movie' : 'tv') + '?sort_by=popularity.desc&release_date.gte=' + getFormattedDate(30) : '/discover/' + (data.type.includes('movie') ? 'movie' : 'tv') + '?sort_by=popularity.desc&release_date.gte=' + getFormattedDate(365),
+            title: data.title,
+            component: 'trailers_main',
+            type: data.type,
+            page: 1
+          });
+        },
+        onBack: function onBack() {
+          Lampa.Controller.toggle('content');
+        }
+      });
+    });
+    moreButton = $('<div class="items-line__more selector">' + Lampa.Lang.translate('trailers_more') + '</div>');
+    moreButton.on('hover:enter', function () {
+      Lampa.Activity.push({
+        url: data.url,
+        title: data.title,
+        component: 'trailers_full',
+        type: data.type,
+        page: Math.floor(loadedIndex / visibleCards) + 2
+      });
+    });
+    content.find('.items-line__title').after(filter);
+    filter.after(moreButton);
+    this.bind();
+    body.append(scroll.render());
+    var debouncedLoad = (0,_utils_js__WEBPACK_IMPORTED_MODULE_1__.debounce)(function () {
+      if (scroll.isEnd() && !isLoading) {
+        loadMoreCards();
+      }
+    }, 200);
+    scroll.render().on('scroll', debouncedLoad);
+  };
+  function loadMoreCards() {
+    if (isLoading) return;
+    isLoading = true;
+    var remainingCards = data.results.slice(loadedIndex, loadedIndex + visibleCards);
+    if (remainingCards.length > 0) {
+      remainingCards.forEach(function (element) {
+        var card = new _trailer_js__WEBPACK_IMPORTED_MODULE_0__.Trailer(element, {
+          type: data.type
+        });
+        card.create();
+        card.visible();
+        card.onFocus = function (target, card_data, is_mouse) {
+          last = target;
+          active = items.indexOf(card);
+          if (_this.onFocus) _this.onFocus(card_data);
+          scroll.update(card.render(), true);
+          if (items.length > 0 && items.indexOf(card) === items.length - 1) {
+            var message = Lampa.Lang.translate('trailers_last_movie').replace('[title]', card_data.title || card_data.name);
+            Lampa.Noty.show(message);
+          }
+        };
+        scroll.append(card.render());
+        items.push(card);
+      });
+      loadedIndex += remainingCards.length;
+      Lampa.Layer.update();
+      isLoading = false;
+    } else {
+      Lampa.Activity.push({
+        url: data.url,
+        title: data.title,
+        component: 'trailers_full',
+        type: data.type,
+        page: Math.floor(loadedIndex / visibleCards) + 2
+      });
+      isLoading = false;
+    }
+  }
+  this.bind = function () {
+    loadMoreCards();
+    this.more();
+    Lampa.Layer.update();
+  };
+  this.cardImgBackground = function (card_data) {
+    if (Lampa.Storage.field('background')) {
+      if (Lampa.Storage.get('background_type', 'complex') === 'poster' && window.innerWidth > 790) {
+        return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'original') : '';
+      }
+      return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'w500') : '';
+    }
+    return '';
+  };
+  this.more = function () {
+    more = Lampa.Template.get('more');
+    more.addClass('more--trailers');
+    more.on('hover:enter', function () {
+      Lampa.Activity.push({
+        url: data.url,
+        title: data.title,
+        component: 'trailers_full',
+        type: data.type,
+        page: Math.floor(loadedIndex / visibleCards) + 2
+      });
+    });
+    more.on('hover:focus', function (e) {
+      last = e.target;
+      scroll.update(more, true);
+    });
+    scroll.append(more);
+  };
+  this.toggle = function () {
+    var _this2 = this;
+    Lampa.Controller.add('items_line', {
+      toggle: function toggle() {
+        Lampa.Controller.collectionSet(scroll.render());
+        Lampa.Controller.collectionFocus(items.length ? last : false, scroll.render());
+        if (last && items.length) {
+          scroll.update($(last), true);
+        }
+      },
+      right: function right() {
+        if (Navigator.canmove('right')) {
+          Navigator.move('right');
+          if (last && items.length) {
+            scroll.update($(last), true);
+          }
+        }
+        Lampa.Controller.enable('items_line');
+      },
+      left: function left() {
+        if (Navigator.canmove('left')) {
+          Navigator.move('left');
+          if (last && items.length) {
+            scroll.update($(last), true);
+          }
+        } else if (_this2.onLeft) {
+          _this2.onLeft();
+        } else {
+          Lampa.Controller.toggle('menu');
+        }
+      },
+      down: this.onDown,
+      up: this.onUp,
+      gone: function gone() {},
+      back: this.onBack
+    });
+    Lampa.Controller.toggle('items_line');
+  };
+  this.render = function () {
+    return content;
+  };
+  this.destroy = function () {
+    Lampa.Arrays.destroy(items);
+    scroll.destroy();
+    content.remove();
+    more && more.remove();
+    filter && filter.remove();
+    moreButton && moreButton.remove();
+    items = [];
+  };
+}
+
+/***/ }),
+
+/***/ "./t2/templates.js":
+/*!*************************!*\
+  !*** ./t2/templates.js ***!
+  \*************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   initTemplates: () => (/* binding */ initTemplates),
+/* harmony export */   translations: () => (/* binding */ translations)
+/* harmony export */ });
+var translations = {
+  trailers_popular: {
+    ru: 'Популярное',
+    uk: 'Популярне',
+    en: 'Popular'
+  },
+  trailers_in_theaters: {
+    ru: 'В прокате',
+    uk: 'В прокаті',
+    en: 'In Theaters'
+  },
+  trailers_upcoming_movies: {
+    ru: 'Ожидаемые фильмы',
+    uk: 'Очікувані фільми',
+    en: 'Upcoming Movies'
+  },
+  trailers_popular_series: {
+    ru: 'Популярные сериалы',
+    uk: 'Популярні серіали',
+    en: 'Popular Series'
+  },
+  trailers_new_series_seasons: {
+    ru: 'Новые сериалы и сезоны',
+    uk: 'Нові серіали та сезони',
+    en: 'New Series and Seasons'
+  },
+  trailers_upcoming_series: {
+    ru: 'Ожидаемые сериалы',
+    uk: 'Очікувані серіали',
+    en: 'Upcoming Series'
+  },
+  trailers_no_trailers: {
+    ru: 'Нет трейлеров',
+    uk: 'Немає трейлерів',
+    en: 'No trailers'
+  },
+  trailers_no_ua_trailer: {
+    ru: 'Нет украинского трейлера',
+    uk: 'Немає українського трейлера',
+    en: 'No Ukrainian trailer'
+  },
+  trailers_no_ru_trailer: {
+    ru: 'Нет русского трейлера',
+    uk: 'Немає російського трейлера',
+    en: 'No Russian trailer'
+  },
+  trailers_view: {
+    ru: 'Подробнее',
+    uk: 'Докладніше',
+    en: 'More'
+  },
+  title_trailers: {
+    ru: 'Трейлеры',
+    uk: 'Трейлери',
+    en: 'Trailers'
+  },
+  trailers_filter: {
+    ru: 'Фильтр',
+    uk: 'Фільтр',
+    en: 'Filter'
+  },
+  trailers_filter_today: {
+    ru: 'Сегодня',
+    uk: 'Сьогодні',
+    en: 'Today'
+  },
+  trailers_filter_week: {
+    ru: 'Неделя',
+    uk: 'Тиждень',
+    en: 'Week'
+  },
+  trailers_filter_month: {
+    ru: 'Месяц',
+    uk: 'Місяць',
+    en: 'Month'
+  },
+  trailers_filter_year: {
+    ru: 'Год',
+    uk: 'Рік',
+    en: 'Year'
+  },
+  trailers_movies: {
+    ru: 'Фильмы',
+    uk: 'Фільми',
+    en: 'Movies'
+  },
+  trailers_series: {
+    ru: 'Сериалы',
+    uk: 'Серіали',
+    en: 'Series'
+  },
+  trailers_more: {
+    ru: 'Ещё',
+    uk: 'Ще',
+    en: 'More'
+  },
+  trailers_popular_movies: {
+    ru: 'Популярные фильмы',
+    uk: 'Популярні фільми',
+    en: 'Popular Movies'
+  },
+  trailers_last_movie: {
+    ru: 'Это последний фильм: [title]',
+    uk: 'Це останній фільм: [title]',
+    en: 'This is the last movie: [title]'
+  },
+  trailers_no_more_data: {
+    ru: 'Больше нет данных для загрузки',
+    uk: 'Більше немає даних для завантаження',
+    en: 'No more data to load'
+  }
+};
+function initTemplates() {
+  Lampa.Template.add('trailer', '<div class="card selector card--trailer layer--render layer--visible"><div class="card__view"><img src="./img/img_load.svg" class="card__img"><div class="card__promo"><div class="card__promo-text"><div class="card__title"></div></div><div class="card__details"></div></div></div><div class="card__play"><img src="./img/icons/player/play.svg"></div></div>');
+  Lampa.Template.add('trailer_style', '<style>.card.card--trailer,.card-more.more--trailers{width:25.7em}.card.card--trailer .card__view{padding-bottom:56%;margin-bottom:0}.card.card--trailer .card__details{margin-top:0.8em}.card.card--trailer .card__play{position:absolute;top:50%;transform:translateY(-50%);left:1.5em;background:#000000b8;width:2.2em;height:2.2em;border-radius:100%;text-align:center;padding-top:0.6em}.card.card--trailer .card__play img{width:0.9em;height:1em}.card.card--trailer .card__rating{position:absolute;bottom:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.card.card--trailer .card__trailer-lang{position:absolute;top:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;text-transform:uppercase;font-size:1.2em}.card.card--trailer .card__release-date{position:absolute;top:2em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.card-more.more--trailers .card-more__box{padding-bottom:56%}.category-full--trailers{display:flex;flex-wrap:wrap;justify-content:space-between}.category-full--trailers .card{width:33.3%;margin-bottom:1.5em}.category-full--trailers .card .card__view{padding-bottom:56%;margin-bottom:0}.items-line__more{display:inline-block;margin-left:10px;cursor:pointer;padding:0.5em 1em}@media screen and (max-width:767px){.category-full--trailers .card{width:50%}}@media screen and (max-width:400px){.category-full--trailers .card{width:100%}}</style>');
+}
+
+/***/ }),
+
+/***/ "./t2/trailer.js":
+/*!***********************!*\
+  !*** ./t2/trailer.js ***!
+  \***********************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Trailer: () => (/* binding */ Trailer)
+/* harmony export */ });
+/* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./api.js */ "./t2/api.js");
+/* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_api_js__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./utils.js */ "./t2/utils.js");
+
+
+function Trailer(data, params) {
+  this.build = function () {
+    this.card = Lampa.Template.get('trailer', data);
+    this.img = this.card.find('img')[0];
+    this.is_youtube = params.type === 'rating';
+    this.rating = data.vote_average ? data.vote_average.toFixed(1) : '-';
+    this.trailer_lang = '';
+    this.release_date = '-';
+    if (!this.is_youtube) {
+      var create = ((data.release_date || data.first_air_date || '0000') + '').slice(0, 4);
+      var title = data.title || data.name || data.original_title || data.original_name;
+      this.card.find('.card__title').text(title);
+      this.card.find('.card__details').text(create + ' - ' + (data.original_title || data.original_name));
+      if (this.rating !== '-') {
+        this.card.find('.card__view').append('<div class="card__rating">' + this.rating + '</div>');
+      } else {
+        this.card.find('.card__view').append('<div class="card__rating">-</div>');
+      }
+      this.card.find('.card__view').append('<div class="card__trailer-lang"></div>');
+      this.card.find('.card__view').append('<div class="card__release-date"></div>');
+    } else {
+      this.card.find('.card__title').text(data.name);
+      this.card.find('.card__details').remove();
+    }
+  };
+  this.cardImgBackground = function (card_data) {
+    if (Lampa.Storage.field('background')) {
+      if (Lampa.Storage.get('background_type', 'complex') === 'poster' && window.innerWidth > 790) {
+        return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'original') : this.is_youtube ? 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg' : '';
+      }
+      return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'w500') : this.is_youtube ? 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg' : '';
+    }
+    return '';
+  };
+  this.image = function () {
+    var _this = this;
+    this.img.onload = function () {
+      _this.card.addClass('card--loaded');
+    };
+    this.img.onerror = function () {
+      _this.img.src = './img/img_broken.svg';
+    };
+  };
+  this.loadTrailerInfo = function () {
+    var _this = this;
+    if (!this.is_youtube && !this.trailer_lang) {
+      _api_js__WEBPACK_IMPORTED_MODULE_0__.Api.videos(data, function (videos) {
+        var trailers = videos.results ? videos.results.filter(function (v) {
+          return v.type === 'Trailer';
+        }) : [];
+        var preferredLangs = (0,_api_js__WEBPACK_IMPORTED_MODULE_0__.getPreferredLanguage)();
+        var video = trailers.find(function (v) {
+          return preferredLangs.includes(v.iso_639_1);
+        }) || trailers[0];
+        _this.trailer_lang = video ? video.iso_639_1 : '-';
+        if (_this.trailer_lang !== '-') {
+          _this.card.find('.card__trailer-lang').text(_this.trailer_lang.toUpperCase());
+        } else {
+          _this.card.find('.card__trailer-lang').text('-');
+        }
+        if (params.type === 'in_theaters' || params.type === 'upcoming_movies') {
+          if (data.release_details && data.release_details.results) {
+            var region = (0,_utils_js__WEBPACK_IMPORTED_MODULE_1__.getRegion)();
+            var releaseInfo = data.release_details.results.find(function (r) {
+              return r.iso_3166_1 === region;
+            });
+            if (releaseInfo && releaseInfo.release_dates && releaseInfo.release_dates.length) {
+              var releaseDate = releaseInfo.release_dates[0].release_date;
+              _this.release_date = (0,_utils_js__WEBPACK_IMPORTED_MODULE_1__.formatDateToDDMMYYYY)(releaseDate);
+            } else if (data.release_date) {
+              _this.release_date = (0,_utils_js__WEBPACK_IMPORTED_MODULE_1__.formatDateToDDMMYYYY)(data.release_date);
+            }
+          } else if (data.release_date) {
+            _this.release_date = (0,_utils_js__WEBPACK_IMPORTED_MODULE_1__.formatDateToDDMMYYYY)(data.release_date);
+          }
+        } else if (params.type === 'new_series_seasons' || params.type === 'upcoming_series') {
+          if (data.release_details && data.release_details.first_air_date) {
+            _this.release_date = (0,_utils_js__WEBPACK_IMPORTED_MODULE_1__.formatDateToDDMMYYYY)(data.release_details.first_air_date);
+          }
+        }
+        _this.card.find('.card__release-date').text(_this.release_date);
+      }, function () {
+        _this.trailer_lang = '-';
+        _this.card.find('.card__trailer-lang').text('-');
+        _this.card.find('.card__release-date').text('-');
+      });
+    }
+  };
+  this.play = function (id) {
+    if (!id) {
+      Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
+      return;
+    }
+    try {
+      if (Lampa.Manifest.app_digital >= 183) {
+        var item = {
+          title: Lampa.Utils.shortText(data.title || data.name, 50),
+          id: id,
+          youtube: true,
+          url: 'https://www.youtube.com/watch?v=' + id,
+          icon: '<img class="size-youtube" src="https://img.youtube.com/vi/' + id + '/default.jpg" />',
+          template: 'selectbox_icon'
+        };
+        Lampa.Player.play(item);
+        Lampa.Player.playlist([item]);
+      } else {
+        Lampa.YouTube.play(id);
+      }
+    } catch (e) {
+      Lampa.Noty.show('Помилка відтворення трейлера: ' + e.message);
+    }
+  };
+  this.create = function () {
+    var _this2 = this;
+    this.build();
+    this.card.on('hover:focus', function (e, is_mouse) {
+      Lampa.Background.change(_this2.cardImgBackground(data));
+      _this2.onFocus(e.target, data, is_mouse);
+      _this2.loadTrailerInfo();
+    }).on('hover:enter', function () {
+      if (_this2.is_youtube) {
+        _this2.play(data.id);
+      } else {
+        _api_js__WEBPACK_IMPORTED_MODULE_0__.Api.videos(data, function (videos) {
+          var preferredLangs = (0,_api_js__WEBPACK_IMPORTED_MODULE_0__.getPreferredLanguage)();
+          var trailers = videos.results ? videos.results.filter(function (v) {
+            return v.type === 'Trailer';
+          }) : [];
+          var video = trailers.find(function (v) {
+            return preferredLangs.includes(v.iso_639_1);
+          }) || trailers[0];
+          if (video && video.key) {
+            if (preferredLangs[0] === 'uk' && video.iso_639_1 !== 'uk' && video.iso_639_1 !== 'en') {
+              Lampa.Noty.show(Lampa.Lang.translate('trailers_no_ua_trailer'));
+            } else if (preferredLangs[0] === 'ru' && video.iso_639_1 !== 'ru' && video.iso_639_1 !== 'en') {
+              Lampa.Noty.show(Lampa.Lang.translate('trailers_no_ru_trailer'));
+            }
+            _this2.play(video.key);
+          } else {
+            Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
+          }
+        }, function () {
+          Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
+        });
+      }
+    }).on('hover:long', function () {
+      if (!_this2.is_youtube) {
+        var items = [{
+          title: Lampa.Lang.translate('trailers_view'),
+          view: true
+        }];
+        Lampa.Loading.start(function () {
+          _api_js__WEBPACK_IMPORTED_MODULE_0__.Api.clear();
+          Lampa.Loading.stop();
+        });
+        _api_js__WEBPACK_IMPORTED_MODULE_0__.Api.videos(data, function (videos) {
+          Lampa.Loading.stop();
+          var preferredLangs = (0,_api_js__WEBPACK_IMPORTED_MODULE_0__.getPreferredLanguage)();
+          var trailers = videos.results ? videos.results.filter(function (v) {
+            return v.type === 'Trailer';
+          }) : [];
+          if (trailers.length) {
+            items.push({
+              title: Lampa.Lang.translate('title_trailers'),
+              separator: true
+            });
+            trailers.forEach(function (video) {
+              if (video.key && preferredLangs.includes(video.iso_639_1)) {
+                items.push({
+                  title: video.name || 'Trailer',
+                  id: video.key,
+                  subtitle: video.iso_639_1
+                });
+              }
+            });
+          }
+          Lampa.Select.show({
+            title: Lampa.Lang.translate('title_action'),
+            items: items,
+            onSelect: function onSelect(item) {
+              Lampa.Controller.toggle('content');
+              if (item.view) {
+                Lampa.Activity.push({
+                  url: '',
+                  component: 'full',
+                  id: data.id,
+                  method: data.name ? 'tv' : 'movie',
+                  card: data,
+                  source: 'tmdb'
+                });
+              } else {
+                _this2.play(item.id);
+              }
+            },
+            onBack: function onBack() {
+              Lampa.Controller.toggle('content');
+            }
+          });
+        }, function () {
+          Lampa.Loading.stop();
+          Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
+        });
+      }
+    });
+    this.image();
+    this.loadTrailerInfo();
+  };
+  this.destroy = function () {
+    this.img.onerror = null;
+    this.img.onload = null;
+    this.img.src = '';
+    this.card.remove();
+    this.card = null;
+    this.img = null;
+  };
+  this.visible = function () {
+    if (this.visibled) return;
+    if (params.type === 'rating') {
+      this.img.src = 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg';
+    } else if (data.backdrop_path) {
+      this.img.src = Lampa.Api.img(data.backdrop_path, 'w500');
+    } else if (data.poster_path) {
+      this.img.src = Lampa.Api.img(data.poster_path);
+    } else {
+      this.img.src = './img/img_broken.svg';
+    }
+    this.visibled = true;
+  };
+  this.render = function () {
+    return this.card;
+  };
+}
+
+/***/ }),
+
+/***/ "./t2/utils.js":
+/*!*********************!*\
+  !*** ./t2/utils.js ***!
+  \*********************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   debounce: () => (/* binding */ debounce),
+/* harmony export */   formatDateToDDMMYYYY: () => (/* binding */ formatDateToDDMMYYYY),
+/* harmony export */   getFormattedDate: () => (/* binding */ getFormattedDate),
+/* harmony export */   getInterfaceLanguage: () => (/* binding */ getInterfaceLanguage),
+/* harmony export */   getPreferredLanguage: () => (/* binding */ getPreferredLanguage),
+/* harmony export */   getRegion: () => (/* binding */ getRegion)
+/* harmony export */ });
+function debounce(func, wait) {
+  var timeout;
+  return function () {
+    var context = this,
+      args = arguments;
+    clearTimeout(timeout);
+    timeout = setTimeout(function () {
+      func.apply(context, args);
+    }, wait);
+  };
+}
+function getFormattedDate(daysAgo) {
+  var today = new Date();
+  if (daysAgo) today.setDate(today.getDate() - daysAgo);
+  var year = today.getFullYear();
+  var month = String(today.getMonth() + 1).padStart(2, '0');
+  var day = String(today.getDate()).padStart(2, '0');
+  return year + '-' + month + '-' + day;
+}
+function formatDateToDDMMYYYY(dateStr) {
+  if (!dateStr) return '-';
+  var date = new Date(dateStr);
+  var day = String(date.getDate()).padStart(2, '0');
+  var month = String(date.getMonth() + 1).padStart(2, '0');
+  var year = date.getFullYear();
+  return day + '.' + month + '.' + year;
+}
+function getRegion() {
+  var lang = Lampa.Storage.get('language', 'ru');
+  return lang === 'uk' ? 'UA' : lang === 'ru' ? 'RU' : 'US';
+}
+function getInterfaceLanguage() {
+  return Lampa.Storage.get('language', 'ru');
+}
+function getPreferredLanguage() {
+  var lang = Lampa.Storage.get('language', 'ru');
+  if (lang === 'uk') {
+    return ['uk', 'en'];
+  } else if (lang === 'ru') {
+    return ['ru', 'en'];
+  } else {
+    return ['en'];
+  }
+}
+
+/***/ })
+
+/******/ 	});
+/************************************************************************/
+/******/ 	// The module cache
+/******/ 	var __webpack_module_cache__ = {};
+/******/ 	
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/ 		// Check if module is in cache
+/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
+/******/ 		if (cachedModule !== undefined) {
+/******/ 			return cachedModule.exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = __webpack_module_cache__[moduleId] = {
+/******/ 			// no module.id needed
+/******/ 			// no module.loaded needed
+/******/ 			exports: {}
+/******/ 		};
+/******/ 	
+/******/ 		// Execute the module function
+/******/ 		__webpack_modules__[moduleId](module, module.exports, __webpack_require__);
+/******/ 	
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/ 	
+/************************************************************************/
+/******/ 	/* webpack/runtime/compat get default export */
+/******/ 	(() => {
+/******/ 		// getDefaultExport function for compatibility with non-harmony modules
+/******/ 		__webpack_require__.n = (module) => {
+/******/ 			var getter = module && module.__esModule ?
+/******/ 				() => (module['default']) :
+/******/ 				() => (module);
+/******/ 			__webpack_require__.d(getter, { a: getter });
+/******/ 			return getter;
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/define property getters */
+/******/ 	(() => {
+/******/ 		// define getter functions for harmony exports
+/******/ 		__webpack_require__.d = (exports, definition) => {
+/******/ 			for(var key in definition) {
+/******/ 				if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
+/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 				}
+/******/ 			}
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
+/******/ 	(() => {
+/******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/make namespace object */
+/******/ 	(() => {
+/******/ 		// define __esModule on exports
+/******/ 		__webpack_require__.r = (exports) => {
+/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 			}
+/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/************************************************************************/
+var __webpack_exports__ = {};
+// This entry needs to be wrapped in an IIFE because it needs to be in strict mode.
+(() => {
+"use strict";
+/*!*********************!*\
+  !*** ./t2/index.js ***!
+  \*********************/
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _trailer_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./trailer.js */ "./t2/trailer.js");
+/* harmony import */ var _line_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./line.js */ "./t2/line.js");
+/* harmony import */ var _component_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./component.js */ "./t2/component.js");
+/* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./api.js */ "./t2/api.js");
+/* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_api_js__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var _templates_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./templates.js */ "./t2/templates.js");
+
+
+
+
+
+function startPlugin() {
+  if (window.plugin_trailers_ready) return;
+  window.plugin_trailers_ready = true;
+
+  // Додаємо переклади
+  Lampa.Lang.add(_templates_js__WEBPACK_IMPORTED_MODULE_4__.translations);
+
+  // Реєструємо компоненти
+  Lampa.Component.add('trailers_main', _component_js__WEBPACK_IMPORTED_MODULE_2__.Component$1);
+  Lampa.Component.add('trailers_full', _component_js__WEBPACK_IMPORTED_MODULE_2__.Component);
+
+  // Додаємо шаблони та стилі
+  (0,_templates_js__WEBPACK_IMPORTED_MODULE_4__.initTemplates)();
+  function add() {
+    var button = $('<li class="menu__item selector"><div class="menu__ico"><svg height="70" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/></svg></div><div class="menu__text">' + Lampa.Lang.translate('title_trailers') + '</div></li>');
+    button.on('hover:enter', function () {
+      Lampa.Activity.push({
+        url: '',
+        title: Lampa.Lang.translate('title_trailers'),
+        component: 'trailers_main',
+        page: 1
+      });
+    });
+    $('.menu .menu__list').eq(0).append(button);
+    $('body').append(Lampa.Template.get('trailer_style', {}, true));
+    Lampa.Storage.listener.follow('change', function (event) {
+      if (event.name === 'language') {
+        _api_js__WEBPACK_IMPORTED_MODULE_3__.Api.clear();
+      }
+    });
+  }
+  if (Lampa.TMDB && Lampa.TMDB.key()) {
+    add();
+  } else {
+    Lampa.Noty.show('TMDB API key is missing. Trailers plugin cannot be loaded.');
+  }
+}
+
+// Запускаємо плагін
+if (!window.appready) {
+  Lampa.Listener.follow('app', function (e) {
+    if (e.type === 'ready') {
+      startPlugin();
+    }
+  });
+} else {
+  startPlugin();
+}
+})();
+
+/******/ })()
+;
