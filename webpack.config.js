@@ -1,7 +1,7 @@
 const path = require('path');
 
 module.exports = {
-    entry: './t2/index.js', // Змінено шлях
+    entry: './t2/index.js',
     output: {
         path: path.resolve(__dirname, 'dist'),
         filename: 't2.js'
