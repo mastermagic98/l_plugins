@@ -6,7 +6,7 @@ module.exports = {
         path: path.resolve(__dirname, 'dist'),
         filename: 't2.js'
     },
-    mode: 'development', // Використовуємо режим development для уникнення оптимізацій
+    mode: 'development',
     module: {
         rules: [
             {
@@ -16,7 +16,6 @@ module.exports = {
                     loader: 'babel-loader',
                     options: {
                         presets: ['@babel/preset-env'],
-                        // Зберігаємо коментарі у вихідному коді
                         comments: true
                     }
                 }
@@ -24,9 +23,8 @@ module.exports = {
         ]
     },
     optimization: {
-        minimize: false, // Вимикаємо мінфікацію
-        usedExports: false // Вимикаємо tree-shaking, щоб зберегти весь код
+        minimize: false,
+        usedExports: false
     },
-    // Зберігаємо читабельний формат вихідного коду
-    devtool: false // Вимикаємо source maps, щоб не генерувати додаткові файли
+    devtool: false
 };
