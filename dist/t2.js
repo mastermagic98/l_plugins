@@ -1106,7 +1106,7 @@ function startPlugin() {
   if (window.plugin_trailers_ready) return;
   window.plugin_trailers_ready = true;
 
-  // Додаємо переклади
+  // Додаємо переклади 
   Lampa.Lang.add(_templates_js__WEBPACK_IMPORTED_MODULE_4__.translations);
 
   // Реєструємо компоненти
