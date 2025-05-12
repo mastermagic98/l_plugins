@@ -1,4 +1,3 @@
-// l_plugins/t2/utils.js
 export function debounce(func, wait) {
     var timeout;
     return function () {
