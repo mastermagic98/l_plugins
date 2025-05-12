@@ -1,12 +1,128 @@
 /******/ (() => { // webpackBootstrap
+/******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
 
 /***/ "./t2/api.js":
 /*!*******************!*\
   !*** ./t2/api.js ***!
   \*******************/
-/***/ (() => {
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Api: () => (/* binding */ Api),
+/* harmony export */   getPreferredLanguage: () => (/* binding */ getPreferredLanguage)
+/* harmony export */ });
+// Модуль для роботи з API TMDB
+var trailerCache = {};
+var categoryCache = {};
+var Api = {
+  // Очищення кешу
+  clear: function clear() {
+    Object.keys(trailerCache).forEach(function (key) {
+      return delete trailerCache[key];
+    });
+    Object.keys(categoryCache).forEach(function (key) {
+      return delete categoryCache[key];
+    });
+  },
+  // Отримання основних даних для головної сторінки
+  main: function main(onSuccess, onError) {
+    var types = [{
+      type: 'trailers_popular',
+      url: '/discover/movie?sort_by=popularity.desc'
+    }, {
+      type: 'trailers_in_theaters',
+      url: '/movie/now_playing'
+    }, {
+      type: 'trailers_upcoming_movies',
+      url: '/movie/upcoming'
+    }, {
+      type: 'trailers_popular_series',
+      url: '/discover/tv?sort_by=popularity.desc'
+    }, {
+      type: 'trailers_new_series_seasons',
+      url: '/tv/on_the_air'
+    }, {
+      type: 'trailers_upcoming_series',
+      url: '/tv/on_the_air'
+    }];
+    var results = [];
+    var completed = 0;
+    types.forEach(function (item) {
+      if (categoryCache[item.type]) {
+        results.push(categoryCache[item.type]);
+        completed++;
+        if (completed === types.length) {
+          onSuccess(results);
+        }
+        return;
+      }
+      Lampa.TMDB.get(item.url, {
+        language: Lampa.Storage.get('language', 'ru')
+      }, function (data) {
+        var result = {
+          title: Lampa.Lang.translate(item.type),
+          results: data.results || [],
+          url: item.url,
+          type: item.type
+        };
+        categoryCache[item.type] = result;
+        results.push(result);
+        completed++;
+        if (completed === types.length) {
+          onSuccess(results);
+        }
+      }, function () {
+        completed++;
+        if (completed === types.length) {
+          onSuccess(results);
+        }
+      });
+    });
+  },
+  // Отримання повних даних для сторінки трейлерів
+  full: function full(params, onSuccess, onError) {
+    var lang = Lampa.Storage.get('language', 'ru');
+    var cacheKey = "".concat(params.type, "_").concat(params.page, "_").concat(lang);
+    if (categoryCache[cacheKey]) {
+      onSuccess(categoryCache[cacheKey]);
+      return;
+    }
+    Lampa.TMDB.get(params.url, {
+      language: lang,
+      page: params.page
+    }, function (data) {
+      var result = {
+        results: data.results || [],
+        page: data.page || 1,
+        total_pages: data.total_pages || 1
+      };
+      categoryCache[cacheKey] = result;
+      onSuccess(result);
+    }, onError);
+  },
+  // Отримання відео для картки
+  videos: function videos(data, onSuccess, onError) {
+    var cacheKey = "video_".concat(data.id, "_").concat(Lampa.Storage.get('language', 'ru'));
+    if (trailerCache[cacheKey]) {
+      onSuccess(trailerCache[cacheKey]);
+      return;
+    }
+    Lampa.TMDB.get("/".concat(data.name ? 'tv' : 'movie', "/").concat(data.id, "/videos"), {
+      language: Lampa.Storage.get('language', 'ru')
+    }, function (videos) {
+      trailerCache[cacheKey] = videos;
+      onSuccess(videos);
+    }, onError);
+  }
+};
+
+// Функція для отримання бажаних мов
+function getPreferredLanguage() {
+  var lang = Lampa.Storage.get('language', 'ru');
+  return lang === 'uk' ? ['uk', 'en'] : lang === 'ru' ? ['ru', 'en'] : ['en'];
+}
 
 
 /***/ }),
@@ -17,7 +133,6 @@
   \*************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   Component: () => (/* binding */ Component),
@@ -26,7 +141,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _line_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./line.js */ "./t2/line.js");
 /* harmony import */ var _trailer_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./trailer.js */ "./t2/trailer.js");
 /* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./api.js */ "./t2/api.js");
-/* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_api_js__WEBPACK_IMPORTED_MODULE_2__);
 
 
 
@@ -346,7 +460,6 @@ function Component(object) {
   \********************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   Line: () => (/* binding */ Line)
@@ -576,7 +689,6 @@ function Line(data) {
   \*************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   initTemplates: () => (/* binding */ initTemplates),
@@ -707,13 +819,11 @@ function initTemplates() {
   \***********************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   Trailer: () => (/* binding */ Trailer)
 /* harmony export */ });
 /* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./api.js */ "./t2/api.js");
-/* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_api_js__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./utils.js */ "./t2/utils.js");
 
 
@@ -958,7 +1068,6 @@ function Trailer(data, params) {
   \*********************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   debounce: () => (/* binding */ debounce),
@@ -1042,18 +1151,6 @@ function getPreferredLanguage() {
 /******/ 	}
 /******/ 	
 /************************************************************************/
-/******/ 	/* webpack/runtime/compat get default export */
-/******/ 	(() => {
-/******/ 		// getDefaultExport function for compatibility with non-harmony modules
-/******/ 		__webpack_require__.n = (module) => {
-/******/ 			var getter = module && module.__esModule ?
-/******/ 				() => (module['default']) :
-/******/ 				() => (module);
-/******/ 			__webpack_require__.d(getter, { a: getter });
-/******/ 			return getter;
-/******/ 		};
-/******/ 	})();
-/******/ 	
 /******/ 	/* webpack/runtime/define property getters */
 /******/ 	(() => {
 /******/ 		// define getter functions for harmony exports
@@ -1084,9 +1181,8 @@ function getPreferredLanguage() {
 /******/ 	
 /************************************************************************/
 var __webpack_exports__ = {};
-// This entry needs to be wrapped in an IIFE because it needs to be in strict mode.
+// This entry needs to be wrapped in an IIFE because it needs to be isolated against other modules in the chunk.
 (() => {
-"use strict";
 /*!*********************!*\
   !*** ./t2/index.js ***!
   \*********************/
@@ -1095,7 +1191,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _line_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./line.js */ "./t2/line.js");
 /* harmony import */ var _component_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./component.js */ "./t2/component.js");
 /* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./api.js */ "./t2/api.js");
-/* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_api_js__WEBPACK_IMPORTED_MODULE_3__);
 /* harmony import */ var _templates_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./templates.js */ "./t2/templates.js");
 
 
