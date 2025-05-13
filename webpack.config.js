@@ -1,12 +1,20 @@
 const path = require('path');
+const TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = {
-    entry: './t2/index.js',
+    entry: {
+        t2: './src/t2/index.js',
+    },
     output: {
         path: path.resolve(__dirname, 'dist'),
-        filename: 't2.js'
+        filename: '[name].js',
+        library: {
+            type: 'module', // Експериментальна підтримка ES-модулів
+        },
     },
-    mode: 'development',
+    experiments: {
+        outputModule: true, // Увімкнення вихідного формату ES-модулів
+    },
     module: {
         rules: [
             {
@@ -15,16 +23,27 @@ module.exports = {
                 use: {
                     loader: 'babel-loader',
                     options: {
-                        presets: ['@babel/preset-env'],
-                        comments: true
-                    }
-                }
-            }
-        ]
+                        presets: [
+                            ['@babel/preset-env', {
+                                targets: 'defaults', // Сумісність із сучасними браузерами
+                                modules: false, // Збереження ES-модулів
+                            }],
+                        ],
+                    },
+                },
+            },
+        ],
     },
     optimization: {
-        minimize: false,
-        usedExports: false
+        minimize: true,
+        minimizer: [
+            new TerserPlugin({
+                terserOptions: {
+                    keep_fnames: true, // Збереження імен функцій
+                    keep_classnames: true, // Збереження імен класів і конструкторів
+                },
+            }),
+        ],
     },
-    devtool: false
+    mode: 'production',
 };
