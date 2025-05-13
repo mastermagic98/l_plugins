@@ -1423,7 +1423,7 @@ function Trailer(data, params) {
         var trailers = videos.results ? videos.results.filter(function (v) {
           return v.type === 'Trailer';
         }) : [];
-        var preferredLangs = (0,_api_js__WEBPACK_IMPORTED_MODULE_0__.getPreferredLanguage)();
+        var preferredLangs = (0,_utils_js__WEBPACK_IMPORTED_MODULE_1__.getPreferredLanguage)();
         var video = trailers.find(function (v) {
           return preferredLangs.includes(v.iso_639_1);
         }) || trailers[0];
@@ -1501,7 +1501,7 @@ function Trailer(data, params) {
         _this2.play(data.id);
       } else {
         _api_js__WEBPACK_IMPORTED_MODULE_0__.Api.videos(data, function (videos) {
-          var preferredLangs = (0,_api_js__WEBPACK_IMPORTED_MODULE_0__.getPreferredLanguage)();
+          var preferredLangs = (0,_utils_js__WEBPACK_IMPORTED_MODULE_1__.getPreferredLanguage)();
           var trailers = videos.results ? videos.results.filter(function (v) {
             return v.type === 'Trailer';
           }) : [];
@@ -1534,7 +1534,7 @@ function Trailer(data, params) {
         });
         _api_js__WEBPACK_IMPORTED_MODULE_0__.Api.videos(data, function (videos) {
           Lampa.Loading.stop();
-          var preferredLangs = (0,_api_js__WEBPACK_IMPORTED_MODULE_0__.getPreferredLanguage)();
+          var preferredLangs = (0,_utils_js__WEBPACK_IMPORTED_MODULE_1__.getPreferredLanguage)();
           var trailers = videos.results ? videos.results.filter(function (v) {
             return v.type === 'Trailer';
           }) : [];
