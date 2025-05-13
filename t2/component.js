@@ -1,88 +1,81 @@
 (function () {
-    function Component(object) {
+    function component(object) {
         var scroll;
         var items = [];
         var active = 0;
         var light;
 
         this.create = function () {
-            console.log('Component.create called');
-            try {
-                scroll = $('<div class="trailers scroll--h"></div>');
-                var menu = [];
-                if (!Lampa.Platform.is('tizen')) {
-                    menu.push({
-                        title: Lampa.Lang.translate('settings_reset'),
-                        subtitle: Lampa.Lang.translate('trailers_clear_cache'),
-                        clear: true
-                    });
-                }
-                Lampa.Component.add('trailers', this);
-                this.build();
-            } catch (e) {
-                console.error('Error in Component.create:', e);
-                scroll.append('<div class="trailers__empty">' + Lampa.Lang.translate('trailers_empty') + '</div>');
-            }
+            console.log('component.create called');
+            scroll = $('<div class="upcoming scroll--h"></div>');
+            this.build();
         };
 
         this.build = function () {
-            console.log('Component.build called');
-            try {
-                if (!Lampa || !Lampa.Status || !window.LampaPlugin.main) {
-                    console.error('Lampa.Status or main is undefined:', {
-                        Status: Lampa.Status,
-                        main: window.LampaPlugin.main
-                    });
-                    scroll.append('<div class="trailers__empty">' + Lampa.Lang.translate('trailers_empty') + '</div>');
-                    return;
+            console.log('component.build called');
+            var status = new Lampa.Status(5);
+            var results = {};
+            status.onComplite = function () {
+                console.log('Status completed:', results);
+                var hasItems = false;
+                for (var i in results) {
+                    if (results[i].results && results[i].results.length) {
+                        this.append(results[i]);
+                        hasItems = true;
+                    }
                 }
-                var status = new Lampa.Status(5);
-                var results = {};
-                status.onComplite = function () {
-                    console.log('Status completed:', results);
-                    var hasItems = false;
-                    for (var i in results) {
-                        if (results[i].results && results[i].results.length) {
-                            this.append(results[i]);
-                            hasItems = true;
-                        }
-                    }
-                    if (!hasItems) {
-                        console.log('No items to display');
-                        scroll.append('<div class="trailers__empty">' + Lampa.Lang.translate('trailers_empty') + '</div>');
-                    }
-                    if (light) Lampa.Background.immediately('');
-                    this.activity.loader(false);
-                    this.activity.toggle();
-                }.bind(this);
-                window.LampaPlugin.main(status, results);
-            } catch (e) {
-                console.error('Error in Component.build:', e);
-                scroll.append('<div class="trailers__empty">' + Lampa.Lang.translate('trailers_empty') + '</div>');
-            }
+                if (!hasItems) {
+                    scroll.append('<div class="upcoming__empty">' + Lampa.Lang.translate('upcoming_empty') + '</div>');
+                }
+                if (light) Lampa.Background.immediately('');
+                this.activity.loader(false);
+                this.activity.toggle();
+            }.bind(this);
+
+            var today = new Date();
+            var priorDate = new Date(new Date().setDate(today.getDate() - 30));
+            var dateString = priorDate.getFullYear() + '-' + (priorDate.getMonth() + 1).toString().padStart(2, '0') + '-' + priorDate.getDate().toString().padStart(2, '0');
+            Lampa.TMDB.api('discover/movie?region=' + (Lampa.Storage.get('region') || 'US') + '&language=' + (Lampa.Storage.get('language') || 'en') + '&sort_by=popularity.desc&release_date.gte=' + dateString + '&with_release_type=3|2', function (json) {
+                if (json.results) {
+                    var localStatus = new Lampa.Status(json.results.length);
+                    localStatus.onComplite = function () {
+                        results['in_theaters'] = {
+                            title: Lampa.Lang.translate('upcoming_in_theaters'),
+                            results: json.results,
+                            type: 'in_theaters'
+                        };
+                        status.append({}, {});
+                    };
+                    json.results.forEach(function (item, i) {
+                        Lampa.TMDB.release(item.id, 'movie', function (release) {
+                            json.results[i].release_details = release;
+                            localStatus.append(item.id, {});
+                        }, function () {
+                            localStatus.append(item.id, {});
+                        });
+                    });
+                } else {
+                    status.append({}, {});
+                }
+            }, function () {
+                status.append({}, {});
+            });
+
+            // Додаткові запити для upcoming, series_new, series_upcoming, popular...
         };
 
         this.append = function (element) {
-            console.log('Component.append called:', element);
-            try {
-                var item = new window.LampaPlugin.Line(element);
-                item.create();
-                item.onDown = this.down.bind(this);
-                item.onUp = this.up.bind(this);
-                item.onBack = this.back.bind(this);
-                item.onToggle = function () {
-                    active = items.indexOf(item);
-                };
-                item.wrap = $('<div></div>');
-                if (light) {
-                    scroll.append(item.wrap);
-                } else {
-                    scroll.append(item.render());
-                }
-                items.push(item);
-            } catch (e) {
-                console.error('Error in Component.append:', e);
-            }
+            console.log('component.append called:', element);
+            var item = new window.plugin_upcoming.line(element);
+            item.create();
+            item.onDown = this.down.bind(this);
+            item.onUp = this.up.bind(this);
+            item.onBack = this.back.bind(this);
+            item.onToggle = function () {
+                active = items.indexOf(item);
+            };
+            scroll.append(item.render());
+            items.push(item);
         };
 
         this.down = function () {
@@ -114,8 +107,10 @@
             items = [];
             if (scroll) scroll.remove();
         };
+
+        Lampa.Component.add('upcoming', this);
     }
 
-    window.LampaPlugin = window.LampaPlugin || {};
-    window.LampaPlugin.Component = Component;
+    window.plugin_upcoming = window.plugin_upcoming || {};
+    window.plugin_upcoming.component = component;
 })();
