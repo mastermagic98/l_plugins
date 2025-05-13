@@ -3,17 +3,17 @@ const TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = {
     entry: {
-        t2: './src/t2/index.js',
+        t2: './t2/index.js', // Виправлено шлях
     },
     output: {
         path: path.resolve(__dirname, 'dist'),
         filename: '[name].js',
         library: {
-            type: 'module', // Експериментальна підтримка ES-модулів
+            type: 'module',
         },
     },
     experiments: {
-        outputModule: true, // Увімкнення вихідного формату ES-модулів
+        outputModule: true,
     },
     module: {
         rules: [
@@ -25,8 +25,8 @@ module.exports = {
                     options: {
                         presets: [
                             ['@babel/preset-env', {
-                                targets: 'defaults', // Сумісність із сучасними браузерами
-                                modules: false, // Збереження ES-модулів
+                                targets: 'defaults',
+                                modules: false,
                             }],
                         ],
                     },
@@ -39,8 +39,8 @@ module.exports = {
         minimizer: [
             new TerserPlugin({
                 terserOptions: {
-                    keep_fnames: true, // Збереження імен функцій
-                    keep_classnames: true, // Збереження імен класів і конструкторів
+                    keep_fnames: true,
+                    keep_classnames: true,
                 },
             }),
         ],
