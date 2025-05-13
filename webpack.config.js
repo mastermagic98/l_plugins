@@ -1,5 +1,4 @@
 const path = require('path');
-const TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = {
     entry: {
@@ -26,8 +25,13 @@ module.exports = {
                         presets: [
                             ['@babel/preset-env', {
                                 targets: 'defaults',
-                                modules: false,
+                                modules: false, // Збереження ES-модулів
+                                loose: true, // Менш агресивна транспіляція
+                                bugfixes: true,
                             }],
+                        ],
+                        plugins: [
+                            '@babel/plugin-transform-modules-commonjs', // Конвертація ES-модулів у CommonJS для простоти
                         ],
                     },
                 },
@@ -35,7 +39,8 @@ module.exports = {
         ],
     },
     optimization: {
-        minimize: false, // Вимкнено мінімізацію
+        minimize: false, // Без мінімізації
+        concatenateModules: true, // Об’єднання модулів у читабельний спосіб
     },
-    mode: 'development', // Змінено на development для читабельного коду
+    mode: 'development', // Читабельний код
 };
