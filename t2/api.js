@@ -10,6 +10,7 @@ const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 години в мілісекун�
 // Очищення застарілого кешу
 function clearExpiredCache() {
     // Очищення trailerCache
+    console.log('Clearing expired cache'); // Діагностика
     for (var key in trailerCache) {
         if (trailerCache[key].timestamp && Date.now() - trailerCache[key].timestamp > CACHE_TTL) {
             delete trailerCache[key];
