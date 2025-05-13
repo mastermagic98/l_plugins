@@ -1,47 +1,28 @@
 import { Trailer } from './trailer.js';
-import { Api } from './api.js';
 
 function Line(data) {
-    var line = this;
+    this.data = data;
+    this.cards = [];
 
     this.create = function () {
-        var items = [];
-        var status = new Lampa.Status(data.results.length);
-
-        status.onComplite = function () {
-            items.forEach(function (card) {
-                card.create();
-            });
-            line.cards = items;
-        };
-
-        data.results.forEach(function (item) {
-            Api.videos(item, function (videos) {
-                var trailers = videos.results ? videos.results.filter(function (v) {
-                    return v.type === 'Trailer';
-                }) : [];
-                if (trailers.length > 0) {
-                    var card = new Trailer(item, { type: data.type });
-                    items.push(card);
-                }
-                status.append(item.id, {});
-            }, function () {
-                // Не додаємо картку, якщо трейлери не знайдено
-                status.append(item.id, {});
-            });
+        this.cards = [];
+        this.data.results.forEach(item => {
+            const card = new Trailer(item, { type: this.data.type });
+            card.create();
+            this.cards.push(card);
         });
     };
 
     this.render = function () {
-        var element = Lampa.Template.get('line', { title: data.title });
-        this.cards.forEach(function (card) {
+        const element = Lampa.Template.get('line', { title: this.data.title });
+        this.cards.forEach(card => {
             element.find('.line__cards').append(card.render());
         });
         return element;
     };
 
     this.destroy = function () {
-        this.cards.forEach(function (card) {
+        this.cards.forEach(card => {
             card.destroy();
         });
         this.cards = [];
