@@ -1,5 +1,4 @@
 const path = require('path');
-const WebpackObfuscator = require('webpack-obfuscator');
 const webpack = require('webpack');
 
 module.exports = {
@@ -11,7 +10,7 @@ module.exports = {
     },
     mode: 'production',
     optimization: {
-        minimize: false
+        minimize: false // Вимикаємо мініфікацію, щоб зберегти коментарі та форматування
     },
     module: {
         rules: [
@@ -28,13 +27,8 @@ module.exports = {
         ]
     },
     plugins: [
-        new WebpackObfuscator({
-            rotateStringArray: true,
-            stringArray: true,
-            stringArrayThreshold: 0.75
-        }, []),
         new webpack.BannerPlugin({
-            banner: '(function () {',
+            banner: "(function () {\n    'use strict';",
             raw: true,
             entryOnly: true
         }),
