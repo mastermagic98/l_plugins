@@ -22,8 +22,9 @@ function clearExpiredCache() {
 setInterval(clearExpiredCache, 3600 * 1000);
 
 function finalizeResults(json, status, results, type) {
+    console.log('finalizeResults called:', { json, type }); // Діагностика
     if (!json.results) {
-        console.error('No results in JSON:', json); // Діагностика
+        console.error('No results in JSON:', json);
         status.append({}, {});
         return;
     }
@@ -38,7 +39,7 @@ function finalizeResults(json, status, results, type) {
             original_title: item.original_title,
             original_name: item.original_name,
             name: item.name,
-            release_details: item.release_details || {} // Додано значення за замовчуванням
+            release_details: item.release_details || {}
         };
     });
     results[type] = {
@@ -111,7 +112,11 @@ var Api = {
 };
 
 function main(status, results) {
-    console.log('main called'); // Діагностика
+    console.log('main called:', { status, results }); // Діагностика
+    if (!(status instanceof Lampa.Status)) {
+        console.error('Invalid status object:', status);
+        return;
+    }
     Api.getLocalMoviesInTheaters(status, results);
     Api.getUpcomingMovies(status, results);
     Api.getNewSeriesSeasons(status, results);
