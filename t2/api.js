@@ -26,7 +26,7 @@ function clearExpiredCache() {
 setInterval(clearExpiredCache, 3600 * 1000);
 
 function finalizeResults(json, status, results, type) {
-    console.log('finalizeResults called:', { json, type });
+    console.log('finalizeResults called:', { type, resultsLength: json.results ? json.results.length : 0 });
     if (!json.results) {
         console.error('No results in JSON:', json);
         if (status && typeof status.append === 'function') {
@@ -40,7 +40,7 @@ function finalizeResults(json, status, results, type) {
             title: item.title || item.name,
             poster_path: item.poster_path,
             backdrop_path: item.backdrop_path,
-            vote_average: item.vote_average,
+            vote_average: item.vote_average, // Виправлено з item.vot
             release_date: item.release_date || item.first_air_date,
             original_title: item.original_title,
             original_name: item.original_name,
@@ -71,15 +71,20 @@ var Api = {
         }
         var key = data.id + '_' + (data.name ? 'tv' : 'movie');
         if (trailerCache[key] && trailerCache[key].timestamp && Date.now() - trailerCache[key].timestamp < CACHE_TTL) {
+            console.log('Using cached videos for:', key);
             success(trailerCache[key].data);
         } else {
             Lampa.TMDB.video(data.id, data.name ? 'tv' : 'movie', function (json) {
+                console.log('TMDB video response:', json);
                 trailerCache[key] = {
                     data: json,
                     timestamp: Date.now()
                 };
                 success(json);
-            }, fail);
+            }, function () {
+                console.error('TMDB video request failed');
+                if (typeof fail === 'function') fail();
+            });
         }
     },
     getLocalMoviesInTheaters: function getLocalMoviesInTheaters(status, results) {
@@ -93,13 +98,14 @@ var Api = {
         }
         var key = 'in_theaters_' + getRegion();
         if (categoryCache[key] && categoryCache[key].timestamp && Date.now() - categoryCache[key].timestamp < CACHE_TTL) {
+            console.log('Using cached data for:', key);
             finalizeResults(categoryCache[key].data, status, results, 'in_theaters');
         } else {
             var today = new Date();
             var priorDate = new Date(new Date().setDate(today.getDate() - 30));
             var dateString = priorDate.getFullYear() + '-' + (priorDate.getMonth() + 1).toString().padStart(2, '0') + '-' + priorDate.getDate().toString().padStart(2, '0');
             Lampa.TMDB.api('discover/movie?region=' + getRegion() + '&language=' + getInterfaceLanguage() + '&sort_by=popularity.desc&release_date.gte=' + dateString + '&with_release_type=3|2', function (json) {
-                console.log('TMDB response:', json);
+                console.log('TMDB response for in_theaters:', json);
                 if (json.results) {
                     var localStatus = new Lampa.Status(json.results.length);
                     localStatus.onComplite = function () {
@@ -127,7 +133,7 @@ var Api = {
                     }
                 }
             }, function () {
-                console.error('TMDB request failed');
+                console.error('TMDB request failed for in_theaters');
                 if (status && typeof status.append === 'function') {
                     status.append({}, {});
                 }
@@ -145,68 +151,11 @@ var Api = {
         }
         var key = 'upcoming_' + getRegion();
         if (categoryCache[key] && categoryCache[key].timestamp && Date.now() - categoryCache[key].timestamp < CACHE_TTL) {
+            console.log('Using cached data for:', key);
             finalizeResults(categoryCache[key].data, status, results, 'upcoming');
         } else {
             var today = new Date();
             var nextMonth = new Date(new Date().setMonth(today.getMonth() + 1));
             var dateString = today.getFullYear() + '-' + (today.getMonth() + 1).toString().padStart(2, '0') + '-' + today.getDate().toString().padStart(2, '0');
             var endDateString = nextMonth.getFullYear() + '-' + (nextMonth.getMonth() + 1).toString().padStart(2, '0') + '-' + nextMonth.getDate().toString().padStart(2, '0');
-            Lampa.TMDB.api('discover/movie?region=' + getRegion() + '&language=' + getInterfaceLanguage() + '&sort_by=popularity.desc&release_date.gte=' + dateString + '&release_date.lte=' + endDateString, function (json) {
-                console.log('TMDB response for upcoming:', json);
-                if (json.results) {
-                    var localStatus = new Lampa.Status(json.results.length);
-                    localStatus.onComplite = function () {
-                        finalizeResults(json, status, results, 'upcoming');
-                    };
-                    json.results.forEach(function (item, i) {
-                        Lampa.TMDB.release(item.id, 'movie', function (release) {
-                            json.results[i].release_details = release;
-                            localStatus.append(item.id, {});
-                        }, function () {
-                            localStatus.append(item.id, {});
-                        });
-                    });
-                    categoryCache[key] = {
-                        data: json,
-                        timestamp: Date.now()
-                    };
-                    if (Lampa && Lampa.Storage) {
-                        Lampa.Storage.set('trailer_category_cache_' + key, categoryCache[key]);
-                    }
-                } else {
-                    console.error('No results for upcoming');
-                    if (status && typeof status.append === 'function') {
-                        status.append({}, {});
-                    }
-                }
-            }, function () {
-                console.error('TMDB request failed for upcoming');
-                if (status && typeof status.append === 'function') {
-                    status.append({}, {});
-                }
-            });
-        }
-    },
-    // ... (інші методи аналогічно оновлені)
-};
-
-function main(status, results) {
-    console.log('main called:', { status, results });
-    if (!Lampa || !Lampa.Status || !Lampa.TMDB) {
-        console.error('Lampa API unavailable:', { Status: Lampa.Status, TMDB: Lampa.TMDB });
-        return;
-    }
-    if (!status || typeof status.append !== 'function') {
-        console.error('Invalid status object:', status);
-        return;
-    }
-    Api.getLocalMoviesInTheaters(status, results);
-    Api.getUpcomingMovies(status, results);
-    Api.getNewSeriesSeasons(status, results);
-    Api.getUpcomingSeries(status, results);
-    Api.getPopularTrailers(status, results);
-}
-
-window.LampaPlugin = window.LampaPlugin || {};
-window.LampaPlugin.Api = Api;
-window.LampaPlugin.main = main;
+            Lampa.TMDB.api('discover/movie?region=' + getRegion() + '&language=' + getInterfaceLanguage() + '&sort_by=popularity.desc&release_date.gte=' +
