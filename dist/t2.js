@@ -1023,224 +1023,58 @@ function Component(object) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   Line: () => (/* binding */ Line)
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 /* harmony import */ var _trailer_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./trailer.js */ "./t2/trailer.js");
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./utils.js */ "./t2/utils.js");
+/* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./api.js */ "./t2/api.js");
 
 
 function Line(data) {
-  var _this = this;
-  var content = Lampa.Template.get('items_line', {
-    title: data.title
-  });
-  var body = content.find('.items-line__body');
-  var scroll = new Lampa.Scroll({
-    horizontal: true,
-    step: 600
-  });
-  var light = Lampa.Storage.field('light_version') && window.innerWidth >= 767;
-  var items = [];
-  var active = 0;
-  var more;
-  var filter;
-  var moreButton;
-  var last;
-  var visibleCards = light ? 6 : 10;
-  var loadedIndex = 0;
-  var isLoading = false;
+  var line = this;
   this.create = function () {
-    scroll.render().find('.scroll__body').addClass('items-cards');
-    content.find('.items-line__title').text(data.title);
-    filter = $('<div class="items-line__more selector"><svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg></div>');
-    filter.css({
-      display: 'inline-block',
-      marginLeft: '10px',
-      cursor: 'pointer',
-      padding: '0.5em',
-      background: 'transparent',
-      border: 'none'
-    });
-    filter.on('hover:enter', function () {
-      var items = [{
-        title: Lampa.Lang.translate('trailers_filter_today'),
-        value: 'day',
-        selected: Lampa.Storage.get('trailers_' + data.type + '_filter', 'day') === 'day'
-      }, {
-        title: Lampa.Lang.translate('trailers_filter_week'),
-        value: 'week',
-        selected: Lampa.Storage.get('trailers_' + data.type + '_filter', 'day') === 'week'
-      }, {
-        title: Lampa.Lang.translate('trailers_filter_month'),
-        value: 'month',
-        selected: Lampa.Storage.get('trailers_' + data.type + '_filter', 'day') === 'month'
-      }, {
-        title: Lampa.Lang.translate('trailers_filter_year'),
-        value: 'year',
-        selected: Lampa.Storage.get('trailers_' + data.type + '_filter', 'day') === 'year'
-      }];
-      Lampa.Select.show({
-        title: Lampa.Lang.translate('trailers_filter'),
-        items: items,
-        onSelect: function onSelect(item) {
-          Lampa.Storage.set('trailer_category_cache_' + data.type, null);
-          categoryCache[data.type] = null;
-          Lampa.Storage.set('trailers_' + data.type + '_filter', item.value);
-          Lampa.Activity.push({
-            url: item.value === 'day' ? '/discover/' + (data.type.includes('movie') ? 'movie' : 'tv') + '?sort_by=popularity.desc' : item.value === 'week' ? '/discover/' + (data.type.includes('movie') ? 'movie' : 'tv') + '?sort_by=popularity.desc' : item.value === 'month' ? '/discover/' + (data.type.includes('movie') ? 'movie' : 'tv') + '?sort_by=popularity.desc&release_date.gte=' + getFormattedDate(30) : '/discover/' + (data.type.includes('movie') ? 'movie' : 'tv') + '?sort_by=popularity.desc&release_date.gte=' + getFormattedDate(365),
-            title: data.title,
-            component: 'trailers_main',
-            type: data.type,
-            page: 1
-          });
-        },
-        onBack: function onBack() {
-          Lampa.Controller.toggle('content');
-        }
-      });
-    });
-    moreButton = $('<div class="items-line__more selector">' + Lampa.Lang.translate('trailers_more') + '</div>');
-    moreButton.on('hover:enter', function () {
-      Lampa.Activity.push({
-        url: data.url,
-        title: data.title,
-        component: 'trailers_full',
-        type: data.type,
-        page: Math.floor(loadedIndex / visibleCards) + 2
-      });
-    });
-    content.find('.items-line__title').after(filter);
-    filter.after(moreButton);
-    this.bind();
-    body.append(scroll.render());
-    var debouncedLoad = (0,_utils_js__WEBPACK_IMPORTED_MODULE_1__.debounce)(function () {
-      if (scroll.isEnd() && !isLoading) {
-        loadMoreCards();
-      }
-    }, 200);
-    scroll.render().on('scroll', debouncedLoad);
-  };
-  function loadMoreCards() {
-    if (isLoading) return;
-    isLoading = true;
-    var remainingCards = data.results.slice(loadedIndex, loadedIndex + visibleCards);
-    if (remainingCards.length > 0) {
-      remainingCards.forEach(function (element) {
-        var card = new _trailer_js__WEBPACK_IMPORTED_MODULE_0__.Trailer(element, {
-          type: data.type
-        });
+    var items = [];
+    var status = new Lampa.Status(data.results.length);
+    status.onComplite = function () {
+      items.forEach(function (card) {
         card.create();
-        card.visible();
-        card.onFocus = function (target, card_data, is_mouse) {
-          last = target;
-          active = items.indexOf(card);
-          if (_this.onFocus) _this.onFocus(card_data);
-          scroll.update(card.render(), true);
-          if (items.length > 0 && items.indexOf(card) === items.length - 1) {
-            var message = Lampa.Lang.translate('trailers_last_movie').replace('[title]', card_data.title || card_data.name);
-            Lampa.Noty.show(message);
-          }
-        };
-        scroll.append(card.render());
-        items.push(card);
       });
-      loadedIndex += remainingCards.length;
-      Lampa.Layer.update();
-      isLoading = false;
-    } else {
-      Lampa.Activity.push({
-        url: data.url,
-        title: data.title,
-        component: 'trailers_full',
-        type: data.type,
-        page: Math.floor(loadedIndex / visibleCards) + 2
-      });
-      isLoading = false;
-    }
-  }
-  this.bind = function () {
-    loadMoreCards();
-    this.more();
-    Lampa.Layer.update();
-  };
-  this.cardImgBackground = function (card_data) {
-    if (Lampa.Storage.field('background')) {
-      if (Lampa.Storage.get('background_type', 'complex') === 'poster' && window.innerWidth > 790) {
-        return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'original') : '';
-      }
-      return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'w500') : '';
-    }
-    return '';
-  };
-  this.more = function () {
-    more = Lampa.Template.get('more');
-    more.addClass('more--trailers');
-    more.on('hover:enter', function () {
-      Lampa.Activity.push({
-        url: data.url,
-        title: data.title,
-        component: 'trailers_full',
-        type: data.type,
-        page: Math.floor(loadedIndex / visibleCards) + 2
+      line.cards = items;
+    };
+    data.results.forEach(function (item) {
+      _api_js__WEBPACK_IMPORTED_MODULE_1__.Api.videos(item, function (videos) {
+        var trailers = videos.results ? videos.results.filter(function (v) {
+          return v.type === 'Trailer';
+        }) : [];
+        if (trailers.length > 0) {
+          var card = new _trailer_js__WEBPACK_IMPORTED_MODULE_0__.Trailer(item, {
+            type: data.type
+          });
+          items.push(card);
+        }
+        status.append(item.id, {});
+      }, function () {
+        // Не додаємо картку, якщо трейлери не знайдено
+        status.append(item.id, {});
       });
     });
-    more.on('hover:focus', function (e) {
-      last = e.target;
-      scroll.update(more, true);
-    });
-    scroll.append(more);
-  };
-  this.toggle = function () {
-    var _this2 = this;
-    Lampa.Controller.add('items_line', {
-      toggle: function toggle() {
-        Lampa.Controller.collectionSet(scroll.render());
-        Lampa.Controller.collectionFocus(items.length ? last : false, scroll.render());
-        if (last && items.length) {
-          scroll.update($(last), true);
-        }
-      },
-      right: function right() {
-        if (Navigator.canmove('right')) {
-          Navigator.move('right');
-          if (last && items.length) {
-            scroll.update($(last), true);
-          }
-        }
-        Lampa.Controller.enable('items_line');
-      },
-      left: function left() {
-        if (Navigator.canmove('left')) {
-          Navigator.move('left');
-          if (last && items.length) {
-            scroll.update($(last), true);
-          }
-        } else if (_this2.onLeft) {
-          _this2.onLeft();
-        } else {
-          Lampa.Controller.toggle('menu');
-        }
-      },
-      down: this.onDown,
-      up: this.onUp,
-      gone: function gone() {},
-      back: this.onBack
-    });
-    Lampa.Controller.toggle('items_line');
   };
   this.render = function () {
-    return content;
+    var element = Lampa.Template.get('line', {
+      title: data.title
+    });
+    this.cards.forEach(function (card) {
+      element.find('.line__cards').append(card.render());
+    });
+    return element;
   };
   this.destroy = function () {
-    Lampa.Arrays.destroy(items);
-    scroll.destroy();
-    content.remove();
-    more && more.remove();
-    filter && filter.remove();
-    moreButton && moreButton.remove();
-    items = [];
+    this.cards.forEach(function (card) {
+      card.destroy();
+    });
+    this.cards = [];
   };
 }
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (Line);
 
 /***/ }),
 
