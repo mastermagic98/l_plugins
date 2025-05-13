@@ -1026,41 +1026,24 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 /* harmony import */ var _trailer_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./trailer.js */ "./t2/trailer.js");
-/* harmony import */ var _api_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./api.js */ "./t2/api.js");
-
 
 function Line(data) {
-  var line = this;
+  this.data = data;
+  this.cards = [];
   this.create = function () {
-    var items = [];
-    var status = new Lampa.Status(data.results.length);
-    status.onComplite = function () {
-      items.forEach(function (card) {
-        card.create();
+    var _this = this;
+    this.cards = [];
+    this.data.results.forEach(function (item) {
+      var card = new _trailer_js__WEBPACK_IMPORTED_MODULE_0__.Trailer(item, {
+        type: _this.data.type
       });
-      line.cards = items;
-    };
-    data.results.forEach(function (item) {
-      _api_js__WEBPACK_IMPORTED_MODULE_1__.Api.videos(item, function (videos) {
-        var trailers = videos.results ? videos.results.filter(function (v) {
-          return v.type === 'Trailer';
-        }) : [];
-        if (trailers.length > 0) {
-          var card = new _trailer_js__WEBPACK_IMPORTED_MODULE_0__.Trailer(item, {
-            type: data.type
-          });
-          items.push(card);
-        }
-        status.append(item.id, {});
-      }, function () {
-        // Не додаємо картку, якщо трейлери не знайдено
-        status.append(item.id, {});
-      });
+      card.create();
+      _this.cards.push(card);
     });
   };
   this.render = function () {
     var element = Lampa.Template.get('line', {
-      title: data.title
+      title: this.data.title
     });
     this.cards.forEach(function (card) {
       element.find('.line__cards').append(card.render());
