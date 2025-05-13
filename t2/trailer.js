@@ -1,174 +1,247 @@
 (function () {
-    function trailer(data, params) {
-        var _this = this;
-
-        this.card;
-
+    function Trailer(data, params) {
         this.build = function () {
-            _this.card = $('<div class="trailer card--trailer"><div class="trailer__content"></div></div>');
-            _this.card.data('card', data);
+            this.card = Lampa.Template.get('trailer', data);
+            this.img = this.card.find('img')[0];
+            this.is_youtube = params.type === 'rating';
+            this.rating = data.vote_average ? data.vote_average.toFixed(1) : '-';
+            this.trailer_lang = '';
+            this.release_date = '-';
+
+            if (!this.is_youtube) {
+                var create = ((data.release_date || data.first_air_date || '0000') + '').slice(0, 4);
+                var title = data.title || data.name || data.original_title || data.original_name;
+                this.card.find('.card__title').text(title);
+                this.card.find('.card__details').text(create + ' - ' + (data.original_title || data.original_name));
+                if (this.rating !== '-') {
+                    this.card.find('.card__view').append('<div class="card__rating">' + this.rating + '</div>');
+                } else {
+                    this.card.find('.card__view').append('<div class="card__rating">-</div>');
+                }
+                this.card.find('.card__view').append('<div class="card__trailer-lang"></div>');
+                this.card.find('.card__view').append('<div class="card__release-date"></div>');
+            } else {
+                this.card.find('.card__title').text(data.name);
+                this.card.find('.card__details').remove();
+            }
         };
 
         this.cardImgBackground = function (card_data) {
-            if (card_data.backdrop_path) {
-                _this.card.find('.trailer__content').addClass('bg--trailer').css({
-                    'background-image': 'url(https://image.tmdb.org/t/p/w500' + card_data.backdrop_path + ')'
-                });
-            } else if (card_data.poster_path) {
-                _this.card.find('.trailer__content').addClass('bg--trailer').css({
-                    'background-image': 'url(https://image.tmdb.org/t/p/w500' + card_data.poster_path + ')'
-                });
+            if (Lampa.Storage.field('background')) {
+                if (Lampa.Storage.get('background_type', 'complex') === 'poster' && window.innerWidth > 790) {
+                    return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'original') : this.is_youtube ? 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg' : '';
+                }
+                return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'w500') : this.is_youtube ? 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg' : '';
             }
+            return '';
         };
 
         this.image = function () {
-            var img = document.createElement('img');
-            var url = 'https://image.tmdb.org/t/p/w500' + (data.poster_path || data.backdrop_path || '');
-
-            img.onerror = function () {
-                img.src = './img/img_broken.svg';
+            var _this = this;
+            this.img.onload = function () {
+                _this.card.addClass('card--loaded');
             };
-
-            img.onload = function () {
-                _this.card.find('.trailer__content').css({
-                    'background-image': 'url(' + url + ')'
-                }).addClass('bg--trailer');
+            this.img.onerror = function () {
+                _this.img.src = './img/img_broken.svg';
             };
-
-            img.src = url;
         };
 
         this.loadTrailerInfo = function () {
-            var content = _this.card.find('.trailer__content');
-            var title = data.title || data.name;
+            var _this = this;
+            if (!this.is_youtube && !this.trailer_lang) {
+                window.plugin_upcoming.Api.videos(data, function (videos) {
+                    var trailers = videos.results ? videos.results.filter(function (v) {
+                        return v.type === 'Trailer';
+                    }) : [];
+                    var preferredLangs = window.plugin_upcoming.utils.getPreferredLanguage();
+                    var video = trailers.find(function (v) {
+                        return preferredLangs.includes(v.iso_639_1);
+                    }) || trailers[0];
+                    _this.trailer_lang = video ? video.iso_639_1 : '-';
+                    if (_this.trailer_lang !== '-') {
+                        _this.card.find('.card__trailer-lang').text(_this.trailer_lang.toUpperCase());
+                    } else {
+                        _this.card.find('.card__trailer-lang').text('-');
+                    }
 
-            content.append('<div class="trailer__details"><div class="trailer__title">' + title + '</div></div>');
-
-            if (data.vote_average) content.find('.trailer__details').append('<div class="trailer__rate">IMDb: ' + parseFloat(data.vote_average).toFixed(1) + '</div>');
+                    if (params.type === 'in_theaters' || params.type === 'upcoming_movies') {
+                        if (data.release_details && data.release_details.results) {
+                            var region = window.plugin_upcoming.utils.getRegion();
+                            var releaseInfo = data.release_details.results.find(function (r) {
+                                return r.iso_3166_1 === region;
+                            });
+                            if (releaseInfo && releaseInfo.release_dates && releaseInfo.release_dates.length) {
+                                var releaseDate = releaseInfo.release_dates[0].release_date;
+                                _this.release_date = window.plugin_upcoming.utils.formatDateToDDMMYYYY(releaseDate);
+                            } else if (data.release_date) {
+                                _this.release_date = window.plugin_upcoming.utils.formatDateToDDMMYYYY(data.release_date);
+                            }
+                        } else if (data.release_date) {
+                            _this.release_date = window.plugin_upcoming.utils.formatDateToDDMMYYYY(data.release_date);
+                        }
+                    } else if (params.type === 'new_series_seasons' || params.type === 'upcoming_series') {
+                        if (data.release_details && data.release_details.first_air_date) {
+                            _this.release_date = window.plugin_upcoming.utils.formatDateToDDMMYYYY(data.release_details.first_air_date);
+                        }
+                    }
+                    _this.card.find('.card__release-date').text(_this.release_date);
+                }, function () {
+                    _this.trailer_lang = '-';
+                    _this.card.find('.card__trailer-lang').text('-');
+                    _this.card.find('.card__release-date').text('-');
+                });
+            }
         };
 
         this.play = function (id) {
-            var videos = _this.card.data('videos');
-
-            Lampa.TMDB.video(data.id, data.name ? 'tv' : 'movie', function (v) {
-                var video = v.results.find(function (a) {
-                    return a.key == id;
-                });
-
-                if (video) {
-                    var link = 'https://www.youtube.com/watch?v=' + video.key;
-                    Lampa.Player.play({
-                        url: link,
-                        title: data.title || data.name,
-                        quality: {
-                            selected: '1080p'
-                        }
-                    });
-                    Lampa.Player.opened();
+            if (!id) {
+                Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
+                return;
+            }
+            try {
+                if (Lampa.Manifest.app_digital >= 183) {
+                    var item = {
+                        title: Lampa.Utils.shortText(data.title || data.name, 50),
+                        id: id,
+                        youtube: true,
+                        url: 'https://www.youtube.com/watch?v=' + id,
+                        icon: '<img class="size-youtube" src="https://img.youtube.com/vi/' + id + '/default.jpg" />',
+                        template: 'selectbox_icon'
+                    };
+                    Lampa.Player.play(item);
+                    Lampa.Player.playlist([item]);
+                } else {
+                    Lampa.YouTube.play(id);
                 }
-            });
+            } catch (e) {
+                Lampa.Noty.show('Помилка відтворення трейлера: ' + e.message);
+            }
         };
 
         this.create = function () {
-            _this.build();
-
-            var is_youtube = params && params.youtube;
-
-            if (!is_youtube) {
-                Lampa.TMDB.video(data.id, data.name ? 'tv' : 'movie', function (videos) {
-                    _this.card.data('videos', videos);
-
-                    var btn = $('<div class="trailer__btn selector"></div>');
-
-                    if (videos.results && videos.results.length) {
-                        btn.on('hover:enter', function () {
-                            var list = [];
-
-                            videos.results.forEach(function (video) {
-                                list.push({
-                                    title: video.name,
-                                    source: video.key,
-                                    url: video.key
-                                });
-                            });
-
-                            Lampa.Select.show({
-                                title: Lampa.Lang.translate('title_action'),
-                                items: list,
-                                onSelect: function (item) {
-                                    _this.play(item.url);
-                                },
-                                onBack: function () {
-                                    Lampa.Controller.toggle('content');
-                                }
-                            });
-                        });
-                    } else {
-                        _this.card = null;
-                        return;
-                    }
-
-                    _this.card.find('.trailer__content').append(btn);
-                    _this.image();
-                    _this.loadTrailerInfo();
-                }, function () {
-                    _this.card = null;
-                });
-            } else {
-                _this.card.find('.trailer__content').append('<div class="trailer__btn selector"></div>').addClass('youtube');
-
-                _this.card.find('.trailer__btn').on('hover:enter', function () {
-                    _this.play(data.youtube);
-                });
-
-                _this.image();
-                _this.loadTrailerInfo();
-            }
-
-            _this.card.on('hover:focus', function (e) {
-                scroll.update(_this.card, true);
+            var _this2 = this;
+            this.build();
+            this.card.on('hover:focus', function (e, is_mouse) {
+                Lampa.Background.change(_this2.cardImgBackground(data));
+                _this2.onFocus(e.target, data, is_mouse);
+                _this2.loadTrailerInfo();
             }).on('hover:enter', function () {
-                var videos = _this.card.data('videos');
-
-                if (videos && videos.results && videos.results.length == 1) {
-                    _this.play(videos.results[0].key);
+                if (_this2.is_youtube) {
+                    _this2.play(data.id);
+                } else {
+                    window.plugin_upcoming.Api.videos(data, function (videos) {
+                        var preferredLangs = window.plugin_upcoming.utils.getPreferredLanguage();
+                        var trailers = videos.results ? videos.results.filter(function (v) {
+                            return v.type === 'Trailer';
+                        }) : [];
+                        var video = trailers.find(function (v) {
+                            return preferredLangs.includes(v.iso_639_1);
+                        }) || trailers[0];
+                        if (video && video.key) {
+                            if (preferredLangs[0] === 'uk' && video.iso_639_1 !== 'uk' && video.iso_639_1 !== 'en') {
+                                Lampa.Noty.show(Lampa.Lang.translate('trailers_no_ua_trailer'));
+                            } else if (preferredLangs[0] === 'ru' && video.iso_639_1 !== 'ru' && video.iso_639_1 !== 'en') {
+                                Lampa.Noty.show(Lampa.Lang.translate('trailers_no_ru_trailer'));
+                            }
+                            _this2.play(video.key);
+                        } else {
+                            Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
+                        }
+                    }, function () {
+                        Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
+                    });
                 }
             }).on('hover:long', function () {
-                Lampa.TMDB.get(data.name ? 'tv' : 'movie', data.id, function (elem) {
-                    elem.card = _this.card;
-
-                    Lampa.Activity.push({
-                        url: '',
-                        component: 'full',
-                        id: data.id,
-                        method: data.name ? 'tv' : 'movie',
-                        card: elem,
-                        source: 'tmdb'
+                if (!_this2.is_youtube) {
+                    var items = [{
+                        title: Lampa.Lang.translate('trailers_view'),
+                        view: true
+                    }];
+                    Lampa.Loading.start(function () {
+                        window.plugin_upcoming.Api.clear();
+                        Lampa.Loading.stop();
                     });
-                });
+                    window.plugin_upcoming.Api.videos(data, function (videos) {
+                        Lampa.Loading.stop();
+                        var preferredLangs = window.plugin_upcoming.utils.getPreferredLanguage();
+                        var trailers = videos.results ? videos.results.filter(function (v) {
+                            return v.type === 'Trailer';
+                        }) : [];
+                        if (trailers.length) {
+                            items.push({
+                                title: Lampa.Lang.translate('title_trailers'),
+                                separator: true
+                            });
+                            trailers.forEach(function (video) {
+                                if (video.key && preferredLangs.includes(video.iso_639_1)) {
+                                    items.push({
+                                        title: video.name || 'Trailer',
+                                        id: video.key,
+                                        subtitle: video.iso_639_1
+                                    });
+                                }
+                            });
+                        }
+                        Lampa.Select.show({
+                            title: Lampa.Lang.translate('title_action'),
+                            items: items,
+                            onSelect: function (item) {
+                                Lampa.Controller.toggle('content');
+                                if (item.view) {
+                                    Lampa.Activity.push({
+                                        url: '',
+                                        component: 'full',
+                                        id: data.id,
+                                        method: data.name ? 'tv' : 'movie',
+                                        card: data,
+                                        source: 'tmdb'
+                                    });
+                                } else {
+                                    _this2.play(item.id);
+                                }
+                            },
+                            onBack: function () {
+                                Lampa.Controller.toggle('content');
+                            }
+                        });
+                    }, function () {
+                        Lampa.Loading.stop();
+                        Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
+                    });
+                }
             });
+            this.image();
+            this.loadTrailerInfo();
         };
 
         this.destroy = function () {
-            if (_this.card) _this.card.remove();
-            _this.card = null;
+            this.img.onerror = null;
+            this.img.onload = null;
+            this.img.src = '';
+            this.card.remove();
+            this.card = null;
+            this.img = null;
         };
 
         this.visible = function () {
-            if (Lampa.Platform.is('webos')) {
-                _this.card.find('img').each(function () {
-                    var img = $(this)[0];
-
-                    if (img.onerror) img.onerror();
-                });
+            if (this.visibled) return;
+            if (params.type === 'rating') {
+                this.img.src = 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg';
+            } else if (data.backdrop_path) {
+                this.img.src = Lampa.Api.img(data.backdrop_path, 'w500');
+            } else if (data.poster_path) {
+                this.img.src = Lampa.Api.img(data.poster_path);
+            } else {
+                this.img.src = './img/img_broken.svg';
             }
+            this.visibled = true;
         };
 
         this.render = function () {
-            return _this.card;
+            return this.card;
         };
     }
 
     window.plugin_upcoming = window.plugin_upcoming || {};
-    window.plugin_upcoming.trailer = trailer;
+    window.plugin_upcoming.Trailer = Trailer;
 })();
