@@ -25,22 +25,21 @@ module.exports = {
                         presets: [
                             ['@babel/preset-env', {
                                 targets: 'defaults',
-                                modules: false, // Збереження ES-модулів
-                                loose: true, // Менш агресивна транспіляція
+                                modules: false,
+                                loose: true,
                                 bugfixes: true,
                             }],
                         ],
-                        plugins: [
-                            '@babel/plugin-transform-modules-commonjs', // Конвертація ES-модулів у CommonJS для простоти
-                        ],
+                        sourceMaps: true, // Додано для дебагінгу
                     },
                 },
             },
         ],
     },
     optimization: {
-        minimize: false, // Без мінімізації
-        concatenateModules: true, // Об’єднання модулів у читабельний спосіб
+        minimize: false,
+        concatenateModules: true,
     },
-    mode: 'development', // Читабельний код
+    mode: 'development',
+    devtool: 'source-map', // Додано для читабельного дебагінгу
 };
