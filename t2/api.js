@@ -5,6 +5,24 @@ var tmdb_api_key = Lampa.TMDB.key();
 var tmdb_base_url = 'https://api.themoviedb.org/3';
 var trailerCache = {};
 var categoryCache = {};
+const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 години в мілісекундах
+
+// Очищення застарілого кешу
+function clearExpiredCache() {
+    // Очищення trailerCache
+    for (var key in trailerCache) {
+        if (trailerCache[key].timestamp && Date.now() - trailerCache[key].timestamp > CACHE_TTL) {
+            delete trailerCache[key];
+        }
+    }
+    // Очищення categoryCache
+    for (var key in categoryCache) {
+        if (categoryCache[key].timestamp && Date.now() - categoryCache[key].timestamp > CACHE_TTL) {
+            delete categoryCache[key];
+            Lampa.Storage.set('trailer_category_cache_' + key, null);
+        }
+    }
+}
 
 export function get(url, page, resolve, reject) {
     var full_url = tmdb_base_url + url + '&api_key=' + tmdb_api_key + '&page=' + page + '&language=' + getInterfaceLanguage();
@@ -18,7 +36,7 @@ export function getLocalMoviesInTheaters(page, resolve, reject) {
     var daysThreshold = 45;
     var startDate = new Date(today.getTime() - daysThreshold * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-    var now_playing_url = `${tmdb_base_url}/movie/now_playing?api_key=${tmdb_api_key}&language=${language}&page=${page}®ion=${region}&primary_release_date.gte=${startDate}`;
+    var now_playing_url = `${tmdb_base_url}/movie/now_playing?api_key=${tmdb_api_key}&language=${language}&page=${page}&region=${region}&primary_release_date.gte=${startDate}`;
     network.silent(now_playing_url, function (data) {
         if (data.results && data.results.length) {
             var totalRequests = data.results.length;
@@ -87,7 +105,7 @@ export function getUpcomingMovies(page, resolve, reject) {
     var sixMonthsLater = getFormattedDate(-180);
     var language = getInterfaceLanguage();
 
-    var upcoming_url = `${tmdb_base_url}/discover/movie?api_key=${tmdb_api_key}&language=${language}&page=${page}®ion=${region}&primary_release_date.gte=${today}&primary_release_date.lte=${sixMonthsLater}&sort_by=popularity.desc&vote_count.gte=1`;
+    var upcoming_url = `${tmdb_base_url}/discover/movie?api_key=${tmdb_api_key}&language=${language}&page=${page}&region=${region}&primary_release_date.gte=${today}&primary_release_date.lte=${sixMonthsLater}&sort_by=popularity.desc&vote_count.gte=1`;
     network.silent(upcoming_url, function (data) {
         if (data.results && data.results.length) {
             var totalRequests = data.results.length;
@@ -230,6 +248,7 @@ export function main(oncomplite, onerror) {
 }
 
 export function full(params, oncomplite, onerror) {
+    clearExpiredCache(); // Очищаємо застарілий кеш перед використанням
     if (params.type === 'in_theaters') {
         var region = getRegion();
         var today = new Date();
@@ -515,11 +534,12 @@ export function full(params, oncomplite, onerror) {
 }
 
 export function videos(card, oncomplite, onerror) {
+    clearExpiredCache(); // Очищаємо застарілий кеш перед використанням
     var type = card.name ? 'tv' : 'movie';
     var id = card.id;
     var cacheKey = type + '_' + id;
 
-    if (trailerCache[cacheKey]) {
+    if (trailerCache[cacheKey] && trailerCache[cacheKey].timestamp && Date.now() - trailerCache[cacheKey].timestamp < CACHE_TTL) {
         oncomplite(trailerCache[cacheKey]);
         return;
     }
@@ -536,10 +556,10 @@ export function videos(card, oncomplite, onerror) {
                 return v.iso_639_1 === 'en';
             });
             if (englishTrailer) {
-                trailerCache[cacheKey] = { id: id, results: [englishTrailer] };
+                trailerCache[cacheKey] = { id: id, results: [englishTrailer], timestamp: Date.now() };
                 oncomplite({ id: id, results: [englishTrailer] });
             } else {
-                trailerCache[cacheKey] = { id: id, results: [] };
+                trailerCache[cacheKey] = { id: id, results: [], timestamp: Date.now() };
                 onerror();
             }
             return;
@@ -558,7 +578,7 @@ export function videos(card, oncomplite, onerror) {
                 return preferredLangs.includes(v.iso_639_1);
             });
             if (preferredTrailer) {
-                trailerCache[cacheKey] = { id: id, results: [preferredTrailer] };
+                trailerCache[cacheKey] = { id: id, results: [preferredTrailer], timestamp: Date.now() };
                 oncomplite({ id: id, results: [preferredTrailer] });
             } else {
                 attempts++;
