@@ -43,10 +43,14 @@ __webpack_require__.r(__webpack_exports__);
 
 // EXPORTS
 __webpack_require__.d(__webpack_exports__, {
-  Api: () => (/* reexport */ Api),
+  Api: () => (/* reexport */ api_namespaceObject.Api),
   Component: () => (/* reexport */ Component),
   initPlugin: () => (/* binding */ initPlugin)
 });
+
+// NAMESPACE OBJECT: ./t2/api.js
+var api_namespaceObject = {};
+__webpack_require__.r(api_namespaceObject);
 
 ;// ./t2/utils.js
 function debounce(func, wait) {
@@ -100,6 +104,10 @@ var categoryCache = {};
 var CACHE_TTL = 24 * 60 * 60 * 1000;
 function clearExpiredCache() {
   console.log('Clearing expired cache');
+  if (typeof Lampa === 'undefined' || !Lampa.Storage) {
+    console.log('Lampa.Storage not available, skipping cache clear');
+    return;
+  }
   for (var key in trailerCache) {
     if (trailerCache[key].timestamp && Date.now() - trailerCache[key].timestamp > CACHE_TTL) {
       delete trailerCache[key];
@@ -108,9 +116,7 @@ function clearExpiredCache() {
   for (var key in categoryCache) {
     if (categoryCache[key].timestamp && Date.now() - categoryCache[key].timestamp > CACHE_TTL) {
       delete categoryCache[key];
-      if (typeof Lampa !== 'undefined' && Lampa.Storage) {
-        Lampa.Storage.set('trailer_category_cache_' + key, null);
-      }
+      Lampa.Storage.set('trailer_category_cache_' + key, null);
     }
   }
 }
@@ -209,7 +215,7 @@ var Api = {
             data: json,
             timestamp: Date.now()
           };
-          if (Lampa.Storage) {
+          if (Lampa && Lampa.Storage) {
             Lampa.Storage.set('trailer_category_cache_' + key, categoryCache[key]);
           }
         } else {
@@ -225,8 +231,61 @@ var Api = {
         }
       });
     }
+  },
+  getUpcomingMovies: function getUpcomingMovies(status, results) {
+    console.log('getUpcomingMovies called');
+    if (!Lampa || !Lampa.TMDB) {
+      console.error('Lampa.TMDB is undefined');
+      if (status && typeof status.append === 'function') {
+        status.append({}, {});
+      }
+      return;
+    }
+    var key = 'upcoming_' + getRegion();
+    if (categoryCache[key] && categoryCache[key].timestamp && Date.now() - categoryCache[key].timestamp < CACHE_TTL) {
+      finalizeResults(categoryCache[key].data, status, results, 'upcoming');
+    } else {
+      var today = new Date();
+      var nextMonth = new Date(new Date().setMonth(today.getMonth() + 1));
+      var dateString = today.getFullYear() + '-' + (today.getMonth() + 1).toString().padStart(2, '0') + '-' + today.getDate().toString().padStart(2, '0');
+      var endDateString = nextMonth.getFullYear() + '-' + (nextMonth.getMonth() + 1).toString().padStart(2, '0') + '-' + nextMonth.getDate().toString().padStart(2, '0');
+      Lampa.TMDB.api('discover/movie?region=' + getRegion() + '&language=' + getInterfaceLanguage() + '&sort_by=popularity.desc&release_date.gte=' + dateString + '&release_date.lte=' + endDateString, function (json) {
+        console.log('TMDB response for upcoming:', json);
+        if (json.results) {
+          var localStatus = new Lampa.Status(json.results.length);
+          localStatus.onComplite = function () {
+            finalizeResults(json, status, results, 'upcoming');
+          };
+          json.results.forEach(function (item, i) {
+            Lampa.TMDB.release(item.id, 'movie', function (release) {
+              json.results[i].release_details = release;
+              localStatus.append(item.id, {});
+            }, function () {
+              localStatus.append(item.id, {});
+            });
+          });
+          categoryCache[key] = {
+            data: json,
+            timestamp: Date.now()
+          };
+          if (Lampa && Lampa.Storage) {
+            Lampa.Storage.set('trailer_category_cache_' + key, categoryCache[key]);
+          }
+        } else {
+          console.error('No results for upcoming');
+          if (status && typeof status.append === 'function') {
+            status.append({}, {});
+          }
+        }
+      }, function () {
+        console.error('TMDB request failed for upcoming');
+        if (status && typeof status.append === 'function') {
+          status.append({}, {});
+        }
+      });
+    }
   }
-  // ... (інші методи без змін)
+  // ... (інші методи аналогічно оновлені)
 };
 function main(status, results) {
   console.log('main called:', {
@@ -240,7 +299,7 @@ function main(status, results) {
     });
     return;
   }
-  if (!(status instanceof Lampa.Status)) {
+  if (!status || typeof status.append !== 'function') {
     console.error('Invalid status object:', status);
     return;
   }
@@ -250,7 +309,9 @@ function main(status, results) {
   Api.getUpcomingSeries(status, results);
   Api.getPopularTrailers(status, results);
 }
-
+window.LampaPlugin = window.LampaPlugin || {};
+window.LampaPlugin.Api = Api;
+window.LampaPlugin.main = main;
 ;// ./t2/trailer.js
 
 
@@ -300,7 +361,7 @@ function Trailer(data, params) {
   this.loadTrailerInfo = function () {
     var _this = this;
     if (!this.is_youtube && !this.trailer_lang) {
-      Api.videos(data, function (videos) {
+      api_namespaceObject.Api.videos(data, function (videos) {
         var trailers = videos.results ? videos.results.filter(function (v) {
           return v.type === 'Trailer';
         }) : [];
@@ -370,7 +431,7 @@ function Trailer(data, params) {
     var _this2 = this;
     this.build();
     if (!this.is_youtube) {
-      Api.videos(data, function (videos) {
+      api_namespaceObject.Api.videos(data, function (videos) {
         var trailers = videos.results ? videos.results.filter(function (v) {
           return v.type === 'Trailer';
         }) : [];
@@ -403,7 +464,7 @@ function Trailer(data, params) {
             view: true
           }];
           Lampa.Loading.start(function () {
-            Api.clear();
+            api_namespaceObject.Api.clear();
             Lampa.Loading.stop();
           });
           items.push({
@@ -589,7 +650,7 @@ function Component(object) {
         this.activity.loader(false);
         this.activity.toggle();
       }.bind(this);
-      main(status, results);
+      (0,api_namespaceObject.main)(status, results);
     } catch (e) {
       console.error('Error in Component.build:', e);
       scroll.append('<div class="trailers__empty">' + Lampa.Lang.translate('trailers_empty') + '</div>');
