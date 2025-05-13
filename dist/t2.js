@@ -144,6 +144,11 @@ var Api = {
     categoryCache = {};
   },
   videos: function videos(data, success, fail) {
+    if (!Lampa.TMDB) {
+      console.error('Lampa.TMDB is undefined');
+      fail();
+      return;
+    }
     var key = data.id + '_' + (data.name ? 'tv' : 'movie');
     if (trailerCache[key] && trailerCache[key].timestamp && Date.now() - trailerCache[key].timestamp < CACHE_TTL) {
       success(trailerCache[key].data);
@@ -159,13 +164,18 @@ var Api = {
   },
   getLocalMoviesInTheaters: function getLocalMoviesInTheaters(status, results) {
     console.log('getLocalMoviesInTheaters called'); // Діагностика
+    if (!Lampa.TMDB) {
+      console.error('Lampa.TMDB is undefined');
+      status.append({}, {});
+      return;
+    }
     var key = 'in_theaters_' + getRegion();
     if (categoryCache[key] && categoryCache[key].timestamp && Date.now() - categoryCache[key].timestamp < CACHE_TTL) {
       finalizeResults(categoryCache[key].data, status, results, 'in_theaters');
     } else {
       var today = new Date();
       var priorDate = new Date(new Date().setDate(today.getDate() - 30));
-      var dateString = priorDate.getFullYear() + '-' + (priorDate.getMonth() + 1) + '-' + priorDate.getDate();
+      var dateString = priorDate.getFullYear() + '-' + (priorDate.getMonth() + 1).toString().padStart(2, '0') + '-' + priorDate.getDate().toString().padStart(2, '0');
       Lampa.TMDB.api('discover/movie?region=' + getRegion() + '&language=' + getInterfaceLanguage() + '&sort_by=popularity.desc&release_date.gte=' + dateString + '&with_release_type=3|2', function (json) {
         console.log('TMDB response:', json); // Діагностика
         if (json.results) {
@@ -187,22 +197,29 @@ var Api = {
           };
           Lampa.Storage.set('trailer_category_cache_' + key, categoryCache[key]);
         } else {
-          console.error('No results for in_theaters'); // Діагностика
+          console.error('No results for in_theaters');
           status.append({}, {});
         }
       }, function () {
-        console.error('TMDB request failed'); // Діагностика
+        console.error('TMDB request failed');
         status.append({}, {});
       });
     }
   }
-  // ... (інші методи, як getUpcomingMovies, getNewSeriesSeasons тощо, залишаються без змін)
+  // ... (інші методи без змін)
 };
 function main(status, results) {
   console.log('main called:', {
     status,
     results
   }); // Діагностика
+  if (!Lampa.Status || !Lampa.TMDB) {
+    console.error('Lampa API unavailable:', {
+      Status: Lampa.Status,
+      TMDB: Lampa.TMDB
+    });
+    return;
+  }
   if (!(status instanceof Lampa.Status)) {
     console.error('Invalid status object:', status);
     return;
