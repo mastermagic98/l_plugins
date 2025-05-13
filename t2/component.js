@@ -233,4 +233,99 @@
                     scroll.onWheel = function (step) {
                         if (!Lampa.Controller.own(_this3)) _this3.start();
                         if (step > 0) Navigator.move('down');
-                        else if (active >
+                        else if (active > 0) Navigator.move('up');
+                    }.bind(this);
+                    var debouncedLoad = window.plugin_upcoming.utils.debounce(function () {
+                        if (scroll.isEnd() && !waitload) {
+                            _this3.next();
+                        }
+                    }, 100);
+                    scroll.render().on('scroll', debouncedLoad);
+                }
+                this.activity.loader(false);
+                this.activity.toggle();
+            } else {
+                html.append(scroll.render());
+                this.empty();
+            }
+        };
+
+        this.more = function () {
+            var _this = this;
+            var more = $('<div class="selector" style="width: 100%; height: 5px"></div>');
+            more.on('hover:enter', function () {
+                var next = Lampa.Arrays.clone(object);
+                delete next.activity;
+                next.page = (next.page || 1) + 1;
+                Lampa.Activity.push({
+                    url: next.url,
+                    title: object.title || Lampa.Lang.translate('title_trailers'),
+                    component: 'trailers_full',
+                    type: next.type,
+                    page: next.page
+                });
+            });
+            body.append(more);
+        };
+
+        this.back = function () {
+            last = items[0].render()[0];
+            var more = $('<div class="selector" style="width: 100%; height: 5px"></div>');
+            more.on('hover:enter', function () {
+                if (object.page > 1) {
+                    Lampa.Activity.backward();
+                } else {
+                    Lampa.Controller.toggle('head');
+                }
+            });
+            body.prepend(more);
+        };
+
+        this.start = function () {
+            if (Lampa.Activity.active().activity !== this.activity) return;
+            Lampa.Controller.add('content', {
+                link: this,
+                toggle: function () {
+                    Lampa.Controller.collectionSet(scroll.render());
+                    Lampa.Controller.collectionFocus(last || false, scroll.render());
+                },
+                left: function () {
+                    if (Navigator.canmove('left')) Navigator.move('left');
+                    else Lampa.Controller.toggle('menu');
+                },
+                right: function () {
+                    Navigator.move('right');
+                },
+                up: function () {
+                    if (Navigator.canmove('up')) Navigator.move('up');
+                    else Lampa.Controller.toggle('head');
+                },
+                down: function () {
+                    if (Navigator.canmove('down')) Navigator.move('down');
+                },
+                back: function () {
+                    Lampa.Activity.backward();
+                }
+            });
+            Lampa.Controller.toggle('content');
+        };
+
+        this.pause = function () {};
+        this.stop = function () {};
+        this.render = function () {
+            return html;
+        };
+
+        this.destroy = function () {
+            Lampa.Arrays.destroy(items);
+            scroll.destroy();
+            html.remove();
+            body.remove();
+            items = [];
+        };
+    }
+
+    window.plugin_upcoming = window.plugin_upcoming || {};
+    window.plugin_upcoming.ComponentMain = ComponentMain;
+    window.plugin_upcoming.ComponentFull = ComponentFull;
+})();
