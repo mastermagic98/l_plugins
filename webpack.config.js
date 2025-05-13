@@ -20,12 +20,11 @@ module.exports = {
                     options: {
                         presets: [
                             ['@babel/preset-env', {
-                                targets: 'defaults',
-                                loose: true,
-                                bugfixes: true
+                                targets: '> 0.25%, not dead',
+                                useBuiltIns: false,
+                                modules: false
                             }]
-                        ],
-                        sourceMaps: true
+                        ]
                     }
                 }
             }
@@ -35,5 +34,5 @@ module.exports = {
         minimize: false
     },
     mode: 'development',
-    devtool: 'source-map'
+    devtool: false
 };
