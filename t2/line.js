@@ -1,25 +1,43 @@
 (function () {
     function line(data) {
+        var _this = this;
+
+        this.element;
+
         this.create = function () {
-            console.log('line.create called:', data);
-            // Логіка створення лінії
-            this.element = $('<div class="line"><div class="line__title">' + data.title + '</div><div class="line__cards scroll--h"></div></div>');
+            _this.element = $('<div class="line"><div class="line__title">' + Lampa.Utils.shortText(data.title, 34) + '</div><div class="line__cards scroll--h"></div></div>');
+
             data.results.forEach(function (item) {
                 var card = new window.plugin_upcoming.trailer(item);
                 card.create();
-                this.element.find('.line__cards').append(card.render());
-            }.bind(this));
+                var rendered = card.render();
+
+                if (rendered) _this.element.find('.line__cards').append(rendered);
+            });
+
+            _this.element.find('.line__cards .trailer').on('hover:focus', function (e, data) {
+                scroll.update($(this), true);
+                Lampa.Background.change(Lampa.TMDB.image('backdrop_path', data.backdrop_path, true));
+            });
+        };
+
+        this.toggle = function () {
+            var cards = _this.element.find('.line__cards .trailer');
+
+            if (cards.length) {
+                Lampa.Controller.enabled().collectionSet(_this.element.find('.line__cards'));
+                Lampa.Controller.collectionFocus(cards.eq(0), _this.element.find('.line__cards'));
+            }
         };
 
         this.render = function () {
-            return this.element || $('<div></div>');
+            return _this.element;
         };
 
         this.destroy = function () {
-            if (this.element) this.element.remove();
+            if (_this.element) _this.element.remove();
+            _this.element = null;
         };
-
-        this.toggle = function () {};
     }
 
     window.plugin_upcoming = window.plugin_upcoming || {};
