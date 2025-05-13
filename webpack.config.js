@@ -8,7 +8,8 @@ module.exports = {
         path: path.resolve(__dirname, 'dist'),
         filename: '[name].js',
         library: {
-            type: 'commonjs', // Змінено на commonjs для стабільності
+            name: 'LampaPlugin', // Глобальна змінна для плагіна
+            type: 'var', // Вивід як глобальна змінна
         },
     },
     module: {
