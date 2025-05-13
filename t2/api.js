@@ -6,6 +6,10 @@ var CACHE_TTL = 24 * 60 * 60 * 1000;
 
 function clearExpiredCache() {
     console.log('Clearing expired cache');
+    if (typeof Lampa === 'undefined' || !Lampa.Storage) {
+        console.log('Lampa.Storage not available, skipping cache clear');
+        return;
+    }
     for (var key in trailerCache) {
         if (trailerCache[key].timestamp && Date.now() - trailerCache[key].timestamp > CACHE_TTL) {
             delete trailerCache[key];
@@ -14,9 +18,7 @@ function clearExpiredCache() {
     for (var key in categoryCache) {
         if (categoryCache[key].timestamp && Date.now() - categoryCache[key].timestamp > CACHE_TTL) {
             delete categoryCache[key];
-            if (typeof Lampa !== 'undefined' && Lampa.Storage) {
-                Lampa.Storage.set('trailer_category_cache_' + key, null);
-            }
+            Lampa.Storage.set('trailer_category_cache_' + key, null);
         }
     }
 }
@@ -115,7 +117,7 @@ var Api = {
                         data: json,
                         timestamp: Date.now()
                     };
-                    if (Lampa.Storage) {
+                    if (Lampa && Lampa.Storage) {
                         Lampa.Storage.set('trailer_category_cache_' + key, categoryCache[key]);
                     }
                 } else {
@@ -132,7 +134,60 @@ var Api = {
             });
         }
     },
-    // ... (інші методи без змін)
+    getUpcomingMovies: function getUpcomingMovies(status, results) {
+        console.log('getUpcomingMovies called');
+        if (!Lampa || !Lampa.TMDB) {
+            console.error('Lampa.TMDB is undefined');
+            if (status && typeof status.append === 'function') {
+                status.append({}, {});
+            }
+            return;
+        }
+        var key = 'upcoming_' + getRegion();
+        if (categoryCache[key] && categoryCache[key].timestamp && Date.now() - categoryCache[key].timestamp < CACHE_TTL) {
+            finalizeResults(categoryCache[key].data, status, results, 'upcoming');
+        } else {
+            var today = new Date();
+            var nextMonth = new Date(new Date().setMonth(today.getMonth() + 1));
+            var dateString = today.getFullYear() + '-' + (today.getMonth() + 1).toString().padStart(2, '0') + '-' + today.getDate().toString().padStart(2, '0');
+            var endDateString = nextMonth.getFullYear() + '-' + (nextMonth.getMonth() + 1).toString().padStart(2, '0') + '-' + nextMonth.getDate().toString().padStart(2, '0');
+            Lampa.TMDB.api('discover/movie?region=' + getRegion() + '&language=' + getInterfaceLanguage() + '&sort_by=popularity.desc&release_date.gte=' + dateString + '&release_date.lte=' + endDateString, function (json) {
+                console.log('TMDB response for upcoming:', json);
+                if (json.results) {
+                    var localStatus = new Lampa.Status(json.results.length);
+                    localStatus.onComplite = function () {
+                        finalizeResults(json, status, results, 'upcoming');
+                    };
+                    json.results.forEach(function (item, i) {
+                        Lampa.TMDB.release(item.id, 'movie', function (release) {
+                            json.results[i].release_details = release;
+                            localStatus.append(item.id, {});
+                        }, function () {
+                            localStatus.append(item.id, {});
+                        });
+                    });
+                    categoryCache[key] = {
+                        data: json,
+                        timestamp: Date.now()
+                    };
+                    if (Lampa && Lampa.Storage) {
+                        Lampa.Storage.set('trailer_category_cache_' + key, categoryCache[key]);
+                    }
+                } else {
+                    console.error('No results for upcoming');
+                    if (status && typeof status.append === 'function') {
+                        status.append({}, {});
+                    }
+                }
+            }, function () {
+                console.error('TMDB request failed for upcoming');
+                if (status && typeof status.append === 'function') {
+                    status.append({}, {});
+                }
+            });
+        }
+    },
+    // ... (інші методи аналогічно оновлені)
 };
 
 function main(status, results) {
@@ -141,7 +196,7 @@ function main(status, results) {
         console.error('Lampa API unavailable:', { Status: Lampa.Status, TMDB: Lampa.TMDB });
         return;
     }
-    if (!(status instanceof Lampa.Status)) {
+    if (!status || typeof status.append !== 'function') {
         console.error('Invalid status object:', status);
         return;
     }
@@ -152,4 +207,6 @@ function main(status, results) {
     Api.getPopularTrailers(status, results);
 }
 
-export { Api, main };
+window.LampaPlugin = window.LampaPlugin || {};
+window.LampaPlugin.Api = Api;
+window.LampaPlugin.main = main;
