@@ -1331,18 +1331,15 @@ function Trailer(data, params) {
   this.create = function () {
     var _this2 = this;
     this.build();
-    // Перевіряємо наявність трейлерів перед додаванням картки
     if (!this.is_youtube) {
       _api_js__WEBPACK_IMPORTED_MODULE_0__.Api.videos(data, function (videos) {
         var trailers = videos.results ? videos.results.filter(function (v) {
           return v.type === 'Trailer';
         }) : [];
         if (trailers.length === 0) {
-          // Якщо трейлерів немає, не додаємо картку
           _this2.card = null;
           return;
         }
-        // Якщо трейлери є, налаштовуємо картку
         _this2.card.on('hover:focus', function (e, is_mouse) {
           Lampa.Background.change(_this2.cardImgBackground(data));
           _this2.onFocus(e.target, data, is_mouse);
@@ -1410,11 +1407,9 @@ function Trailer(data, params) {
         _this2.image();
         _this2.loadTrailerInfo();
       }, function () {
-        // Якщо трейлери не знайдено, не додаємо картку
         _this2.card = null;
       });
     } else {
-      // Для YouTube карток пропускаємо перевірку трейлерів
       this.card.on('hover:focus', function (e, is_mouse) {
         Lampa.Background.change(_this2.cardImgBackground(data));
         _this2.onFocus(e.target, data, is_mouse);
@@ -1450,7 +1445,7 @@ function Trailer(data, params) {
     this.visibled = true;
   };
   this.render = function () {
-    return this.card || $('<div></div>'); // Повертаємо порожній елемент, якщо картка не створена
+    return this.card || $('<div></div>');
   };
 }
 
