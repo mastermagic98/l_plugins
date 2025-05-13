@@ -1,9 +1,7 @@
-var plugin_upcoming;
+})();
+(function () {
+    'use strict';
 /******/ (() => { // webpackBootstrap
-var __webpack_exports__ = {};
-/*!*********************!*\
-  !*** ./t2/index.js ***!
-  \*********************/
 (function () {
   'use strict';
 
@@ -161,6 +159,5 @@ var __webpack_exports__ = {};
     startPlugin();
   }
 })();
-plugin_upcoming = __webpack_exports__;
 /******/ })()
 ;
