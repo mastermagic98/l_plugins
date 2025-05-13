@@ -98,7 +98,7 @@ var trailerCache = {};
 var categoryCache = {};
 var CACHE_TTL = 24 * 60 * 60 * 1000;
 function clearExpiredCache() {
-  console.log('Clearing expired cache'); // Діагностика
+  console.log('Clearing expired cache');
   for (var key in trailerCache) {
     if (trailerCache[key].timestamp && Date.now() - trailerCache[key].timestamp > CACHE_TTL) {
       delete trailerCache[key];
@@ -107,7 +107,9 @@ function clearExpiredCache() {
   for (var key in categoryCache) {
     if (categoryCache[key].timestamp && Date.now() - categoryCache[key].timestamp > CACHE_TTL) {
       delete categoryCache[key];
-      Lampa.Storage.set('trailer_category_cache_' + key, null);
+      if (typeof Lampa !== 'undefined' && Lampa.Storage) {
+        Lampa.Storage.set('trailer_category_cache_' + key, null);
+      }
     }
   }
 }
@@ -116,10 +118,12 @@ function finalizeResults(json, status, results, type) {
   console.log('finalizeResults called:', {
     json,
     type
-  }); // Діагностика
+  });
   if (!json.results) {
     console.error('No results in JSON:', json);
-    status.append({}, {});
+    if (status && typeof status.append === 'function') {
+      status.append({}, {});
+    }
     return;
   }
   var items = json.results.map(function (item) {
@@ -137,11 +141,13 @@ function finalizeResults(json, status, results, type) {
     };
   });
   results[type] = {
-    title: Lampa.Lang.translate('trailers_' + type),
+    title: Lampa && Lampa.Lang ? Lampa.Lang.translate('trailers_' + type) : type,
     results: items,
     type: type
   };
-  status.append({}, {});
+  if (status && typeof status.append === 'function') {
+    status.append({}, {});
+  }
 }
 var Api = {
   clear: function clear() {
@@ -149,9 +155,9 @@ var Api = {
     categoryCache = {};
   },
   videos: function videos(data, success, fail) {
-    if (!Lampa.TMDB) {
+    if (!Lampa || !Lampa.TMDB) {
       console.error('Lampa.TMDB is undefined');
-      fail();
+      if (typeof fail === 'function') fail();
       return;
     }
     var key = data.id + '_' + (data.name ? 'tv' : 'movie');
@@ -168,10 +174,12 @@ var Api = {
     }
   },
   getLocalMoviesInTheaters: function getLocalMoviesInTheaters(status, results) {
-    console.log('getLocalMoviesInTheaters called'); // Діагностика
-    if (!Lampa.TMDB) {
+    console.log('getLocalMoviesInTheaters called');
+    if (!Lampa || !Lampa.TMDB) {
       console.error('Lampa.TMDB is undefined');
-      status.append({}, {});
+      if (status && typeof status.append === 'function') {
+        status.append({}, {});
+      }
       return;
     }
     var key = 'in_theaters_' + getRegion();
@@ -182,32 +190,38 @@ var Api = {
       var priorDate = new Date(new Date().setDate(today.getDate() - 30));
       var dateString = priorDate.getFullYear() + '-' + (priorDate.getMonth() + 1).toString().padStart(2, '0') + '-' + priorDate.getDate().toString().padStart(2, '0');
       Lampa.TMDB.api('discover/movie?region=' + getRegion() + '&language=' + getInterfaceLanguage() + '&sort_by=popularity.desc&release_date.gte=' + dateString + '&with_release_type=3|2', function (json) {
-        console.log('TMDB response:', json); // Діагностика
+        console.log('TMDB response:', json);
         if (json.results) {
-          var status = new Lampa.Status(json.results.length);
-          status.onComplite = function () {
+          var localStatus = new Lampa.Status(json.results.length);
+          localStatus.onComplite = function () {
             finalizeResults(json, status, results, 'in_theaters');
           };
           json.results.forEach(function (item, i) {
             Lampa.TMDB.release(item.id, 'movie', function (release) {
               json.results[i].release_details = release;
-              status.append(item.id, {});
+              localStatus.append(item.id, {});
             }, function () {
-              status.append(item.id, {});
+              localStatus.append(item.id, {});
             });
           });
           categoryCache[key] = {
             data: json,
             timestamp: Date.now()
           };
-          Lampa.Storage.set('trailer_category_cache_' + key, categoryCache[key]);
+          if (Lampa.Storage) {
+            Lampa.Storage.set('trailer_category_cache_' + key, categoryCache[key]);
+          }
         } else {
           console.error('No results for in_theaters');
-          status.append({}, {});
+          if (status && typeof status.append === 'function') {
+            status.append({}, {});
+          }
         }
       }, function () {
         console.error('TMDB request failed');
-        status.append({}, {});
+        if (status && typeof status.append === 'function') {
+          status.append({}, {});
+        }
       });
     }
   }
@@ -217,8 +231,8 @@ function main(status, results) {
   console.log('main called:', {
     status,
     results
-  }); // Діагностика
-  if (!Lampa.Status || !Lampa.TMDB) {
+  });
+  if (!Lampa || !Lampa.Status || !Lampa.TMDB) {
     console.error('Lampa API unavailable:', {
       Status: Lampa.Status,
       TMDB: Lampa.TMDB
