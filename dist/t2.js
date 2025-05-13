@@ -1028,10 +1028,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _trailer_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./trailer.js */ "./t2/trailer.js");
 
 function Line(data) {
+  console.log('Line constructor called'); // Діагностика
   this.data = data;
   this.cards = [];
   this.create = function () {
     var _this = this;
+    console.log('Line.create called'); // Діагностика
     this.cards = [];
     this.data.results.forEach(function (item) {
       var card = new _trailer_js__WEBPACK_IMPORTED_MODULE_0__.Trailer(item, {
@@ -1042,22 +1044,25 @@ function Line(data) {
     });
   };
   this.render = function () {
+    console.log('Line.render called'); // Діагностика
     var element = Lampa.Template.get('line', {
       title: this.data.title
     });
     this.cards.forEach(function (card) {
-      element.find('.line__cards').append(card.render());
+      var cardElement = card.render();
+      if (cardElement && cardElement.length) {
+        element.find('.line__cards').append(cardElement);
+      }
     });
     return element;
   };
   this.destroy = function () {
+    console.log('Line.destroy called'); // Діагностика
     this.cards.forEach(function (card) {
       card.destroy();
     });
     this.cards = [];
   };
-
-  // Додаємо методи для навігації, які використовуються в component.js
   this.toggle = function () {
     if (this.cards.length) {
       Lampa.Controller.collectionSet(this.render());
