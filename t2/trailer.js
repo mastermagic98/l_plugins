@@ -1,6 +1,6 @@
 // Клас для створення картки трейлера
-import { Api, getPreferredLanguage } from './api.js';
-import { formatDateToDDMMYYYY, getRegion } from './utils.js';
+import { Api } from './api.js';
+import { formatDateToDDMMYYYY, getRegion, getPreferredLanguage } from './utils.js';
 
 function Trailer(data, params) {
   // Створення DOM-структури картки
