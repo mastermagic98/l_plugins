@@ -1056,6 +1056,17 @@ function Line(data) {
     });
     this.cards = [];
   };
+
+  // Додаємо методи для навігації, які використовуються в component.js
+  this.toggle = function () {
+    if (this.cards.length) {
+      Lampa.Controller.collectionSet(this.render());
+      Lampa.Controller.collectionFocus(this.cards[0].render()[0], this.render());
+    }
+  };
+  this.onDown = function () {};
+  this.onUp = function () {};
+  this.onBack = function () {};
 }
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (Line);
 
