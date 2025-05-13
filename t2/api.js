@@ -3,7 +3,7 @@
     var categoryCache = {};
     var CACHE_TTL = 24 * 60 * 60 * 1000;
 
-    // Функції з utils.js перенесено сюди
+    // Функції з utils.js перенесено сюди  
     function getRegion() {
         return (Lampa && Lampa.Storage && Lampa.Storage.get('region')) || 'US';
     }
