@@ -8,8 +8,8 @@ module.exports = {
         path: path.resolve(__dirname, 'dist'),
         filename: '[name].js',
         library: {
-            name: 'LampaPlugin', // Глобальна змінна для плагіна
-            type: 'var', // Вивід як глобальна змінна
+            name: 'LampaPlugin',
+            type: 'var',
         },
     },
     module: {
@@ -39,4 +39,7 @@ module.exports = {
     },
     mode: 'development',
     devtool: 'source-map',
+    resolve: {
+        modules: [path.resolve(__dirname, 't2'), 'node_modules'], // Явно вказуємо папку t2
+    },
 };
