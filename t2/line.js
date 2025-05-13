@@ -47,5 +47,4 @@ function Line(data) {
     this.onBack = function () {};
 }
 
-// Явний експорт як конструктора
-export { Line };
+export { Line }; // Явний експорт
