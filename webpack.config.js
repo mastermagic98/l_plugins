@@ -3,7 +3,7 @@ const TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = {
     entry: {
-        t2: './t2/index.js', // Виправлено шлях
+        t2: './t2/index.js',
     },
     output: {
         path: path.resolve(__dirname, 'dist'),
@@ -35,15 +35,7 @@ module.exports = {
         ],
     },
     optimization: {
-        minimize: true,
-        minimizer: [
-            new TerserPlugin({
-                terserOptions: {
-                    keep_fnames: true,
-                    keep_classnames: true,
-                },
-            }),
-        ],
+        minimize: false, // Вимкнено мінімізацію
     },
-    mode: 'production',
+    mode: 'development', // Змінено на development для читабельного коду
 };
