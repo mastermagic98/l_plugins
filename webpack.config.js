@@ -1,14 +1,17 @@
 const path = require('path');
+const WebpackObfuscator = require('webpack-obfuscator');
+const webpack = require('webpack');
 
 module.exports = {
     entry: './t2/index.js',
     output: {
         path: path.resolve(__dirname, 'dist'),
         filename: 't2.js',
-        library: {
-            name: 'plugin_upcoming',
-            type: 'var'
-        }
+        clean: true
+    },
+    mode: 'production',
+    optimization: {
+        minimize: false
     },
     module: {
         rules: [
@@ -18,21 +21,28 @@ module.exports = {
                 use: {
                     loader: 'babel-loader',
                     options: {
-                        presets: [
-                            ['@babel/preset-env', {
-                                targets: '> 0.25%, not dead',
-                                useBuiltIns: false,
-                                modules: false
-                            }]
-                        ]
+                        presets: ['@babel/preset-env']
                     }
                 }
             }
         ]
     },
-    optimization: {
-        minimize: false
-    },
-    mode: 'development',
-    devtool: false
+    plugins: [
+        new WebpackObfuscator({
+            rotateStringArray: true,
+            stringArray: true,
+            stringArrayThreshold: 0.75
+        }, []),
+        new webpack.BannerPlugin({
+            banner: '(function () {',
+            raw: true,
+            entryOnly: true
+        }),
+        new webpack.BannerPlugin({
+            banner: '})();',
+            raw: true,
+            entryOnly: true,
+            stage: webpack.BannerPlugin.AFTER
+        })
+    ]
 };
