@@ -8,7 +8,7 @@ function Component(object) {
     var light;
 
     this.create = function () {
-        console.log('Component.create called'); // Діагностика
+        console.log('Component.create called');
         try {
             scroll = $('<div class="trailers scroll--h"></div>');
             var menu = [];
@@ -28,9 +28,9 @@ function Component(object) {
     };
 
     this.build = function () {
-        console.log('Component.build called'); // Діагностика
+        console.log('Component.build called');
         try {
-            if (!Lampa.Status) {
+            if (!Lampa || !Lampa.Status) {
                 console.error('Lampa.Status is undefined');
                 scroll.append('<div class="trailers__empty">' + Lampa.Lang.translate('trailers_empty') + '</div>');
                 return;
@@ -38,7 +38,7 @@ function Component(object) {
             var status = new Lampa.Status(5);
             var results = {};
             status.onComplite = function () {
-                console.log('Status completed:', results); // Діагностика
+                console.log('Status completed:', results);
                 var hasItems = false;
                 for (var i in results) {
                     if (results[i].results && results[i].results.length) {
@@ -47,7 +47,7 @@ function Component(object) {
                     }
                 }
                 if (!hasItems) {
-                    console.log('No items to display'); // Діагностика
+                    console.log('No items to display');
                     scroll.append('<div class="trailers__empty">' + Lampa.Lang.translate('trailers_empty') + '</div>');
                 }
                 if (light) Lampa.Background.immediately('');
@@ -62,7 +62,7 @@ function Component(object) {
     };
 
     this.append = function (element) {
-        console.log('Component.append called:', element); // Діагностика
+        console.log('Component.append called:', element);
         try {
             var item = new Line(element);
             item.create();
@@ -84,12 +84,36 @@ function Component(object) {
         }
     };
 
-    this.down = function () { /* ... */ };
-    this.up = function () { /* ... */ };
-    this.back = function () { /* ... */ };
-    this.start = function () { /* ... */ };
+    this.down = function () {
+        active++;
+        if (active >= items.length) active = 0;
+        items[active].toggle();
+    };
+
+    this.up = function () {
+        active--;
+        if (active < 0) active = items.length - 1;
+        items[active].toggle();
+    };
+
+    this.back = function () {
+        Lampa.Activity.backward();
+    };
+
+    this.start = function () {
+        if (items.length) items[active].toggle();
+    };
+
     this.activity = object.activity;
-    this.destroy = function () { /* ... */ };
+
+    this.destroy = function () {
+        items.forEach(function (item) {
+            item.destroy();
+        });
+        items = [];
+        if (scroll) scroll.remove();
+    };
 }
 
-export { Component };
+window.LampaPlugin = window.LampaPlugin || {};
+window.LampaPlugin.Component = Component;
