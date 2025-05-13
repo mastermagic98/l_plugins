@@ -1,4 +1,4 @@
-var LampaPlugin;
+var plugin_upcoming;
 /******/ (() => { // webpackBootstrap
 var __webpack_exports__ = {};
 /*!*********************!*\
@@ -98,7 +98,7 @@ var __webpack_exports__ = {};
   window.plugin_upcoming.ready = ready;
   init();
 })();
-LampaPlugin = __webpack_exports__;
+plugin_upcoming = __webpack_exports__;
 /******/ })()
 ;
 //# sourceMappingURL=t2.js.map
