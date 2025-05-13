@@ -1,16 +1,14 @@
 const path = require('path');
 
 module.exports = {
-    entry: {
-        t2: './t2/index.js',
-    },
+    entry: './t2/index.js',
     output: {
         path: path.resolve(__dirname, 'dist'),
-        filename: '[name].js',
+        filename: 't2.js',
         library: {
-            name: 'LampaPlugin',
-            type: 'var',
-        },
+            name: 'plugin_upcoming',
+            type: 'var'
+        }
     },
     module: {
         rules: [
@@ -24,18 +22,18 @@ module.exports = {
                             ['@babel/preset-env', {
                                 targets: 'defaults',
                                 loose: true,
-                                bugfixes: true,
-                            }],
+                                bugfixes: true
+                            }]
                         ],
-                        sourceMaps: true,
-                    },
-                },
-            },
-        ],
+                        sourceMaps: true
+                    }
+                }
+            }
+        ]
     },
     optimization: {
-        minimize: false,
+        minimize: false
     },
     mode: 'development',
-    devtool: 'source-map',
+    devtool: 'source-map'
 };
