@@ -8,11 +8,8 @@ module.exports = {
         path: path.resolve(__dirname, 'dist'),
         filename: '[name].js',
         library: {
-            type: 'module',
+            type: 'commonjs', // Змінено на commonjs для стабільності
         },
-    },
-    experiments: {
-        outputModule: true,
     },
     module: {
         rules: [
@@ -25,12 +22,11 @@ module.exports = {
                         presets: [
                             ['@babel/preset-env', {
                                 targets: 'defaults',
-                                modules: false,
                                 loose: true,
                                 bugfixes: true,
                             }],
                         ],
-                        sourceMaps: true, // Додано для дебагінгу
+                        sourceMaps: true,
                     },
                 },
             },
@@ -41,5 +37,5 @@ module.exports = {
         concatenateModules: true,
     },
     mode: 'development',
-    devtool: 'source-map', // Додано для читабельного дебагінгу
+    devtool: 'source-map',
 };
