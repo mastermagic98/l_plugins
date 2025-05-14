@@ -311,12 +311,15 @@
 })();
 (function () {
     var ComponentMain = {
-        start: function (params) {
+        init: function (params) {
+            this.params = params || {};
             this.container = $('<div class="category-full"></div>');
             this.lines = [];
+            return this;
+        },
+        start: function () {
             var _this = this;
-
-            window.plugin_upcoming.Api.main(params, function (data) {
+            window.plugin_upcoming.Api.main(this.params, function (data) {
                 data.lines.forEach(function (line) {
                     var l = new window.plugin_upcoming.Line(line.params);
                     _this.lines.push(l);
@@ -353,8 +356,13 @@
             }, function () {
                 Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
             });
-
             return this;
+        },
+        build: function () {
+            return this.container;
+        },
+        update: function () {
+            return this.container;
         },
         render: function () {
             return this.container;
@@ -365,15 +373,27 @@
                 line.destroy();
             });
             this.lines = [];
+            this.params = null;
         }
     };
 
     var ComponentFull = {
-        start: function (params) {
+        init: function (params) {
+            this.params = params || {};
             this.container = $('<div class="category-full category-full--trailers"></div>');
-            this.line = new window.plugin_upcoming.Line(params);
+            this.line = null;
+            return this;
+        },
+        start: function () {
+            this.line = new window.plugin_upcoming.Line(this.params);
             this.container.append(this.line.container);
             return this;
+        },
+        build: function () {
+            return this.container;
+        },
+        update: function () {
+            return this.container;
         },
         render: function () {
             return this.container;
@@ -382,6 +402,7 @@
             this.container.remove();
             if (this.line) this.line.destroy();
             this.line = null;
+            this.params = null;
         }
     };
 
