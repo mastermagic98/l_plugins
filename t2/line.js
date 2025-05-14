@@ -10,22 +10,25 @@
 
         this.load = function () {
             if (this.params.category) {
-                var url = Lampa.TMDB.url(this.params.type + '/' + this.params.category);
+                var path = this.params.type + '/' + this.params.category; // Наприклад, 'movie/popular'
                 var language = Lampa.Storage.get('language', 'uk');
                 var region = language === 'uk' ? 'UA' : language === 'ru' ? 'RU' : 'US';
 
                 if (this.params.filter) {
-                    url = Lampa.TMDB.url('trending/' + this.params.type + '/' + this.params.filter);
+                    path = 'trending/' + this.params.type + '/' + this.params.filter; // Наприклад, 'trending/movie/day'
                 }
 
+                console.log('[Line] Loading path:', path);
+
                 Lampa.TMDB.get(
-                    url,
+                    path,
                     {
                         language: language,
                         region: region,
                         page: this.page
                     },
                     function (data) {
+                        console.log('[Line] TMDB data:', data);
                         if (data.results && data.results.length) {
                             data.results.forEach(function (item) {
                                 var card = new window.plugin_upcoming.Trailer(item, this.params);
@@ -52,6 +55,7 @@
                         this.page++;
                     }.bind(this),
                     function () {
+                        console.log('[Line] TMDB request failed');
                         this.more.hide();
                         Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
                     }.bind(this)
