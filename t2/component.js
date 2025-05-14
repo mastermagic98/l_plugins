@@ -1,10 +1,10 @@
 (function () {
-    function ComponentMain(params) {
-        var _this = this;
-        this.container = $('<div class="category-full"></div>');
-        this.lines = [];
+    var ComponentMain = {
+        start: function (params) {
+            this.container = $('<div class="category-full"></div>');
+            this.lines = [];
+            var _this = this;
 
-        this.start = function () {
             window.plugin_upcoming.Api.main(params, function (data) {
                 data.lines.forEach(function (line) {
                     var l = new window.plugin_upcoming.Line(line.params);
@@ -42,18 +42,37 @@
             }, function () {
                 Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
             });
-        };
-    }
 
-    function ComponentFull(params) {
-        var _this = this;
-        this.container = $('<div class="category-full category-full--trailers"></div>');
-        this.line = new window.plugin_upcoming.Line(params);
+            return this;
+        },
+        render: function () {
+            return this.container;
+        },
+        destroy: function () {
+            this.container.remove();
+            this.lines.forEach(function (line) {
+                line.destroy();
+            });
+            this.lines = [];
+        }
+    };
 
-        this.start = function () {
-            _this.container.append(_this.line.container);
-        };
-    }
+    var ComponentFull = {
+        start: function (params) {
+            this.container = $('<div class="category-full category-full--trailers"></div>');
+            this.line = new window.plugin_upcoming.Line(params);
+            this.container.append(this.line.container);
+            return this;
+        },
+        render: function () {
+            return this.container;
+        },
+        destroy: function () {
+            this.container.remove();
+            if (this.line) this.line.destroy();
+            this.line = null;
+        }
+    };
 
     window.plugin_upcoming = window.plugin_upcoming || {};
     window.plugin_upcoming.ComponentMain = ComponentMain;
