@@ -310,12 +310,17 @@
     window.plugin_upcoming.Line = Line;
 })();
 (function () {
-    var ComponentMain = {
+    function ComponentMain(params) {
+        this.params = params || {};
+        this.container = $('<div class="category-full"></div>');
+        this.lines = [];
+        console.log('[ComponentMain] Initialized with params:', params);
+    }
+
+    ComponentMain.prototype = {
         init: function (params) {
             this.params = params || {};
-            this.container = $('<div class="category-full"></div>');
-            this.lines = [];
-            console.log('[ComponentMain] Initialized with params:', params);
+            console.log('[ComponentMain] Init with params:', params);
             return this;
         },
         start: function () {
@@ -381,12 +386,17 @@
         }
     };
 
-    var ComponentFull = {
+    function ComponentFull(params) {
+        this.params = params || {};
+        this.container = $('<div class="category-full category-full--trailers"></div>');
+        this.line = null;
+        console.log('[ComponentFull] Initialized with params:', params);
+    }
+
+    ComponentFull.prototype = {
         init: function (params) {
             this.params = params || {};
-            this.container = $('<div class="category-full category-full--trailers"></div>');
-            this.line = null;
-            console.log('[ComponentFull] Initialized with params:', params);
+            console.log('[ComponentFull] Init with params:', params);
             return this;
         },
         start: function () {
