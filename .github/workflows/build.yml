@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - 'build/**'
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -21,8 +23,12 @@ jobs:
           cat src/init.js >> build/upcoming.js
           echo "})();" >> build/upcoming.js
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: build
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add build/upcoming.js
+          git commit -m "Update upcoming.js"
+          git push origin main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
