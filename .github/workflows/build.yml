@@ -1,47 +1,31 @@
-name: Build t2.js
+name: Build and Deploy t2.js
 
 on:
   push:
     branches:
       - main
 
-permissions:
-  contents: write
-
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      # Перевіряємо код із репозиторію
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
+      # Створюємо dist/t2.js за допомогою cat
+      - name: Build t2.js
+        run: |
+          mkdir -p dist
+          echo "(function () {" > dist/t2.js
+          echo "    'use strict';" >> dist/t2.js
+          cat t2/utils.js t2/api.js t2/trailer.js t2/line.js t2/component.js t2/index.js >> dist/t2.js
+          echo "})();" >> dist/t2.js
 
-    - name: Clear npm cache
-      run: npm cache clean --force
-
-    - name: Install dependencies
-      run: npm install
-
-    - name: Build with Webpack
-      run: npm run build
-
-    - name: Commit and push t2.js
-      run: |
-        git config --global user.name "GitHub Action"
-        git config --global user.email "action@github.com"
-        mkdir -p dist || echo "dist directory already exists"
-        ls -la dist/ || echo "dist/ directory not found"
-        cat dist/t2.js || echo "t2.js not found or empty"
-        cat .gitignore || echo ".gitignore not found"
-        git add dist/ --force
-        git commit -m "Auto-generate dist/t2.js" || echo "No changes to commit"
-        git push --force origin main
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Публікуємо dist/ на GitHub Pages
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
