@@ -133,113 +133,127 @@ function getUpcomingMovies(page, resolve, reject) {
     var region = getRegion();
     var today = getFormattedDate(0);
     var sixMonthsLater = getFormattedDate(-180);
-    var language = getInterfaceLanguage();
+    var lang = Lampa.Storage.get('language', 'ru');
+    var language = lang === 'uk' ? 'uk-UA' : lang === 'ru' ? 'ru-RU' : 'en-US';
     var preferredLangs = getPreferredLanguage();
+    var maxPages = 30; // Максимальна кількість сторінок для запобігання надмірних запитів
+    var allMoviesWithTrailers = [];
+    var currentPage = 1;
+    var totalPages = 1;
 
-    var upcoming_url = `${tmdb_base_url}/discover/movie?api_key=${tmdb_api_key}&language=${language}&page=${page}®ion=${region}&primary_release_date.gte=${today}&primary_release_date.lte=${sixMonthsLater}&sort_by=popularity.desc&vote_count.gte=1`;
-    network.silent(upcoming_url, function (data) {
-        if (data.results && data.results.length) {
-            var totalRequests = data.results.length;
-            var completedRequests = 0;
-            var moviesWithTrailers = [];
+    function fetchPage(pageToFetch) {
+        var upcoming_url = `${tmdb_base_url}/movie/upcoming?api_key=${tmdb_api_key}&language=${language}&page=${pageToFetch}®ion=${region}`;
+        network.silent(upcoming_url, function (data) {
+            if (data.results && data.results.length) {
+                totalPages = Math.min(data.total_pages || maxPages, maxPages);
+                var totalRequests = data.results.length;
+                var completedRequests = 0;
 
-            function finalizeResults() {
-                var filteredResults = moviesWithTrailers.filter(function (m) {
-                    if (m.release_details && m.release_details.results) {
-                        var regionRelease = m.release_details.results.find(function (r) {
-                            return r.iso_3166_1 === region;
-                        });
-                        if (regionRelease && regionRelease.release_dates && regionRelease.release_dates.length) {
-                            return true; // Має регіональну дату релізу
-                        }
-                    }
-                    return !!m.release_date; // Має глобальну дату релізу
-                });
-                filteredResults.sort(function (a, b) {
-                    var dateA = a.release_details?.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date || a.release_date;
-                    var dateB = b.release_details?.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date || b.release_date;
-                    return new Date(dateA) - new Date(dateB);
-                });
-                data.results = filteredResults;
-                data.total_results = filteredResults.length;
-                resolve(data);
-            }
-
-            data.results.forEach(function (movie) {
-                var movie_id = movie.id;
-                if (movie_id) {
-                    var release_url = `${tmdb_base_url}/movie/${movie_id}/release_dates?api_key=${tmdb_api_key}`;
-                    var video_url = `${tmdb_base_url}/movie/${movie_id}/videos?api_key=${tmdb_api_key}&language=${preferredLangs[0] || 'en'}`;
-                    var cacheKey = 'movie_' + movie_id;
-
-                    // Перевіряємо кеш трейлерів
-                    if (trailerCache[cacheKey] && trailerCache[cacheKey].results.length > 0) {
-                        network.silent(release_url, function (release_data) {
-                            movie.release_details = release_data;
-                            moviesWithTrailers.push(movie);
-                            completedRequests++;
-                            if (completedRequests === totalRequests) {
-                                finalizeResults();
-                            }
-                        }, function () {
-                            movie.release_details = { results: [] };
-                            moviesWithTrailers.push(movie);
-                            completedRequests++;
-                            if (completedRequests === totalRequests) {
-                                finalizeResults();
-                            }
-                        });
-                    } else {
-                        // Перевіряємо наявність трейлера
-                        network.silent(video_url, function (video_data) {
-                            var trailers = video_data.results ? video_data.results.filter(function (v) {
-                                return v.type === 'Trailer';
-                            }) : [];
-                            var hasTrailer = trailers.length > 0;
-
-                            // Якщо є трейлер, додаємо фільм до списку
-                            if (hasTrailer) {
-                                trailerCache[cacheKey] = { id: movie_id, results: trailers };
-                                network.silent(release_url, function (release_data) {
-                                    movie.release_details = release_data;
-                                    moviesWithTrailers.push(movie);
-                                    completedRequests++;
-                                    if (completedRequests === totalRequests) {
-                                        finalizeResults();
-                                    }
-                                }, function () {
-                                    movie.release_details = { results: [] };
-                                    moviesWithTrailers.push(movie);
-                                    completedRequests++;
-                                    if (completedRequests === totalRequests) {
-                                        finalizeResults();
-                                    }
-                                });
-                            } else {
-                                completedRequests++;
-                                if (completedRequests === totalRequests) {
-                                    finalizeResults();
-                                }
-                            }
-                        }, function () {
-                            // Якщо відео запит не вдався, пропускаємо фільм
-                            completedRequests++;
-                            if (completedRequests === totalRequests) {
-                                finalizeResults();
-                            }
-                        });
-                    }
-                } else {
+                function processPageResults() {
                     completedRequests++;
                     if (completedRequests === totalRequests) {
-                        finalizeResults();
+                        if (currentPage < totalPages && pageToFetch === currentPage) {
+                            currentPage++;
+                            fetchPage(currentPage);
+                        } else {
+                            finalizeResults();
+                        }
                     }
                 }
-            });
-        } else {
-            resolve(data);
-        }
-    }, reject);
+
+                data.results.forEach(function (movie) {
+                    var movie_id = movie.id;
+                    if (movie_id) {
+                        var release_url = `${tmdb_base_url}/movie/${movie_id}/release_dates?api_key=${tmdb_api_key}`;
+                        var video_url = `${tmdb_base_url}/movie/${movie_id}/videos?api_key=${tmdb_api_key}&language=${preferredLangs[0] || 'en'}`;
+                        var cacheKey = 'movie_' + movie_id;
+
+                        // Перевірка кешу трейлерів
+                        if (trailerCache[cacheKey] && trailerCache[cacheKey].results.length > 0) {
+                            network.silent(release_url, function (release_data) {
+                                movie.release_details = release_data;
+                                // Фільтруємо за датами
+                                var releaseDate = movie.release_date || (release_data.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date);
+                                if (releaseDate && new Date(releaseDate) >= new Date(today) && new Date(releaseDate) <= new Date(sixMonthsLater)) {
+                                    allMoviesWithTrailers.push(movie);
+                                }
+                                processPageResults();
+                            }, function () {
+                                movie.release_details = { results: [] };
+                                processPageResults();
+                            });
+                        } else {
+                            // Перевіряємо наявність трейлера
+                            network.silent(video_url, function (video_data) {
+                                var trailers = video_data.results ? video_data.results.filter(function (v) {
+                                    return v.type === 'Trailer';
+                                }) : [];
+                                var hasTrailer = trailers.length > 0;
+
+                                if (hasTrailer) {
+                                    trailerCache[cacheKey] = { id: movie_id, results: trailers };
+                                    network.silent(release_url, function (release_data) {
+                                        movie.release_details = release_data;
+                                        // Фільтруємо за датами
+                                        var releaseDate = movie.release_date || (release_data.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date);
+                                        if (releaseDate && new Date(releaseDate) >= new Date(today) && new Date(releaseDate) <= new Date(sixMonthsLater)) {
+                                            allMoviesWithTrailers.push(movie);
+                                        }
+                                        processPageResults();
+                                    }, function () {
+                                        movie.release_details = { results: [] };
+                                        processPageResults();
+                                    });
+                                } else {
+                                    processPageResults();
+                                }
+                            }, function () {
+                                processPageResults();
+                            });
+                        }
+                    } else {
+                        processPageResults();
+                    }
+                });
+            } else {
+                finalizeResults();
+            }
+        }, function () {
+            if (pageToFetch === 1) {
+                reject();
+            } else {
+                finalizeResults();
+            }
+        });
+    }
+
+    function finalizeResults() {
+        var filteredResults = allMoviesWithTrailers.filter(function (m) {
+            if (m.release_details && m.release_details.results) {
+                var regionRelease = m.release_details.results.find(function (r) {
+                    return r.iso_3166_1 === region;
+                });
+                if (regionRelease && regionRelease.release_dates && regionRelease.release_dates.length) {
+                    return true;
+                }
+            }
+            return !!m.release_date;
+        });
+        filteredResults.sort(function (a, b) {
+            var dateA = a.release_details?.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date || a.release_date;
+            var dateB = b.release_details?.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date || b.release_date;
+            return new Date(dateA) - new Date(dateB);
+        });
+        var result = {
+            page: page,
+            results: filteredResults.slice((page - 1) * 20, page * 20), // Повертаємо лише потрібну сторінку
+            total_pages: Math.ceil(filteredResults.length / 20) || 1,
+            total_results: filteredResults.length
+        };
+        resolve(result);
+    }
+
+    fetchPage(page);
 }
 
 function main(oncomplite, onerror) {
@@ -289,9 +303,9 @@ function main(oncomplite, onerror) {
     });
 
     getUpcomingMovies(1, function (json) {
-        append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/discover/movie?primary_release_date.gte=' + today + '&primary_release_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc', { results: json.results || [] });
+        append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/movie/upcoming', { results: json.results || [] });
     }, function () {
-        append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/discover/movie?primary_release_date.gte=' + today + '&primary_release_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc', { results: [] });
+        append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/movie/upcoming', { results: [] });
     });
 
     get('/discover/tv?sort_by=popularity.desc&vote_count.gte=1', 1, function (json) {
