@@ -1,10 +1,12 @@
 (function () {
     function Line(params) {
-        var _this = this;
         this.params = params;
+        this.container = $('<div class="items-line"></div>');
         this.cards = [];
-        this.container = $('<div class="items-line category-full category-full--trailers"></div>');
-        this.more = $('<div class="card-more more--trailers selector"><div class="card-more__box"><div class="card-more__title">' + Lampa.Lang.translate('trailers_more') + '</div></div></div>');
+        this.page = 1;
+        this.count = 20;
+        this.more = $('<div class="card-more more--trailers"><div class="card-more__box"><div class="card-more__text">' + Lampa.Lang.translate('trailers_more') + '</div></div></div>');
+        console.log('[Line] Initialized with params:', params);
         this.container.append(this.more);
         this.page = 1;
         this.load = window.plugin_upcoming.utils.debounce(function () {
