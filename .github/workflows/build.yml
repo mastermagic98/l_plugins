@@ -1,53 +1,28 @@
-name: Build and Deploy t2.js
-
+name: Build Upcoming Plugin
 on:
   push:
     branches:
       - main
-
-permissions:
-  contents: write
-  pages: write
-  id-token: write
-
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Build t2.js
+      - name: Concatenate JS files with IIFE wrapper
         run: |
-          mkdir -p dist
-          echo "(function () {" > dist/t2.js
-          echo "    'use strict';" >> dist/t2.js
-          cat t2/utils.js t2/api.js t2/trailer.js t2/line.js t2/component.js t2/index.js >> dist/t2.js
-          echo "})();" >> dist/t2.js
-
-      - name: Commit dist/t2.js
-        run: |
-          git config --local user.name "GitHub Action"
-          git config --local user.email "action@github.com"
-          git add dist/t2.js
-          git commit -m "Build dist/t2.js" || echo "No changes to commit"
-          git pull --rebase origin main
-          git push origin main
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
+          mkdir -p build
+          echo "(function () {" > build/upcoming.js
+          echo "'use strict';" >> build/upcoming.js
+          cat src/utils.js >> build/upcoming.js
+          cat src/api.js >> build/upcoming.js
+          cat src/components.js >> build/upcoming.js
+          cat src/init.js >> build/upcoming.js
+          echo "})();" >> build/upcoming.js
 
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/upload-pages-artifact@v3
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          path: ./dist
-
-      - name: Deploy artifact
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: build
