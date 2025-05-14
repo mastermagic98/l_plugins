@@ -460,8 +460,12 @@
         if (window.plugin_trailers_ready) return;
         window.plugin_trailers_ready = true;
 
+        console.log('[Index] Registering components...');
+        console.log('[Index] ComponentMain:', window.plugin_upcoming.ComponentMain);
+        console.log('[Index] ComponentFull:', window.plugin_upcoming.ComponentFull);
         Lampa.Component.add('trailers_main', window.plugin_upcoming.ComponentMain);
         Lampa.Component.add('trailers_full', window.plugin_upcoming.ComponentFull);
+        console.log('[Index] Components registered');
 
         Lampa.Template.add('trailer', '<div class="card selector card--trailer layer--render layer--visible"><div class="card__view"><img src="./img/img_load.svg" class="card__img"><div class="card__promo"><div class="card__promo-text"><div class="card__title"></div></div><div class="card__details"></div></div></div><div class="card__play"><img src="./img/icons/player/play.svg"></div></div>');
         Lampa.Template.add('trailer_style', [
@@ -487,6 +491,7 @@
         function add() {
             var button = $('<li class="menu__item selector"><div class="menu__ico"><svg height="70" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/></svg></div><div class="menu__text">' + Lampa.Lang.translate('title_trailers') + '</div></li>');
             button.on('hover:enter', function () {
+                console.log('[Index] Pushing trailers_main activity');
                 Lampa.Activity.push({
                     url: '',
                     title: Lampa.Lang.translate('title_trailers'),
@@ -505,19 +510,24 @@
         }
 
         if (Lampa.TMDB && Lampa.TMDB.key()) {
+            console.log('[Index] TMDB key available, starting plugin');
             add();
         } else {
+            console.log('[Index] TMDB key missing');
             Lampa.Noty.show('TMDB API key is missing. Trailers plugin cannot be loaded.');
         }
     }
 
     if (!window.appready) {
+        console.log('[Index] App not ready, waiting for ready event');
         Lampa.Listener.follow('app', function (e) {
             if (e.type === 'ready') {
+                console.log('[Index] App ready, starting plugin');
                 startPlugin();
             }
         });
     } else {
+        console.log('[Index] App already ready, starting plugin');
         startPlugin();
     }
 })();
