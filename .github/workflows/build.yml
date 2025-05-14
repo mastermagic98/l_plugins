@@ -21,7 +21,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Отримуємо повну історію для коректного pull
+          fetch-depth: 0
 
       - name: Build t2.js
         run: |
@@ -35,9 +35,9 @@ jobs:
         run: |
           git config --local user.name "GitHub Action"
           git config --local user.email "action@github.com"
-          git pull --rebase origin main
           git add dist/t2.js
-          git commit -m "Update dist/t2.js" || echo "No changes to commit"
+          git commit -m "Build dist/t2.js" || echo "No changes to commit"
+          git pull --rebase origin main
           git push origin main
 
       - name: Setup Pages
