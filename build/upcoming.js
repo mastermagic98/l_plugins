@@ -432,31 +432,22 @@ function full(params, oncomplite, onerror) {
 
         fetchNextPage();
     } else if (params.type === 'upcoming_movies') {
+        var targetCards = 20;
+        var region = getRegion();
         var today = getFormattedDate(0);
         var sixMonthsLater = getFormattedDate(-180);
-        var targetCards = 20;
 
+        // Перевірка кешу
         var cachedData = categoryCache['upcoming_movies'] || Lampa.Storage.get('trailer_category_cache_upcoming_movies', null);
         if (cachedData && cachedData.results && cachedData.results.length > 0) {
-            var filteredResults = cachedData.results.filter(function (m) {
-                if (m.release_details && m.release_details.results) {
-                    var regionRelease = m.release_details.results.find(function (r) {
-                        return r.iso_3166_1 === getRegion();
-                    });
-                    if (regionRelease && regionRelease.release_dates && regionRelease.release_dates.length) {
-                        return true;
-                    }
-                }
-                return !!m.release_date;
-            });
             var startIdx = (params.page - 1) * targetCards;
-            var endIdx = Math.min(params.page * targetCards, filteredResults.length);
-            var pageResults = filteredResults.slice(startIdx, endIdx);
+            var endIdx = Math.min(params.page * targetCards, cachedData.results.length);
+            var pageResults = cachedData.results.slice(startIdx, endIdx);
             var result = {
                 page: params.page,
                 results: pageResults,
-                total_pages: Math.ceil(filteredResults.length / targetCards) || 1,
-                total_results: filteredResults.length
+                total_pages: Math.ceil(cachedData.results.length / targetCards) || 1,
+                total_results: cachedData.results.length
             };
             if (pageResults.length > 0) {
                 oncomplite(result);
@@ -464,33 +455,19 @@ function full(params, oncomplite, onerror) {
             }
         }
 
+        // Завантаження даних
         getUpcomingMovies(params.page, function (result) {
             if (result && result.results && result.results.length) {
-                var filteredResults = result.results.filter(function (m) {
-                    if (m.release_details && m.release_details.results) {
-                        var regionRelease = m.release_details.results.find(function (r) {
-                            return r.iso_3166_1 === getRegion();
-                        });
-                        if (regionRelease && regionRelease.release_dates && regionRelease.release_dates.length) {
-                            return true;
-                        }
-                    }
-                    return !!m.release_date;
-                });
-                result.results = filteredResults;
-                result.total_results = filteredResults.length;
-                result.total_pages = Math.ceil(filteredResults.length / targetCards) || 1;
-
+                // Зберігаємо всі результати в кеші
                 if (params.page === 1) {
                     categoryCache['upcoming_movies'] = {
-                        results: filteredResults,
+                        results: result.results,
                         timestamp: Date.now()
                     };
                     Lampa.Storage.set('trailer_category_cache_upcoming_movies', categoryCache['upcoming_movies']);
                 } else {
                     var existingCache = categoryCache['upcoming_movies'] || Lampa.Storage.get('trailer_category_cache_upcoming_movies', { results: [] });
-                    existingCache.results = existingCache.results.concat(filteredResults);
-                    existingCache.results = [...new Set(existingCache.results.map(JSON.stringify))].map(JSON.parse);
+                    existingCache.results = [...new Set([...existingCache.results, ...result.results].map(JSON.stringify))].map(JSON.parse);
                     categoryCache['upcoming_movies'] = existingCache;
                     Lampa.Storage.set('trailer_category_cache_upcoming_movies', existingCache);
                 }
