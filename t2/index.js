@@ -24,7 +24,9 @@
         trailers_more: { ru: 'Ещё', uk: 'Ще', en: 'More' },
         trailers_popular_movies: { ru: 'Популярные фильмы', uk: 'Популярні фільми', en: 'Popular Movies' },
         trailers_last_movie: { ru: 'Это последний фильм: [title]', uk: 'Це останній фільм: [title]', en: 'This is the last movie: [title]' },
-        trailers_no_more_data: { ru: 'Больше нет данных для загрузки', uk: 'Більше немає даних для завантаження', en: 'No more data to load' }
+        trailers_no_more_data: { ru: 'Больше нет данных для загрузки', uk: 'Більше немає даних для завантаження', en: 'No more data to load' },
+        clear_trailers_cache: { ru: 'Очистить кэш трейлеров', uk: 'Очистити кеш трейлерів', en: 'Clear trailers cache' },
+        done: { ru: 'Выполнено', uk: 'Виконано', en: 'Done' }
     });
 
     function startPlugin() {
@@ -47,7 +49,14 @@
                     page: 1
                 });
             });
-            $('.menu .menu__list').eq(0).append(button);
+
+            var clearCacheButton = $('<li class="menu__item selector"><div class="menu__ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 19C6 20.1 6.9 21 8 21H16C17.1 21 18 20.1 18 19V7H6V19ZM19 4H15.5L14.5 3H9.5L8.5 4H5V6H19V4Z" fill="currentColor"/></svg></div><div class="menu__text">' + Lampa.Lang.translate('clear_trailers_cache') + '</div></li>');
+            clearCacheButton.on('hover:enter', function () {
+                window.plugin_upcoming.Api.clear();
+                Lampa.Noty.show(Lampa.Lang.translate('clear_trailers_cache') + ': ' + Lampa.Lang.translate('done'));
+            });
+
+            $('.menu .menu__list').eq(0).append(button).append(clearCacheButton);
             $('body').append(Lampa.Template.get('trailer_style', {}, true));
             Lampa.Storage.listener.follow('change', function (event) {
                 if (event.name === 'language') {
