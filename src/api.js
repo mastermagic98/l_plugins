@@ -383,9 +383,10 @@ function full(params, oncomplite, onerror) {
         fetchNextPage();
     } else if (params.type === 'upcoming_movies') {
         var targetCards = 20;
-        var region = getRegion();
-        var today = getFormattedDate(0);
-        var sixMonthsLater = getFormattedDate(-180);
+        var accumulatedResults = [];
+        var currentPage = 1;
+        var maxPages = 30;
+        var totalPages = 1;
 
         // Перевірка кешу
         var cachedData = categoryCache['upcoming_movies'] || Lampa.Storage.get('trailer_category_cache_upcoming_movies', null);
@@ -399,33 +400,65 @@ function full(params, oncomplite, onerror) {
                 total_pages: Math.ceil(cachedData.results.length / targetCards) || 1,
                 total_results: cachedData.results.length
             };
+            console.log('Upcoming movies cache:', cachedData.results.length, 'Page:', params.page, 'Results:', pageResults.length);
             if (pageResults.length > 0) {
                 oncomplite(result);
                 return;
             }
         }
 
-        // Завантаження даних
-        getUpcomingMovies(params.page, function (result) {
-            if (result && result.results && result.results.length) {
-                // Зберігаємо всі результати в кеші
-                if (params.page === 1) {
-                    categoryCache['upcoming_movies'] = {
-                        results: result.results,
-                        timestamp: Date.now()
-                    };
-                    Lampa.Storage.set('trailer_category_cache_upcoming_movies', categoryCache['upcoming_movies']);
+        // Завантаження всіх сторінок
+        function fetchNextPage() {
+            if (currentPage > maxPages || currentPage > totalPages) {
+                finalizeResults();
+                return;
+            }
+
+            getUpcomingMovies(currentPage, function (result) {
+                if (result && result.results && result.results.length) {
+                    accumulatedResults = accumulatedResults.concat(result.results);
+                    if (currentPage === 1) {
+                        totalPages = result.total_pages || maxPages;
+                    }
+                    currentPage++;
+                    fetchNextPage();
                 } else {
-                    var existingCache = categoryCache['upcoming_movies'] || Lampa.Storage.get('trailer_category_cache_upcoming_movies', { results: [] });
-                    existingCache.results = [...new Set([...existingCache.results, ...result.results].map(JSON.stringify))].map(JSON.parse);
-                    categoryCache['upcoming_movies'] = existingCache;
-                    Lampa.Storage.set('trailer_category_cache_upcoming_movies', existingCache);
+                    finalizeResults();
                 }
+            }, function () {
+                finalizeResults();
+            });
+        }
+
+        function finalizeResults() {
+            // Уникаємо дублікатів
+            var finalResults = [...new Set(accumulatedResults.map(JSON.stringify))].map(JSON.parse);
+            var startIdx = (params.page - 1) * targetCards;
+            var endIdx = Math.min(params.page * targetCards, finalResults.length);
+            var pageResults = finalResults.slice(startIdx, endIdx);
+            var result = {
+                page: params.page,
+                results: pageResults,
+                total_pages: Math.ceil(finalResults.length / targetCards) || 1,
+                total_results: finalResults.length
+            };
+            console.log('Upcoming movies final results:', finalResults.length, 'Page:', params.page, 'Results:', pageResults.length);
+
+            // Зберігаємо в кеш
+            categoryCache['upcoming_movies'] = {
+                results: finalResults,
+                timestamp: Date.now()
+            };
+            Lampa.Storage.set('trailer_category_cache_upcoming_movies', categoryCache['upcoming_movies']);
+
+            if (pageResults.length > 0 || params.page === 1) {
                 oncomplite(result);
             } else {
                 onerror();
             }
-        }, onerror);
+        }
+
+        fetchNextPage();
     } else if (params.type === 'new_series_seasons') {
         var threeMonthsAgo = getFormattedDate(90);
         var threeMonthsLater = getFormattedDate(-90);
