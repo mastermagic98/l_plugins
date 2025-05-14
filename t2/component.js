@@ -4,11 +4,14 @@
             this.params = params || {};
             this.container = $('<div class="category-full"></div>');
             this.lines = [];
+            console.log('[ComponentMain] Initialized with params:', params);
             return this;
         },
         start: function () {
             var _this = this;
+            console.log('[ComponentMain] Starting...');
             window.plugin_upcoming.Api.main(this.params, function (data) {
+                console.log('[ComponentMain] Api.main success:', data);
                 data.lines.forEach(function (line) {
                     var l = new window.plugin_upcoming.Line(line.params);
                     _this.lines.push(l);
@@ -43,6 +46,7 @@
                     }
                 });
             }, function () {
+                console.log('[ComponentMain] Api.main failed');
                 Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
             });
             return this;
@@ -71,9 +75,11 @@
             this.params = params || {};
             this.container = $('<div class="category-full category-full--trailers"></div>');
             this.line = null;
+            console.log('[ComponentFull] Initialized with params:', params);
             return this;
         },
         start: function () {
+            console.log('[ComponentFull] Starting...');
             this.line = new window.plugin_upcoming.Line(this.params);
             this.container.append(this.line.container);
             return this;
@@ -98,4 +104,5 @@
     window.plugin_upcoming = window.plugin_upcoming || {};
     window.plugin_upcoming.ComponentMain = ComponentMain;
     window.plugin_upcoming.ComponentFull = ComponentFull;
+    console.log('[Component] Registered ComponentMain and ComponentFull');
 })();
