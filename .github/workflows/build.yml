@@ -13,13 +13,14 @@ permissions:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      # Перевіряємо код
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Створюємо dist/t2.js за допомогою cat
       - name: Build t2.js
         run: |
           mkdir -p dist
@@ -28,7 +29,6 @@ jobs:
           cat t2/utils.js t2/api.js t2/trailer.js t2/line.js t2/component.js t2/index.js >> dist/t2.js
           echo "})();" >> dist/t2.js
 
-      # Комітимо dist/t2.js у гілку main
       - name: Commit dist/t2.js
         run: |
           git config --local user.name "GitHub Action"
@@ -37,14 +37,14 @@ jobs:
           git commit -m "Update dist/t2.js" || echo "No changes to commit"
           git push origin main
 
-      # Налаштування GitHub Pages
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
-      # Публікуємо dist/ на GitHub Pages
       - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
+
       - name: Deploy artifact
         uses: actions/deploy-pages@v4
