@@ -28,10 +28,23 @@ jobs:
           cat t2/utils.js t2/api.js t2/trailer.js t2/line.js t2/component.js t2/index.js >> dist/t2.js
           echo "})();" >> dist/t2.js
 
+      # Комітимо dist/t2.js у гілку main
+      - name: Commit dist/t2.js
+        run: |
+          git config --local user.name "GitHub Action"
+          git config --local user.email "action@github.com"
+          git add dist/t2.js
+          git commit -m "Update dist/t2.js" || echo "No changes to commit"
+          git push origin main
+
+      # Налаштування GitHub Pages
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
       # Публікуємо dist/ на GitHub Pages
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
-          publish_branch: gh-pages
+          path: ./dist
+      - name: Deploy artifact
+        uses: actions/deploy-pages@v4
