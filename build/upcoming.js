@@ -55,7 +55,8 @@ var trailerCache = {};
 var categoryCache = {};
 
 function get(url, page, resolve, reject) {
-    var full_url = tmdb_base_url + url + '&api_key=' + tmdb_api_key + '&page=' + page + '&language=' + getInterfaceLanguage();
+    var separator = url.includes('?') ? '&' : '?';
+    var full_url = tmdb_base_url + url + separator + 'api_key=' + tmdb_api_key + '&page=' + page + '&language=' + getInterfaceLanguage();
     network.silent(full_url, resolve, reject);
 }
 
