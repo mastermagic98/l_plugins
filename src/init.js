@@ -163,8 +163,12 @@
                         Lampa.Menu.ready();
                         console.log('[Trailers]','Menu updated via Lampa.Menu.ready');
                     }
+                    if(typeof Lampa.Menu.render === 'function') {
+                        Lampa.Menu.render();
+                        console.log('[Trailers]','Menu updated via Lampa.Menu.render');
+                    }
                     console.log('[Trailers]','Final menu items:',Lampa.Menu.items);
-                },2000);
+                },1000);
             }
             catch(e){
                 console.error('[Trailers]','Error adding menu item:',e.message);
