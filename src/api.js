@@ -19,7 +19,7 @@
     var daysThreshold = 45;
     var startDate = new Date(today.getTime() - daysThreshold * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-    var now_playing_url = tmdb_base_url + '/movie/now_playing?api_key=' + tmdb_api_key + '&language=' + language + '&page=' + page + '&region=' + region + '&primary_release_date.gte=' + startDate;
+    var now_playing_url = tmdb_base_url + '/movie/now_playing?api_key=' + tmdb_api_key + '&language=' + language + '&page=' + page + '®ion=' + region + '&primary_release_date.gte=' + startDate;
     network.silent(now_playing_url, function(data) {
       if (data.results && data.results.length) {
         var totalRequests = data.results.length;
@@ -95,7 +95,7 @@
     var totalPages = 1;
 
     function fetchPage(pageToFetch) {
-      var upcoming_url = tmdb_base_url + '/movie/upcoming?api_key=' + tmdb_api_key + '&language=' + language + '&page=' + pageToFetch + '&region=' + region;
+      var upcoming_url = tmdb_base_url + '/movie/upcoming?api_key=' + tmdb_api_key + '&language=' + language + '&page=' + pageToFetch + '®ion=' + region;
       network.silent(upcoming_url, function(data) {
         if (data.results && data.results.length) {
           totalPages = Math.min(data.total_pages || maxPages, maxPages);
@@ -241,7 +241,64 @@
     var threeMonthsLater = TrailerPlugin.Utils.getFormattedDate(-90);
 
     get('/discover/movie?sort_by=popularity.desc&vote_count.gte=1', 1, function(json) {
-      append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/discover/movie?sort_by=popularity.desc', { results: json.results || [] });
+      if (json.results && json.results.length) {
+        var totalRequests = json.results.length;
+        var completedRequests = 0;
+        var filteredResults = [];
+        var lang = TrailerPlugin.Utils.getInterfaceLanguage();
+        var targetLang = lang === 'uk' ? 'uk-UA' : lang === 'ru' ? 'ru-RU' : 'en-US';
+
+        json.results.forEach(function(movie) {
+          var movie_id = movie.id;
+          var cacheKey = 'movie_' + movie_id;
+
+          // Перевіряємо дубльовану назву
+          var hasTranslatedTitle = lang === 'uk' ? !!movie.title : lang === 'ru' ? !!movie.title : true;
+
+          if (movie_id && hasTranslatedTitle) {
+            // Перевіряємо кеш трейлера
+            if (trailerCache[cacheKey] && trailerCache[cacheKey].results.length > 0) {
+              filteredResults.push(movie);
+              completedRequests++;
+              if (completedRequests === totalRequests) {
+                finalizePopularMovies();
+              }
+            } else {
+              var video_url = tmdb_base_url + '/movie/' + movie_id + '/videos?api_key=' + tmdb_api_key + '&language=' + targetLang;
+              network.silent(video_url, function(video_data) {
+                var trailers = video_data.results ? video_data.results.filter(function(v) {
+                  return v.type === 'Trailer';
+                }) : [];
+                if (trailers.length > 0) {
+                  trailerCache[cacheKey] = { id: movie_id, results: trailers };
+                  filteredResults.push(movie);
+                }
+                completedRequests++;
+                if (completedRequests === totalRequests) {
+                  finalizePopularMovies();
+                }
+              }, function() {
+                completedRequests++;
+                if (completedRequests === totalRequests) {
+                  finalizePopularMovies();
+                }
+              });
+            }
+          } else {
+            completedRequests++;
+            if (completedRequests === totalRequests) {
+              finalizePopularMovies();
+            }
+          }
+        });
+
+        function finalizePopularMovies() {
+          json.results = filteredResults;
+          append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/discover/movie?sort_by=popularity.desc', { results: json.results });
+        }
+      } else {
+        append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/discover/movie?sort_by=popularity.desc', { results: [] });
+      }
     }, function() {
       append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/discover/movie?sort_by=popularity.desc', { results: [] });
     });
