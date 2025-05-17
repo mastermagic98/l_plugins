@@ -1613,9 +1613,13 @@ var Api = {
                 console.log('[Trailers]','Menu item added');
                 console.log('[Trailers]','Menu item details:',Lampa.Menu.items[Lampa.Menu.items.length - 1]);
                 console.log('[Trailers]','Available components:',Object.keys(Lampa.Components));
-                console.log('[Trailers]','Menu items:',Lampa.Menu.items);
+                console.log('[Trailers]','Menu items before render:',Lampa.Menu.items);
                 console.log('[Trailers]','TrailersComponent methods:',Object.keys(window.TrailersComponent));
 
+                if(typeof Lampa.Menu.init === 'function') {
+                    Lampa.Menu.init();
+                    console.log('[Trailers]','Menu initialized via Lampa.Menu.init');
+                }
                 if(typeof Lampa.Menu.ready === 'function') {
                     Lampa.Menu.ready();
                     console.log('[Trailers]','Menu updated via Lampa.Menu.ready');
@@ -1624,13 +1628,15 @@ var Api = {
                     Lampa.Menu.render();
                     console.log('[Trailers]','Menu updated via Lampa.Menu.render');
                 }
+                console.log('[Trailers]','Menu items after render:',Lampa.Menu.items);
+
                 setTimeout(function(){
                     if(typeof Lampa.Menu.render === 'function') {
                         Lampa.Menu.render();
                         console.log('[Trailers]','Menu updated via delayed Lampa.Menu.render');
                     }
                     console.log('[Trailers]','Final menu items:',Lampa.Menu.items);
-                },500);
+                },1000);
             }
             catch(e){
                 console.error('[Trailers]','Error adding menu item:',e.message);
