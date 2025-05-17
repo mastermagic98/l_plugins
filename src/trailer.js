@@ -12,11 +12,19 @@
     this.visibled = false;
 
     this.build = function() {
-      // Перевіряємо дубльовану назву на початку
+      // Validate required fields
+      var title = data.title || data.name || data.original_title || data.original_name;
+      if (!title) {
+        console.warn('Skipping card due to missing title:', data);
+        return; // Skip if no valid title
+      }
+
+      // Check for translated title
       var lang = TrailerPlugin.Utils.getInterfaceLanguage();
       var hasTranslatedTitle = lang === 'uk' ? !!data.title : lang === 'ru' ? !!data.title : true;
       if (!hasTranslatedTitle) {
-        return; // Не створюємо картку, якщо немає дубльованої назви
+        console.warn('Skipping card due to missing translated title for lang:', lang, data);
+        return; // Skip if no translated title
       }
 
       this.card = Lampa.Template.get('trailer', data);
@@ -24,9 +32,8 @@
 
       if (!this.is_youtube) {
         var create = ((data.release_date || data.first_air_date || '0000') + '').slice(0, 4);
-        var title = data.title || data.name || data.original_title || data.original_name;
         this.card.find('.card__title').text(title);
-        this.card.find('.card__details').text(create + ' - ' + (data.original_title || data.original_name));
+        this.card.find('.card__details').text(create + ' - ' + (data.original_title || data.original_name || ''));
         if (this.rating !== '-') {
           this.card.find('.card__view').append('<div class="card__rating">' + this.rating + '</div>');
         } else {
@@ -35,7 +42,7 @@
         this.card.find('.card__view').append('<div class="card__trailer-lang"></div>');
         this.card.find('.card__view').append('<div class="card__release-date"></div>');
       } else {
-        this.card.find('.card__title').text(data.name);
+        this.card.find('.card__title').text(data.name || title);
         this.card.find('.card__details').remove();
       }
     };
@@ -43,15 +50,15 @@
     this.cardImgBackground = function(card_data) {
       if (Lampa.Storage.field('background')) {
         if (Lampa.Storage.get('background_type', 'complex') === 'poster' && window.innerWidth > 790) {
-          return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'original') : this.is_youtube ? 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg' : '';
+          return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'original') : this.is_youtube ? 'https://img.youtube.com/vi/' + card_data.id + '/hqdefault.jpg' : '';
         }
-        return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'w500') : this.is_youtube ? 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg' : '';
+        return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'w500') : this.is_youtube ? 'https://img.youtube.com/vi/' + card_data.id + '/hqdefault.jpg' : '';
       }
       return '';
     };
 
     this.image = function() {
-      if (!this.card) return; // Уникаємо помилки, якщо картка не створена
+      if (!this.card || !this.img) return; // Skip if card or img is not created
       this.img.onload = function() {
         _this.card.addClass('card--loaded');
       };
@@ -61,7 +68,7 @@
     };
 
     this.loadTrailerInfo = function() {
-      if (!this.card || this.is_youtube || this.trailer_lang) return; // Пропускаємо, якщо картка не створена
+      if (!this.card || this.is_youtube || this.trailer_lang) return; // Skip if no card
 
       TrailerPlugin.Api.videos(data, function(videos) {
         var trailers = videos.results ? videos.results.filter(function(v) {
@@ -74,7 +81,7 @@
         _this.trailer_lang = video ? video.iso_639_1 : '-';
         _this.card.find('.card__trailer-lang').text(_this.trailer_lang.toUpperCase());
 
-        // Відображаємо дату релізу з release_details
+        // Handle release date
         var region = TrailerPlugin.Utils.getRegion();
         if (data.release_details && data.release_details.results) {
           var releaseInfo = data.release_details.results.find(function(r) {
@@ -93,7 +100,7 @@
         _this.trailer_lang = '-';
         _this.card.find('.card__trailer-lang').text('-');
 
-        // Відображаємо дату релізу навіть без трейлера
+        // Fallback release date
         var region = TrailerPlugin.Utils.getRegion();
         if (data.release_details && data.release_details.results) {
           var releaseInfo = data.release_details.results.find(function(r) {
@@ -140,8 +147,11 @@
       var _this2 = this;
       this.build();
       
-      // Якщо картка не створена, виходимо
-      if (!this.card) return;
+      // Exit if card was not created
+      if (!this.card) {
+        console.warn('Card creation skipped for:', data);
+        return;
+      }
 
       this.card.on('hover:focus', function(e, is_mouse) {
         Lampa.Background.change(_this2.cardImgBackground(data));
@@ -266,6 +276,10 @@
     };
 
     this.render = function() {
+      if (!this.card) {
+        console.warn('Render skipped due to null card:', data);
+        return null; // Explicitly return null to avoid appendChild issues
+      }
       return this.card;
     };
   }
