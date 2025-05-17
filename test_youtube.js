@@ -60,7 +60,7 @@
     getPreferredLanguage: getPreferredLanguage
   };
 })();
-(function() { 
+(function() {
   'use strict';
 
   var network = new Lampa.Reguest();
@@ -320,11 +320,23 @@
           if (movie_id && hasTranslatedTitle) {
             // Перевіряємо кеш трейлера
             if (trailerCache[cacheKey] && trailerCache[cacheKey].results.length > 0) {
-              filteredResults.push(movie);
-              completedRequests++;
-              if (completedRequests === totalRequests) {
-                finalizePopularMovies();
-              }
+              // Додаємо release_details
+              var release_url = tmdb_base_url + '/movie/' + movie_id + '/release_dates?api_key=' + tmdb_api_key;
+              network.silent(release_url, function(release_data) {
+                movie.release_details = release_data;
+                filteredResults.push(movie);
+                completedRequests++;
+                if (completedRequests === totalRequests) {
+                  finalizePopularMovies();
+                }
+              }, function() {
+                movie.release_details = { results: [] };
+                filteredResults.push(movie);
+                completedRequests++;
+                if (completedRequests === totalRequests) {
+                  finalizePopularMovies();
+                }
+              });
             } else {
               var video_url = tmdb_base_url + '/movie/' + movie_id + '/videos?api_key=' + tmdb_api_key + '&language=' + targetLang;
               network.silent(video_url, function(video_data) {
@@ -333,11 +345,28 @@
                 }) : [];
                 if (trailers.length > 0) {
                   trailerCache[cacheKey] = { id: movie_id, results: trailers };
-                  filteredResults.push(movie);
-                }
-                completedRequests++;
-                if (completedRequests === totalRequests) {
-                  finalizePopularMovies();
+                  // Додаємо release_details
+                  var release_url = tmdb_base_url + '/movie/' + movie_id + '/release_dates?api_key=' + tmdb_api_key;
+                  network.silent(release_url, function(release_data) {
+                    movie.release_details = release_data;
+                    filteredResults.push(movie);
+                    completedRequests++;
+                    if (completedRequests === totalRequests) {
+                      finalizePopularMovies();
+                    }
+                  }, function() {
+                    movie.release_details = { results: [] };
+                    filteredResults.push(movie);
+                    completedRequests++;
+                    if (completedRequests === totalRequests) {
+                      finalizePopularMovies();
+                    }
+                  });
+                } else {
+                  completedRequests++;
+                  if (completedRequests === totalRequests) {
+                    finalizePopularMovies();
+                  }
                 }
               }, function() {
                 completedRequests++;
@@ -648,10 +677,10 @@
           });
           if (params.page === 1) {
             categoryCache['upcoming_series'] = {
-            results: result.results,
-            timestamp: Date.now()
-          };
-          Lampa.Storage.set('trailer_category_cache_upcoming_series', categoryCache['upcoming_series']);
+              results: result.results,
+              timestamp: Date.now()
+            };
+            Lampa.Storage.set('trailer_category_cache_upcoming_series', categoryCache['upcoming_series']);
           } else {
             var existingCache = categoryCache['upcoming_series'] || Lampa.Storage.get('trailer_category_cache_upcoming_series', { results: [] });
             existingCache.results = existingCache.results.concat(result.results);
