@@ -13,6 +13,8 @@ function get(url, page, resolve, reject) {
 function getLocalMoviesInTheaters(page, resolve, reject) {
     var region = getRegion();
     var language = getInterfaceLanguage();
+    var lang = Lampa.Storage.get('language', 'ru');
+    var preferredLang = lang === 'uk' ? 'uk-UA' : lang === 'ru' ? 'ru-RU' : 'en-US';
     var today = new Date();
     var daysThreshold = 45;
     var startDate = new Date(today.getTime() - daysThreshold * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -22,9 +24,10 @@ function getLocalMoviesInTheaters(page, resolve, reject) {
         if (data.results && data.results.length) {
             var totalRequests = data.results.length;
             var completedRequests = 0;
+            var moviesWithTrailers = [];
 
             function finalizeResults() {
-                var filteredResults = data.results.filter(function (m) {
+                var filteredResults = moviesWithTrailers.filter(function (m) {
                     if (m.release_details && m.release_details.results) {
                         var regionRelease = m.release_details.results.find(function (r) {
                             return r.iso_3166_1 === region;
@@ -46,6 +49,7 @@ function getLocalMoviesInTheaters(page, resolve, reject) {
                     return new Date(dateB) - new Date(dateA);
                 });
                 data.results = filteredResults;
+                console.log('In theaters results:', filteredResults.length, 'Page:', page);
                 resolve(data);
             }
 
@@ -53,21 +57,61 @@ function getLocalMoviesInTheaters(page, resolve, reject) {
                 var movie_id = movie.id;
                 if (movie_id) {
                     var release_url = `${tmdb_base_url}/movie/${movie_id}/release_dates?api_key=${tmdb_api_key}`;
-                    network.silent(release_url, function (release_data) {
-                        movie.release_details = release_data;
-                        completedRequests++;
-                        if (completedRequests === totalRequests) {
-                            finalizeResults();
-                        }
-                    }, function () {
-                        movie.release_details = { results: [] };
-                        completedRequests++;
-                        if (completedRequests === totalRequests) {
-                            finalizeResults();
-                        }
-                    });
+                    var video_url = `${tmdb_base_url}/movie/${movie_id}/videos?api_key=${tmdb_api_key}&language=${preferredLang}`;
+                    var cacheKey = 'movie_' + movie_id;
+
+                    if (trailerCache[cacheKey] && trailerCache[cacheKey].results.length > 0) {
+                        network.silent(release_url, function (release_data) {
+                            movie.release_details = release_data;
+                            moviesWithTrailers.push(movie);
+                            completedRequests++;
+                            if (completedRequests === totalRequests) {
+                                finalizeResults();
+                            }
+                        }, function () {
+                            movie.release_details = { results: [] };
+                            completedRequests++;
+                            if (completedRequests === totalRequests) {
+                                finalizeResults();
+                            }
+                        });
+                    } else {
+                        network.silent(video_url, function (video_data) {
+                            var trailers = video_data.results ? video_data.results.filter(function (v) {
+                                return v.type === 'Trailer' && v.iso_639_1 === lang;
+                            }) : [];
+                            var hasTrailer = trailers.length > 0;
+
+                            if (hasTrailer) {
+                                trailerCache[cacheKey] = { id: movie_id, results: trailers };
+                                network.silent(release_url, function (release_data) {
+                                    movie.release_details = release_data;
+                                    moviesWithTrailers.push(movie);
+                                    completedRequests++;
+                                    if (completedRequests === totalRequests) {
+                                        finalizeResults();
+                                    }
+                                }, function () {
+                                    movie.release_details = { results: [] };
+                                    completedRequests++;
+                                    if (completedRequests === totalRequests) {
+                                        finalizeResults();
+                                    }
+                                });
+                            } else {
+                                completedRequests++;
+                                if (completedRequests === totalRequests) {
+                                    finalizeResults();
+                                }
+                            }
+                        }, function () {
+                            completedRequests++;
+                            if (completedRequests === totalRequests) {
+                                finalizeResults();
+                            }
+                        });
+                    }
                 } else {
-                    movie.release_details = { results: [] };
                     completedRequests++;
                     if (completedRequests === totalRequests) {
                         finalizeResults();
