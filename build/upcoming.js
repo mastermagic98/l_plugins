@@ -1616,18 +1616,21 @@ var Api = {
                 console.log('[Trailers]','Menu items:',Lampa.Menu.items);
                 console.log('[Trailers]','TrailersComponent methods:',Object.keys(window.TrailersComponent));
 
+                if(typeof Lampa.Menu.ready === 'function') {
+                    Lampa.Menu.ready();
+                    console.log('[Trailers]','Menu updated via Lampa.Menu.ready');
+                }
+                if(typeof Lampa.Menu.render === 'function') {
+                    Lampa.Menu.render();
+                    console.log('[Trailers]','Menu updated via Lampa.Menu.render');
+                }
                 setTimeout(function(){
-                    console.log('[Trailers]','Executing delayed render');
-                    if(typeof Lampa.Menu.ready === 'function') {
-                        Lampa.Menu.ready();
-                        console.log('[Trailers]','Menu updated via Lampa.Menu.ready');
-                    }
                     if(typeof Lampa.Menu.render === 'function') {
                         Lampa.Menu.render();
-                        console.log('[Trailers]','Menu updated via Lampa.Menu.render');
+                        console.log('[Trailers]','Menu updated via delayed Lampa.Menu.render');
                     }
                     console.log('[Trailers]','Final menu items:',Lampa.Menu.items);
-                },1000);
+                },500);
             }
             catch(e){
                 console.error('[Trailers]','Error adding menu item:',e.message);
