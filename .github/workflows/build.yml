@@ -1,0 +1,36 @@
+name: Build Trailer Plugin
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Concatenate JavaScript files
+        run: |
+          cat src/utils.js src/api.js src/trailer.js src/line.js src/component-main.js src/component-full.js src/plugin.js src/index.js > test_youtube.js
+
+      - name: Verify output
+        run: |
+          if [ -s test_youtube.js ]; then
+            echo "Build successful: test_youtube.js created"
+          else
+            echo "Build failed: test_youtube.js is empty or not created"
+            exit 1
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: test_youtube
+          path: test_youtube.js
+          retention-days: 7
