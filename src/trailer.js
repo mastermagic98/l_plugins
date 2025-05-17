@@ -12,14 +12,12 @@
     this.visibled = false;
 
     this.build = function() {
-      // Валідація даних
       var title = data.title || data.name || data.original_title || data.original_name;
       if (!title) {
         console.warn('Skipping card: missing title/name', data);
         return;
       }
 
-      // Перевірка дубльованої назви
       var lang = TrailerPlugin.Utils.getInterfaceLanguage();
       var hasTranslatedTitle = lang === 'uk' ? !!data.title : lang === 'ru' ? !!data.title : true;
       if (!hasTranslatedTitle) {
@@ -87,7 +85,6 @@
         _this.trailer_lang = video ? video.iso_639_1 : '-';
         _this.card.find('.card__trailer-lang').text(_this.trailer_lang.toUpperCase());
 
-        // Обробка дати релізу
         var region = TrailerPlugin.Utils.getRegion();
         if (data.release_details && data.release_details.results) {
           var releaseInfo = data.release_details.results.find(function(r) {
@@ -106,7 +103,6 @@
         _this.trailer_lang = '-';
         _this.card.find('.card__trailer-lang').text('-');
 
-        // Резервна дата релізу
         var region = TrailerPlugin.Utils.getRegion();
         if (data.release_details && data.release_details.results) {
           var releaseInfo = data.release_details.results.find(function(r) {
@@ -153,7 +149,6 @@
       var _this2 = this;
       this.build();
 
-      // Вихід, якщо картка не створена
       if (!this.card) {
         console.warn('Card creation failed:', data);
         return;
