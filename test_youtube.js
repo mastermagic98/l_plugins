@@ -1592,7 +1592,7 @@
 })();
 (function() {
   'use strict';
-
+ 
   function initPlugin() {
     Lampa.Lang.add({
       trailers_popular: { ru: 'Популярное', uk: 'Популярне', en: 'Popular' },
