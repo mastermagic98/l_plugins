@@ -1667,7 +1667,7 @@
   window.TrailerPlugin = window.TrailerPlugin || {};
   window.TrailerPlugin.init = initPlugin;
 })();
-(function() { 
+(function() {  
   'use strict';
   TrailerPlugin.init();
 })();
