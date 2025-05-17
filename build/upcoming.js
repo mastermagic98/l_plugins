@@ -304,10 +304,16 @@ var Api = {
             Lampa.Components['trailers'] = window.TrailersComponent;
             console.log('Trailers', 'Component added via Lampa.Components');
 
-            // Try Lampa.Component.add for compatibility
+            // Try Lampa.Component.add
             if (typeof Lampa.Component?.add === 'function') {
                 Lampa.Component.add('trailers', window.TrailersComponent);
                 console.log('Trailers', 'Component added via Lampa.Component.add');
+            }
+
+            // Try Lampa.Component.register
+            if (typeof Lampa.Component?.register === 'function') {
+                Lampa.Component.register('trailers', window.TrailersComponent);
+                console.log('Trailers', 'Component registered via Lampa.Component.register');
             }
 
             // Add CSS
@@ -323,19 +329,33 @@ var Api = {
                     name: 'trailers',
                     component: 'trailers',
                     id: 'trailers',
-                    order: 10
+                    order: 10,
+                    enabled: true,
+                    visible: true,
+                    type: 'plugin'
                 });
                 console.log('Trailers', 'Menu item added via Lampa.Menu.items');
 
-                // Try to force menu update
+                // Try menu update methods
                 if (typeof Lampa.Menu?.update === 'function') {
                     Lampa.Menu.update();
                     console.log('Trailers', 'Menu updated via Lampa.Menu.update');
                 }
+                if (typeof Lampa.Menu?.refresh === 'function') {
+                    Lampa.Menu.refresh();
+                    console.log('Trailers', 'Menu refreshed via Lampa.Menu.refresh');
+                }
+                if (typeof Lampa.Menu?.render === 'function') {
+                    Lampa.Menu.render();
+                    console.log('Trailers', 'Menu rendered via Lampa.Menu.render');
+                }
 
-                // Log available components and menu items
+                // Log menu and component state
                 console.log('Trailers', 'Available components:', Object.keys(Lampa.Components || {}));
                 console.log('Trailers', 'Menu items:', Lampa.Menu.items);
+                if (typeof Lampa.Component?.get === 'function') {
+                    console.log('Trailers', 'Component exists:', !!Lampa.Component.get('trailers'));
+                }
             } catch (e) {
                 console.error('Trailers', 'Error adding menu item:', e.message);
             }
