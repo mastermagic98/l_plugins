@@ -60,7 +60,7 @@
     getPreferredLanguage: getPreferredLanguage
   };
 })();
-(function() {
+(function() { 
   'use strict';
 
   var network = new Lampa.Reguest();
