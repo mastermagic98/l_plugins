@@ -299,7 +299,7 @@ var Api = {
 
         console.log('Trailers', 'Registering component');
         try {
-            // Use Lampa.Components for compatibility
+            // Register component
             Lampa.Components = Lampa.Components || {};
             Lampa.Components['trailers'] = window.TrailersComponent;
             console.log('Trailers', 'Component added via Lampa.Components');
@@ -309,12 +309,17 @@ var Api = {
             console.log('Trailers', 'CSS added');
 
             // Add to menu
-            Lampa.Menu = Lampa.Menu || {};
-            Lampa.Menu.add('trailers', {
-                title: 'Трейлери',
-                component: 'trailers'
-            });
-            console.log('Trailers', 'Menu item added');
+            try {
+                Lampa.Menu = Lampa.Menu || {};
+                Lampa.Menu.items = Lampa.Menu.items || [];
+                Lampa.Menu.items.push({
+                    title: 'Трейлери',
+                    component: 'trailers'
+                });
+                console.log('Trailers', 'Menu item added via Lampa.Menu.items');
+            } catch (e) {
+                console.error('Trailers', 'Error adding menu item:', e.message);
+            }
         } catch (e) {
             console.error('Trailers', 'Error adding component:', e.message);
         }
