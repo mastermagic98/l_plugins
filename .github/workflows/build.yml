@@ -1,34 +1,42 @@
-name: Build Upcoming Plugin
+name: Build and Deploy
+
 on:
   push:
     branches:
       - main
-    paths-ignore:
-      - 'build/**'
+
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-      - name: Concatenate JS files with IIFE wrapper
-        run: |
-          mkdir -p build
-          echo "(function () {" > build/upcoming.js
-          echo "'use strict';" >> build/upcoming.js
-          cat src/utils.js >> build/upcoming.js
-          cat src/api.js >> build/upcoming.js
-          cat src/components.js >> build/upcoming.js
-          cat src/init.js >> build/upcoming.js
-          echo "})();" >> build/upcoming.js
+    - name: Set up Git
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
 
-      - name: Commit and push changes
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add build/upcoming.js
-          git commit -m "Update upcoming.js"
-          git push origin main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Pull latest changes
+      run: git pull --rebase origin main
+
+    - name: Concatenate JS files
+      run: |
+        echo "(function() {'use strict';" > build/upcoming.js
+        cat src/utils.js src/api.js src/component.js src/init.js >> build/upcoming.js
+        echo "})();" >> build/upcoming.js
+
+    - name: Commit changes
+      run: |
+        git add build/upcoming.js
+        git commit -m "Update upcoming.js" || echo "No changes to commit"
+
+    - name: Push changes
+      run: git push origin main
+
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./
