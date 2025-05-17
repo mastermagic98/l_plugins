@@ -50,17 +50,16 @@
                     console.log('Trailers', 'TrailersComponent.init called');
                 }
 
-                // Render menu synchronously
-                if (typeof Lampa.Menu?.render === 'function') {
-                    let renderResult = Lampa.Menu.render();
-                    console.log('Trailers', 'Menu rendered via Lampa.Menu.render', 'Result:', renderResult);
-                }
-                if (typeof Lampa.Menu?.init === 'function') {
-                    Lampa.Menu.init();
-                    console.log('Trailers', 'Menu initialized via Lampa.Menu.init');
-                }
-                console.log('Trailers', 'Menu state after render:', Lampa.Menu);
-                console.log('Trailers', 'Final menu items:', Lampa.Menu.items);
+                // Delayed menu update
+                setTimeout(function() {
+                    console.log('Trailers', 'Executing delayed update');
+                    if (typeof Lampa.Menu?.ready === 'function') {
+                        Lampa.Menu.ready();
+                        console.log('Trailers', 'Menu updated via Lampa.Menu.ready');
+                    }
+                    console.log('Trailers', 'Menu state after update:', Lampa.Menu);
+                    console.log('Trailers', 'Final menu items:', Lampa.Menu.items);
+                }, 2000);
             } catch (e) {
                 console.error('Trailers', 'Error adding menu item:', e.message);
             }
