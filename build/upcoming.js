@@ -325,31 +325,19 @@ function getPreferredLanguage() {
                         let readyResult = Lampa.Menu.ready();
                         console.log('Trailers', 'Menu updated via Lampa.Menu.ready', 'Result:', readyResult);
                     }
-                    if (typeof Lampa.Menu?.update === 'function') {
-                        Lampa.Menu.update();
-                        console.log('Trailers', 'Menu updated via Lampa.Menu.update');
-                    }
-                    if (typeof Lampa.Menu?.reload === 'function') {
-                        Lampa.Menu.reload();
-                        console.log('Trailers', 'Menu updated via Lampa.Menu.reload');
+                    if (typeof Lampa.Menu?.render === 'function') {
+                        try {
+                            let renderResult = Lampa.Menu.render();
+                            console.log('Trailers', 'Menu rendered via Lampa.Menu.render', 'Result:', renderResult);
+                        } catch (e) {
+                            console.error('Trailers', 'Error rendering menu:', e.message);
+                        }
                     }
                     console.log('Trailers', 'Menu state after update:', Lampa.Menu);
                     console.log('Trailers', 'Final menu items:', Lampa.Menu.items);
                     console.log('Trailers', 'DOM menu items:', document.querySelectorAll('.menu__item'));
-
-                    // Try activating component
-                    try {
-                        Lampa.Activity.push({
-                            title: 'Трейлери',
-                            component: 'trailers',
-                            url: '',
-                            page: 1
-                        });
-                        console.log('Trailers', 'Component activated via Lampa.Activity.push');
-                    } catch (e) {
-                        console.error('Trailers', 'Error activating component:', e.message);
-                    }
-                }, 3000);
+                    console.log('Trailers', 'DOM menu item texts:', Array.from(document.querySelectorAll('.menu__item')).map(item => item.textContent));
+                }, 5000);
             } catch (e) {
                 console.error('Trailers', 'Error adding menu item:', e.message);
             }
