@@ -329,10 +329,8 @@ var Api = {
                     component: 'trailers',
                     name: 'trailers',
                     id: 'trailers',
-                    order: 10,
                     enabled: true,
-                    visible: true,
-                    type: 'plugin'
+                    visible: true
                 });
                 console.log('Trailers', 'Menu item added via Lampa.Menu.items');
                 console.log('Trailers', 'Menu item details:', Lampa.Menu.items[Lampa.Menu.items.length - 1]);
@@ -343,6 +341,10 @@ var Api = {
                         Lampa.Menu.render();
                         console.log('Trailers', 'Menu rendered via Lampa.Menu.render');
                     }
+                    if (typeof Lampa.Menu?.init === 'function') {
+                        Lampa.Menu.init();
+                        console.log('Trailers', 'Menu initialized via Lampa.Menu.init');
+                    }
                     if (typeof Lampa.Menu?.refresh === 'function') {
                         Lampa.Menu.refresh();
                         console.log('Trailers', 'Menu refreshed via Lampa.Menu.refresh');
@@ -351,7 +353,8 @@ var Api = {
                         Lampa.Menu.reload();
                         console.log('Trailers', 'Menu reloaded via Lampa.Menu.reload');
                     }
-                }, 1000);
+                    console.log('Trailers', 'Menu state after render:', Lampa.Menu);
+                }, 2000);
 
                 // Log menu and component state
                 console.log('Trailers', 'Available components:', Object.keys(Lampa.Components || {}));
