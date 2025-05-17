@@ -36,33 +36,42 @@
                 Lampa.Menu.items = Lampa.Menu.items || [];
                 Lampa.Menu.items.push({
                     title: 'Трейлери',
-                    name: 'trailers',
-                    component: 'trailers',
-                    id: 'trailers',
-                    order: 10,
-                    enabled: true,
-                    visible: true,
-                    type: 'plugin'
+                    component: 'trailers'
                 });
                 console.log('Trailers', 'Menu item added via Lampa.Menu.items');
+                console.log('Trailers', 'Menu item details:', Lampa.Menu.items[Lampa.Menu.items.length - 1]);
 
-                // Try menu update methods
-                if (typeof Lampa.Menu?.update === 'function') {
-                    Lampa.Menu.update();
-                    console.log('Trailers', 'Menu updated via Lampa.Menu.update');
-                }
-                if (typeof Lampa.Menu?.refresh === 'function') {
-                    Lampa.Menu.refresh();
-                    console.log('Trailers', 'Menu refreshed via Lampa.Menu.refresh');
-                }
-                if (typeof Lampa.Menu?.render === 'function') {
-                    Lampa.Menu.render();
-                    console.log('Trailers', 'Menu rendered via Lampa.Menu.render');
+                // Delayed menu render
+                setTimeout(function() {
+                    if (typeof Lampa.Menu?.render === 'function') {
+                        Lampa.Menu.render();
+                        console.log('Trailers', 'Menu rendered via Lampa.Menu.render');
+                    }
+                    if (typeof Lampa.Menu?.refresh === 'function') {
+                        Lampa.Menu.refresh();
+                        console.log('Trailers', 'Menu refreshed via Lampa.Menu.refresh');
+                    }
+                    if (typeof Lampa.Menu?.reload === 'function') {
+                        Lampa.Menu.reload();
+                        console.log('Trailers', 'Menu reloaded via Lampa.Menu.reload');
+                    }
+                }, 1000);
+
+                // Activate component
+                if (typeof Lampa.Activity?.push === 'function') {
+                    Lampa.Activity.push({
+                        title: 'Трейлери',
+                        component: 'trailers',
+                        url: '',
+                        page: 1
+                    });
+                    console.log('Trailers', 'Component activated via Lampa.Activity.push');
                 }
 
                 // Log menu and component state
                 console.log('Trailers', 'Available components:', Object.keys(Lampa.Components || {}));
                 console.log('Trailers', 'Menu items:', Lampa.Menu.items);
+                console.log('Trailers', 'Lampa.Menu:', Lampa.Menu);
                 if (typeof Lampa.Component?.get === 'function') {
                     console.log('Trailers', 'Component exists:', !!Lampa.Component.get('trailers'));
                 }
