@@ -298,10 +298,29 @@ function getPreferredLanguage() {
                 Lampa.Menu.items = Lampa.Menu.items || [];
                 Lampa.Menu.items.push({
                     title: 'Трейлери',
-                    component: 'trailers'
+                    component: 'trailers',
+                    name: 'trailers',
+                    id: 'trailers',
+                    enabled: true,
+                    visible: true
                 });
                 console.log('Trailers', 'Menu item added via Lampa.Menu.items');
                 console.log('Trailers', 'Menu item details:', Lampa.Menu.items[Lampa.Menu.items.length - 1]);
+
+                // Synchronous logs
+                console.log('Trailers', 'Available components:', Object.keys(Lampa.Components || {}));
+                console.log('Trailers', 'Menu items:', Lampa.Menu.items);
+                console.log('Trailers', 'Lampa.Menu:', Lampa.Menu);
+                console.log('Trailers', 'TrailersComponent methods:', Object.keys(window.TrailersComponent));
+                if (typeof Lampa.Component?.get === 'function') {
+                    console.log('Trailers', 'Component exists:', !!Lampa.Component.get('trailers'));
+                }
+
+                // Test component initialization
+                if (typeof window.TrailersComponent.init === 'function') {
+                    window.TrailersComponent.init();
+                    console.log('Trailers', 'TrailersComponent.init called');
+                }
 
                 // Delayed menu render
                 setTimeout(function() {
@@ -313,7 +332,12 @@ function getPreferredLanguage() {
                         Lampa.Menu.init();
                         console.log('Trailers', 'Menu initialized via Lampa.Menu.init');
                     }
-                }, 1000);
+                    if (typeof Lampa.Menu?.refresh === 'function') {
+                        Lampa.Menu.refresh();
+                        console.log('Trailers', 'Menu refreshed via Lampa.Menu.refresh');
+                    }
+                    console.log('Trailers', 'Menu state after render:', Lampa.Menu);
+                }, 2000);
             } catch (e) {
                 console.error('Trailers', 'Error adding menu item:', e.message);
             }
@@ -322,7 +346,9 @@ function getPreferredLanguage() {
         }
     }
 
-    console.log('Trailers', 'init.js loaded');
+    console
+
+.log('Trailers', 'init.js loaded');
     startPlugin();
 })();
 })();
