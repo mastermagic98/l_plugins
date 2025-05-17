@@ -16,7 +16,7 @@
             console.error('Trailers', 'Error adding component:', e.message);
         }
 
-        // Fallback initialization
+        // Listen for app.ready
         Lampa.Listener.follow('app', {
             ready: function () {
                 console.log('Trailers', 'App ready, ensuring component is added');
@@ -29,18 +29,14 @@
             }
         });
 
-        // Additional fallback in case app.ready doesn't fire
+        // Fallback initialization
         setTimeout(function () {
-            if (!Lampa.Component.list().includes('trailers')) {
-                console.log('Trailers', 'Fallback: Adding component after delay');
-                try {
-                    Lampa.Component.add('trailers', window.TrailersComponent);
-                    console.log('Trailers', 'Component added in fallback');
-                } catch (e) {
-                    console.error('Trailers', 'Error in fallback:', e.message);
-                }
-            } else {
-                console.log('Trailers', 'Component already registered');
+            console.log('Trailers', 'Fallback: Adding component after delay');
+            try {
+                Lampa.Component.add('trailers', window.TrailersComponent);
+                console.log('Trailers', 'Component added in fallback');
+            } catch (e) {
+                console.error('Trailers', 'Error in fallback:', e.message);
             }
         }, 1000);
     }
