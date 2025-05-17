@@ -36,7 +36,13 @@
                 Lampa.Menu.items = Lampa.Menu.items || [];
                 Lampa.Menu.items.push({
                     title: 'Трейлери',
-                    component: 'trailers'
+                    component: 'trailers',
+                    name: 'trailers',
+                    id: 'trailers',
+                    order: 10,
+                    enabled: true,
+                    visible: true,
+                    type: 'plugin'
                 });
                 console.log('Trailers', 'Menu item added via Lampa.Menu.items');
                 console.log('Trailers', 'Menu item details:', Lampa.Menu.items[Lampa.Menu.items.length - 1]);
@@ -57,21 +63,11 @@
                     }
                 }, 1000);
 
-                // Activate component
-                if (typeof Lampa.Activity?.push === 'function') {
-                    Lampa.Activity.push({
-                        title: 'Трейлери',
-                        component: 'trailers',
-                        url: '',
-                        page: 1
-                    });
-                    console.log('Trailers', 'Component activated via Lampa.Activity.push');
-                }
-
                 // Log menu and component state
                 console.log('Trailers', 'Available components:', Object.keys(Lampa.Components || {}));
                 console.log('Trailers', 'Menu items:', Lampa.Menu.items);
                 console.log('Trailers', 'Lampa.Menu:', Lampa.Menu);
+                console.log('Trailers', 'TrailersComponent methods:', Object.keys(window.TrailersComponent));
                 if (typeof Lampa.Component?.get === 'function') {
                     console.log('Trailers', 'Component exists:', !!Lampa.Component.get('trailers'));
                 }
