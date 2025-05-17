@@ -12,17 +12,14 @@
                     var original_title = is_movie ? (card.original_title || '') : (card.original_name || '');
                     var date = '';
 
-                    if (card.release_details) {
-                        if (is_movie && card.release_details.release_date) {
+                    // Add date for upcoming_movies and popular_movies
+                    if (item.type === 'upcoming_movies' || item.type === 'popular_movies') {
+                        if (card.release_details && card.release_details.release_date) {
                             date = card.release_details.release_date;
-                        } else if (!is_movie && card.release_details.first_air_date) {
-                            date = card.release_details.first_air_date;
+                        } else if (card.release_date) {
+                            date = card.release_date;
                         }
-                    }
-                    if (!date && card.release_date) {
-                        date = card.release_date;
-                    }
-                    if (!date && card.first_air_date) {
+                    } else if (!is_movie && card.first_air_date) {
                         date = card.first_air_date;
                     }
 
@@ -145,6 +142,5 @@
     };
 
     console.log('Trailers', 'Component defined');
-
     window.TrailersComponent = Component;
 })();
