@@ -304,6 +304,12 @@ var Api = {
             Lampa.Components['trailers'] = window.TrailersComponent;
             console.log('Trailers', 'Component added via Lampa.Components');
 
+            // Try Lampa.Component.add for compatibility
+            if (typeof Lampa.Component?.add === 'function') {
+                Lampa.Component.add('trailers', window.TrailersComponent);
+                console.log('Trailers', 'Component added via Lampa.Component.add');
+            }
+
             // Add CSS
             Lampa.Template.add('trailers_css', '<style>.trailers-list{display:flex;flex-wrap:wrap;gap:20px}.trailers-card{width:150px;cursor:pointer}.trailers-card__img img{width:100%;border-radius:8px}.trailers-card__title{font-size:14px;margin-top:8px;color:#fff}.trailers-card__date{font-size:12px;color:#999;margin-top:4px}.trailers-category__title{font-size:18px;margin:20px 0 10px;color:#fff}.trailers-category__more{font-size:14px;color:#1e88e5;cursor:pointer;margin-top:10px}</style>');
             console.log('Trailers', 'CSS added');
@@ -314,9 +320,22 @@ var Api = {
                 Lampa.Menu.items = Lampa.Menu.items || [];
                 Lampa.Menu.items.push({
                     title: 'Трейлери',
-                    component: 'trailers'
+                    name: 'trailers',
+                    component: 'trailers',
+                    id: 'trailers',
+                    order: 10
                 });
                 console.log('Trailers', 'Menu item added via Lampa.Menu.items');
+
+                // Try to force menu update
+                if (typeof Lampa.Menu?.update === 'function') {
+                    Lampa.Menu.update();
+                    console.log('Trailers', 'Menu updated via Lampa.Menu.update');
+                }
+
+                // Log available components and menu items
+                console.log('Trailers', 'Available components:', Object.keys(Lampa.Components || {}));
+                console.log('Trailers', 'Menu items:', Lampa.Menu.items);
             } catch (e) {
                 console.error('Trailers', 'Error adding menu item:', e.message);
             }
