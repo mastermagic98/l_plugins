@@ -12,19 +12,19 @@
     this.visibled = false;
 
     this.build = function() {
-      // Validate required fields
+      // Валідація даних
       var title = data.title || data.name || data.original_title || data.original_name;
       if (!title) {
-        console.warn('Skipping card due to missing title:', data);
-        return; // Skip if no valid title
+        console.warn('Skipping card: missing title/name', data);
+        return;
       }
 
-      // Check for translated title
+      // Перевірка дубльованої назви
       var lang = TrailerPlugin.Utils.getInterfaceLanguage();
       var hasTranslatedTitle = lang === 'uk' ? !!data.title : lang === 'ru' ? !!data.title : true;
       if (!hasTranslatedTitle) {
-        console.warn('Skipping card due to missing translated title for lang:', lang, data);
-        return; // Skip if no translated title
+        console.warn('Skipping card: no translated title for lang', lang, data);
+        return;
       }
 
       this.card = Lampa.Template.get('trailer', data);
@@ -58,7 +58,10 @@
     };
 
     this.image = function() {
-      if (!this.card || !this.img) return; // Skip if card or img is not created
+      if (!this.card || !this.img) {
+        console.warn('Skipping image load: no card or img', data);
+        return;
+      }
       this.img.onload = function() {
         _this.card.addClass('card--loaded');
       };
@@ -68,7 +71,10 @@
     };
 
     this.loadTrailerInfo = function() {
-      if (!this.card || this.is_youtube || this.trailer_lang) return; // Skip if no card
+      if (!this.card || this.is_youtube || this.trailer_lang) {
+        console.warn('Skipping trailer info: no card or already loaded', data);
+        return;
+      }
 
       TrailerPlugin.Api.videos(data, function(videos) {
         var trailers = videos.results ? videos.results.filter(function(v) {
@@ -81,7 +87,7 @@
         _this.trailer_lang = video ? video.iso_639_1 : '-';
         _this.card.find('.card__trailer-lang').text(_this.trailer_lang.toUpperCase());
 
-        // Handle release date
+        // Обробка дати релізу
         var region = TrailerPlugin.Utils.getRegion();
         if (data.release_details && data.release_details.results) {
           var releaseInfo = data.release_details.results.find(function(r) {
@@ -100,7 +106,7 @@
         _this.trailer_lang = '-';
         _this.card.find('.card__trailer-lang').text('-');
 
-        // Fallback release date
+        // Резервна дата релізу
         var region = TrailerPlugin.Utils.getRegion();
         if (data.release_details && data.release_details.results) {
           var releaseInfo = data.release_details.results.find(function(r) {
@@ -146,10 +152,10 @@
     this.create = function() {
       var _this2 = this;
       this.build();
-      
-      // Exit if card was not created
+
+      // Вихід, якщо картка не створена
       if (!this.card) {
-        console.warn('Card creation skipped for:', data);
+        console.warn('Card creation failed:', data);
         return;
       }
 
@@ -277,8 +283,8 @@
 
     this.render = function() {
       if (!this.card) {
-        console.warn('Render skipped due to null card:', data);
-        return null; // Explicitly return null to avoid appendChild issues
+        console.warn('Render skipped: null card', data);
+        return null;
       }
       return this.card;
     };
