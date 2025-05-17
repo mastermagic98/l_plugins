@@ -7,8 +7,9 @@
   var trailerCache = {};
   var categoryCache = {};
 
-  function get(url, page, resolve, reject) {
-    var full_url = tmdb_base_url + url + '&api_key=' + tmdb_api_key + '&page=' + page + '&language=' + TrailerPlugin.Utils.getInterfaceLanguage();
+  function get(url, page, resolve, reject, overrideLanguage) {
+    var language = overrideLanguage || TrailerPlugin.Utils.getInterfaceLanguage();
+    var full_url = tmdb_base_url + url + '&api_key=' + tmdb_api_key + '&page=' + page + '&language=' + language;
     network.silent(full_url, resolve, reject);
   }
 
@@ -240,26 +241,32 @@
     var threeMonthsAgo = TrailerPlugin.Utils.getFormattedDate(90);
     var threeMonthsLater = TrailerPlugin.Utils.getFormattedDate(-90);
 
-    // Популярні фільми через /trending/movie/day
+    // Popular Movies with language=en-US
     get('/trending/movie/day', 1, function(json) {
       if (json.results && json.results.length) {
         var totalRequests = json.results.length;
         var completedRequests = 0;
         var filteredResults = [];
         var lang = TrailerPlugin.Utils.getInterfaceLanguage();
-        var targetLang = lang === 'uk' ? 'uk-UA' : lang === 'ru' ? 'ru-RU' : 'en-US';
+        var targetLang = 'en-US'; // Hardcode for Popular Movies
 
         json.results.forEach(function(movie) {
           var movie_id = movie.id;
           var cacheKey = 'movie_' + movie_id;
 
-          // Перевіряємо дубльовану назву
-          var hasTranslatedTitle = lang === 'uk' ? !!movie.title : lang === 'ru' ? !!movie.title : true;
+          // Validate title
+          var hasTranslatedTitle = !!movie.title || !!movie.original_title;
+          if (!hasTranslatedTitle) {
+            console.warn('Skipping movie due to missing title:', movie);
+            completedRequests++;
+            if (completedRequests === totalRequests) {
+              finalizePopularMovies();
+            }
+            return;
+          }
 
-          if (movie_id && hasTranslatedTitle) {
-            // Перевіряємо кеш трейлера
+          if (movie_id) {
             if (trailerCache[cacheKey] && trailerCache[cacheKey].results.length > 0) {
-              // Додаємо release_details
               var release_url = tmdb_base_url + '/movie/' + movie_id + '/release_dates?api_key=' + tmdb_api_key;
               network.silent(release_url, function(release_data) {
                 movie.release_details = release_data;
@@ -284,7 +291,6 @@
                 }) : [];
                 if (trailers.length > 0) {
                   trailerCache[cacheKey] = { id: movie_id, results: trailers };
-                  // Додаємо release_details
                   var release_url = tmdb_base_url + '/movie/' + movie_id + '/release_dates?api_key=' + tmdb_api_key;
                   network.silent(release_url, function(release_data) {
                     movie.release_details = release_data;
@@ -331,7 +337,7 @@
       }
     }, function() {
       append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/trending/movie/day', { results: [] });
-    });
+    }, 'en-US');
 
     getLocalMoviesInTheaters(1, function(json) {
       append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/movie/now_playing', { results: json.results || [] });
@@ -345,7 +351,6 @@
       append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/movie/upcoming', { results: [] });
     });
 
-    // Відновлюємо категорії серіалів
     get('/discover/tv?sort_by=popularity.desc&vote_count.gte=1', 1, function(json) {
       var filteredResults = json.results ? json.results.filter(function(item) {
         return !item.genre_ids.includes(99) && !item.genre_ids.includes(10763) && !item.genre_ids.includes(10764);
@@ -446,7 +451,7 @@
           return new Date(dateB) - new Date(dateA);
         });
         finalResults = finalResults.filter(function(m) {
-          return m.poster_path && m.poster_path !== '';
+          return m.poster_path && m.poster_path !== '' && (m.title || m.original_title);
         });
         var result = {
           dates: { maximum: today.toISOString().split('T')[0], minimum: startDate },
@@ -530,7 +535,7 @@
           return new Date(dateA) - new Date(dateB);
         });
         finalResults = finalResults.filter(function(m) {
-          return m.poster_path && m.poster_path !== '';
+          return m.poster_path && m.poster_path !== '' && (m.title || m.original_title);
         });
         var result = {
           dates: { maximum: sixMonthsLater, minimum: today },
