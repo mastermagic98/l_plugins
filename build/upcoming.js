@@ -267,7 +267,6 @@ function getPreferredLanguage() {
     window.TrailersComponent = component;
 })();
 (function() {
-    
     function startPlugin() {
         console.log('Trailers', 'startPlugin called');
 
@@ -299,11 +298,7 @@ function getPreferredLanguage() {
                 Lampa.Menu.items = Lampa.Menu.items || [];
                 Lampa.Menu.items.push({
                     title: 'Трейлери',
-                    component: 'trailers',
-                    name: 'trailers',
-                    id: 'trailers',
-                    enabled: true,
-                    visible: true
+                    component: 'trailers'
                 });
                 console.log('Trailers', 'Menu item added via Lampa.Menu.items');
                 console.log('Trailers', 'Menu item details:', Lampa.Menu.items[Lampa.Menu.items.length - 1]);
@@ -323,19 +318,17 @@ function getPreferredLanguage() {
                     console.log('Trailers', 'TrailersComponent.init called');
                 }
 
-                // Delayed menu render
-                setTimeout(function() {
-                    console.log('Trailers', 'Executing delayed render');
-                    if (typeof Lampa.Menu?.render === 'function') {
-                        let renderResult = Lampa.Menu.render();
-                        console.log('Trailers', 'Menu rendered via Lampa.Menu.render', 'Result:', renderResult);
-                    }
-                    if (typeof Lampa.Menu?.init === 'function') {
-                        Lampa.Menu.init();
-                        console.log('Trailers', 'Menu initialized via Lampa.Menu.init');
-                    }
-                    console.log('Trailers', 'Menu state after render:', Lampa.Menu);
-                }, 2000);
+                // Render menu synchronously
+                if (typeof Lampa.Menu?.render === 'function') {
+                    let renderResult = Lampa.Menu.render();
+                    console.log('Trailers', 'Menu rendered via Lampa.Menu.render', 'Result:', renderResult);
+                }
+                if (typeof Lampa.Menu?.init === 'function') {
+                    Lampa.Menu.init();
+                    console.log('Trailers', 'Menu initialized via Lampa.Menu.init');
+                }
+                console.log('Trailers', 'Menu state after render:', Lampa.Menu);
+                console.log('Trailers', 'Final menu items:', Lampa.Menu.items);
             } catch (e) {
                 console.error('Trailers', 'Error adding menu item:', e.message);
             }
