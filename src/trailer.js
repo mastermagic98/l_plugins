@@ -63,38 +63,50 @@
             return preferredLangs.includes(v.iso_639_1);
           }) || trailers[0];
           _this.trailer_lang = video ? video.iso_639_1 : '-';
-          if (_this.trailer_lang !== '-') {
-            _this.card.find('.card__trailer-lang').text(_this.trailer_lang.toUpperCase());
-          } else {
-            _this.card.find('.card__trailer-lang').text('-');
-          }
+          _this.card.find('.card__trailer-lang').text(_this.trailer_lang.toUpperCase());
 
-          if (params.type === 'in_theaters' || params.type === 'upcoming_movies') {
-            if (data.release_details && data.release_details.results) {
-              var region = TrailerPlugin.Utils.getRegion();
-              var releaseInfo = data.release_details.results.find(function(r) {
-                return r.iso_3166_1 === region;
-              });
-              if (releaseInfo && releaseInfo.release_dates && releaseInfo.release_dates.length) {
-                var releaseDate = releaseInfo.release_dates[0].release_date;
-                _this.release_date = TrailerPlugin.Utils.formatDateToDDMMYYYY(releaseDate);
-              } else if (data.release_date) {
-                _this.release_date = TrailerPlugin.Utils.formatDateToDDMMYYYY(data.release_date);
-              }
+          // Відображаємо дату релізу з release_details, як у "В прокаті" та "Очікувані фільми"
+          var region = TrailerPlugin.Utils.getRegion();
+          if (data.release_details && data.release_details.results) {
+            var releaseInfo = data.release_details.results.find(function(r) {
+              return r.iso_3166_1 === region;
+            });
+            if (releaseInfo && releaseInfo.release_dates && releaseInfo.release_dates.length) {
+              _this.release_date = TrailerPlugin.Utils.formatDateToDDMMYYYY(releaseInfo.release_dates[0].release_date);
             } else if (data.release_date) {
               _this.release_date = TrailerPlugin.Utils.formatDateToDDMMYYYY(data.release_date);
             }
-          } else if (params.type === 'new_series_seasons' || params.type === 'upcoming_series') {
-            if (data.release_details && data.release_details.first_air_date) {
-              _this.release_date = TrailerPlugin.Utils.formatDateToDDMMYYYY(data.release_details.first_air_date);
-            }
+          } else if (data.release_date) {
+            _this.release_date = TrailerPlugin.Utils.formatDateToDDMMYYYY(data.release_date);
           }
           _this.card.find('.card__release-date').text(_this.release_date);
         }, function() {
           _this.trailer_lang = '-';
           _this.card.find('.card__trailer-lang').text('-');
-          _this.card.find('.card__release-date').text('-');
+
+          // Відображаємо дату релізу навіть без трейлера
+          var region = TrailerPlugin.Utils.getRegion();
+          if (data.release_details && data.release_details.results) {
+            var releaseInfo = data.release_details.results.find(function(r) {
+              return r.iso_3166_1 === region;
+            });
+            if (releaseInfo && releaseInfo.release_dates && releaseInfo.release_dates.length) {
+              _this.release_date = TrailerPlugin.Utils.formatDateToDDMMYYYY(releaseInfo.release_dates[0].release_date);
+            } else if (data.release_date) {
+              _this.release_date = TrailerPlugin.Utils.formatDateToDDMMYYYY(data.release_date);
+            }
+          } else if (data.release_date) {
+            _this.release_date = TrailerPlugin.Utils.formatDateToDDMMYYYY(data.release_date);
+          }
+          _this.card.find('.card__release-date').text(_this.release_date);
         });
+
+        // Перевіряємо дубльовану назву
+        var lang = TrailerPlugin.Utils.getInterfaceLanguage();
+        var hasTranslatedTitle = lang === 'uk' ? !!data.title : lang === 'ru' ? !!data.title : true;
+        if (!hasTranslatedTitle) {
+          _this.card = null; // Не створюємо картку, якщо немає дубльованої назви
+        }
       }
     };
 
@@ -126,6 +138,10 @@
     this.create = function() {
       var _this2 = this;
       this.build();
+      
+      // Якщо картка не створена (немає дубльованої назви), виходимо
+      if (!this.card) return;
+
       this.card.on('hover:focus', function(e, is_mouse) {
         Lampa.Background.change(_this2.cardImgBackground(data));
         _this2.onFocus(e.target, data, is_mouse);
@@ -223,23 +239,25 @@
       this.img.onerror = null;
       this.img.onload = null;
       this.img.src = '';
-      this.card.remove();
+      this.card && this.card.remove();
       this.card = null;
       this.img = null;
     };
 
     this.visible = function() {
       if (this.visibled) return;
-      if (params.type === 'rating') {
-        this.img.src = 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg';
-      } else if (data.backdrop_path) {
-        this.img.src = Lampa.Api.img(data.backdrop_path, 'w500');
-      } else if (data.poster_path) {
-        this.img.src = Lampa.Api.img(data.poster_path);
-      } else {
-        this.img.src = './img/img_broken.svg';
+      if (this.card) {
+        if (params.type === 'rating') {
+          this.img.src = 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg';
+        } else if (data.backdrop_path) {
+          this.img.src = Lampa.Api.img(data.backdrop_path, 'w500');
+        } else if (data.poster_path) {
+          this.img.src = Lampa.Api.img(data.poster_path);
+        } else {
+          this.img.src = './img/img_broken.svg';
+        }
+        this.visibled = true;
       }
-      this.visibled = true;
     };
 
     this.render = function() {
