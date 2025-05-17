@@ -151,13 +151,27 @@
                 console.log('[Trailers]','Available components:',Object.keys(Lampa.Components));
                 console.log('[Trailers]','TrailersComponent methods:',Object.keys(window.TrailersComponent));
 
-                function addMenuItem(){
-                    Lampa.Menu.items.push({
-                        title: 'Трейлери',
-                        component: 'trailers'
-                    });
-                    console.log('[Trailers]','Menu item added');
-                    console.log('[Trailers]','Menu item details:',Lampa.Menu.items[Lampa.Menu.items.length - 1]);
+                setTimeout(function(){
+                    var hasTrailers = false;
+                    for(var i = 0; i < Lampa.Menu.items.length; i++){
+                        if(Lampa.Menu.items[i].title === 'Трейлери' && Lampa.Menu.items[i].component === 'trailers'){
+                            hasTrailers = true;
+                            break;
+                        }
+                    }
+
+                    if(!hasTrailers){
+                        Lampa.Menu.items.push({
+                            title: 'Трейлери',
+                            component: 'trailers'
+                        });
+                        console.log('[Trailers]','Menu item added');
+                        console.log('[Trailers]','Menu item details:',Lampa.Menu.items[Lampa.Menu.items.length - 1]);
+                    }
+                    else{
+                        console.log('[Trailers]','Menu item already exists');
+                    }
+
                     console.log('[Trailers]','Menu items after adding:',Lampa.Menu.items);
 
                     if(typeof Lampa.Menu.init === 'function') {
@@ -169,35 +183,12 @@
                         console.log('[Trailers]','Menu updated via Lampa.Menu.ready');
                     }
                     if(typeof Lampa.Menu.render === 'function') {
-                        Lampa.Menu.render();
+                        var renderResult = Lampa.Menu.render();
                         console.log('[Trailers]','Menu updated via Lampa.Menu.render');
+                        console.log('[Trailers]','Render result:',renderResult);
                     }
                     console.log('[Trailers]','Final menu items:',Lampa.Menu.items);
-                }
-
-                if(typeof Lampa.Storage === 'object' && typeof Lampa.Storage.get === 'function' && Lampa.Storage.get('app_ready',false)){
-                    console.log('[Trailers]','App already ready, adding menu item');
-                    addMenuItem();
-                }
-                else{
-                    console.log('[Trailers]','App not ready, starting interval check');
-                    var attempts = 0;
-                    var maxAttempts = 5;
-                    var checkInterval = setInterval(function(){
-                        attempts++;
-                        console.log('[Trailers]','Checking app readiness, attempt:',attempts);
-                        if(typeof Lampa.Storage === 'object' && typeof Lampa.Storage.get === 'function' && Lampa.Storage.get('app_ready',false)){
-                            console.log('[Trailers]','App ready detected, adding menu item');
-                            addMenuItem();
-                            clearInterval(checkInterval);
-                        }
-                        else if(attempts >= maxAttempts){
-                            console.log('[Trailers]','Max attempts reached, using fallback');
-                            addMenuItem();
-                            clearInterval(checkInterval);
-                        }
-                    },500);
-                }
+                },3000);
             }
             catch(e){
                 console.error('[Trailers]','Error adding menu item:',e.message);
