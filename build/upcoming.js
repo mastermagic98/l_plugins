@@ -1605,38 +1605,63 @@ var Api = {
             try{
                 Lampa.Menu = Lampa.Menu || {};
                 Lampa.Menu.items = Lampa.Menu.items || [];
-                Lampa.Menu.items.push({
-                    title: 'Трейлери',
-                    component: 'trailers'
-                });
 
-                console.log('[Trailers]','Menu item added');
-                console.log('[Trailers]','Menu item details:',Lampa.Menu.items[Lampa.Menu.items.length - 1]);
+                console.log('[Trailers]','Initial menu items:',Lampa.Menu.items);
                 console.log('[Trailers]','Available components:',Object.keys(Lampa.Components));
-                console.log('[Trailers]','Menu items before render:',Lampa.Menu.items);
                 console.log('[Trailers]','TrailersComponent methods:',Object.keys(window.TrailersComponent));
 
-                if(typeof Lampa.Menu.init === 'function') {
-                    Lampa.Menu.init();
-                    console.log('[Trailers]','Menu initialized via Lampa.Menu.init');
-                }
-                if(typeof Lampa.Menu.ready === 'function') {
-                    Lampa.Menu.ready();
-                    console.log('[Trailers]','Menu updated via Lampa.Menu.ready');
-                }
-                if(typeof Lampa.Menu.render === 'function') {
-                    Lampa.Menu.render();
-                    console.log('[Trailers]','Menu updated via Lampa.Menu.render');
-                }
-                console.log('[Trailers]','Menu items after render:',Lampa.Menu.items);
+                if(typeof Lampa.Listener === 'object' && typeof Lampa.Listener.follow === 'function'){
+                    Lampa.Listener.follow('app',function(e){
+                        if(e.type === 'ready'){
+                            console.log('[Trailers]','App ready event received');
+                            Lampa.Menu.items.push({
+                                title: 'Трейлери',
+                                component: 'trailers'
+                            });
+                            console.log('[Trailers]','Menu item added via Listener');
+                            console.log('[Trailers]','Menu item details:',Lampa.Menu.items[Lampa.Menu.items.length - 1]);
+                            console.log('[Trailers]','Menu items after adding:',Lampa.Menu.items);
 
-                setTimeout(function(){
+                            if(typeof Lampa.Menu.init === 'function') {
+                                Lampa.Menu.init();
+                                console.log('[Trailers]','Menu initialized via Lampa.Menu.init');
+                            }
+                            if(typeof Lampa.Menu.ready === 'function') {
+                                Lampa.Menu.ready();
+                                console.log('[Trailers]','Menu updated via Lampa.Menu.ready');
+                            }
+                            if(typeof Lampa.Menu.render === 'function') {
+                                Lampa.Menu.render();
+                                console.log('[Trailers]','Menu updated via Lampa.Menu.render');
+                            }
+                            console.log('[Trailers]','Final menu items:',Lampa.Menu.items);
+                        }
+                    });
+                }
+                else{
+                    console.log('[Trailers]','Lampa.Listener not available, using fallback');
+                    Lampa.Menu.items.push({
+                        title: 'Трейлери',
+                        component: 'trailers'
+                    });
+                    console.log('[Trailers]','Menu item added via fallback');
+                    console.log('[Trailers]','Menu item details:',Lampa.Menu.items[Lampa.Menu.items.length - 1]);
+                    console.log('[Trailers]','Menu items after adding:',Lampa.Menu.items);
+
+                    if(typeof Lampa.Menu.init === 'function') {
+                        Lampa.Menu.init();
+                        console.log('[Trailers]','Menu initialized via Lampa.Menu.init');
+                    }
+                    if(typeof Lampa.Menu.ready === 'function') {
+                        Lampa.Menu.ready();
+                        console.log('[Trailers]','Menu updated via Lampa.Menu.ready');
+                    }
                     if(typeof Lampa.Menu.render === 'function') {
                         Lampa.Menu.render();
-                        console.log('[Trailers]','Menu updated via delayed Lampa.Menu.render');
+                        console.log('[Trailers]','Menu updated via Lampa.Menu.render');
                     }
                     console.log('[Trailers]','Final menu items:',Lampa.Menu.items);
-                },1000);
+                }
             }
             catch(e){
                 console.error('[Trailers]','Error adding menu item:',e.message);
