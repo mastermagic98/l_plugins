@@ -48,100 +48,87 @@ function getPreferredLanguage() {
         return ['en'];
     }
 }
-var Api = {
-    clear: function () {
-        console.log('Trailers', 'Clear cache');
-    },
+(function() {
+    var lang_map = { 'uk': 'uk-UA', 'ru': 'ru-RU', 'en': 'en-US' };
+    var api_key = 'YOUR_TMDB_API_KEY';
 
-    videos: function (data, success, fail) {
-        var type = data.type || (data.name ? 'tv' : 'movie');
-        Lampa.TMDB.videos(type, data.id, success, fail);
-    },
-
-    category: function (params, oncomplite, onerror) {
-        var lang = Lampa.Storage.get('language', 'ru');
-        var page = params.page || 1;
-        var url = params.url.replace('{page}', page).replace('{lang}', lang);
-
-        Lampa.TMDB.get(url, function (data) {
-            var results = data.results || [];
-            console.log('Trailers', params.type + ' results:', results.length, 'Page:', page);
-            oncomplite({
-                title: params.title,
-                results: results,
-                page: data.page,
-                total_pages: data.total_pages,
-                type: params.type,
-                url: params.url
-            });
-        }, onerror);
-    },
-
-    full: function (params, oncomplite, onerror) {
-        this.category(params, oncomplite, onerror);
-    },
-
-    getLocalMoviesInTheaters: function (params, oncomplite, onerror) {
-        var lang = Lampa.Storage.get('language', 'ru');
-        var region = lang === 'ru' ? 'RU' : lang === 'uk' ? 'UA' : 'US';
-        var page = params.page || 1;
-        var url = 'movie/now_playing?language=' + lang + '&page=' + page + '&region=' + region;
-
-        Lampa.TMDB.get(url, function (data) {
-            var results = data.results || [];
-            var total_pages = data.total_pages || 1;
-            console.log('Trailers', 'In theaters results:', results.length, 'Page:', page);
-
-            var filtered_results = [];
-            var pending = results.length;
-            var completed = 0;
-
-            function checkComplete() {
-                if (completed >= pending) {
-                    console.log('Trailers', 'In theaters final results:', filtered_results.length, 'Page:', page);
-                    oncomplite({
-                        title: params.title,
-                        results: filtered_results,
-                        page: data.page,
-                        total_pages: total_pages,
-                        type: params.type,
-                        url: params.url
-                    });
-                }
-            }
-
-            if (!results.length) {
-                checkComplete();
-                return;
-            }
-
-            results.forEach(function (movie) {
-                var release_url = 'movie/' + movie.id + '/release_dates';
-                Lampa.TMDB.get(release_url, function (release_data) {
-                    movie.release_details = release_data.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date || movie.release_date;
-
-                    Api.videos(movie, function (video_data) {
-                        var trailers = video_data.results ? video_data.results.filter(function (v) {
-                            return v.type === 'Trailer' && v.iso_639_1 === lang;
-                        }) : [];
-                        if (trailers.length) {
-                            filtered_results.push(movie);
-                        }
-                        completed++;
-                        checkComplete();
-                    }, function () {
-                        completed++;
-                        checkComplete();
-                    });
-                }, function () {
-                    movie.release_details = movie.release_date;
-                    completed++;
-                    checkComplete();
-                });
-            });
-        }, onerror);
+    function getReleaseDetails(id, type, lang) {
+        var url = 'https://api.themoviedb.org/3/' + type + '/' + id + '/release_dates?api_key=' + api_key;
+        return fetch(url).then(function(response) {
+            return response.json();
+        }).then(function(data) {
+            var release = data.results.find(function(r) { return r.iso_3166_1 === lang_map[lang] || r.iso_3166_1 === 'US'; });
+            return release ? { release_date: release.release_dates[0].release_date.split('T')[0] } : {};
+        }).catch(function(error) {
+            console.error('Trailers', 'Error fetching release details:', error);
+            return {};
+        });
     }
-};
+
+    function getTrailers(id, type, lang) {
+        var url = 'https://api.themoviedb.org/3/' + type + '/' + id + '/videos?api_key=' + api_key + '&language=' + lang_map[lang];
+        return fetch(url).then(function(response) {
+            return response.json();
+        }).then(function(data) {
+            var trailers = data.results ? data.results.filter(function(v) {
+                return v.type === 'Trailer' && v.site === 'YouTube';
+            }) : [];
+            return trailers;
+        }).catch(function(error) {
+            console.error('Trailers', 'Error fetching trailers:', error);
+            return [];
+        });
+    }
+
+    window.TrailersAPI = {
+        get: function(category, params) {
+            var lang = Lampa.Storage.get('language', 'uk');
+            var page = params.page || 1;
+            var url = '';
+            var type = 'movie';
+
+            if (category === 'in_theaters') {
+                url = 'https://api.themoviedb.org/3/movie/now_playing?api_key=' + api_key + '&language=' + lang_map[lang] + '&page=' + page;
+            } else if (category === 'upcoming_movies') {
+                url = 'https://api.themoviedb.org/3/movie/upcoming?api_key=' + api_key + '&language=' + lang_map[lang] + '&page=' + page;
+            } else if (category === 'popular_movies') {
+                url = 'https://api.themoviedb.org/3/movie/popular?api_key=' + api_key + '&language=' + lang_map[lang] + '&page=' + page;
+            } else if (category === 'popular_series') {
+                url = 'https://api.themoviedb.org/3/tv/popular?api_key=' + api_key + '&language=' + lang_map[lang] + '&page=' + page;
+                type = 'tv';
+            }
+
+            return fetch(url).then(function(response) {
+                return response.json();
+            }).then(function(data) {
+                var results = data.results || [];
+                var promises = results.map(function(item) {
+                    var id = item.id;
+                    var p1 = category === 'in_theaters' ? getTrailers(id, type, lang) : Promise.resolve([]);
+                    var p2 = (category === 'upcoming_movies' || category === 'popular_movies') ? getReleaseDetails(id, type, lang) : Promise.resolve({});
+                    return Promise.all([p1, p2]).then(function([trailers, release]) {
+                        if (category === 'in_theaters' && trailers.length === 0) return null;
+                        item.release_details = release;
+                        item.trailers = trailers;
+                        return item;
+                    });
+                });
+
+                return Promise.all(promises).then(function(items) {
+                    return {
+                        results: items.filter(function(item) { return item !== null; }),
+                        page: data.page,
+                        total_pages: data.total_pages,
+                        has_next: data.page < data.total_pages
+                    };
+                });
+            }).catch(function(error) {
+                console.error('Trailers', 'Error fetching data:', error);
+                return { results: [], page: 1, total_pages: 1, has_next: false };
+            });
+        }
+    };
+})();
 (function() {
     var component = {
         render_cards: function(data, category, params) {
