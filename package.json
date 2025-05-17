@@ -1,0 +1,10 @@
+{
+  "name": "trailer-plugin",
+  "version": "1.0.0",
+  "description": "Lampa Trailer Plugin",
+  "scripts": {
+    "build": "cat src/utils.js src/api.js src/trailer.js src/line.js src/component-main.js src/component-full.js src/plugin.js src/index.js > test_youtube.js"
+  },
+  "author": "",
+  "license": "MIT"
+}
