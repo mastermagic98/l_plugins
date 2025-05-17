@@ -1255,102 +1255,247 @@ var Api = {
 };
 (function () {
     'use strict';
+    // Версія 1.53: Виключено фільми без дати релізу в upcoming_movies, виправлено відображення на сторінці "Ще Очікувані фільми"
 
-    function formatDate(dateStr) {
-        if (!dateStr) return '-';
-        var date = new Date(dateStr);
-        if (isNaN(date.getTime())) return '-';
-        var lang = (Lampa && Lampa.Platform && typeof Lampa.Platform.language === 'function' && Lampa.Platform.language()) || 'uk';
-        if (lang === 'en') {
-            return (date.getMonth() + 1) + '/' + date.getDate() + '/' + date.getFullYear();
+    Lampa.Lang.add({
+        trailers_popular: {
+            ru: 'Популярное',
+            uk: 'Популярне',
+            en: 'Popular'
+        },
+        trailers_in_theaters: {
+            ru: 'В прокате',
+            uk: 'В прокаті',
+            en: 'In Theaters'
+        },
+        trailers_upcoming_movies: {
+            ru: 'Ожидаемые фильмы',
+            uk: 'Очікувані фільми',
+            en: 'Upcoming Movies'
+        },
+        trailers_popular_series: {
+            ru: 'Популярные сериалы',
+            uk: 'Популярні серіали',
+            en: 'Popular Series'
+        },
+        trailers_new_series_seasons: {
+            ru: 'Новые сериалы и сезоны',
+            uk: 'Нові серіали та сезони',
+            en: 'New Series and Seasons'
+        },
+        trailers_upcoming_series: {
+            ru: 'Ожидаемые сериалы',
+            uk: 'Очікувані серіали',
+            en: 'Upcoming Series'
+        },
+        trailers_no_trailers: {
+            ru: 'Нет трейлеров',
+            uk: 'Немає трейлерів',
+            en: 'No trailers'
+        },
+        trailers_no_ua_trailer: {
+            ru: 'Нет украинского трейлера',
+            uk: 'Немає українського трейлера',
+            en: 'No Ukrainian trailer'
+        },
+        trailers_no_ru_trailer: {
+            ru: 'Нет русского трейлера',
+            uk: 'Немає російського трейлера',
+            en: 'No Russian trailer'
+        },
+        trailers_view: {
+            ru: 'Подробнее',
+            uk: 'Докладніше',
+            en: 'More'
+        },
+        title_trailers: {
+            ru: 'Трейлеры',
+            uk: 'Трейлери',
+            en: 'Trailers'
+        },
+        trailers_filter: {
+            ru: 'Фильтр',
+            uk: 'Фільтр',
+            en: 'Filter'
+        },
+        trailers_filter_today: {
+            ru: 'Сегодня',
+            uk: 'Сьогодні',
+            en: 'Today'
+        },
+        trailers_filter_week: {
+            ru: 'Неделя',
+            uk: 'Тиждень',
+            en: 'Week'
+        },
+        trailers_filter_month: {
+            ru: 'Месяц',
+            uk: 'Місяць',
+            en: 'Month'
+        },
+        trailers_filter_year: {
+            ru: 'Год',
+            uk: 'Рік',
+            en: 'Year'
+        },
+        trailers_movies: {
+            ru: 'Фильмы',
+            uk: 'Фільми',
+            en: 'Movies'
+        },
+        trailers_series: {
+            ru: 'Сериалы',
+            uk: 'Серіали',
+            en: 'Series'
+        },
+        trailers_more: {
+            ru: 'Ещё',
+            uk: 'Ще',
+            en: 'More'
+        },
+        trailers_popular_movies: {
+            ru: 'Популярные фильмы',
+            uk: 'Популярні фільми',
+            en: 'Popular Movies'
+        },
+        trailers_last_movie: {
+            ru: 'Это последний фильм: [title]',
+            uk: 'Це останній фільм: [title]',
+            en: 'This is the last movie: [title]'
+        },
+        trailers_no_more_data: {
+            ru: 'Больше нет данных для загрузки',
+            uk: 'Більше немає даних для завантаження',
+            en: 'No more data to load'
         }
-        return date.getDate() + '.' + (date.getMonth() + 1) + '.' + date.getFullYear();
+    });
+
+    function startPlugin(){
+        console.log('[Trailers]','startPlugin called');
+
+        if(!window.TrailersComponent){
+            console.error('[Trailers]','TrailersComponent not defined');
+            return;
+        }
+
+        try{
+            Lampa.Components = Lampa.Components || {};
+            Lampa.Components['trailers'] = window.TrailersComponent;
+
+            if(typeof Lampa.Component === 'object' && typeof Lampa.Component.add === 'function'){
+                Lampa.Component.add('trailers',window.TrailersComponent);
+            }
+
+            Lampa.Template.add('trailers_css',`
+                <style>
+                    .trailers-list { display: flex; flex-wrap: wrap; gap: 20px; }
+                    .trailers-card { width: 150px; cursor: pointer; }
+                    .trailers-card__img img { width: 100%; border-radius: 8px; }
+                    .trailers-card__title { font-size: 14px; margin-top: 8px; color: #fff; }
+                    .trailers-card__date { font-size: 12px; color: #999; margin-top: 4px; }
+                    .trailers-category__title { font-size: 18px; margin: 20px 0 10px; color: #fff; }
+                    .trailers-category__more { font-size: 14px; color: #1e88e5; cursor: pointer; margin-top: 10px; }
+                    .menu__item--trailers { cursor: pointer; color: #fff; padding: 10px; }
+                </style>
+            `);
+
+            try{
+                Lampa.Menu = Lampa.Menu || {};
+                Lampa.Menu.items = Lampa.Menu.items || [];
+
+                console.log('[Trailers]','Initial menu items:',Lampa.Menu.items);
+                console.log('[Trailers]','Available components:',Object.keys(Lampa.Components));
+                console.log('[Trailers]','TrailersComponent methods:',Object.keys(window.TrailersComponent));
+
+                function addMenuItem(){
+                    var hasTrailers = false;
+                    for(var i = 0; i < Lampa.Menu.items.length; i++){
+                        if(Lampa.Menu.items[i].title === 'Трейлери' && Lampa.Menu.items[i].component === 'trailers'){
+                            hasTrailers = true;
+                            break;
+                        }
+                    }
+
+                    if(!hasTrailers){
+                        Lampa.Menu.items.push({
+                            title: 'Трейлери',
+                            component: 'trailers'
+                        });
+                        console.log('[Trailers]','Menu item added');
+                        console.log('[Trailers]','Menu item details:',Lampa.Menu.items[Lampa.Menu.items.length - 1]);
+                    }
+                    else{
+                        console.log('[Trailers]','Menu item already exists');
+                    }
+
+                    console.log('[Trailers]','Menu items after adding:',Lampa.Menu.items);
+
+                    if(typeof Lampa.Menu.init === 'function') {
+                        Lampa.Menu.init();
+                        console.log('[Trailers]','Menu initialized via Lampa.Menu.init');
+                    }
+                    if(typeof Lampa.Menu.ready === 'function') {
+                        Lampa.Menu.ready();
+                        console.log('[Trailers]','Menu updated via Lampa.Menu.ready');
+                    }
+                    if(typeof Lampa.Menu.render === 'function') {
+                        var renderResult = Lampa.Menu.render();
+                        console.log('[Trailers]','Menu updated via Lampa.Menu.render');
+                        console.log('[Trailers]','Render result:',renderResult);
+                        var scrollMask = document.querySelector('.scroll--mask');
+                        console.log('[Trailers]','Scroll mask content:',scrollMask ? scrollMask.innerHTML : 'Not found');
+                        var menuItems = document.querySelectorAll('.menu__item');
+                        console.log('[Trailers]','Menu items in DOM:',menuItems.length,menuItems);
+                        var hasTrailersInDom = false;
+                        for(var j = 0; j < menuItems.length; j++){
+                            if(menuItems[j].textContent.indexOf('Трейлери') !== -1){
+                                hasTrailersInDom = true;
+                                break;
+                            }
+                        }
+                        if(!hasTrailersInDom && scrollMask){
+                            var trailerItem = document.createElement('div');
+                            trailerItem.className = 'menu__item menu__item--trailers';
+                            trailerItem.textContent = 'Трейлери';
+                            trailerItem.onclick = function(){
+                                if(Lampa.Components && Lampa.Components.trailers && typeof Lampa.Components.trailers.render === 'function'){
+                                    var container = Lampa.Components.trailers.render();
+                                    document.querySelector('.layer--wheight').appendChild(container);
+                                    console.log('[Trailers]','Trailers component rendered manually');
+                                }
+                            };
+                            scrollMask.appendChild(trailerItem);
+                            console.log('[Trailers]','Trailers item added to DOM manually');
+                        }
+                    }
+                    console.log('[Trailers]','Final menu items:',Lampa.Menu.items);
+                }
+
+                var listenerAdded = false;
+                if(typeof Lampa.Listener === 'object' && typeof Lampa.Listener.follow === 'function' && !listenerAdded){
+                    Lampa.Listener.follow('menu',function(e){
+                        console.log('[Trailers]','Menu event received:',e.type);
+                        addMenuItem();
+                        listenerAdded = true;
+                    });
+                }
+
+                setTimeout(function(){
+                    console.log('[Trailers]','Adding menu item via fallback');
+                    addMenuItem();
+                },3000);
+            }
+            catch(e){
+                console.error('[Trailers]','Error adding menu item:',e.message);
+            }
+        }
+        catch(e){
+            console.error('[Trailers]','Error registering component:',e.message);
+        }
     }
 
-    var TrailersComponent = {
-        baseImageUrl: 'https://image.tmdb.org/t/p/w500',
-        filters: {
-            period: ['today', 'week', 'month', 'year'],
-            type: ['movies', 'series']
-        },
-        filter: function () {
-            return {
-                period: this.filters.period[0],
-                type: this.filters.type[0]
-            };
-        },
-        getFilterItems: function () {
-            var items = [];
-            var _this = this;
-            this.filters.period.forEach(function (p) {
-                items.push({
-                    title: Lampa.Lang.translate('trailers_filter_' + p),
-                    value: p
-                });
-            });
-            this.filters.type.forEach(function (t) {
-                items.push({
-                    title: Lampa.Lang.translate('trailers_' + t),
-                    value: t
-                });
-            });
-            return items;
-        },
-        render_cards: function (data, category) {
-            var _this = this;
-            data.results.forEach(function (item) {
-                var releaseDate = item.release_date || item.first_air_date;
-                var formattedDate = category === 'in_theaters' ? '' : formatDate(releaseDate);
-                console.log('[Trailers]','Card:',item.id,'Title:',item.title || item.name,'Date:',formattedDate);
-            });
-        },
-        createCard: function (item, category) {
-            var card = document.createElement('div');
-            card.className = 'trailers-card';
-            var img = document.createElement('img');
-            img.src = this.baseImageUrl + (item.poster_path || item.backdrop_path);
-            var title = document.createElement('div');
-            title.className = 'trailers-card__title';
-            title.textContent = item.title || item.name;
-            var date = document.createElement('div');
-            date.className = 'trailers-card__date';
-            var releaseDate = item.release_date || item.first_air_date;
-            date.textContent = category === 'in_theaters' ? '' : formatDate(releaseDate);
-            card.appendChild(img);
-            card.appendChild(title);
-            card.appendChild(date);
-            return card;
-        },
-        contextmenu: function () {
-            return [{
-                title: Lampa.Lang.translate('trailers_view'),
-                action: function () {
-                    console.log('[Trailers]','Context menu action triggered');
-                }
-            }];
-        },
-        create: function () {
-            console.log('[Trailers]','Creating component');
-            var container = document.createElement('div');
-            container.className = 'trailers-list';
-            return container;
-        },
-        render: function () {
-            var container = this.create();
-            return container;
-        },
-        getCategoryTitle: function (category) {
-            return Lampa.Lang.translate('trailers_' + category);
-        },
-        visible: function () {
-            console.log('[Trailers]','Component visible');
-        },
-        destroy: function () {
-            console.log('[Trailers]','Component destroyed');
-        }
-    };
-
-    window.TrailersComponent = TrailersComponent;
+    console.log('[Trailers]','init.js loaded');
+    startPlugin();
 })();
 (function () {
     'use strict';
