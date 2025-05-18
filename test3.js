@@ -1,7 +1,8 @@
-// --- ПОЧАТОК ФАЙЛУ test3.js (версія 1.54.1, виправлено ініціалізацію меню) ---
+// --- ПОЧАТОК ФАЙЛУ test3.js (версія 1.54.2, додано альтернативне додавання меню через подію menu) ---
 
 (function () {
 'use strict';
+// Версія 1.54.2: Додано альтернативне додавання пункту меню через подію menu build для старих версій Lampa, додано логи для діагностики
 // Версія 1.54.1: Виправлено ініціалізацію меню через Lampa.Listener.follow('app', 'ready'), додано перевірку Lampa.Menu.add
 // Версія 1.54: Додано перевірку трейлерів для popular_series, оптимізовано кешування videos, додано таймаут кешу (24 години), виправлено відображення картки ЩЕ на малих екранах
 
@@ -1719,6 +1720,7 @@ Lampa.Component.add('trailers_full', Component);
 
 Lampa.Listener.follow('app', function (e) {
     if (e.type === 'ready') {
+        // Спроба використати Lampa.Menu.add
         if (Lampa.Menu && typeof Lampa.Menu.add === 'function') {
             Lampa.Menu.add({
                 title: Lampa.Lang.translate('title_trailers'),
@@ -1726,8 +1728,21 @@ Lampa.Listener.follow('app', function (e) {
                 component: 'trailers_main',
                 tab: 'trailers'
             });
+            console.log('Lampa.Menu.add executed successfully');
         } else {
-            console.error('Lampa.Menu.add is not available. Please check Lampa version or conflicting plugins.');
+            console.warn('Lampa.Menu.add is not available, falling back to menu build event');
+            // Альтернативний метод через подію menu
+            Lampa.Listener.follow('menu', function (m) {
+                if (m.type === 'build') {
+                    m.menu.push({
+                        title: Lampa.Lang.translate('title_trailers'),
+                        url: '',
+                        component: 'trailers_main',
+                        tab: 'trailers'
+                    });
+                    console.log('Menu item added via menu build event');
+                }
+            });
         }
     }
     if (e.type === 'start') {
@@ -1741,4 +1756,4 @@ Lampa.Listener.follow('app', function (e) {
 
 })();
 
-// --- КІНЕЦЬ ФАЙЛУ test3.js (версія 1.54.1, виправлено ініціалізацію меню) ---
+// --- КІНЕЦЬ ФАЙЛУ test3.js (версія 1.54.2, додано альтернативне додавання меню через подію menu) ---
