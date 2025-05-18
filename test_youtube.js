@@ -1067,6 +1067,7 @@
     var _this = this;
     this.cards = [];
     this.lines = [];
+    this.dom = { content: $('<div></div>') }; // Імітація DOM для уникнення помилок
 
     this.create = function() {
       var _this2 = this;
@@ -1089,12 +1090,12 @@
         data.forEach(function(category, index) {
           console.log('ComponentMain: Processing category:', category?.type, 'Items:', category?.results?.length || 0, 'Category:', category);
           if (!category || !category.results || !Array.isArray(category.results)) {
-            console.warn('ComponentMain: Skipping invalid category at index:', index);
+            console.warn('ComponentMain: Skipping invalid category at index:', index, 'Category:', category);
             return;
           }
           var line = new TrailerPlugin.Line(category);
-          if (!line.cards || !Array.isArray(line.cards)) {
-            console.error('ComponentMain: Invalid line.cards for category:', category.type, 'Line:', line);
+          if (!line || !line.cards || !Array.isArray(line.cards)) {
+            console.error('ComponentMain: Invalid line or line.cards for category:', category.type, 'Line:', line);
             return;
           }
           console.log('ComponentMain: Line created with cards:', line.cards.length, 'for category:', category.type);
@@ -1244,6 +1245,9 @@
       });
       this.cards = [];
       this.lines = [];
+      if (this.dom.content) {
+        this.dom.content.remove();
+      }
     };
   }
 
