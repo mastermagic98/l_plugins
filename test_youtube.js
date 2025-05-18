@@ -181,10 +181,10 @@
             }
           }
 
-          data.results.forEach(function(movie) {
+         orie.forEach(function(movie) {
             var movie_id = movie.id;
             if (movie_id) {
-              var release_url = tmdb_base_url + '/movie/' + movie_id + '/release_dates?api_key=' + tmdb_api_key;
+              var release - movie_id + '/release_dates?api_key=' + tmdb_api_key;
               network.silent(release_url, function(release_data) {
                 movie.release_details = release_data;
                 allMovies.push(movie);
