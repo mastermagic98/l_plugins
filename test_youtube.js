@@ -1235,14 +1235,18 @@
           return;
         }
         data.forEach(function(category) {
-          console.log('ComponentMain: Processing category:', category.type, 'Items:', category.results.length);
+          console.log('ComponentMain: Processing category:', category.type, 'Items:', category.results?.length || 0);
           var line = new TrailerPlugin.Line(category);
+          if (!line.cards || !Array.isArray(line.cards)) {
+            console.error('ComponentMain: Invalid line.cards for category:', category.type, 'Line:', line);
+            return;
+          }
           console.log('ComponentMain: Line created with cards:', line.cards.length);
           _this2.cards.push.apply(_this2.cards, line.cards);
           _this2.lines.push(line);
         });
         if (_this2.lines.length === 0) {
-          console.warn('ComponentMain: No lines created');
+          console.warn('ComponentMain: No valid lines created');
           Lampa.Noty.show(Lampa.Lang.translate('trailers_no_data'));
           Lampa.Controller.toggle('content');
           return;
@@ -1256,6 +1260,11 @@
       });
       Lampa.Controller.enabled().add('content', this);
       return this;
+    };
+
+    this.start = function() {
+      console.log('ComponentMain: Starting component');
+      this.create();
     };
 
     this.build = function() {
