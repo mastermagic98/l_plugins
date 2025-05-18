@@ -1,8 +1,7 @@
-// --- ПОЧАТОК ФАЙЛУ test3.js (версія 1.54.1, повернення до початкової версії додавання меню через Lampa.Menu.add) ---
-
 (function () {
 'use strict';
-// Версія 1.54.1: Виправлено ініціалізацію меню через Lampa.Listener.follow('app', 'ready'), додано перевірку Lampa.Menu.add
+// Версія 1.54.2: Додано повторні спроби для Lampa.Menu.add із затримкою, покращено логи для діагностики
+// Версія 1.54.1: Виправлено ініціалізацію меню через Lampa.Listener.follow('app', 'ready')
 // Версія 1.54: Додано перевірку трейлерів для popular_series, оптимізовано кешування videos, додано таймаут кешу (24 години), виправлено відображення картки ЩЕ на малих екранах
 
 function debounce(func, wait) {
@@ -754,7 +753,7 @@ function full(params, oncomplite, onerror) {
                     var existingCache = categoryCache[params.type] || Lampa.Storage.get('trailer_category_cache_' + params.type, { results: [] });
                     existingCache.results = existingCache.results.concat(result.results);
                     categoryCache[params.type] = existingCache;
-                    Lampa.Storage.set('trailer_category_cache_' + params.type, existingCache);
+                    Lampa.Storage.set('trailer_category_cache_' + params.type, categoryCache[params.type]);
                 }
                 oncomplite(result);
             } else {
@@ -803,7 +802,8 @@ function videos(card, oncomplite, onerror) {
             var trailers = result.results ? result.results.filter(function (v) {
                 return v.type === 'Trailer';
             }) : [];
-            tmdbTrailers = tmdbTrailers.concat(trailers);
+            tmdbTrailers = tmd
+bTrailers.concat(trailers);
             var preferredTrailer = trailers.find(function (v) {
                 return preferredLangs.includes(v.iso_639_1);
             });
@@ -1703,43 +1703,55 @@ Lampa.Lang.add({
         en: 'Year'
     },
     trailers_last_movie: {
-        ru: 'Последний фильм: [title]',
-        uk: 'Останній фільм: [title]',
-        en: 'Last movie: [title]'
+        ru: 'Это последний фильм в списке: [title]',
+        uk: 'Це останній фільм у списку: [title]',
+        en: 'This is the last movie in the list: [title]'
     },
-    trailers_no_more_data: {
-        ru: 'Нет больше данных',
-        uk: 'Немає більше даних',
-        en: 'No more data'
+    title_trailers: {
+        ru: 'Трейлеры',
+        uk: 'Трейлери',
+        en: 'Trailers'
     }
 });
 
-Lampa.Component.add('trailers_main', Component$1);
-Lampa.Component.add('trailers_full', Component);
+// Ініціалізація меню з повторними спробами
+function tryAddMenu(attempt, maxAttempts) {
+    console.log('TryAddMenu attempt:', attempt, 'Lampa.Menu:', Lampa.Menu, 'Lampa.Manifest.app_digital:', Lampa.Manifest.app_digital);
+    if (attempt >= maxAttempts) {
+        console.error('Lampa.Menu.add failed after', maxAttempts, 'attempts. Final Lampa.Menu:', Lampa.Menu, 'Keys:', Object.keys(Lampa.Menu || {}));
+        return;
+    }
+    if (Lampa.Menu && typeof Lampa.Menu.add === 'function') {
+        Lampa.Menu.add({
+            title: Lampa.Lang.translate('title_trailers'),
+            url: '',
+            component: 'trailers_main',
+            tab: 'trailers'
+        });
+        console.log('Lampa.Menu.add executed successfully on attempt:', attempt);
+    } else {
+        console.warn('Lampa.Menu.add not available on attempt:', attempt, 'Lampa.Menu:', Lampa.Menu, 'Keys:', Object.keys(Lampa.Menu || {}));
+        setTimeout(function () {
+            tryAddMenu(attempt + 1, maxAttempts);
+        }, 500);
+    }
+}
 
 Lampa.Listener.follow('app', function (e) {
     if (e.type === 'ready') {
-        if (Lampa.Menu && typeof Lampa.Menu.add === 'function') {
-            Lampa.Menu.add({
-                title: Lampa.Lang.translate('title_trailers'),
-                url: '',
-                component: 'trailers_main',
-                tab: 'trailers'
-            });
-            console.log('Lampa.Menu.add executed successfully');
-        } else {
-            console.warn('Lampa.Menu.add is not available. Please check Lampa version or conflicting plugins.');
-        }
+        console.log('App ready. Lampa.Manifest.app_digital:', Lampa.Manifest.app_digital, 'Lampa.Menu:', Lampa.Menu, 'Keys:', Object.keys(Lampa.Menu || {}));
+        tryAddMenu(1, 5); // Спробувати додати меню до 5 разів
     }
     if (e.type === 'start') {
         var lang = Lampa.Storage.get('language', 'ru');
-        if (lang !== Lampa.Storage.get('trailers_lang', '')) {
+        if (lang !== L彼此-13pxLampa.Storage.get('trailers_lang', '')) {
             Api.clear();
             Lampa.Storage.set('trailers_lang', lang);
         }
     }
 });
 
-})();
+Lampa.Component.add('trailers_main', Component$1);
+Lampa.Component.add('trailers_full', Component);
 
-// --- КІНЕЦЬ ФАЙЛУ test3.js (версія 1.54.1, повернення до початкової версії додавання меню через Lampa.Menu.add) ---
+})();
