@@ -8,30 +8,34 @@
 
     this.create = function() {
       var _this2 = this;
-      console.log('ComponentMain: Creating component');
+      console.log('ComponentMain: Creating component, params:', params);
       Lampa.Loading.start(function() {
         console.log('ComponentMain: Clearing API cache');
         TrailerPlugin.Api.clear();
         Lampa.Loading.stop();
       });
       TrailerPlugin.Api.main(function(data) {
-        console.log('ComponentMain: Received data for categories:', data.length);
+        console.log('ComponentMain: Received data for categories:', data?.length || 0, 'Data:', data);
         _this2.cards = [];
         _this2.lines = [];
-        if (data.length === 0) {
-          console.warn('ComponentMain: No categories received');
+        if (!data || !Array.isArray(data) || data.length === 0) {
+          console.warn('ComponentMain: No valid categories received');
           Lampa.Noty.show(Lampa.Lang.translate('trailers_no_data'));
           Lampa.Controller.toggle('content');
           return;
         }
-        data.forEach(function(category) {
-          console.log('ComponentMain: Processing category:', category.type, 'Items:', category.results?.length || 0);
+        data.forEach(function(category, index) {
+          console.log('ComponentMain: Processing category:', category?.type, 'Items:', category?.results?.length || 0, 'Category:', category);
+          if (!category || !category.results || !Array.isArray(category.results)) {
+            console.warn('ComponentMain: Skipping invalid category at index:', index);
+            return;
+          }
           var line = new TrailerPlugin.Line(category);
           if (!line.cards || !Array.isArray(line.cards)) {
             console.error('ComponentMain: Invalid line.cards for category:', category.type, 'Line:', line);
             return;
           }
-          console.log('ComponentMain: Line created with cards:', line.cards.length);
+          console.log('ComponentMain: Line created with cards:', line.cards.length, 'for category:', category.type);
           _this2.cards.push.apply(_this2.cards, line.cards);
           _this2.lines.push(line);
         });
@@ -41,6 +45,7 @@
           Lampa.Controller.toggle('content');
           return;
         }
+        console.log('ComponentMain: Total lines created:', _this2.lines.length, 'Total cards:', _this2.cards.length);
         _this2.build();
         _this2.show();
       }, function() {
