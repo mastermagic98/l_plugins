@@ -1,7 +1,8 @@
-// --- ПОЧАТОК ФАЙЛУ test3.js (версія 1.54) ---
+// --- ПОЧАТОК ФАЙЛУ test3.js (версія 1.54.1, виправлено ініціалізацію меню) ---
 
 (function () {
 'use strict';
+// Версія 1.54.1: Виправлено ініціалізацію меню через Lampa.Listener.follow('app', 'ready'), додано перевірку Lampa.Menu.add
 // Версія 1.54: Додано перевірку трейлерів для popular_series, оптимізовано кешування videos, додано таймаут кешу (24 години), виправлено відображення картки ЩЕ на малих екранах
 
 function debounce(func, wait) {
@@ -1716,14 +1717,19 @@ Lampa.Lang.add({
 Lampa.Component.add('trailers_main', Component$1);
 Lampa.Component.add('trailers_full', Component);
 
-Lampa.Menu.add({
-    title: Lampa.Lang.translate('title_trailers'),
-    url: '',
-    component: 'trailers_main',
-    tab: 'trailers'
-});
-
 Lampa.Listener.follow('app', function (e) {
+    if (e.type === 'ready') {
+        if (Lampa.Menu && typeof Lampa.Menu.add === 'function') {
+            Lampa.Menu.add({
+                title: Lampa.Lang.translate('title_trailers'),
+                url: '',
+                component: 'trailers_main',
+                tab: 'trailers'
+            });
+        } else {
+            console.error('Lampa.Menu.add is not available. Please check Lampa version or conflicting plugins.');
+        }
+    }
     if (e.type === 'start') {
         var lang = Lampa.Storage.get('language', 'ru');
         if (lang !== Lampa.Storage.get('trailers_lang', '')) {
@@ -1735,4 +1741,4 @@ Lampa.Listener.follow('app', function (e) {
 
 })();
 
-// --- КІНЕЦЬ ФАЙЛУ test3.js (версія 1.54) ---
+// --- КІНЕЦЬ ФАЙЛУ test3.js (версія 1.54.1, виправлено ініціалізацію меню) ---
