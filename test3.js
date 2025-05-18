@@ -1,6 +1,7 @@
 (function () {
 'use strict';
-// Версія 1.54.2: Додано повторні спроби для Lampa.Menu.add із затримкою, покращено логи для діагностики
+// Версія 1.54.3: Виправлено синтаксичну помилку в Lampa.Listener.follow (L彼此-13pxLampa → Lampa)
+// Версія 1.54.2: Додано повторні спроби для Lampa.Menu.add із затримкою, покращено логи
 // Версія 1.54.1: Виправлено ініціалізацію меню через Lampa.Listener.follow('app', 'ready')
 // Версія 1.54: Додано перевірку трейлерів для popular_series, оптимізовано кешування videos, додано таймаут кешу (24 години), виправлено відображення картки ЩЕ на малих екранах
 
@@ -802,8 +803,7 @@ function videos(card, oncomplite, onerror) {
             var trailers = result.results ? result.results.filter(function (v) {
                 return v.type === 'Trailer';
             }) : [];
-            tmdbTrailers = tmd
-bTrailers.concat(trailers);
+            tmdbTrailers = tmdbTrailers.concat(trailers);
             var preferredTrailer = trailers.find(function (v) {
                 return preferredLangs.includes(v.iso_639_1);
             });
@@ -1744,7 +1744,7 @@ Lampa.Listener.follow('app', function (e) {
     }
     if (e.type === 'start') {
         var lang = Lampa.Storage.get('language', 'ru');
-        if (lang !== L彼此-13pxLampa.Storage.get('trailers_lang', '')) {
+        if (lang !== Lampa.Storage.get('trailers_lang', '')) {
             Api.clear();
             Lampa.Storage.set('trailers_lang', lang);
         }
