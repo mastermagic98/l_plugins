@@ -750,7 +750,7 @@
         };
 
         this.cardImgBackground = function (card_data) {
-            if (Lampa.Storage.field('background')) {
+            if (Lampa.Storage.field('backgroundretanto: if (Lampa.Storage.get('background')) {
                 if (Lampa.Storage.get('background_type', 'complex') === 'poster' && window.innerWidth > 790) {
                     return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'original') : this.is_youtube ? 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg' : '';
                 }
@@ -1626,21 +1626,79 @@
         if (window.plugin_trailers_ready) return;
         window.plugin_trailers_ready = true;
 
-        console.log('Starting Trailers Plugin v3.1');
+        console.log('Starting Trailers Plugin v3.3');
 
+        // Реєстрація компонентів і шаблонів
         Lampa.Component.add('trailers_main', Component$1);
         Lampa.Component.add('trailers_full', Component);
         Lampa.Template.add('trailer', '<div class="card selector card--trailer layer--render layer--visible"><div class="card__view"><img src="./img/img_load.svg" class="card__img"><div class="card__promo"><div class="card__promo-text"><div class="card__title"></div></div><div class="card__details"></div></div></div><div class="card__play"><img src="./img/icons/player/play.svg"></div></div>');
         Lampa.Template.add('trailer_style', '<style>.card.card--trailer,.card-more.more--trailers{width:25.7em}.card.card--trailer .card__view{padding-bottom:56%;margin-bottom:0}.card.card--trailer .card__details{margin-top:0.8em}.card.card--trailer .card__play{position:absolute;top:50%;transform:translateY(-50%);left:1.5em;background:#000000b8;width:2.2em;height:2.2em;border-radius:100%;text-align:center;padding-top:0.6em}.card.card--trailer .card__play img{width:0.9em;height:1em}.card.card--trailer .card__rating{position:absolute;bottom:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.card.card--trailer .card__trailer-lang{position:absolute;top:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;text-transform:uppercase;font-size:1.2em}.card.card--trailer .card__release-date{position:absolute;top:2em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.category-full--trailers{display:flex;flex-wrap:wrap;justify-content:space-around;padding:0 1em}.card--placeholder{min-height:1px}@media (max-width:767px){.card.card--trailer,.card-more.more--trailers{width:18em}.category-full--trailers{justify-content:space-between}}</style>');
 
-        Lampa.Menu.add({
-            title: Lampa.Lang.translate('trailers_popular'),
-            url: '',
-            component: 'trailers_main',
-            position: 'top'
-        });
+        // Функція для перевірки API і запуску плагіна
+        function tryInitialize(attempts = 0, maxAttempts = 10) {
+            // Перевірка ініціалізації Lampa
+            if (typeof Lampa === 'undefined' || !Lampa.Storage || !Lampa.Component || !Lampa.Template) {
+                if (attempts < maxAttempts) {
+                    console.log(`Lampa not fully initialized, attempt ${attempts + 1}/${maxAttempts}`);
+                    setTimeout(function () {
+                        tryInitialize(attempts + 1, maxAttempts);
+                    }, 500);
+                } else {
+                    console.error('Lampa initialization failed after max attempts');
+                    Lampa.Noty && Lampa.Noty.show && Lampa.Noty.show('Помилка: Lampa не ініціалізована');
+                }
+                return;
+            }
 
-        console.log('Trailers Plugin added to menu:', Lampa.Lang.translate('trailers_popular'));
+            // Перевірка наявності Lampa.Menu.add
+            if (Lampa.Menu && typeof Lampa.Menu.add === 'function') {
+                console.log('Lampa.Menu.add found, adding menu item');
+                Lampa.Menu.add({
+                    title: Lampa.Lang.translate('trailers_popular'),
+                    url: '',
+                    component: 'trailers_main',
+                    position: 'top'
+                });
+                console.log('Trailers Plugin added to menu:', Lampa.Lang.translate('trailers_popular'));
+                return;
+            }
+
+            // Перевірка наявності Lampa.Registry.set
+            if (Lampa.Registry && typeof Lampa.Registry.set === 'function') {
+                console.log('Lampa.Registry.set found, registering menu item');
+                Lampa.Registry.set('menu_trailers', {
+                    title: Lampa.Lang.translate('trailers_popular'),
+                    url: '',
+                    component: 'trailers_main',
+                    position: 'top'
+                });
+                console.log('Trailers Plugin registered via Lampa.Registry:', Lampa.Lang.translate('trailers_popular'));
+                return;
+            }
+
+            // Якщо меню недоступне, запускаємо компонент напряму
+            console.warn('Lampa.Menu.add and Lampa.Registry.set not available, launching trailers_main directly');
+            Lampa.Noty && Lampa.Noty.show && Lampa.Noty.show('Плагін Трейлери запущено, але пункт меню недоступний. Використовуйте команду в консолі для запуску.');
+
+            // Автоматичний запуск компонента trailers_main
+            setTimeout(function () {
+                if (Lampa.Activity && typeof Lampa.Activity.push === 'function') {
+                    console.log('Launching trailers_main via Lampa.Activity.push');
+                    Lampa.Activity.push({
+                        url: '',
+                        title: Lampa.Lang.translate('trailers_popular'),
+                        component: 'trailers_main',
+                        page: 1
+                    });
+                } else {
+                    console.error('Lampa.Activity.push not available, manual launch required');
+                    Lampa.Noty && Lampa.Noty.show && Lampa.Noty.show('Помилка: Lampa.Activity.push недоступний. Скопіюйте код у консоль: Lampa.Activity.push({url: "", title: "Популярное", component: "trailers_main", page: 1})');
+                }
+            }, 1000);
+        }
+
+        // Запускаємо ініціалізацію
+        tryInitialize();
     }
 
     startPlugin();
