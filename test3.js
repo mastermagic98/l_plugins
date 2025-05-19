@@ -750,7 +750,7 @@
         };
 
         this.cardImgBackground = function (card_data) {
-            if (Lampa.Storage.field('backgroundretanto: if (Lampa.Storage.get('background')) {
+            if (Lampa.Storage.field('background')) {
                 if (Lampa.Storage.get('background_type', 'complex') === 'poster' && window.innerWidth > 790) {
                     return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'original') : this.is_youtube ? 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg' : '';
                 }
@@ -1626,7 +1626,7 @@
         if (window.plugin_trailers_ready) return;
         window.plugin_trailers_ready = true;
 
-        console.log('Starting Trailers Plugin v3.3');
+        console.log('Starting Trailers Plugin v3.4');
 
         // Реєстрація компонентів і шаблонів
         Lampa.Component.add('trailers_main', Component$1);
