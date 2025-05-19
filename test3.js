@@ -1580,7 +1580,6 @@
             uk: 'Тиждень',
             en: 'Week'
         },
-        trailers lectable: true,
         trailers_filter_month: {
             ru: 'Месяц',
             uk: 'Місяць',
@@ -1627,7 +1626,7 @@
         if (window.plugin_trailers_ready) return;
         window.plugin_trailers_ready = true;
 
-        console.log('Starting Trailers Plugin v3.0');
+        console.log('Starting Trailers Plugin v3.1');
 
         Lampa.Component.add('trailers_main', Component$1);
         Lampa.Component.add('trailers_full', Component);
