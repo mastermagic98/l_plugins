@@ -1,6 +1,7 @@
 (function () {
     'use strict';
 
+    // Функція для відкладеного виклику
     function debounce(func, wait) {
         var timeout;
         return function () {
@@ -12,6 +13,7 @@
         };
     }
 
+    // Форматування дати у вигляді YYYY-MM-DD
     function getFormattedDate(daysOffset) {
         var date = new Date();
         if (daysOffset) date.setDate(date.getDate() + daysOffset);
@@ -21,6 +23,7 @@
         return year + '-' + month + '-' + day;
     }
 
+    // Перетворення дати у формат DD.MM.YYYY
     function formatDateToDDMMYYYY(dateStr) {
         if (!dateStr) return '-';
         var date = new Date(dateStr);
@@ -30,16 +33,19 @@
         return day + '.' + month + '.' + year;
     }
 
+    // Отримання регіону
     function getRegion() {
         var lang = Lampa.Storage.get('language', 'ru');
         return lang === 'uk' ? 'UA' : lang === 'ru' ? 'RU' : 'US';
     }
 
+    // Отримання мови інтерфейсу
     function getInterfaceLanguage() {
         var lang = Lampa.Storage.get('language', 'ru');
         return lang === 'uk' ? 'uk-UA' : lang === 'ru' ? 'ru-RU' : 'en-US';
     }
 
+    // Отримання пріоритетних мов
     function getPreferredLanguage() {
         var lang = Lampa.Storage.get('language', 'ru');
         if (lang === 'uk') return ['uk', 'en'];
@@ -50,46 +56,16 @@
     var network = new Lampa.Reguest();
     var tmdb_api_key = Lampa.TMDB.key();
     var tmdb_base_url = 'https://api.themoviedb.org/3';
+    var trailerCache = {};
+    var categoryCache = {};
 
+    // Базовий запит до TMDB
     function get(url, page, resolve, reject) {
         var full_url = tmdb_base_url + url + '&api_key=' + tmdb_api_key + '&page=' + page + '&language=' + getInterfaceLanguage();
-        network.silent(full_url, function (data) {
-            if (data.results && data.results.length) {
-                var totalRequests = data.results.length;
-                var completedRequests = 0;
-
-                function finalizeResults() {
-                    completedRequests++;
-                    if (completedRequests === totalRequests) {
-                        data.results = data.results.filter(function (m) {
-                            return m.release_details || m.release_date;
-                        });
-                        resolve(data);
-                    }
-                }
-
-                data.results.forEach(function (movie) {
-                    var movie_id = movie.id;
-                    if (movie_id) {
-                        var release_url = `${tmdb_base_url}/movie/${movie_id}/release_dates?api_key=${tmdb_api_key}`;
-                        network.silent(release_url, function (release_data) {
-                            movie.release_details = release_data;
-                            finalizeResults();
-                        }, function () {
-                            movie.release_details = { results: [] };
-                            finalizeResults();
-                        });
-                    } else {
-                        movie.release_details = { results: [] };
-                        finalizeResults();
-                    }
-                });
-            } else {
-                resolve(data);
-            }
-        }, reject);
+        network.silent(full_url, resolve, reject);
     }
 
+    // Фільми в прокаті
     function getLocalMoviesInTheaters(page, resolve, reject) {
         var region = getRegion();
         var language = getInterfaceLanguage();
@@ -97,7 +73,7 @@
         var daysThreshold = 45;
         var startDate = new Date(today.getTime() - daysThreshold * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-        var now_playing_url = `${tmdb_base_url}/movie/now_playing?api_key=${tmdb_api_key}&language=${language}&page=${page}®ion=${region}&primary_release_date.gte=${startDate}`;
+        var now_playing_url = tmdb_base_url + '/movie/now_playing?api_key=' + tmdb_api_key + '&language=' + language + '&page=' + page + '&region=' + region + '&primary_release_date.gte=' + startDate;
         network.silent(now_playing_url, function (data) {
             if (data.results && data.results.length) {
                 var totalRequests = data.results.length;
@@ -121,19 +97,18 @@
                         return false;
                     });
                     filteredResults.sort(function (a, b) {
-                        var dateA = a.release_details?.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date || a.release_date;
-                        var dateB = b.release_details?.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date || b.release_date;
+                        var dateA = a.release_details && a.release_details.results && a.release_details.results.find(function (r) { return r.iso_3166_1 === region; }) ? a.release_details.results.find(function (r) { return r.iso_3166_1 === region; }).release_dates[0].release_date : a.release_date;
+                        var dateB = b.release_details && b.release_details.results && b.release_details.results.find(function (r) { return r.iso_3166_1 === region; }) ? b.release_details.results.find(function (r) { return r.iso_3166_1 === region; }).release_dates[0].release_date : b.release_date;
                         return new Date(dateB) - new Date(dateA);
                     });
                     data.results = filteredResults;
-                    console.log('getLocalMoviesInTheaters results:', filteredResults.length, 'Page:', page);
                     resolve(data);
                 }
 
                 data.results.forEach(function (movie) {
                     var movie_id = movie.id;
                     if (movie_id) {
-                        var release_url = `${tmdb_base_url}/movie/${movie_id}/release_dates?api_key=${tmdb_api_key}`;
+                        var release_url = tmdb_base_url + '/movie/' + movie_id + '/release_dates?api_key=' + tmdb_api_key;
                         network.silent(release_url, function (release_data) {
                             movie.release_details = release_data;
                             completedRequests++;
@@ -161,6 +136,7 @@
         }, reject);
     }
 
+    // Очікувані фільми
     function getUpcomingMovies(page, resolve, reject) {
         var region = getRegion();
         var today = getFormattedDate(0);
@@ -173,7 +149,7 @@
         var totalPages = 1;
 
         function fetchPage(pageToFetch) {
-            var upcoming_url = `${tmdb_base_url}/movie/upcoming?api_key=${tmdb_api_key}&language=${language}&page=${pageToFetch}®ion=${region}`;
+            var upcoming_url = tmdb_base_url + '/movie/upcoming?api_key=' + tmdb_api_key + '&language=' + language + '&page=' + pageToFetch + '&region=' + region;
             network.silent(upcoming_url, function (data) {
                 if (data.results && data.results.length) {
                     totalPages = Math.min(data.total_pages || maxPages, maxPages);
@@ -195,9 +171,9 @@
                     data.results.forEach(function (movie) {
                         var movie_id = movie.id;
                         if (movie_id) {
-                            var movie_url = `${tmdb_base_url}/movie/${movie_id}?api_key=${tmdb_api_key}&language=${language}`;
-                            var release_url = `${tmdb_base_url}/movie/${movie_id}/release_dates?api_key=${tmdb_api_key}`;
-                            var video_url = `${tmdb_base_url}/movie/${movie_id}/videos?api_key=${tmdb_api_key}&language=${preferredLangs[0] || 'en'}`;
+                            var movie_url = tmdb_base_url + '/movie/' + movie_id + '?api_key=' + tmdb_api_key + '&language=' + language;
+                            var release_url = tmdb_base_url + '/movie/' + movie_id + '/release_dates?api_key=' + tmdb_api_key;
+                            var video_url = tmdb_base_url + '/movie/' + movie_id + '/videos?api_key=' + tmdb_api_key + '&language=' + (preferredLangs[0] || 'en');
 
                             network.silent(movie_url, function (movie_data) {
                                 if (!movie_data.title || movie_data.title === movie_data.original_title) {
@@ -214,7 +190,7 @@
                                     if (hasTrailer) {
                                         network.silent(release_url, function (release_data) {
                                             movie.release_details = release_data;
-                                            var releaseDate = movie.release_date || (release_data.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date);
+                                            var releaseDate = movie.release_date || (release_data.results && release_data.results.find(function (r) { return r.iso_3166_1 === region; }) && release_data.results.find(function (r) { return r.iso_3166_1 === region; }).release_dates[0] ? release_data.results.find(function (r) { return r.iso_3166_1 === region; }).release_dates[0].release_date : null);
                                             if (releaseDate && new Date(releaseDate) >= new Date(today) && new Date(releaseDate) <= new Date(sixMonthsLater)) {
                                                 allMoviesWithTrailers.push(movie);
                                             }
@@ -261,8 +237,8 @@
                 return !!m.release_date;
             });
             filteredResults.sort(function (a, b) {
-                var dateA = a.release_details?.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date || a.release_date;
-                var dateB = b.release_details?.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date || b.release_date;
+                var dateA = a.release_details && a.release_details.results && a.release_details.results.find(function (r) { return r.iso_3166_1 === region; }) ? a.release_details.results.find(function (r) { return r.iso_3166_1 === region; }).release_dates[0].release_date : a.release_date;
+                var dateB = b.release_details && b.release_details.results && b.release_details.results.find(function (r) { return r.iso_3166_1 === region; }) ? b.release_details.results.find(function (r) { return r.iso_3166_1 === region; }).release_dates[0].release_date : b.release_date;
                 return new Date(dateA) - new Date(dateB);
             });
             var result = {
@@ -278,6 +254,7 @@
         fetchPage(page);
     }
 
+    // Очікувані серіали
     function getUpcomingSeries(page, resolve, reject) {
         var region = getRegion();
         var today = getFormattedDate(0);
@@ -290,7 +267,7 @@
         var totalPages = 1;
 
         function fetchPage(pageToFetch) {
-            var upcoming_url = `${tmdb_base_url}/tv/upcoming?api_key=${tmdb_api_key}&language=${language}&page=${pageToFetch}®ion=${region}`;
+            var upcoming_url = tmdb_base_url + '/tv/upcoming?api_key=' + tmdb_api_key + '&language=' + language + '&page=' + pageToFetch + '&region=' + region;
             network.silent(upcoming_url, function (data) {
                 if (data.results && data.results.length) {
                     totalPages = Math.min(data.total_pages || maxPages, maxPages);
@@ -312,8 +289,8 @@
                     data.results.forEach(function (series) {
                         var series_id = series.id;
                         if (series_id) {
-                            var series_url = `${tmdb_base_url}/tv/${series_id}?api_key=${tmdb_api_key}&language=${language}`;
-                            var video_url = `${tmdb_base_url}/tv/${series_id}/videos?api_key=${tmdb_api_key}&language=${preferredLangs[0] || 'en'}`;
+                            var series_url = tmdb_base_url + '/tv/' + series_id + '?api_key=' + tmdb_api_key + '&language=' + language;
+                            var video_url = tmdb_base_url + '/tv/' + series_id + '/videos?api_key=' + tmdb_api_key + '&language=' + (preferredLangs[0] || 'en');
 
                             network.silent(series_url, function (series_data) {
                                 if (!series_data.name || series_data.name === series_data.original_name) {
@@ -381,6 +358,7 @@
         fetchPage(page);
     }
 
+    // Головна функція для завантаження всіх категорій
     function main(oncomplite, onerror) {
         var status = new Lampa.Status(6);
         status.onComplite = function () {
@@ -388,6 +366,11 @@
             var keys = ['popular_movies', 'in_theaters', 'upcoming_movies', 'popular_series', 'new_series_seasons', 'upcoming_series'];
             keys.forEach(function (key) {
                 if (status.data[key] && status.data[key].results && status.data[key].results.length) {
+                    categoryCache[key] = {
+                        results: status.data[key].results,
+                        timestamp: Date.now()
+                    };
+                    Lampa.Storage.set('trailer_category_cache_' + key, categoryCache[key]);
                     fulldata.push(status.data[key]);
                 }
             });
@@ -412,10 +395,10 @@
         var threeMonthsAgo = getFormattedDate(-90);
         var threeMonthsLater = getFormattedDate(90);
 
-        get('/discover/movie?sort_by=popularity.desc&vote_count.gte=1', 1, function (json) {
-            append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/discover/movie?sort_by=popularity.desc', { results: json.results || [] });
+        get('/trending/movie/day', 1, function (json) {
+            append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/trending/movie/day', { results: json.results || [] });
         }, function () {
-            append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/discover/movie?sort_by=popularity.desc', { results: [] });
+            append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/trending/movie/day', { results: [] });
         });
 
         getLocalMoviesInTheaters(1, function (json) {
@@ -430,13 +413,13 @@
             append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/movie/upcoming', { results: [] });
         });
 
-        get('/discover/tv?sort_by=popularity.desc&vote_count.gte=1', 1, function (json) {
+        get('/trending/tv/day', 1, function (json) {
             var filteredResults = json.results ? json.results.filter(function (item) {
                 return !item.genre_ids.includes(99) && !item.genre_ids.includes(10763) && !item.genre_ids.includes(10764);
             }) : [];
-            append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', '/discover/tv?sort_by=popularity.desc', { results: filteredResults });
+            append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', '/trending/tv/day', { results: filteredResults });
         }, function () {
-            append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', '/discover/tv?sort_by=popularity.desc', { results: [] });
+            append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', '/trending/tv/day', { results: [] });
         });
 
         get('/discover/tv?air_date.gte=' + threeMonthsAgo + '&air_date.lte=' + threeMonthsLater + '&sort_by=popularity.desc&vote_count.gte=1', 1, function (json) {
@@ -445,18 +428,24 @@
                     series.release_details = { first_air_date: series.first_air_date };
                 });
             }
-            append(Lampa.Lang.translate('trailers_new_series_seasons'), 'new_series_seasons', '/discover/tv?air_date.gte=' + threeMonthsAgo + '&air_date.lte=' + threeMonthsLater, { results: json.results || [] });
+            append(Lampa.Lang.translate('trailers_new_series_seasons'), 'new_series_seasons', '/discover/tv?air_date.gte=' + threeMonthsAgo + '&air_date.lte=' + threeMonthsLater + '&sort_by=popularity.desc', { results: json.results || [] });
         }, function () {
-            append(Lampa.Lang.translate('trailers_new_series_seasons'), 'new_series_seasons', '/discover/tv?air_date.gte=' + threeMonthsAgo + '&air_date.lte=' + threeMonthsLater, { results: [] });
+            append(Lampa.Lang.translate('trailers_new_series_seasons'), 'new_series_seasons', '/discover/tv?air_date.gte=' + threeMonthsAgo + '&air_date.lte=' + threeMonthsLater + '&sort_by=popularity.desc', { results: [] });
         });
 
-        getUpcomingSeries(1, function (json) {
-            append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/tv/upcoming', { results: json.results || [] });
+        get('/discover/tv?first_air_date.gte=' + today + '&first_air_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc&vote_count.gte=1', 1, function (json) {
+            if (json.results) {
+                json.results.forEach(function (series) {
+                    series.release_details = { first_air_date: series.first_air_date };
+                });
+            }
+            append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/discover/tv?first_air_date.gte=' + today + '&first_air_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc', { results: json.results || [] });
         }, function () {
-            append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/tv/upcoming', { results: [] });
+            append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/discover/tv?first_air_date.gte=' + today + '&first_air_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc', { results: [] });
         });
     }
 
+    // Повне завантаження для однієї категорії
     function full(params, oncomplite, onerror) {
         if (params.type === 'in_theaters') {
             var region = getRegion();
@@ -493,10 +482,12 @@
             }
 
             function finalizeResults() {
-                var finalResults = [...new Set(accumulatedResults.map(JSON.stringify))].map(JSON.parse);
+                var finalResults = [];
+                var resultSet = new Set(accumulatedResults.map(function (item) { return JSON.stringify(item); }));
+                resultSet.forEach(function (item) { finalResults.push(JSON.parse(item)); });
                 finalResults.sort(function (a, b) {
-                    var dateA = a.release_details?.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date || a.release_date;
-                    var dateB = b.release_details?.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date || b.release_date;
+                    var dateA = a.release_details && a.release_details.results && a.release_details.results.find(function (r) { return r.iso_3166_1 === region; }) ? a.release_details.results.find(function (r) { return r.iso_3166_1 === region; }).release_dates[0].release_date : a.release_date;
+                    var dateB = b.release_details && b.release_details.results && b.release_details.results.find(function (r) { return r.iso_3166_1 === region; }) ? b.release_details.results.find(function (r) { return r.iso_3166_1 === region; }).release_dates[0].release_date : b.release_date;
                     return new Date(dateB) - new Date(dateA);
                 });
                 finalResults = finalResults.filter(function (m) {
@@ -548,10 +539,12 @@
             }
 
             function finalizeResults() {
-                var finalResults = [...new Set(accumulatedResults.map(JSON.stringify))].map(JSON.parse);
+                var finalResults = [];
+                var resultSet = new Set(accumulatedResults.map(function (item) { return JSON.stringify(item); }));
+                resultSet.forEach(function (item) { finalResults.push(JSON.parse(item)); });
                 finalResults.sort(function (a, b) {
-                    var dateA = a.release_details?.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date || a.release_date;
-                    var dateB = b.release_details?.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date || b.release_date;
+                    var dateA = a.release_details && a.release_details.results && a.release_details.results.find(function (r) { return r.iso_3166_1 === region; }) ? a.release_details.results.find(function (r) { return r.iso_3166_1 === region; }).release_dates[0].release_date : a.release_date;
+                    var dateB = b.release_details && b.release_details.results && b.release_details.results.find(function (r) { return r.iso_3166_1 === region; }) ? b.release_details.results.find(function (r) { return r.iso_3166_1 === region; }).release_dates[0].release_date : b.release_date;
                     return new Date(dateA) - new Date(dateB);
                 });
                 finalResults = finalResults.filter(function (m) {
@@ -569,6 +562,25 @@
             }
 
             fetchNextPage();
+        } else if (params.type === 'new_series_seasons') {
+            var threeMonthsAgo = getFormattedDate(-90);
+            var threeMonthsLater = getFormattedDate(90);
+
+            get('/discover/tv?air_date.gte=' + threeMonthsAgo + '&air_date.lte=' + threeMonthsLater + '&sort_by=popularity.desc&vote_count.gte=1', params.page, function (result) {
+                if (result && result.results && result.results.length) {
+                    result.results.forEach(function (series) {
+                        series.release_details = { first_air_date: series.first_air_date };
+                    });
+                    console.log('New series seasons results:', result.results.length, 'Page:', params.page);
+                    oncomplite(result);
+                } else {
+                    console.log('New series seasons failed: no data');
+                    onerror();
+                }
+            }, function () {
+                console.log('New series seasons failed: network error');
+                onerror();
+            });
         } else if (params.type === 'upcoming_series') {
             var today = getFormattedDate(0);
             var sixMonthsLater = getFormattedDate(180);
@@ -602,7 +614,9 @@
             }
 
             function finalizeResults() {
-                var finalResults = [...new Set(accumulatedResults.map(JSON.stringify))].map(JSON.parse);
+                var finalResults = [];
+                var resultSet = new Set(accumulatedResults.map(function (item) { return JSON.stringify(item); }));
+                resultSet.forEach(function (item) { finalResults.push(JSON.parse(item)); });
                 finalResults.sort(function (a, b) {
                     var dateA = a.release_details.first_air_date;
                     var dateB = b.release_details.first_air_date;
@@ -623,25 +637,6 @@
             }
 
             fetchNextPage();
-        } else if (params.type === 'new_series_seasons') {
-            var threeMonthsAgo = getFormattedDate(-90);
-            var threeMonthsLater = getFormattedDate(90);
-
-            get('/discover/tv?air_date.gte=' + threeMonthsAgo + '&air_date.lte=' + threeMonthsLater + '&sort_by=popularity.desc&vote_count.gte=1', params.page, function (result) {
-                if (result && result.results && result.results.length) {
-                    result.results.forEach(function (series) {
-                        series.release_details = { first_air_date: series.first_air_date };
-                    });
-                    console.log('New series seasons results:', result.results.length, 'Page:', params.page);
-                    oncomplite(result);
-                } else {
-                    console.log('New series seasons failed: no data');
-                    onerror();
-                }
-            }, function () {
-                console.log('New series seasons failed: network error');
-                onerror();
-            });
         } else {
             get(params.url, params.page, function (result) {
                 if (result && result.results && result.results.length) {
@@ -658,6 +653,7 @@
         }
     }
 
+    // Отримання відео (трейлерів)
     function videos(card, oncomplite, onerror) {
         var type = card.name ? 'tv' : 'movie';
         var id = card.id;
@@ -710,6 +706,7 @@
         tryFetch(0);
     }
 
+    // Очищення мережевих запитів
     function clear() {
         network.clear();
     }
@@ -722,6 +719,7 @@
         clear: clear
     };
 
+    // Клас для рендерингу картки
     function Trailer(data, params) {
         this.build = function () {
             this.card = Lampa.Template.get('trailer', data);
@@ -787,6 +785,7 @@
                         _this.card.find('.card__trailer-lang').text('-');
                     }
 
+                    // Логіка відображення дати прем’єри для всіх категорій
                     if (params.type === 'popular_movies' || params.type === 'in_theaters' || params.type === 'upcoming_movies') {
                         if (data.release_details && data.release_details.results) {
                             var region = getRegion();
@@ -967,6 +966,7 @@
         };
     }
 
+    // Клас для рендерингу рядка карток
     function Line(data) {
         var _this = this;
         var content = Lampa.Template.get('items_line', { title: data.title });
@@ -1007,6 +1007,8 @@
                     title: Lampa.Lang.translate('trailers_filter'),
                     items: items,
                     onSelect: function (item) {
+                        Lampa.Storage.set('trailer_category_cache_' + data.type, null);
+                        categoryCache[data.type] = null;
                         Lampa.Storage.set('trailers_' + data.type + '_filter', item.value);
                         Lampa.Activity.push({
                             url: item.value === 'day' ? '/discover/' + (data.type.includes('movie') ? 'movie' : 'tv') + '?sort_by=popularity.desc' :
@@ -1177,6 +1179,7 @@
         };
     }
 
+    // Компонент для головної сторінки
     function Component$1(object) {
         var scroll = new Lampa.Scroll({ mask: true, over: true, scroll_by_item: true });
         var items = [];
@@ -1312,6 +1315,7 @@
         };
     }
 
+    // Компонент для повного перегляду категорії
     function Component(object) {
         var scroll = new Lampa.Scroll({ mask: true, over: true, step: 250, end_ratio: 2 });
         var items = [];
@@ -1509,6 +1513,7 @@
         };
     }
 
+    // Додавання перекладів
     Lampa.Lang.add({
         trailers_popular: {
             ru: 'Популярное',
@@ -1622,83 +1627,26 @@
         }
     });
 
+    // Запуск плагіна
     function startPlugin() {
         if (window.plugin_trailers_ready) return;
         window.plugin_trailers_ready = true;
 
         console.log('Starting Trailers Plugin v3.4');
 
-        // Реєстрація компонентів і шаблонів
         Lampa.Component.add('trailers_main', Component$1);
         Lampa.Component.add('trailers_full', Component);
         Lampa.Template.add('trailer', '<div class="card selector card--trailer layer--render layer--visible"><div class="card__view"><img src="./img/img_load.svg" class="card__img"><div class="card__promo"><div class="card__promo-text"><div class="card__title"></div></div><div class="card__details"></div></div></div><div class="card__play"><img src="./img/icons/player/play.svg"></div></div>');
         Lampa.Template.add('trailer_style', '<style>.card.card--trailer,.card-more.more--trailers{width:25.7em}.card.card--trailer .card__view{padding-bottom:56%;margin-bottom:0}.card.card--trailer .card__details{margin-top:0.8em}.card.card--trailer .card__play{position:absolute;top:50%;transform:translateY(-50%);left:1.5em;background:#000000b8;width:2.2em;height:2.2em;border-radius:100%;text-align:center;padding-top:0.6em}.card.card--trailer .card__play img{width:0.9em;height:1em}.card.card--trailer .card__rating{position:absolute;bottom:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.card.card--trailer .card__trailer-lang{position:absolute;top:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;text-transform:uppercase;font-size:1.2em}.card.card--trailer .card__release-date{position:absolute;top:2em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.category-full--trailers{display:flex;flex-wrap:wrap;justify-content:space-around;padding:0 1em}.card--placeholder{min-height:1px}@media (max-width:767px){.card.card--trailer,.card-more.more--trailers{width:18em}.category-full--trailers{justify-content:space-between}}</style>');
 
-        // Функція для перевірки API і запуску плагіна
-        function tryInitialize(attempts = 0, maxAttempts = 10) {
-            // Перевірка ініціалізації Lampa
-            if (typeof Lampa === 'undefined' || !Lampa.Storage || !Lampa.Component || !Lampa.Template) {
-                if (attempts < maxAttempts) {
-                    console.log(`Lampa not fully initialized, attempt ${attempts + 1}/${maxAttempts}`);
-                    setTimeout(function () {
-                        tryInitialize(attempts + 1, maxAttempts);
-                    }, 500);
-                } else {
-                    console.error('Lampa initialization failed after max attempts');
-                    Lampa.Noty && Lampa.Noty.show && Lampa.Noty.show('Помилка: Lampa не ініціалізована');
-                }
-                return;
-            }
+        Lampa.Menu.add({
+            title: Lampa.Lang.translate('trailers_popular'),
+            url: '',
+            component: 'trailers_main',
+            position: 'top'
+        });
 
-            // Перевірка наявності Lampa.Menu.add
-            if (Lampa.Menu && typeof Lampa.Menu.add === 'function') {
-                console.log('Lampa.Menu.add found, adding menu item');
-                Lampa.Menu.add({
-                    title: Lampa.Lang.translate('trailers_popular'),
-                    url: '',
-                    component: 'trailers_main',
-                    position: 'top'
-                });
-                console.log('Trailers Plugin added to menu:', Lampa.Lang.translate('trailers_popular'));
-                return;
-            }
-
-            // Перевірка наявності Lampa.Registry.set
-            if (Lampa.Registry && typeof Lampa.Registry.set === 'function') {
-                console.log('Lampa.Registry.set found, registering menu item');
-                Lampa.Registry.set('menu_trailers', {
-                    title: Lampa.Lang.translate('trailers_popular'),
-                    url: '',
-                    component: 'trailers_main',
-                    position: 'top'
-                });
-                console.log('Trailers Plugin registered via Lampa.Registry:', Lampa.Lang.translate('trailers_popular'));
-                return;
-            }
-
-            // Якщо меню недоступне, запускаємо компонент напряму
-            console.warn('Lampa.Menu.add and Lampa.Registry.set not available, launching trailers_main directly');
-            Lampa.Noty && Lampa.Noty.show && Lampa.Noty.show('Плагін Трейлери запущено, але пункт меню недоступний. Використовуйте команду в консолі для запуску.');
-
-            // Автоматичний запуск компонента trailers_main
-            setTimeout(function () {
-                if (Lampa.Activity && typeof Lampa.Activity.push === 'function') {
-                    console.log('Launching trailers_main via Lampa.Activity.push');
-                    Lampa.Activity.push({
-                        url: '',
-                        title: Lampa.Lang.translate('trailers_popular'),
-                        component: 'trailers_main',
-                        page: 1
-                    });
-                } else {
-                    console.error('Lampa.Activity.push not available, manual launch required');
-                    Lampa.Noty && Lampa.Noty.show && Lampa.Noty.show('Помилка: Lampa.Activity.push недоступний. Скопіюйте код у консоль: Lampa.Activity.push({url: "", title: "Популярное", component: "trailers_main", page: 1})');
-                }
-            }, 1000);
-        }
-
-        // Запускаємо ініціалізацію
-        tryInitialize();
+        console.log('Trailers Plugin added to menu:', Lampa.Lang.translate('trailers_popular'));
     }
 
     startPlugin();
