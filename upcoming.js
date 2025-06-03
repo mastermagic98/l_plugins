@@ -7,13 +7,22 @@
     function get(url, page, resolve, reject) {
         var account = Lampa.Storage.get('account', '{}');
         if (account.token) {
-            network.silent(api_url + url + '/' + page, resolve, reject, false, {
+            console.log('API Request: ' + api_url + url + '/' + page + ', Token: ' + account.token);
+            network.silent(api_url + url + '/' + page, function (data) {
+                console.log('API Response for ' + url + ': ', data);
+                resolve(data);
+            }, function (error) {
+                console.log('API Error for ' + url + ': ', error);
+                reject(error);
+            }, false, {
                 headers: {
                     token: account.token
                 }
             });
         } else {
-            reject();
+            console.log('No token found in account');
+            Lampa.Noty.show('Будь ласка, авторизуйтесь у Lampa, щоб переглядати трейлери.');
+            reject(new Error('No token'));
         }
     }
 
@@ -21,11 +30,13 @@
         var status = new Lampa.Status(5);
         status.onComplite = function () {
             var fulldata = [];
-            if (status.data.rating && status.data.rating.results.length) fulldata.push(status.data.rating);
-            if (status.data.anticipated && status.data.anticipated.results.length) fulldata.push(status.data.anticipated);
-            if (status.data.popular && status.data.popular.results.length) fulldata.push(status.data.popular);
-            if (status.data.added && status.data.added.results.length) fulldata.push(status.data.added);
-            if (status.data.trending && status.data.trending.results.length) fulldata.push(status.data.trending);
+            var categories = ['rating', 'anticipated', 'popular', 'added', 'trending'];
+            categories.forEach(function (key) {
+                if (status.data[key] && status.data[key].results && status.data[key].results.length) {
+                    fulldata.push(status.data[key]);
+                }
+            });
+            console.log('Main: Fetched categories with data: ', fulldata);
             if (fulldata.length) oncomplite(fulldata);
             else onerror();
         };
@@ -55,7 +66,10 @@
     }
 
     function full(params, oncomplite, onerror) {
-        get(params.url, params.page, oncomplite, onerror);
+        get(params.url, params.page, oncomplite, function (error) {
+            console.log('Full: Error fetching page ' + params.page + ' for ' + params.url + ': ', error);
+            onerror();
+        });
     }
 
     function videos(card, oncomplite, onerror) {
