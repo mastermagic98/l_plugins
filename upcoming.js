@@ -2,14 +2,13 @@
     'use strict';
 
     var network = new Lampa.Reguest();
-    var tmdb_api_key = 'YOUR_TMDB_API_KEY'; // Замініть на ваш TMDB API ключ
     var base_url = 'https://api.themoviedb.org/3';
     var trailerCache = {};
     var categoryCache = {};
 
     function fetchTMDB(endpoint, params, resolve, reject) {
         var url = new URL(base_url + endpoint);
-        params.api_key = tmdb_api_key;
+        params.api_key = Lampa.TMDB.key();
         Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
         console.log('TMDB Request: ' + url.toString());
         network.silent(url.toString(), function (data) {
@@ -90,7 +89,7 @@
 
     function videos(card, oncomplite, onerror) {
         var endpoint = (card.name ? '/tv' : '/movie') + '/' + card.id + '/videos';
-        fetchTMDB(endpoint, { language: 'en,ru,uk,zh' }, oncomplite, onerror);
+        fetchTMDB(endpoint, { language: 'en,ru,uk' }, oncomplite, onerror);
     }
 
     function clear() {
@@ -698,15 +697,15 @@
     }
 
     Lampa.Lang.add({
-        trailers_popular_movies: { ru: 'Популярные фильмы', uk: 'Популярні фільми', en: 'Popular Movies', zh: '热门电影' },
-        trailers_in_theaters: { ru: 'В кинотеатрах', uk: 'У кінотеатрах', en: 'In Theaters', zh: '影院上映' },
-        trailers_upcoming_movies: { ru: 'Скоро в кино', uk: 'Скоро в кіно', en: 'Upcoming Movies', zh: '即将上映的电影' },
-        trailers_popular_series: { ru: 'Популярные сериалы', uk: 'Популярні серіали', en: 'Popular Series', zh: '热门剧集' },
-        trailers_new_series_seasons: { ru: 'Новые сезоны сериалов', uk: 'Нові сезони серіалів', en: 'New Series Seasons', zh: '新剧季' },
-        trailers_upcoming_series: { ru: 'Скоро на ТВ', uk: 'Скоро на ТБ', en: 'Upcoming Series', zh: '即将播出的剧集' },
-        trailers_no_trailers: { ru: 'Нет трейлеров', uk: 'Немає трейлерів', en: 'No trailers', zh: '没有拖车' },
-        trailers_view: { ru: 'Подробнее', uk: 'Докладніше', en: 'More', zh: '更多的' },
-        title_trailers: { ru: 'Трейлеры', uk: 'Трейлери', en: 'Trailers', zh: '预告片' }
+        trailers_popular_movies: { ru: 'Популярные фильмы', uk: 'Популярні фільми', en: 'Popular Movies' },
+        trailers_in_theaters: { ru: 'В кинотеатрах', uk: 'У кінотеатрах', en: 'In Theaters' },
+        trailers_upcoming_movies: { ru: 'Скоро в кино', uk: 'Скоро в кіно', en: 'Upcoming Movies' },
+        trailers_popular_series: { ru: 'Популярные сериалы', uk: 'Популярні серіали', en: 'Popular Series' },
+        trailers_new_series_seasons: { ru: 'Новые сезоны сериалов', uk: 'Нові сезони серіалів', en: 'New Series Seasons' },
+        trailers_upcoming_series: { ru: 'Скоро на ТВ', uk: 'Скоро на ТБ', en: 'Upcoming Series' },
+        trailers_no_trailers: { ru: 'Нет трейлеров', uk: 'Немає трейлерів', en: 'No trailers' },
+        trailers_view: { ru: 'Подробнее', uk: 'Докладніше', en: 'More' },
+        title_trailers: { ru: 'Трейлеры', uk: 'Трейлери', en: 'Trailers' }
     });
 
     function startPlugin() {
