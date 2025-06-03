@@ -42,7 +42,6 @@
      * @returns {boolean} - Чи відповідає контент критеріям фільтрації.
      */
     function filterTMDBContentByGenre(content) {
-        // Список дозволених жанрів (ID відповідно до TMDB API)
         const allowedGenreIds = [
             28,    // Action (боевики)
             12,    // Adventure (приключения)
@@ -64,7 +63,6 @@
             37     // Western
         ];
 
-        // Список заборонених жанрів (ID відповідно до TMDB API)
         const disallowedGenreIds = [
             10767, // Talk (ток-шоу)
             10764, // Reality (реаліті-шоу)
@@ -72,16 +70,11 @@
             10763  // News (новини)
         ];
 
-        // Отримуємо genre_ids контенту
         const genreIds = content.genre_ids || [];
 
-        // Перевіряємо, чи є хоча б один дозволений жанр
         const hasAllowedGenre = genreIds.some(id => allowedGenreIds.includes(id));
-
-        // Перевіряємо, чи є заборонені жанри
         const hasDisallowedGenre = genreIds.some(id => disallowedGenreIds.includes(id));
 
-        // Контент проходить фільтр, якщо має дозволений жанр і не має заборонених
         return hasAllowedGenre && !hasDisallowedGenre;
     }
 
@@ -107,7 +100,6 @@
             return;
         }
         fetchTMDB(endpoint, params, function (data) {
-            // Фільтруємо результати за жанрами
             if (data.results) {
                 data.results = data.results.filter(filterTMDBContentByGenre);
             }
@@ -196,12 +188,21 @@
 
     function Trailer(data, params) {
         this.build = function () {
+            // Перевірка наявності перекладу назви для мови інтерфейсу
+            var lang = Lampa.Storage.get('language', 'ru');
+            var hasTranslation = false;
+            if (data.translations && data.translations.translations) {
+                var translation = data.translations.translations.find(t => t.iso_639_1 === lang) ||
+                                 data.translations.translations.find(t => t.iso_639_1 === 'en');
+                hasTranslation = translation && (translation.data.title || translation.data.name);
+            }
+            if (!hasTranslation) return; // Не створюємо картку, якщо немає перекладу
+
             this.card = Lampa.Template.get('trailer', data);
             this.img = this.card.find('img')[0];
             this.is_youtube = params.type === 'rating';
 
             // Визначаємо назву відповідно до мови інтерфейсу
-            var lang = Lampa.Storage.get('language', 'ru');
             var title = data.title || data.name;
             if (data.translations && data.translations.translations) {
                 var translation = data.translations.translations.find(t => t.iso_639_1 === lang) ||
@@ -272,8 +273,7 @@
                 var lang = '—';
                 if (videos.results.length) {
                     var preferredVideo = videos.results.find(v => v.iso_639_1 === interfaceLang) ||
-                                        videos.results.find(v => v.iso_639_1 === 'ru') ||
-                                        videos.results.find(v => v.iso_639_1 === 'en') ||
+                                        videos.results.find(v => v.iso_639_1 === 'en') || // Резервний англійський трейлер
                                         videos.results[0];
                     lang = preferredVideo.iso_639_1.toUpperCase();
                 }
@@ -303,6 +303,7 @@
         this.create = function () {
             var _this2 = this;
             this.build();
+            if (!this.card) return; // Не продовжуємо, якщо картка не створена через відсутність перекладу
             this.card.on('hover:focus', function (e, is_mouse) {
                 Lampa.Background.change(_this2.cardImgBackground(data));
                 _this2.onFocus(e.target, data, is_mouse);
@@ -313,8 +314,7 @@
                     var interfaceLang = getShortLanguageCode();
                     Api.videos(data, function (videos) {
                         var video = videos.results.find(v => v.iso_639_1 === interfaceLang) ||
-                                    videos.results.find(v => v.iso_639_1 === 'ru') ||
-                                    videos.results.find(v => v.iso_639_1 === 'en') ||
+                                    videos.results.find(v => v.iso_639_1 === 'en') || // Резервний англійський трейлер
                                     videos.results[0];
                         if (video) {
                             _this2.play(video.key);
@@ -451,6 +451,7 @@
             var _this = this;
             var card = new Trailer(element, { type: data.type });
             card.create();
+            if (!card.render()) return; // Пропускаємо, якщо картка не створена через відсутність перекладу
             card.visible();
             card.onFocus = function (target, card_data, is_mouse) {
                 last = target;
@@ -734,6 +735,7 @@
             data.results.forEach(function (element) {
                 var card = new Trailer(element, { type: object.type });
                 card.create();
+                if (!card.render()) return; // Пропускаємо, якщо картка не створена через відсутність перекладу
                 card.visible();
                 card.onFocus = function (target, card_data) {
                     last = target;
