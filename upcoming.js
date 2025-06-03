@@ -53,7 +53,7 @@
         var region = getRegion();
         var language = getInterfaceLanguage();
         var today = new Date();
-        var url = options.url || '/discover/movie?sort_by=popularity.desc&vote_count.gte=1&region=' + region + '&language=' + language + '&page=' + page;
+        var url = options.url || '/discover/movie?sort_by=popularity.desc&vote_count.gte=1®ion=' + region + '&language=' + language + '&page=' + page;
 
         if (options.nowPlaying) {
             var startDate = new Date(today.getTime() - 45 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -63,7 +63,7 @@
             url = '/discover/movie?primary_release_date.gte=' + today.toISOString().split('T')[0] + '&primary_release_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc&vote_count.gte=1';
         }
 
-        network.silent(tmdb_base_url + url + '&api_key=' + tmdb_api_key + '&language=' + language + '&page=' + page + '&region=' + region, function (data) {
+        network.silent(tmdb_base_url + url + '&api_key=' + tmdb_api_key + '&language=' + language + '&page=' + page + '®ion=' + region, function (data) {
             if (!data.results || !data.results.length) return resolve(data);
 
             var totalRequests = data.results.length;
@@ -546,7 +546,7 @@
         var isLoading = false;
 
         this.create = function () {
-            console.log('Line: Creating with title: ' + data.title);
+            console.log('Line: Creating with title: ' + data.title + ', results length: ' + (data.results ? data.results.length : 0));
             scroll.render().find('.scroll__body').addClass('items-cards');
             content.find('.items-line__title').text(data.title);
 
@@ -611,8 +611,8 @@
             }
             isLoading = true;
 
-            console.log('Line: loadMore: Loading from index ' + loadedIndex);
-            var remainingCards = data.results.slice(loadedIndex, loadedIndex + visibleCards);
+            console.log('Line: loadMore: Loading from index ' + loadedIndex + ', remaining cards: ' + (data.results ? data.results.length - loadedIndex : 0));
+            var remainingCards = data.results ? data.results.slice(loadedIndex, loadedIndex + visibleCards) : [];
             if (remainingCards.length) {
                 for (var i = 0; i < remainingCards.length; i++) {
                     var element = remainingCards[i];
@@ -648,7 +648,7 @@
         }
 
         this.bind = function () {
-            console.log('Line: Binding data');
+            console.log('Line: Binding data, results length: ' + (data.results ? data.results.length : 0));
             loadMore();
             this.loadMore();
             Lampa.Layer.update();
@@ -752,7 +752,7 @@
         };
 
         this.append = function (element) {
-            console.log('Component$1: Appending element ' + element.title);
+            console.log('Component$1: Appending element ' + element.title + ', results length: ' + (element.results ? element.results.length : 0));
             var item = new Line(element);
             item.create();
             item.onDown = this.down;
@@ -901,7 +901,7 @@
         };
 
         this.append = function (data, append) {
-            console.log('Component: Appending data');
+            console.log('Component: Appending data, results length: ' + (data.results ? data.results.length : 0));
             var _this = this;
             if (!append) body.empty();
             for (var i = 0; i < data.results.length; i++) {
@@ -931,7 +931,7 @@
         };
 
         this.build = function (data) {
-            console.log('Component: Building full component');
+            console.log('Component: Building full component, results length: ' + (data.results ? data.results.length : 0));
             var _this = this;
             if (data.results && data.results.length) {
                 total_pages = data.total_pages || 1;
@@ -1067,12 +1067,12 @@
 
         Lampa.Component.add('trailers_main', Component$1);
         Lampa.Component.add('trailers_full', Component);
-        Lampa.Template.add('trailer', '<div class="tooltip top right"></div><div class="card selector card--trailer layer--render layer--visible"><div><div class="card__view"><img src="./img/loading.gif" class="card__img" /><div><div class="card__promo"><div class="card__promo-text"><div><div class="card__title"></div></div><div class="card__details"></div></div><div class="card__play"><img src="./img/icons/player/play.min.svg" /></div>');
-        Lampa.Template.add('trailer_style', '<style>.card.card--trailer,.card--more {width:2}.card.card--trailer .card__view{padding-bottom:2}.card--trailer .card__item{margin-bottom:2}.card.card--trailer .card__play{position:absolute;top:2%;transform:2Y(-2%);left: 2.2em;background:#2;padding:2.2em;width:2.2em;height:2.2em;border-radius:2em;text-align:2;padding-top:2.2em}.card.card--trailer .card__play img{width:2.2em;height:2em}.card.card--trailer .card__rating{position:absolute;bottom:2.2em;right:2.5em;background:#2;padding:2.2em .2em;border-radius:2.2em}.card.card--trailer .card__trailer-lang{position:absolute;top:2.2em;color:white;background:#2;padding:2.2em .2em;border-radius:2em}.card.card--trailer .card__release-date{position:absolute;top:2em;color:white;background:#2;padding:2.2em .5em;border-radius:2em}.card--more .card__box{padding-bottom:2%}.category-full--trailers{display:grid}.category-full--trailers .card{width:2.2%;margin-bottom:2.2em}.category-full--trailers .card .card__view{padding-bottom:2%;margin-bottom:2}.items-line__more{display:2-block;margin-left:2px;items:2px;padding:2.2em 2em}@media screen and (max-width:2px) {.category-full--trailers .card{width:2%}}@media screen and (max-width:2px) {.category-full--trailers .card{width:2%}}</style>');
+        Lampa.Template.add('trailer', '<div class="card selector card--trailer layer--render layer--visible"><div class="card__view"><img src="./img/img_load.svg" class="card__img" /><div class="card__promo"><div class="card__promo-text"><div><div class="card__title"></div></div><div class="card__details"></div></div><div class="card__play"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div></div>');
+        Lampa.Template.add('trailer_style', '<style>.card.card--trailer, .card-more--trailers.card--more {width: 25.7em;}.card.card--trailer .card__view {padding-bottom: 56%; margin-bottom: 0;}.card.card--trailer .card__details {margin-top: 0.8em;}.card.card--trailer .card__play {position: absolute; top: 50%; transform: translateY(-50%); left: 1.5em; background: rgba(0,0,0,0.7); padding: 0.2em; width: 2.2em; height: 2.2em; border-radius: 1em; text-align: center; padding-top: 0.6em;}.card.card--trailer .card__play svg {width: 0.9em; height: 1.1em;}.card.card--trailer .card__rating {position: absolute; bottom: 0.5em; right: 0.5em; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 0.3em; font-size: 1.1em;}.card.card--trailer .card__trailer-lang {position: absolute; top: 0.5em; right: 0.5em; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 0.3em; text-transform: uppercase; font-size: 1.1em;}.card.card--trailer .card__release-date {position: absolute; top: 2em; right: 0.5em; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 0.3em; font-size: 1.1em;}.card-more--trailers .card-more__box {padding-bottom: 56%;}.category-full--trailers {display: flex; flex-wrap: wrap; justify-content: space-between;}.category-full--trailers .card {width: 33.3%; margin-bottom: 1.5em;}.category-full--trailers .card .card__view {padding-bottom: 56%; margin-bottom: 0;}.items-line__more {display: inline-block; margin-left: 10px; cursor: pointer; padding: 0.5em 1em;}@media screen and (max-width: 767px) {.category-full--trailers .card {width: 50%;}}@media screen and (max-width: 400px) {.category-full--trailers .card {width: 100%;}}</style>');
 
         function add() {
             console.log('Adding Trailers button to menu');
-            var button = $('<li class="menu__item selector"><div class="menu__ico"><svg height="40" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 429.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2397 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.6356V20.3644L55.5909 35.0004Z" fill="currentColor"/></svg></div><div class="menu__text">' + Lampa.Lang.translate('title_trailers') + '</div></li>');
+            var button = jQuery('<li class="menu__item selector"><div class="menu__ico"><svg height="40" viewBox="0 0 80 70" width="40" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2397 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.6356V20.3644L55.5909 35.0004Z" fill="currentColor" /></svg></div><div class="menu__text">' + Lampa.Lang.translate('title_trailers') + '</div></li>');
             button.on('hover:enter', function () {
                 console.log('Trailers menu item clicked');
                 Lampa.Activity.push({
@@ -1083,15 +1083,15 @@
                 });
             });
 
-            var menuList = $('.menu__list').first();
+            var menuList = jQuery('.menu__list').first();
             if (menuList.length) {
                 menuList.append(button);
                 console.log('Button appended to menu list');
             } else {
-                $('.menu').append(button);
+                jQuery('.menu').append(button);
                 console.log('Button appended to menu container as fallback');
             }
-            $('body').append(Lampa.Template.get('trailer_style'));
+            jQuery('body').append(Lampa.Template.get('trailer_style'));
             Lampa.Storage.listener.follow('change', function (e) {
                 if (e.name === 'language') {
                     console.log('Language changed, clearing cache');
@@ -1102,7 +1102,7 @@
 
         if (!(Lampa.TMDB && Lampa.TMDB.key())) {
             console.log('TMDB API key missing');
-            Lampa.Noty.show('TMDB API key is missing.');
+            Lampa.Noty.show('TMDB API key is missing. Trailers plugin cannot be loaded.');
             return;
         }
 
