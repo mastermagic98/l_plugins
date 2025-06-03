@@ -75,6 +75,8 @@
         const hasAllowedGenre = genreIds.some(id => allowedGenreIds.includes(id));
         const hasDisallowedGenre = genreIds.some(id => disallowedGenreIds.includes(id));
 
+        console.log('Filtering content by genre:', content.title || content.name, 'genre_ids:', genreIds, 'hasAllowedGenre:', hasAllowedGenre, 'hasDisallowedGenre:', hasDisallowedGenre);
+
         return hasAllowedGenre && !hasDisallowedGenre;
     }
 
@@ -102,6 +104,7 @@
         fetchTMDB(endpoint, params, function (data) {
             if (data.results) {
                 data.results = data.results.filter(filterTMDBContentByGenre);
+                console.log('Filtered results for ' + endpoint + ': ', data.results);
             }
             if (cacheKey) trailerCache[cacheKey] = data;
             resolve(data);
@@ -188,29 +191,20 @@
 
     function Trailer(data, params) {
         this.build = function () {
-            // Перевірка наявності перекладу назви для мови інтерфейсу
-            var lang = Lampa.Storage.get('language', 'ru');
-            var hasTranslation = false;
-            if (data.translations && data.translations.translations) {
-                var translation = data.translations.translations.find(t => t.iso_639_1 === lang) ||
-                                 data.translations.translations.find(t => t.iso_639_1 === 'en');
-                hasTranslation = translation && (translation.data.title || translation.data.name);
-            }
+            // Перевірка наявності перекладу назви
+            var lang = getShortLanguageCode();
+            var title = data.title || data.name;
+            var originalTitle = data.original_title || data.original_name;
+            var hasTranslation = lang === 'en' || (title !== originalTitle && title.trim() !== '');
+
+            console.log('Checking translation for:', title, 'original:', originalTitle, 'lang:', lang, 'hasTranslation:', hasTranslation);
+
             if (!hasTranslation) return; // Не створюємо картку, якщо немає перекладу
 
             this.card = Lampa.Template.get('trailer', data);
             this.img = this.card.find('img')[0];
             this.is_youtube = params.type === 'rating';
 
-            // Визначаємо назву відповідно до мови інтерфейсу
-            var title = data.title || data.name;
-            if (data.translations && data.translations.translations) {
-                var translation = data.translations.translations.find(t => t.iso_639_1 === lang) ||
-                                 data.translations.translations.find(t => t.iso_639_1 === 'en');
-                if (translation && translation.data && (translation.data.title || translation.data.name)) {
-                    title = translation.data.title || translation.data.name;
-                }
-            }
             this.card.find('.card__title').text(title);
 
             if (!this.is_youtube) {
@@ -273,7 +267,7 @@
                 var lang = '—';
                 if (videos.results.length) {
                     var preferredVideo = videos.results.find(v => v.iso_639_1 === interfaceLang) ||
-                                        videos.results.find(v => v.iso_639_1 === 'en') || // Резервний англійський трейлер
+                                        videos.results.find(v => v.iso_639_1 === 'en') ||
                                         videos.results[0];
                     lang = preferredVideo.iso_639_1.toUpperCase();
                 }
@@ -314,7 +308,7 @@
                     var interfaceLang = getShortLanguageCode();
                     Api.videos(data, function (videos) {
                         var video = videos.results.find(v => v.iso_639_1 === interfaceLang) ||
-                                    videos.results.find(v => v.iso_639_1 === 'en') || // Резервний англійський трейлер
+                                    videos.results.find(v => v.iso_639_1 === 'en') ||
                                     videos.results[0];
                         if (video) {
                             _this2.play(video.key);
