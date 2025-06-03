@@ -13,6 +13,11 @@
         return 'en-US';
     }
 
+    function getShortLanguageCode() {
+        var lang = Lampa.Storage.get('language', 'ru');
+        return lang; // Повертаємо 'ru', 'uk' або 'en'
+    }
+
     function fetchTMDB(endpoint, params, resolve, reject) {
         var url = new URL(base_url + endpoint);
         params.api_key = Lampa.TMDB.key();
@@ -99,7 +104,8 @@
 
     function videos(card, oncomplite, onerror) {
         var endpoint = (card.name ? '/tv' : '/movie') + '/' + card.id + '/videos';
-        fetchTMDB(endpoint, { language: 'en,ru,uk' }, oncomplite, onerror);
+        var lang = getInterfaceLanguage();
+        fetchTMDB(endpoint, { language: lang }, oncomplite, onerror);
     }
 
     function clear() {
@@ -182,10 +188,11 @@
 
         this.updateTrailerLanguage = function () {
             var _this = this;
+            var interfaceLang = getShortLanguageCode();
             Api.videos(data, function (videos) {
                 var lang = '—';
                 if (videos.results.length) {
-                    var preferredVideo = videos.results.find(v => v.iso_639_1 === Lampa.Storage.get('language', 'ru')) ||
+                    var preferredVideo = videos.results.find(v => v.iso_639_1 === interfaceLang) ||
                                         videos.results.find(v => v.iso_639_1 === 'ru') ||
                                         videos.results.find(v => v.iso_639_1 === 'en') ||
                                         videos.results[0];
@@ -224,14 +231,12 @@
                 if (_this2.is_youtube) {
                     _this2.play(data.id);
                 } else {
+                    var interfaceLang = getShortLanguageCode();
                     Api.videos(data, function (videos) {
-                        var video = videos.results.find(function (v) {
-                            return v.iso_639_1 === Lampa.Storage.get('language', 'ru');
-                        }) || videos.results.find(function (v) {
-                            return v.iso_639_1 === 'ru';
-                        }) || videos.results.find(function (v) {
-                            return v.iso_639_1 === 'en';
-                        }) || videos.results[0];
+                        var video = videos.results.find(v => v.iso_639_1 === interfaceLang) ||
+                                    videos.results.find(v => v.iso_639_1 === 'ru') ||
+                                    videos.results.find(v => v.iso_639_1 === 'en') ||
+                                    videos.results[0];
                         if (video) {
                             _this2.play(video.key);
                         } else {
@@ -251,6 +256,7 @@
                         Api.clear();
                         Lampa.Loading.stop();
                     });
+                    var interfaceLang = getShortLanguageCode();
                     Api.videos(data, function (videos) {
                         Lampa.Loading.stop();
                         if (videos.results.length) {
@@ -260,7 +266,7 @@
                             });
                             videos.results.forEach(function (video) {
                                 items.push({
-                                    title: video.name,
+                                    title: video.name + ' (' + video.iso_639_1.toUpperCase() + ')',
                                     id: video.key
                                 });
                             });
