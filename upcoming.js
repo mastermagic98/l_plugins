@@ -653,6 +653,7 @@
         var light = newlampa ? false : Lampa.Storage.field('light_version') && window.innerWidth >= 767;
         var total_pages = 0;
         var last, waitload;
+        var active = 0; // Ініціалізація active
 
         this.create = function () {
             Api.full(object, this.build.bind(this), this.empty.bind(this));
@@ -718,7 +719,6 @@
                 if (total_pages > data.page && light && items.length) this.more();
                 scroll.append(body);
                 if (newlampa) {
-                    active = 0; // Ensure active is defined
                     scroll.onEnd = this.next.bind(this);
                     scroll.onWheel = function (step) {
                         if (!Lampa.Controller.own(_this3)) _this3.start();
@@ -737,7 +737,7 @@
         this.more = function () {
             var more = $('<div class="selector" style="width: 100%; height: 5px;"></div>');
             more.on('hover:focus', function (e) {
-                Lampa.Controller.collectionFocus(last || false, '', scroll.element());
+                Lampa.Controller.collectionFocus(last || false, scroll.render());
                 var next = Lampa.Arrays.clone(object);
                 delete next.activity;
                 active = 0; // Reset active for the new activity
@@ -766,7 +766,7 @@
                 link: this,
                 toggle: function () {
                     Lampa.Controller.collectionSet(scroll.render());
-                    Lampa.Controller.collectionFocus(last || false, scroll.element());
+                    Lampa.Controller.collectionFocus(last || false, scroll.render());
                 },
                 left: function () {
                     if (Navigator.canmove('left')) Navigator.move('left');
@@ -808,8 +808,8 @@
         trailers_in_theaters: { ru: 'В кинотеатрах', uk: 'У кінотеатрах', en: 'In Theaters' },
         trailers_upcoming_movies: { ru: 'Скоро в кино', uk: 'Скоро в кіно', en: 'Upcoming Movies' },
         trailers_popular_series: { ru: 'Популярные сериалы', uk: 'Популярні серіали', en: 'Popular Series' },
-        trailers_new_series: { ru: 'Новые сезоны сериалов', uk: 'Нові сезони серіалів', en: 'New Series Seasons' },
-        trailers_upcoming_series: { ru: 'Скоро', uk: 'Скоро', en: 'TV Shows' },
+        trailers_new_series_seasons: { ru: 'Новые сезоны сериалов', uk: 'Нові сезони серіалів', en: 'New Series Seasons' },
+        trailers_upcoming_series: { ru: 'Скоро на ТВ', uk: 'Скоро на ТБ', en: 'Upcoming Series' },
         trailers_no_trailers: { ru: 'Нет трейлеров', uk: 'Немає трейлерів', en: 'No trailers' },
         trailers_view: { ru: 'Подробнее', uk: 'Докладніше', en: 'More' },
         title_trailers: { ru: 'Трейлеры', uk: 'Трейлери', en: 'Trailers' }
@@ -831,18 +831,18 @@
                     </div>
                 </div>
                 <div class="card__play">
-                    <img src="./img/icons/player/play.png">
+                    <img src="./img/icons/player/play.svg">
                 </div>
             </div>
         `);
-        Lampa.Template.add('trailers_style', `
+        Lampa.Template.add('trailer_style', `
             <style>
             .card.card--trailer,
-            .card-more.more--later {
-                width: 25px;
+            .card-more.more--trailers {
+                width: 25.7em;
             }
             .card.card--trailer .card__view {
-                padding-bottom: 50%;
+                padding-bottom: 56%;
                 margin-bottom: 0;
                 position: relative;
             }
@@ -853,10 +853,10 @@
                 position: absolute;
                 top: 1.4em;
                 left: 1.5em;
-                background: rgba(0, 0, 0, 0.72);
+                background: #000000b8;
                 width: 2.2em;
                 height: 2.2em;
-                border-radius: 50%;
+                border-radius: 100%;
                 text-align: center;
                 padding-top: 0.6em;
             }
@@ -865,11 +865,11 @@
                 height: 1em;
             }
             .card-more.more--trailers .card-more__box {
-                padding-bottom: 50%;
+                padding-bottom: 56%;
             }
             .category-full--trailers .card {
                 margin-bottom: 1.5em;
-                width: 33.3%
+                width: 33.3%;
             }
             @media screen and (max-width: 767px) {
                 .category-full--trailers .card {
@@ -881,9 +881,9 @@
                     width: 100%;
                 }
             }
-            .card__premiere, .card__trailer-lang-lang, .card__rating {
+            .card__premiere, .card__trailer-lang, .card__rating {
                 font-size: 0.9em;
-                z-index: 1;
+                z-index: 10;
             }
             </style>
         `);
@@ -891,8 +891,8 @@
         function add() {
             var button = $(`<li class="menu__item selector">
                 <div class="menu__ico">
-                    <svg height="30" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.53 3.23955 77.41 6.62828 78.33 10.9306C80 18.32 80 35 80 35C80 35 80 51.68 78.33 59.32C77.41 63.32 74.54 66.71 71.32 67.89C65.48 70 40 70 40 70C40 70 14.52 70 8.68 67.897C5.44 66.71 2.53 63.41 1.65 59.41C0 51.43 0 35 0 35C0 35 0 18.57 1.65 10.93C2.53 6.61 5.44 3.22 8.67 2.08C14.51 0 40 0 40 0C40 0 65.48 0 71.32 2.08ZM55.64 35L29.97 49.32V20.67L55.64 35Z" fill="white"/>
+                    <svg height="70" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/>
                     </svg>
                 </div>
                 <div class="menu__text">${Lampa.Lang.translate('title_trailers')}</div>
@@ -906,7 +906,7 @@
                 });
             });
             $('.menu .menu__list').eq(0).append(button);
-            $('body').append(Lampa.Template.get('trailers_style', {}, true));
+            $('body').append(Lampa.Template.get('trailer_style', {}, true));
         }
 
         if (window.appready) add();
