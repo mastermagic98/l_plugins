@@ -2,24 +2,42 @@
     'use strict';
 
     var network = new Lampa.Reguest();
-    var api_url = Lampa.Utils.protocol() + Lampa.Manifest.cub_domain + '/api/trailers/get/';
+    var tmdb_api_key = 'YOUR_TMDB_API_KEY'; // Замініть на ваш TMDB API ключ
+    var base_url = 'https://api.themoviedb.org/3';
+    var trailerCache = {};
+    var categoryCache = {};
 
-    function get(url, page, resolve, reject) {
-        console.log('API Request: ' + api_url + url + '/' + page);
-        network.silent(api_url + url + '/' + page, function (data) {
-            console.log('API Response for ' + url + ': ', data);
+    function fetchTMDB(endpoint, params, resolve, reject) {
+        var url = new URL(base_url + endpoint);
+        params.api_key = tmdb_api_key;
+        Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+        console.log('TMDB Request: ' + url.toString());
+        network.silent(url.toString(), function (data) {
+            console.log('TMDB Response for ' + endpoint + ': ', data);
             resolve(data);
         }, function (error) {
-            console.log('API Error for ' + url + ': ', error);
+            console.log('TMDB Error for ' + endpoint + ': ', error);
             reject(error);
-        }, false);
+        });
+    }
+
+    function get(endpoint, params, cacheKey, resolve, reject) {
+        if (cacheKey && trailerCache[cacheKey]) {
+            console.log('Using cache for ' + cacheKey);
+            resolve(trailerCache[cacheKey]);
+            return;
+        }
+        fetchTMDB(endpoint, params, function (data) {
+            if (cacheKey) trailerCache[cacheKey] = data;
+            resolve(data);
+        }, reject);
     }
 
     function main(oncomplite, onerror) {
-        var status = new Lampa.Status(5);
+        var status = new Lampa.Status(6);
         status.onComplite = function () {
             var fulldata = [];
-            var categories = ['rating', 'anticipated', 'popular', 'added', 'trending'];
+            var categories = ['popular_movies', 'in_theaters', 'upcoming_movies', 'popular_series', 'new_series_seasons', 'upcoming_series'];
             categories.forEach(function (key) {
                 if (status.data[key] && status.data[key].results && status.data[key].results.length) {
                     fulldata.push(status.data[key]);
@@ -37,37 +55,48 @@
             status.append(name, json);
         };
 
-        get('trailers/trending', 1, function (json) {
-            append(Lampa.Lang.translate('trailers_tranding'), 'trending', 'trailers/trending', json);
+        var today = new Date().toISOString().split('T')[0];
+        var oneMonthAgo = new Date();
+        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+        oneMonthAgo = oneMonthAgo.toISOString().split('T')[0];
+        var oneMonthLater = new Date();
+        oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+        oneMonthLater = oneMonthLater.toISOString().split('T')[0];
+
+        get('/movie/popular', { language: 'en-US', page: 1 }, 'popular_movies', function (json) {
+            append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/movie/popular', json);
         }, status.error.bind(status));
-        get('trailers/anticipated', 1, function (json) {
-            append(Lampa.Lang.translate('trailers_anticipated'), 'anticipated', 'trailers/anticipated', json);
+        get('/movie/now_playing', { language: 'en-US', page: 1 }, 'in_theaters', function (json) {
+            append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/movie/now_playing', json);
         }, status.error.bind(status));
-        get('trailers/popular', 1, function (json) {
-            append(Lampa.Lang.translate('trailers_popular'), 'popular', 'trailers/popular', json);
+        get('/movie/upcoming', { language: 'en-US', page: 1 }, 'upcoming_movies', function (json) {
+            append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/movie/upcoming', json);
         }, status.error.bind(status));
-        get('trailers/added', 1, function (json) {
-            append(Lampa.Lang.translate('trailers_added'), 'added', 'trailers/added', json);
+        get('/tv/popular', { language: 'en-US', page: 1 }, 'popular_series', function (json) {
+            append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', '/tv/popular', json);
         }, status.error.bind(status));
-        get('youtube/rating', 1, function (json) {
-            append('YouTube', 'rating', 'youtube/rating', json);
+        get('/tv/on_the_air', { language: 'en-US', page: 1 }, 'new_series_seasons', function (json) {
+            append(Lampa.Lang.translate('trailers_new_series_seasons'), 'new_series_seasons', '/tv/on_the_air', json);
+        }, status.error.bind(status));
+        get('/tv/airing_today', { language: 'en-US', page: 1 }, 'upcoming_series', function (json) {
+            append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/tv/airing_today', json);
         }, status.error.bind(status));
     }
 
     function full(params, oncomplite, onerror) {
-        get(params.url, params.page, oncomplite, function (error) {
-            console.log('Full: Error fetching page ' + params.page + ' for ' + params.url + ': ', error);
-            onerror();
-        });
+        var cacheKey = params.url + '_page_' + params.page;
+        get(params.url, { language: 'en-US', page: params.page }, cacheKey, oncomplite, onerror);
     }
 
     function videos(card, oncomplite, onerror) {
-        var url = Lampa.TMDB.api((card.name ? 'tv' : 'movie') + '/' + card.id + '/videos' + '?language=en,ru,uk,zh&api_key=' + Lampa.TMDB.key());
-        network.silent(url, oncomplite, onerror);
+        var endpoint = (card.name ? '/tv' : '/movie') + '/' + card.id + '/videos';
+        fetchTMDB(endpoint, { language: 'en,ru,uk,zh' }, oncomplite, onerror);
     }
 
     function clear() {
         network.clear();
+        trailerCache = {};
+        categoryCache = {};
     }
 
     var Api = {
@@ -404,7 +433,7 @@
             scroll.minus();
             html.append(scroll.render());
             data.forEach(function (element) {
-                if (element.type !== 'rating') _this.append(element);
+                _this.append(element);
             });
 
             if (light) {
@@ -669,10 +698,12 @@
     }
 
     Lampa.Lang.add({
-        trailers_tranding: { ru: 'В тренде', uk: 'У тренді', en: 'In trend', zh: '在流行' },
-        trailers_anticipated: { ru: 'В ожидание', uk: 'В очікуванні', en: 'In expectation', zh: '期待中' },
-        trailers_popular: { ru: 'Популярные', uk: 'Популярні', en: 'Popular', zh: '受欢迎的' },
-        trailers_added: { ru: 'Новые', uk: 'Нові', en: 'New', zh: '新的' },
+        trailers_popular_movies: { ru: 'Популярные фильмы', uk: 'Популярні фільми', en: 'Popular Movies', zh: '热门电影' },
+        trailers_in_theaters: { ru: 'В кинотеатрах', uk: 'У кінотеатрах', en: 'In Theaters', zh: '影院上映' },
+        trailers_upcoming_movies: { ru: 'Скоро в кино', uk: 'Скоро в кіно', en: 'Upcoming Movies', zh: '即将上映的电影' },
+        trailers_popular_series: { ru: 'Популярные сериалы', uk: 'Популярні серіали', en: 'Popular Series', zh: '热门剧集' },
+        trailers_new_series_seasons: { ru: 'Новые сезоны сериалов', uk: 'Нові сезони серіалів', en: 'New Series Seasons', zh: '新剧季' },
+        trailers_upcoming_series: { ru: 'Скоро на ТВ', uk: 'Скоро на ТБ', en: 'Upcoming Series', zh: '即将播出的剧集' },
         trailers_no_trailers: { ru: 'Нет трейлеров', uk: 'Немає трейлерів', en: 'No trailers', zh: '没有拖车' },
         trailers_view: { ru: 'Подробнее', uk: 'Докладніше', en: 'More', zh: '更多的' },
         title_trailers: { ru: 'Трейлеры', uk: 'Трейлери', en: 'Trailers', zh: '预告片' }
