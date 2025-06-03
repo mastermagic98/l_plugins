@@ -666,7 +666,7 @@
                 });
             }).on('hover:focus', function (e) {
                 last = e.target;
-                active = items.length;
+                active = items.length; // Set active to the "More" button index
                 scroll.update(more, true);
                 console.log('Line: More button focused - active set to: ' + active);
             });
@@ -684,16 +684,17 @@
                 },
                 right: function () {
                     console.log('Line: Right navigation, active: ' + active + ', items length: ' + items.length);
-                    if (active < items.length) {
-                        if (Navigator.canmove('right')) {
-                            active++;
-                            Navigator.move('right');
-                            scroll.update(active === items.length ? more : items[active].render(), true);
-                            console.log('Line: Moved right to ' + (active === items.length ? 'More' : 'card') + ', new active: ' + active);
-                        } else {
-                            console.log('Line: Cannot move right, staying at active: ' + active);
-                        }
-                    } else {
+                    if (active < items.length - 1) { // Move to the next card
+                        active++;
+                        Navigator.move('right');
+                        scroll.update(items[active].render(), true);
+                        console.log('Line: Moved right to card, new active: ' + active);
+                    } else if (active === items.length - 1) { // Move to the "More" button
+                        active++;
+                        scroll.update(more, true);
+                        Lampa.Controller.collectionFocus(more[0], scroll.render());
+                        console.log('Line: Moved right to More, new active: ' + active);
+                    } else { // Already on "More", go to menu
                         Lampa.Controller.toggle('menu');
                         console.log('Line: Moved to menu');
                     }
@@ -701,13 +702,16 @@
                 left: function () {
                     console.log('Line: Left navigation, active: ' + active);
                     if (active > 0) {
-                        if (Navigator.canmove('left')) {
-                            active--;
+                        active--;
+                        if (active === items.length - 1) {
+                            // Moving from "More" to the last card
+                            scroll.update(items[active].render(), true);
+                            Lampa.Controller.collectionFocus(items[active].render()[0], scroll.render());
+                            console.log('Line: Moved left from More to card, new active: ' + active);
+                        } else {
                             Navigator.move('left');
                             scroll.update(items[active].render(), true);
                             console.log('Line: Moved left to card, new active: ' + active);
-                        } else {
-                            console.log('Line: Cannot move left, staying at active: ' + active);
                         }
                     } else if (active === 0) {
                         if (_this.onLeft) _this.onLeft();
@@ -1058,7 +1062,7 @@
         trailers_in_theaters: { ru: 'В прокате', uk: 'В прокаті', en: 'In Theaters' },
         trailers_upcoming_movies: { ru: 'Ожидаемые фильмы', uk: 'Очікувані фільми', en: 'Upcoming Movies' },
         trailers_popular_series: { ru: 'Популярные сериалы', uk: 'Популярні серіали', en: 'Popular Series' },
-        trailers_new_series_seasons: { ru: 'Новые сериалы и сезоны', uk: 'Нові серіали та сезони', en: 'New Series and Seasons' },
+        trailers_new_series_seasons: { ru: 'Новые сериалы и сезоны', uk: 'Нові серіали та сезон', en: 'New Series and Seasons' },
         trailers_upcoming_series: { ru: 'Ожидаемые сериалы', uk: 'Очікувані серіали', en: 'Upcoming Series' },
         trailers_no_trailers: { ru: 'Нет трейлеров', uk: 'Немає трейлерів', en: 'No trailers' },
         trailers_no_ua_trailer: { ru: 'Нет украинского трейлера', uk: 'Немає українського трейлера', en: 'No Ukrainian trailer' },
@@ -1089,7 +1093,7 @@
         Lampa.Component.add('trailers_main', Component$1);
         Lampa.Component.add('trailers_full', Component);
         Lampa.Template.add('trailer', '<div class="card selector card--trailer layer--render layer--visible"><div class="card__view"><img src="./img/img_load.svg" class="card__img" /><div class="card__promo"><div class="card__promo-text"><div><div class="card__title"></div></div><div class="card__details"></div></div><div class="card__play"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div></div>');
-        Lampa.Template.add('trailer_style', '<style>.card.card--trailer, .card--more {width: 25.7em;}.card.card--trailer .card__view {padding-bottom: 56%; margin-bottom: 0;}.card.card--trailer .card__details {margin-top: 0.8em;}.card.card--trailer .card__play {position: absolute; top: 50%; transform: translateY(-50%); left: 1.5em; background: rgba(0,0,0,0.7); padding: 0.2em; width: 2.2em; height: 2.2em; border-radius: 1em; display: flex; align-items: center; justify-content: center;}.card.card--trailer .card__play svg {width: 1.5em; height: 1.5em;}.card.card--trailer .card__rating {position: absolute; bottom: 0.5em; right: 0.5em; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 0.3em; font-size: 1.1em;}.card.card--trailer .card__trailer-lang {position: absolute; top: 0.5em; right: 0.5em; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 0.3em; text-transform: uppercase; font-size: 1.1em;}.card.card--trailer .card__release-date {position: absolute; top: 2em; right: 0.5em; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 0.3em; font-size: 1.1em;}.card--more .card-more__box {padding-bottom: 56%;}.category-full--trailers {display: flex; flex-wrap: wrap; justify-content: space-between;}.category-full--trailers .card {width: 33.3%; margin-bottom: 1.5em;}.category-full--trailers .card .card__view {padding-bottom: 56%; margin-bottom: 0;}.items-line__more {display: inline-block; margin-left: 10px; cursor: pointer; padding: 0.5em 1em;}@media screen and (max-width: 767px) {.category-full--trailers .card {width: 50%;}}@media screen and (max-width: 400px) {.category-full--trailers .card {width: 100%;}}</style>');
+        Lampa.Template.add('trailer_style', '<style>.card.card--trailer, .card--more {width: 25.7em;}.card.card--trailer .card__view {position: relative; height: 14.42em; margin-bottom: 0;}.card.card--trailer .card__img {width: 100%; height: 100%; object-fit: cover;}.card.card--trailer .card__details {margin-top: 0.8em;}.card.card--trailer .card__play {position: absolute; top: 50%; transform: translateY(-50%); left: 1.5em; background: rgba(0,0,0,0.7); padding: 0.2em; width: 2.2em; height: 2.2em; border-radius: 1em; display: flex; align-items: center; justify-content: center;}.card.card--trailer .card__play svg {width: 1.5em; height: 1.5em;}.card.card--trailer .card__rating {position: absolute; bottom: 0.5em; right: 0.5em; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 0.3em; font-size: 1.1em;}.card.card--trailer .card__trailer-lang {position: absolute; top: 0.5em; right: 0.5em; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 0.3em; text-transform: uppercase; font-size: 1.1em;}.card.card--trailer .card__release-date {position: absolute; top: 2em; right: 0.5em; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 0.3em; font-size: 1.1em;}.card--more .card-more__box {padding-bottom: 56%;}.category-full--trailers {display: flex; flex-wrap: wrap; justify-content: space-between;}.category-full--trailers .card {width: 33.3%; margin-bottom: 1.5em;}.category-full--trailers .card .card__view {position: relative; height: 14.42em; margin-bottom: 0;}.category-full--trailers .card .card__img {width: 100%; height: 100%; object-fit: cover;}.items-line__more {display: inline-block; margin-left: 10px; cursor: pointer; padding: 0.5em 1em;}@media screen and (max-width: 767px) {.category-full--trailers .card {width: 50%;}}@media screen and (max-width: 400px) {.category-full--trailers .card {width: 100%;}}</style>');
 
         function add() {
             console.log('Adding Trailers button to menu');
