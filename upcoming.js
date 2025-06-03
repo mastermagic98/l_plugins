@@ -147,10 +147,14 @@
                 this.card.find('.card__details').remove();
             }
 
-            // Додаємо дату прем'єри у правий верхній кут
+            // Додаємо дату прем'єри у правий верхній кут у форматі ДДММРРРР
             var premiereDate = data.release_date || data.first_air_date || 'N/A';
+            if (premiereDate !== 'N/A') {
+                var dateParts = premiereDate.split('-');
+                premiereDate = dateParts[2] + dateParts[1] + dateParts[0];
+            }
             this.card.find('.card__view').append(`
-                <div class="card__premiere" style="position: absolute; top: 0.5em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${premiereDate.slice(0, 10)}</div>
+                <div class="card__premiere" style="position: absolute; top: 0.5em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${premiereDate}</div>
             `);
 
             // Додаємо мову трейлера нижче дати
