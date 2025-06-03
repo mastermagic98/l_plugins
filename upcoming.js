@@ -18,6 +18,25 @@
         return lang; // Повертаємо 'ru', 'uk' або 'en'
     }
 
+    function applyWithoutKeywords(baseUrl) {
+        var baseExcludedKeywords = [
+            '346488',
+            '158718',
+            '41278',
+            '13141',
+            '345822',
+            '315535',
+            '290667',
+            '323477',
+            '290609',
+            '210024'
+        ];
+
+        baseUrl += '&without_keywords=' + encodeURIComponent(baseExcludedKeywords.join(','));
+
+        return baseUrl;
+    }
+
     function fetchTMDB(endpoint, params, resolve, reject) {
         var url = new URL(base_url + endpoint);
         params.api_key = Lampa.TMDB.key();
@@ -38,7 +57,8 @@
             resolve(trailerCache[cacheKey]);
             return;
         }
-        fetchTMDB(endpoint, params, function (data) {
+        var modifiedUrl = applyWithoutKeywords(base_url + endpoint);
+        fetchTMDB(modifiedUrl, params, function (data) {
             if (cacheKey) trailerCache[cacheKey] = data;
             resolve(data);
         }, reject);
@@ -99,13 +119,15 @@
     function full(params, oncomplite, onerror) {
         var cacheKey = params.url + '_page_' + params.page;
         var lang = getInterfaceLanguage();
-        get(params.url, { language: lang, page: params.page }, cacheKey, oncomplite, onerror);
+        var modifiedUrl = applyWithoutKeywords(base_url + params.url);
+        get(modifiedUrl, { language: lang, page: params.page }, cacheKey, oncomplite, onerror);
     }
 
     function videos(card, oncomplite, onerror) {
         var endpoint = (card.name ? '/tv' : '/movie') + '/' + card.id + '/videos';
         var lang = getInterfaceLanguage();
-        fetchTMDB(endpoint, { language: lang }, oncomplite, onerror);
+        var modifiedUrl = applyWithoutKeywords(base_url + endpoint);
+        fetchTMDB(modifiedUrl, { language: lang }, oncomplite, onerror);
     }
 
     function clear() {
