@@ -35,26 +35,60 @@
         return params;
     }
 
-    function applyGenreFilter(params) {
-        var allowedGenres = [
-            28,    // боевики
-            35,    // комедии
-            16,    // мультфильмы
-            10762, // детское
-            12,    // приключения
-            878,   // фантастика
-            10751, // семейные
-            14     // фэнтези
+    /**
+     * Фільтрує контент (фільми або серіали) за жанрами.
+     * Повертає true, якщо контент має хоча б один дозволений жанр і не має жодного забороненого.
+     * @param {Object} content - Об'єкт контенту з масивом genre_ids.
+     * @returns {boolean} - Чи відповідає контент критеріям фільтрації.
+     */
+    function filterTMDBContentByGenre(content) {
+        // Список дозволених жанрів (ID відповідно до TMDB API)
+        const allowedGenreIds = [
+            28,    // Action (боевики)
+            12,    // Adventure (приключения)
+            16,    // Animation (мультфильмы)
+            35,    // Comedy (комедии)
+            80,    // Crime
+            99,    // Documentary
+            18,    // Drama
+            10751, // Family (семейные)
+            14,    // Fantasy (фэнтези)
+            36,    // History
+            27,    // Horror
+            10402, // Music
+            9648,  // Mystery
+            10749, // Romance
+            878,   // Science Fiction (фантастика)
+            53,    // Thriller
+            10752, // War
+            37     // Western
         ];
-        params.with_genres = allowedGenres.join(',');
-        return params;
+
+        // Список заборонених жанрів (ID відповідно до TMDB API)
+        const disallowedGenreIds = [
+            10767, // Talk (ток-шоу)
+            10764, // Reality (реаліті-шоу)
+            10766, // Soap (мильні опери)
+            10763  // News (новини)
+        ];
+
+        // Отримуємо genre_ids контенту
+        const genreIds = content.genre_ids || [];
+
+        // Перевіряємо, чи є хоча б один дозволений жанр
+        const hasAllowedGenre = genreIds.some(id => allowedGenreIds.includes(id));
+
+        // Перевіряємо, чи є заборонені жанри
+        const hasDisallowedGenre = genreIds.some(id => disallowedGenreIds.includes(id));
+
+        // Контент проходить фільтр, якщо має дозволений жанр і не має заборонених
+        return hasAllowedGenre && !hasDisallowedGenre;
     }
 
     function fetchTMDB(endpoint, params, resolve, reject) {
         var url = new URL(base_url + endpoint);
         params.api_key = Lampa.TMDB.key();
         params = applyWithoutKeywords(params);
-        params = applyGenreFilter(params);
         Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
         console.log('TMDB Request: ' + url.toString());
         network.silent(url.toString(), function (data) {
@@ -73,6 +107,10 @@
             return;
         }
         fetchTMDB(endpoint, params, function (data) {
+            // Фільтруємо результати за жанрами
+            if (data.results) {
+                data.results = data.results.filter(filterTMDBContentByGenre);
+            }
             if (cacheKey) trailerCache[cacheKey] = data;
             resolve(data);
         }, reject);
