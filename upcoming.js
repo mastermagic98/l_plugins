@@ -18,7 +18,7 @@
         return lang; // Повертаємо 'ru', 'uk' або 'en'
     }
 
-    function applyWithoutKeywords(baseUrl) {
+    function applyWithoutKeywords(params) {
         var baseExcludedKeywords = [
             '346488',
             '158718',
@@ -31,15 +31,14 @@
             '290609',
             '210024'
         ];
-
-        baseUrl += '&without_keywords=' + encodeURIComponent(baseExcludedKeywords.join(','));
-
-        return baseUrl;
+        params.without_keywords = baseExcludedKeywords.join(',');
+        return params;
     }
 
     function fetchTMDB(endpoint, params, resolve, reject) {
         var url = new URL(base_url + endpoint);
         params.api_key = Lampa.TMDB.key();
+        params = applyWithoutKeywords(params);
         Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
         console.log('TMDB Request: ' + url.toString());
         network.silent(url.toString(), function (data) {
@@ -57,8 +56,7 @@
             resolve(trailerCache[cacheKey]);
             return;
         }
-        var modifiedUrl = applyWithoutKeywords(base_url + endpoint);
-        fetchTMDB(modifiedUrl, params, function (data) {
+        fetchTMDB(endpoint, params, function (data) {
             if (cacheKey) trailerCache[cacheKey] = data;
             resolve(data);
         }, reject);
@@ -119,15 +117,13 @@
     function full(params, oncomplite, onerror) {
         var cacheKey = params.url + '_page_' + params.page;
         var lang = getInterfaceLanguage();
-        var modifiedUrl = applyWithoutKeywords(base_url + params.url);
-        get(modifiedUrl, { language: lang, page: params.page }, cacheKey, oncomplite, onerror);
+        get(params.url, { language: lang, page: params.page }, cacheKey, oncomplite, onerror);
     }
 
     function videos(card, oncomplite, onerror) {
         var endpoint = (card.name ? '/tv' : '/movie') + '/' + card.id + '/videos';
         var lang = getInterfaceLanguage();
-        var modifiedUrl = applyWithoutKeywords(base_url + endpoint);
-        fetchTMDB(modifiedUrl, { language: lang }, oncomplite, onerror);
+        fetchTMDB(endpoint, { language: lang }, oncomplite, onerror);
     }
 
     function clear() {
