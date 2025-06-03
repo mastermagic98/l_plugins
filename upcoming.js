@@ -684,15 +684,17 @@
                 },
                 right: function () {
                     console.log('Line: Right navigation, active: ' + active + ', items length: ' + items.length);
-                    if (active < items.length - 1) {
-                        active++;
-                        Navigator.move('right');
-                        scroll.update(items[active].render(), true);
-                        console.log('Line: Moved right, new active: ' + active);
-                    } else if (active === items.length - 1 && data.type !== 'upcoming_series') {
-                        active = items.length;
-                        Lampa.Controller.toggle('items_line');
-                        console.log('Line: Moved to More, active: ' + active);
+                    if (Navigator.canmove('right')) {
+                        if (active < items.length - 1) {
+                            active++;
+                            Navigator.move('right');
+                            scroll.update(items[active].render(), true);
+                            console.log('Line: Moved right to card, new active: ' + active);
+                        } else if (active === items.length - 1 && data.type !== 'upcoming_series') {
+                            active = items.length;
+                            Lampa.Controller.toggle('items_line');
+                            console.log('Line: Moved to More, active: ' + active);
+                        }
                     } else {
                         Lampa.Controller.toggle('menu');
                         console.log('Line: Moved to menu');
@@ -700,20 +702,22 @@
                 },
                 left: function () {
                     console.log('Line: Left navigation, active: ' + active);
-                    if (active > 0) {
-                        active--;
-                        Navigator.move('left');
-                        scroll.update(items[active].render(), true);
-                        console.log('Line: Moved left, new active: ' + active);
+                    if (Navigator.canmove('left')) {
+                        if (active > 0) {
+                            active--;
+                            Navigator.move('left');
+                            scroll.update(items[active].render(), true);
+                            console.log('Line: Moved left to card, new active: ' + active);
+                        } else if (active === items.length) {
+                            active = items.length - 1;
+                            Navigator.move('left');
+                            scroll.update(items[active].render(), true);
+                            console.log('Line: Returned from More, new active: ' + active);
+                        }
                     } else if (active === 0) {
                         if (_this.onLeft) _this.onLeft();
                         else Lampa.Controller.toggle('menu');
                         console.log('Line: Moved to menu or onLeft');
-                    } else if (active === items.length) {
-                        active = items.length - 1;
-                        Navigator.move('left');
-                        scroll.update(items[active].render(), true);
-                        console.log('Line: Returned from More, new active: ' + active);
                     }
                 },
                 down: this.onDown,
@@ -1090,7 +1094,7 @@
         Lampa.Component.add('trailers_main', Component$1);
         Lampa.Component.add('trailers_full', Component);
         Lampa.Template.add('trailer', '<div class="card selector card--trailer layer--render layer--visible"><div class="card__view"><img src="./img/img_load.svg" class="card__img" /><div class="card__promo"><div class="card__promo-text"><div><div class="card__title"></div></div><div class="card__details"></div></div><div class="card__play"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div></div>');
-        Lampa.Template.add('trailer_style', '<style>.card.card--trailer, .card--more {width: 25.7em;}.card.card--trailer .card__view {padding-bottom: 56%; margin-bottom: 0;}.card.card--trailer .card__details {margin-top: 0.8em;}.card.card--trailer .card__play {position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); padding: 0.2em; width: 2.2em; height: 2.2em; border-radius: 1em; display: flex; align-items: center; justify-content: center;}.card.card--trailer .card__play svg {width: 1.5em; height: 1.5em;}.card.card--trailer .card__rating {position: absolute; bottom: 0.5em; right: 0.5em; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 0.3em; font-size: 1.1em;}.card.card--trailer .card__trailer-lang {position: absolute; top: 0.5em; right: 0.5em; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 0.3em; text-transform: uppercase; font-size: 1.1em;}.card.card--trailer .card__release-date {position: absolute; top: 2em; right: 0.5em; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 0.3em; font-size: 1.1em;}.card--more .card-more__box {padding-bottom: 56%;}.category-full--trailers {display: flex; flex-wrap: wrap; justify-content: space-between;}.category-full--trailers .card {width: 33.3%; margin-bottom: 1.5em;}.category-full--trailers .card .card__view {padding-bottom: 56%; margin-bottom: 0;}.items-line__more {display: inline-block; margin-left: 10px; cursor: pointer; padding: 0.5em 1em;}@media screen and (max-width: 767px) {.category-full--trailers .card {width: 50%;}}@media screen and (max-width: 400px) {.category-full--trailers .card {width: 100%;}}</style>');
+        Lampa.Template.add('trailer_style', '<style>.card.card--trailer, .card--more {width: 25.7em;}.card.card--trailer .card__view {padding-bottom: 56%; margin-bottom: 0;}.card.card--trailer .card__details {margin-top: 0.8em;}.card.card--trailer .card__play {position: absolute; top: 50%; transform: translateY(-50%); left: 1.5em; background: rgba(0,0,0,0.7); padding: 0.2em; width: 2.2em; height: 2.2em; border-radius: 1em; text-align: center; padding-top: 0.6em;}.card.card--trailer .card__play svg {width: 1.5em; height: 1.5em;}.card.card--trailer .card__rating {position: absolute; bottom: 0.5em; right: 0.5em; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 0.3em; font-size: 1.1em;}.card.card--trailer .card__trailer-lang {position: absolute; top: 0.5em; right: 0.5em; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 0.3em; text-transform: uppercase; font-size: 1.1em;}.card.card--trailer .card__release-date {position: absolute; top: 2em; right: 0.5em; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 0.3em; font-size: 1.1em;}.card--more .card-more__box {padding-bottom: 56%;}.category-full--trailers {display: flex; flex-wrap: wrap; justify-content: space-between;}.category-full--trailers .card {width: 33.3%; margin-bottom: 1.5em;}.category-full--trailers .card .card__view {padding-bottom: 56%; margin-bottom: 0;}.items-line__more {display: inline-block; margin-left: 10px; cursor: pointer; padding: 0.5em 1em;}@media screen and (max-width: 767px) {.category-full--trailers .card {width: 50%;}}@media screen and (max-width: 400px) {.category-full--trailers .card {width: 100%;}}</style>');
 
         function add() {
             console.log('Adding Trailers button to menu');
