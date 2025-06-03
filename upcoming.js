@@ -624,9 +624,6 @@
                         active = items.indexOf(card);
                         if (_this.onFocus) _this.onFocus(card_data);
                         scroll.update(card.render(), true);
-                        if (items.length && items.indexOf(card) === items.length - 1) {
-                            Lampa.Noty.show(Lampa.Lang.translate('trailers_last_movie').replace('[title]', card_data.title || card_data.name));
-                        }
                     };
                     scroll.append(card.render());
                     items.push(card);
@@ -656,7 +653,7 @@
 
         this.loadMore = function () {
             console.log('Line: Adding more button');
-            more = Lampa.Template.get('more').addClass('more--trailers');
+            more = Lampa.Template.get('more').addClass('more--trailers card--more');
             more.on('hover:enter', function () {
                 console.log('Line: More button entered');
                 Lampa.Activity.push({
@@ -683,7 +680,8 @@
                 },
                 right: function () {
                     if (Navigator.canmove('right')) Navigator.move('right');
-                    Lampa.Controller.toggle('items_line');
+                    else if (items.length > 1) Lampa.Controller.toggle('items_line');
+                    else Lampa.Controller.toggle('menu');
                 },
                 left: function () {
                     if (Navigator.canmove('left')) Navigator.move('left');
@@ -915,9 +913,6 @@
                     if (!light && !newlampa && scroll.isEnd()) {
                         _this.next();
                     }
-                    if (items.length && items.indexOf(card) === items.length - 1) {
-                        Lampa.Noty.show(Lampa.Lang.translate('trailers_last_movie').replace('[title]', card_data.title || card_data.name));
-                    }
                 };
                 body.append(card.render());
                 items.push(card);
@@ -1052,7 +1047,6 @@
         trailers_series: { ru: 'Сериалы', uk: 'Серіали', en: 'Series' },
         trailers_more: { ru: 'Ещё', uk: 'Ще', en: 'More' },
         trailers_popular_movies: { ru: 'Популярные фильмы', uk: 'Популярні фільми', en: 'Popular Movies' },
-        trailers_last_movie: { ru: 'Это последний фильм: [title]', uk: 'Це останній фільм: [title]', en: 'This is the last movie: [title]' },
         trailers_no_more_data: { ru: 'Больше нет данных для загрузки', uk: 'Більше немає даних для завантаження', en: 'No more data to load' }
     });
 
@@ -1068,7 +1062,7 @@
         Lampa.Component.add('trailers_main', Component$1);
         Lampa.Component.add('trailers_full', Component);
         Lampa.Template.add('trailer', '<div class="card selector card--trailer layer--render layer--visible"><div class="card__view"><img src="./img/img_load.svg" class="card__img" /><div class="card__promo"><div class="card__promo-text"><div><div class="card__title"></div></div><div class="card__details"></div></div><div class="card__play"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div></div>');
-        Lampa.Template.add('trailer_style', '<style>.card.card--trailer, .card-more--trailers.card--more {width: 25.7em;}.card.card--trailer .card__view {padding-bottom: 56%; margin-bottom: 0;}.card.card--trailer .card__details {margin-top: 0.8em;}.card.card--trailer .card__play {position: absolute; top: 50%; transform: translateY(-50%); left: 1.5em; background: rgba(0,0,0,0.7); padding: 0.2em; width: 2.2em; height: 2.2em; border-radius: 1em; text-align: center; padding-top: 0.6em;}.card.card--trailer .card__play svg {width: 0.9em; height: 1.1em;}.card.card--trailer .card__rating {position: absolute; bottom: 0.5em; right: 0.5em; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 0.3em; font-size: 1.1em;}.card.card--trailer .card__trailer-lang {position: absolute; top: 0.5em; right: 0.5em; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 0.3em; text-transform: uppercase; font-size: 1.1em;}.card.card--trailer .card__release-date {position: absolute; top: 2em; right: 0.5em; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 0.3em; font-size: 1.1em;}.card-more--trailers .card-more__box {padding-bottom: 56%;}.category-full--trailers {display: flex; flex-wrap: wrap; justify-content: space-between;}.category-full--trailers .card {width: 33.3%; margin-bottom: 1.5em;}.category-full--trailers .card .card__view {padding-bottom: 56%; margin-bottom: 0;}.items-line__more {display: inline-block; margin-left: 10px; cursor: pointer; padding: 0.5em 1em;}@media screen and (max-width: 767px) {.category-full--trailers .card {width: 50%;}}@media screen and (max-width: 400px) {.category-full--trailers .card {width: 100%;}}</style>');
+        Lampa.Template.add('trailer_style', '<style>.card.card--trailer, .card--more {width: 25.7em;}.card.card--trailer .card__view {padding-bottom: 56%; margin-bottom: 0;}.card.card--trailer .card__details {margin-top: 0.8em;}.card.card--trailer .card__play {position: absolute; top: 50%; transform: translateY(-50%); left: 1.5em; background: rgba(0,0,0,0.7); padding: 0.2em; width: 2.2em; height: 2.2em; border-radius: 1em; text-align: center; padding-top: 0.6em;}.card.card--trailer .card__play svg {width: 1.5em; height: 1.5em;}.card.card--trailer .card__rating {position: absolute; bottom: 0.5em; right: 0.5em; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 0.3em; font-size: 1.1em;}.card.card--trailer .card__trailer-lang {position: absolute; top: 0.5em; right: 0.5em; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 0.3em; text-transform: uppercase; font-size: 1.1em;}.card.card--trailer .card__release-date {position: absolute; top: 2em; right: 0.5em; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 0.3em; font-size: 1.1em;}.card--more .card-more__box {padding-bottom: 56%;}.category-full--trailers {display: flex; flex-wrap: wrap; justify-content: space-between;}.category-full--trailers .card {width: 33.3%; margin-bottom: 1.5em;}.category-full--trailers .card .card__view {padding-bottom: 56%; margin-bottom: 0;}.items-line__more {display: inline-block; margin-left: 10px; cursor: pointer; padding: 0.5em 1em;}@media screen and (max-width: 767px) {.category-full--trailers .card {width: 50%;}}@media screen and (max-width: 400px) {.category-full--trailers .card {width: 100%;}}</style>');
 
         function add() {
             console.log('Adding Trailers button to menu');
