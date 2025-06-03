@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-    // Функція для затримки виклику (debounce)
+    // Затримка виклику
     function debounce(func, wait) {
         var timeout;
         return function () {
@@ -18,264 +18,110 @@
     var trailerCache = {};
     var categoryCache = {};
 
-    // Отримання форматованої дати
+    // Форматування дати
     function getFormattedDate(daysAgo) {
         var today = new Date();
         if (daysAgo) today.setDate(today.getDate() - daysAgo);
-        var year = today.getFullYear();
-        var month = String(today.getMonth() + 1).padStart(2, '0');
-        var day = String(today.getDate()).padStart(2, '0');
-        return year + '-' + month + '-' + day;
+        return today.toISOString().split('T')[0];
     }
 
-    // Форматування дати у формат ДД.ММ.РРРР
+    // Формат ДД.ММ.РРРР
     function formatDateToDDMMYYYY(dateStr) {
         if (!dateStr) return '-';
         var date = new Date(dateStr);
-        var day = String(date.getDate()).padStart(2, '0');
-        var month = String(date.getMonth() + 1).padStart(2, '0');
-        var year = date.getFullYear();
-        return day + '.' + month + '.' + year;
+        return String(date.getDate()).padStart(2, '0') + '.' + String(date.getMonth() + 1).padStart(2, '0') + '.' + date.getFullYear();
     }
 
-    // Отримання регіону на основі мови інтерфейсу
+    // Регіон
     function getRegion() {
-        var lang = Lampa.Storage.get('language', 'uk');
-        return lang === 'uk' ? 'UA' : 'US';
+        var lang = Lampa.Storage.get('language', 'ru');
+        return lang === 'uk' ? 'UA' : lang === 'ru' ? 'RU' : 'US';
     }
 
-    // Отримання мови інтерфейсу
+    // Мова інтерфейсу
     function getInterfaceLanguage() {
-        return Lampa.Storage.get('language', 'uk');
+        return Lampa.Storage.get('language', 'ru');
     }
 
-    // Визначення пріоритетних мов для трейлерів
+    // Пріоритетні мови
     function getPreferredLanguage() {
-        var lang = Lampa.Storage.get('language', 'uk');
-        if (lang === 'uk') {
-            return ['uk', 'en'];
-        } else {
-            return ['en'];
-        }
+        var lang = Lampa.Storage.get('language', 'ru');
+        return lang === 'uk' ? ['uk', 'en'] : lang === 'ru' ? ['ru', 'en'] : ['en'];
     }
 
-    // Базова функція для виконання запитів до TMDB
+    // Універсальний запит до TMDB
     function get(url, page, resolve, reject) {
-        var full_url = tmdb_base_url + url + '&api_key=' + tmdb_api_key + '&page=' + page + '&language=' + getInterfaceLanguage();
-        network.silent(full_url, resolve, reject);
+        network.silent(tmdb_base_url + url + '&api_key=' + tmdb_api_key + '&page=' + page + '&language=' + getInterfaceLanguage(), resolve, reject);
     }
 
-    // Функція для отримання фільмів у прокаті
-    function getLocalMoviesInTheaters(page, resolve, reject) {
+    // Універсальна функція для отримання фільмів
+    function fetchMovies(page, resolve, reject, options) {
         var region = getRegion();
         var language = getInterfaceLanguage();
         var today = new Date();
-        var daysThreshold = 45;
-        var startDate = new Date(today.getTime() - daysThreshold * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        var url = options.url || `/discover/movie?sort_by=popularity.desc&vote_count.gte=1®ion=${region}&language=${language}&page=${page}`;
 
-        var now_playing_url = `${tmdb_base_url}/movie/now_playing?api_key=${tmdb_api_key}&language=${language}&page=${page}&region=${region}&primary_release_date.gte=${startDate}`;
-        network.silent(now_playing_url, function (data) {
-            if (data.results && data.results.length) {
-                var totalRequests = data.results.length;
-                var completedRequests = 0;
+        if (options.nowPlaying) {
+            var startDate = new Date(today.getTime() - 45 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            url = `/movie/now_playing?primary_release_date.gte=${startDate}`;
+        } else if (options.upcoming) {
+            var sixMonthsLater = getFormattedDate(-180);
+            url = `/discover/movie?primary_release_date.gte=${today.toISOString().split('T')[0]}&primary_release_date.lte=${sixMonthsLater}&sort_by=popularity.desc&vote_count.gte=1`;
+        }
 
-                function finalizeResults() {
-                    var filteredResults = data.results.filter(function (m) {
-                        if (m.release_details && m.release_details.results) {
-                            var regionRelease = m.release_details.results.find(function (r) {
-                                return r.iso_3166_1 === region;
-                            });
-                            if (regionRelease && regionRelease.release_dates && regionRelease.release_dates.length) {
-                                var releaseDate = new Date(regionRelease.release_dates[0].release_date);
-                                return releaseDate >= new Date(startDate) && releaseDate <= today;
-                            }
-                        }
-                        if (m.release_date) {
-                            var globalReleaseDate = new Date(m.release_date);
-                            return globalReleaseDate >= new Date(startDate) && globalReleaseDate <= today;
-                        }
-                        return false;
-                    });
-                    filteredResults.sort(function (a, b) {
-                        var dateA = a.release_details?.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date || a.release_date;
-                        var dateB = b.release_details?.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date || b.release_date;
-                        return new Date(dateB) - new Date(dateA);
-                    });
-                    data.results = filteredResults;
-                    resolve(data);
-                }
+        network.silent(tmdb_base_url + url + '&api_key=' + tmdb_api_key + '&language=' + language + '&page=' + page + '&region=' + region, function (data) {
+            if (!data.results || !data.results.length) return resolve(data);
 
-                data.results.forEach(function (movie) {
-                    var movie_id = movie.id;
-                    if (movie_id) {
-                        var release_url = `${tmdb_base_url}/movie/${movie_id}/release_dates?api_key=${tmdb_api_key}`;
-                        network.silent(release_url, function (release_data) {
-                            movie.release_details = release_data;
-                            completedRequests++;
-                            if (completedRequests === totalRequests) {
-                                finalizeResults();
-                            }
-                        }, function () {
-                            movie.release_details = { results: [] };
-                            completedRequests++;
-                            if (completedRequests === totalRequests) {
-                                finalizeResults();
-                            }
-                        });
-                    } else {
-                        movie.release_details = { results: [] };
-                        completedRequests++;
-                        if (completedRequests === totalRequests) {
-                            finalizeResults();
-                        }
+            var totalRequests = data.results.length;
+            var completedRequests = 0;
+
+            function finalizeResults() {
+                data.results = data.results.filter(function (m) {
+                    if (options.nowPlaying) {
+                        var releaseDate = new Date(m.release_details?.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date || m.release_date);
+                        return releaseDate >= new Date(startDate) && releaseDate <= today;
                     }
+                    return !!m.release_date || (m.release_details && m.release_details.results?.length);
+                }).sort(function (a, b) {
+                    var dateA = a.release_details?.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date || a.release_date;
+                    var dateB = b.release_details?.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date || b.release_date;
+                    return new Date(options.upcoming ? dateA : dateB) - new Date(options.upcoming ? dateB : dateA);
                 });
-            } else {
                 resolve(data);
             }
+
+            data.results.forEach(function (movie) {
+                var movie_id = movie.id;
+                if (movie_id) {
+                    network.silent(`${tmdb_base_url}/movie/${movie_id}/release_dates?api_key=${tmdb_api_key}`, function (release_data) {
+                        movie.release_details = release_data;
+                        if (++completedRequests === totalRequests) finalizeResults();
+                    }, function () {
+                        movie.release_details = { results: [] };
+                        if (++completedRequests === totalRequests) finalizeResults();
+                    });
+                } else {
+                    movie.release_details = { results: [] };
+                    if (++completedRequests === totalRequests) finalizeResults();
+                }
+            });
         }, reject);
     }
 
-    // Функція для отримання очікуваних фільмів
-    function getUpcomingMovies(page, resolve, reject) {
-        var region = getRegion();
-        var today = getFormattedDate(0);
-        var sixMonthsLater = getFormattedDate(-180);
-        var language = getInterfaceLanguage();
-
-        var upcoming_url = `${tmdb_base_url}/discover/movie?api_key=${tmdb_api_key}&language=${language}&page=${page}&region=${region}&primary_release_date.gte=${today}&primary_release_date.lte=${sixMonthsLater}&sort_by=popularity.desc&vote_count.gte=1`;
-        network.silent(upcoming_url, function (data) {
-            if (data.results && data.results.length) {
-                var totalRequests = data.results.length;
-                var completedRequests = 0;
-
-                function finalizeResults() {
-                    var filteredResults = data.results.filter(function (m) {
-                        if (m.release_details && m.release_details.results) {
-                            var regionRelease = m.release_details.results.find(function (r) {
-                                return r.iso_3166_1 === region;
-                            });
-                            if (regionRelease && regionRelease.release_dates && regionRelease.release_dates.length) {
-                                return true;
-                            }
-                        }
-                        return !!m.release_date;
-                    });
-                    filteredResults.sort(function (a, b) {
-                        var dateA = a.release_details?.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date || a.release_date;
-                        var dateB = b.release_details?.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date || b.release_date;
-                        return new Date(dateA) - new Date(dateB);
-                    });
-                    data.results = filteredResults;
-                    resolve(data);
-                }
-
-                data.results.forEach(function (movie) {
-                    var movie_id = movie.id;
-                    if (movie_id) {
-                        var release_url = `${tmdb_base_url}/movie/${movie_id}/release_dates?api_key=${tmdb_api_key}`;
-                        network.silent(release_url, function (release_data) {
-                            movie.release_details = release_data;
-                            completedRequests++;
-                            if (completedRequests === totalRequests) {
-                                finalizeResults();
-                            }
-                        }, function () {
-                            movie.release_details = { results: [] };
-                            completedRequests++;
-                            if (completedRequests === totalRequests) {
-                                finalizeResults();
-                            }
-                        });
-                    } else {
-                        movie.release_details = { results: [] };
-                        completedRequests++;
-                        if (completedRequests === totalRequests) {
-                            finalizeResults();
-                        }
-                    }
-                });
-            } else {
-                resolve(data);
-            }
-        }, reject);
-    }
-
-    // Функція для отримання популярних фільмів
-    function getPopularMovies(page, resolve, reject) {
-        var region = getRegion();
-        var language = getInterfaceLanguage();
-        var popular_url = `${tmdb_base_url}/discover/movie?api_key=${tmdb_api_key}&language=${language}&page=${page}&sort_by=popularity.desc&vote_count.gte=1`;
-        network.silent(popular_url, function (data) {
-            if (data.results && data.results.length) {
-                var totalRequests = data.results.length;
-                var completedRequests = 0;
-
-                function finalizeResults() {
-                    var filteredResults = data.results.filter(function (m) {
-                        return !!m.release_date || (m.release_details && m.release_details.results && m.release_details.results.length);
-                    });
-                    filteredResults.sort(function (a, b) {
-                        var dateA = a.release_details?.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date || a.release_date;
-                        var dateB = b.release_details?.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date || b.release_date;
-                        return new Date(dateB) - new Date(dateA);
-                    });
-                    data.results = filteredResults;
-                    resolve(data);
-                }
-
-                data.results.forEach(function (movie) {
-                    var movie_id = movie.id;
-                    if (movie_id) {
-                        var release_url = `${tmdb_base_url}/movie/${movie_id}/release_dates?api_key=${tmdb_api_key}`;
-                        network.silent(release_url, function (release_data) {
-                            movie.release_details = release_data;
-                            completedRequests++;
-                            if (completedRequests === totalRequests) {
-                                finalizeResults();
-                            }
-                        }, function () {
-                            movie.release_details = { results: [] };
-                            completedRequests++;
-                            if (completedRequests === totalRequests) {
-                                finalizeResults();
-                            }
-                        });
-                    } else {
-                        movie.release_details = { results: [] };
-                        completedRequests++;
-                        if (completedRequests === totalRequests) {
-                            finalizeResults();
-                        }
-                    }
-                });
-            } else {
-                resolve(data);
-            }
-        }, reject);
-    }
-
-    // Головна функція для завантаження всіх категорій
+    // Головна функція
     function main(oncomplite, onerror) {
         var status = new Lampa.Status(6);
         status.onComplite = function () {
             var fulldata = [];
             var keys = ['popular_movies', 'in_theaters', 'upcoming_movies', 'popular_series', 'new_series_seasons', 'upcoming_series'];
             keys.forEach(function (key) {
-                if (status.data[key] && status.data[key].results && status.data[key].results.length) {
-                    categoryCache[key] = {
-                        results: status.data[key].results,
-                        timestamp: Date.now()
-                    };
+                if (status.data[key]?.results?.length) {
+                    categoryCache[key] = { results: status.data[key].results, timestamp: Date.now() };
                     Lampa.Storage.set('trailer_category_cache_' + key, categoryCache[key]);
                     fulldata.push(status.data[key]);
                 }
             });
-            if (fulldata.length) {
-                oncomplite(fulldata);
-            } else {
-                onerror();
-            }
+            fulldata.length ? oncomplite(fulldata) : onerror();
         };
 
         var append = function (title, name, url, json) {
@@ -290,445 +136,132 @@
         var threeMonthsAgo = getFormattedDate(90);
         var threeMonthsLater = getFormattedDate(-90);
 
-        // Запит для популярних фільмів
-        getPopularMovies(1, function (json) {
+        fetchMovies(1, function (json) {
             append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/discover/movie?sort_by=popularity.desc', { results: json.results || [] });
         }, function () {
             append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/discover/movie?sort_by=popularity.desc', { results: [] });
-        });
+        }, {});
 
-        // Запит для фільмів у прокаті
-        getLocalMoviesInTheaters(1, function (json) {
+        fetchMovies(1, function (json) {
             append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/movie/now_playing', { results: json.results || [] });
         }, function () {
             append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/movie/now_playing', { results: [] });
-        });
+        }, { nowPlaying: true });
 
-        // Запит для очікуваних фільмів
-        getUpcomingMovies(1, function (json) {
+        fetchMovies(1, function (json) {
             append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/discover/movie?primary_release_date.gte=' + today + '&primary_release_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc', { results: json.results || [] });
         }, function () {
             append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/discover/movie?primary_release_date.gte=' + today + '&primary_release_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc', { results: [] });
-        });
+        }, { upcoming: true });
 
-        // Запит для популярних серіалів
         get('/discover/tv?sort_by=popularity.desc&vote_count.gte=1', 1, function (json) {
-            var filteredResults = json.results ? json.results.filter(function (item) {
+            var filteredResults = json.results?.filter(function (item) {
                 return !item.genre_ids.includes(99) && !item.genre_ids.includes(10763) && !item.genre_ids.includes(10764);
-            }) : [];
+            }) || [];
             append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', '/discover/tv?sort_by=popularity.desc', { results: filteredResults });
         }, function () {
             append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', '/discover/tv?sort_by=popularity.desc', { results: [] });
         });
 
-        // Запит для нових серіалів і сезонів
         get('/discover/tv?air_date.gte=' + threeMonthsAgo + '&air_date.lte=' + threeMonthsLater + '&sort_by=popularity.desc&vote_count.gte=1', 1, function (json) {
-            if (json.results) {
-                json.results.forEach(function (series) {
-                    series.release_details = { first_air_date: series.first_air_date };
-                });
-            }
+            if (json.results) json.results.forEach(function (series) { series.release_details = { first_air_date: series.first_air_date }; });
             append(Lampa.Lang.translate('trailers_new_series_seasons'), 'new_series_seasons', '/discover/tv?air_date.gte=' + threeMonthsAgo + '&air_date.lte=' + threeMonthsLater + '&sort_by=popularity.desc', { results: json.results || [] });
         }, function () {
             append(Lampa.Lang.translate('trailers_new_series_seasons'), 'new_series_seasons', '/discover/tv?air_date.gte=' + threeMonthsAgo + '&air_date.lte=' + threeMonthsLater + '&sort_by=popularity.desc', { results: [] });
         });
 
-        // Запит для очікуваних серіалів
         get('/discover/tv?first_air_date.gte=' + today + '&first_air_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc&vote_count.gte=1', 1, function (json) {
-            if (json.results) {
-                json.results.forEach(function (series) {
-                    series.release_details = { first_air_date: series.first_air_date };
-                });
-            }
+            if (json.results) json.results.forEach(function (series) { series.release_details = { first_air_date: series.first_air_date }; });
             append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/discover/tv?first_air_date.gte=' + today + '&first_air_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc', { results: json.results || [] });
         }, function () {
             append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/discover/tv?first_air_date.gte=' + today + '&first_air_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc', { results: [] });
         });
     }
 
-    // Функція для повного завантаження категорії
+    // Повне завантаження категорії
     function full(params, oncomplite, onerror) {
-        if (params.type === 'in_theaters') {
-            var region = getRegion();
-            var today = new Date();
-            var daysThreshold = 45;
-            var startDate = new Date(today.getTime() - daysThreshold * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-            var targetCards = 20;
-            var accumulatedResults = [];
-            var loadedPages = new Set();
-            var currentPage = 1;
-            var maxPages = 30;
-            var totalPagesFromFirstResponse = 0;
+        var targetCards = 20;
+        var cachedData = categoryCache[params.type] || Lampa.Storage.get('trailer_category_cache_' + params.type, null);
 
-            var cachedData = categoryCache['in_theaters'] || Lampa.Storage.get('trailer_category_cache_in_theaters', null);
-            if (cachedData && cachedData.results && cachedData.results.length > 0) {
-                accumulatedResults = cachedData.results;
-                var startIdx = (params.page - 1) * targetCards;
-                var endIdx = Math.min(params.page * targetCards, accumulatedResults.length);
-                var pageResults = accumulatedResults.slice(startIdx, endIdx);
-                var result = {
-                    dates: { maximum: today.toISOString().split('T')[0], minimum: startDate },
-                    page: params.page,
-                    results: pageResults,
-                    total_pages: Math.ceil(accumulatedResults.length / targetCards) || 1,
-                    total_results: accumulatedResults.length
-                };
-                if (accumulatedResults.length >= startIdx + 1 && pageResults.length > 0) {
-                    oncomplite(result);
-                    return;
-                }
-                currentPage = Math.ceil(accumulatedResults.length / targetCards) + 1;
-            }
-
-            function fetchNextPage() {
-                if (loadedPages.has(currentPage) || currentPage > maxPages || (totalPagesFromFirstResponse && currentPage > totalPagesFromFirstResponse)) {
-                    finalizeResults();
-                    return;
-                }
-
-                loadedPages.add(currentPage);
-                getLocalMoviesInTheaters(currentPage, function (result) {
-                    if (result && result.results && result.results.length) {
-                        accumulatedResults = accumulatedResults.concat(result.results);
-                        if (currentPage === 1) {
-                            totalPagesFromFirstResponse = result.total_pages || maxPages;
-                        }
-                        var startIdx = (params.page - 1) * targetCards;
-                        var endIdx = Math.min(params.page * targetCards, accumulatedResults.length);
-                        if (accumulatedResults.length >= startIdx + 1 || currentPage >= totalPagesFromFirstResponse || currentPage >= maxPages) {
-                            finalizeResults();
-                        } else {
-                            currentPage++;
-                            fetchNextPage();
-                        }
-                    } else {
-                        if (currentPage < totalPagesFromFirstResponse && currentPage < maxPages) {
-                            currentPage++;
-                            fetchNextPage();
-                        } else {
-                            finalizeResults();
-                        }
-                    }
-                }, onerror);
-            }
-
-            function finalizeResults() {
-                var finalResults = [...new Set(accumulatedResults.map(JSON.stringify))].map(JSON.parse);
-                finalResults.sort(function (a, b) {
-                    var dateA = a.release_details?.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date || a.release_date;
-                    var dateB = b.release_details?.results?.find(function (r) { return r.iso_3166_1 === region; })?.release_dates[0]?.release_date || b.release_date;
-                    return new Date(dateB) - new Date(dateA);
-                });
-                var startIdx = (params.page - 1) * targetCards;
-                var endIdx = Math.min(params.page * targetCards, finalResults.length);
-                var pageResults = finalResults.slice(startIdx, endIdx);
-                var result = {
-                    dates: { maximum: today.toISOString().split('T')[0], minimum: startDate },
-                    page: params.page,
-                    results: pageResults.length > 0 ? pageResults : finalResults.slice(0, targetCards),
-                    total_pages: Math.ceil(finalResults.length / targetCards) || 1,
-                    total_results: finalResults.length
-                };
-                categoryCache['in_theaters'] = {
-                    results: finalResults,
-                    timestamp: Date.now()
-                };
-                Lampa.Storage.set('trailer_category_cache_in_theaters', categoryCache['in_theaters']);
-                oncomplite(result);
-            }
-
-            fetchNextPage();
-        } else if (params.type === 'upcoming_movies') {
-            var today = getFormattedDate(0);
-            var sixMonthsLater = getFormattedDate(-180);
-            var targetCards = 20;
-
-            var cachedData = categoryCache['upcoming_movies'] || Lampa.Storage.get('trailer_category_cache_upcoming_movies', null);
-            if (cachedData && cachedData.results && cachedData.results.length > 0) {
-                var filteredResults = cachedData.results.filter(function (m) {
-                    if (m.release_details && m.release_details.results) {
-                        var regionRelease = m.release_details.results.find(function (r) {
-                            return r.iso_3166_1 === getRegion();
-                        });
-                        if (regionRelease && regionRelease.release_dates && regionRelease.release_dates.length) {
-                            return true;
-                        }
-                    }
-                    return !!m.release_date;
-                });
-                var startIdx = (params.page - 1) * targetCards;
-                var endIdx = Math.min(params.page * targetCards, filteredResults.length);
-                var pageResults = filteredResults.slice(startIdx, endIdx);
-                var result = {
+        if (cachedData?.results?.length) {
+            var filteredResults = cachedData.results.filter(function (m) {
+                return params.type.includes('series') ? true : !!m.release_date || (m.release_details?.results?.length);
+            });
+            var startIdx = (params.page - 1) * targetCards;
+            var pageResults = filteredResults.slice(startIdx, startIdx + targetCards);
+            if (pageResults.length) {
+                return oncomplite({
                     page: params.page,
                     results: pageResults,
                     total_pages: Math.ceil(filteredResults.length / targetCards) || 1,
                     total_results: filteredResults.length
-                };
-                if (pageResults.length > 0) {
-                    oncomplite(result);
-                    return;
-                }
-            }
-
-            getUpcomingMovies(params.page, function (result) {
-                if (result && result.results && result.results.length) {
-                    var filteredResults = result.results.filter(function (m) {
-                        if (m.release_details && m.release_details.results) {
-                            var regionRelease = m.release_details.results.find(function (r) {
-                                return r.iso_3166_1 === getRegion();
-                            });
-                            if (regionRelease && regionRelease.release_dates && regionRelease.release_dates.length) {
-                                return true;
-                            }
-                        }
-                        return !!m.release_date;
-                    });
-                    result.results = filteredResults;
-                    result.total_results = filteredResults.length;
-                    result.total_pages = Math.ceil(filteredResults.length / targetCards) || 1;
-
-                    if (params.page === 1) {
-                        categoryCache['upcoming_movies'] = {
-                            results: filteredResults,
-                            timestamp: Date.now()
-                        };
-                        Lampa.Storage.set('trailer_category_cache_upcoming_movies', categoryCache['upcoming_movies']);
-                    } else {
-                        var existingCache = categoryCache['upcoming_movies'] || Lampa.Storage.get('trailer_category_cache_upcoming_movies', { results: [] });
-                        existingCache.results = existingCache.results.concat(filteredResults);
-                        existingCache.results = [...new Set(existingCache.results.map(JSON.stringify))].map(JSON.parse);
-                        categoryCache['upcoming_movies'] = existingCache;
-                        Lampa.Storage.set('trailer_category_cache_upcoming_movies', existingCache);
-                    }
-                    oncomplite(result);
-                } else {
-                    onerror();
-                }
-            }, onerror);
-        } else if (params.type === 'popular_movies') {
-            var targetCards = 20;
-
-            var cachedData = categoryCache['popular_movies'] || Lampa.Storage.get('trailer_category_cache_popular_movies', null);
-            if (cachedData && cachedData.results && cachedData.results.length > 0) {
-                var filteredResults = cachedData.results.filter(function (m) {
-                    return !!m.release_date || (m.release_details && m.release_details.results && m.release_details.results.length);
                 });
-                var startIdx = (params.page - 1) * targetCards;
-                var endIdx = Math.min(params.page * targetCards, filteredResults.length);
-                var pageResults = filteredResults.slice(startIdx, endIdx);
-                var result = {
-                    page: params.page,
-                    results: pageResults,
-                    total_pages: Math.ceil(filteredResults.length / targetCards) || 1,
-                    total_results: filteredResults.length
-                };
-                if (pageResults.length > 0) {
-                    oncomplite(result);
-                    return;
-                }
             }
-
-            getPopularMovies(params.page, function (result) {
-                if (result && result.results && result.results.length) {
-                    var filteredResults = result.results.filter(function (m) {
-                        return !!m.release_date || (m.release_details && m.release_details.results && m.release_details.results.length);
-                    });
-                    result.results = filteredResults;
-                    result.total_results = filteredResults.length;
-                    result.total_pages = Math.ceil(filteredResults.length / targetCards) || 1;
-
-                    if (params.page === 1) {
-                        categoryCache['popular_movies'] = {
-                            results: filteredResults,
-                            timestamp: Date.now()
-                        };
-                        Lampa.Storage.set('trailer_category_cache_popular_movies', categoryCache['popular_movies']);
-                    } else {
-                        var existingCache = categoryCache['popular_movies'] || Lampa.Storage.get('trailer_category_cache_popular_movies', { results: [] });
-                        existingCache.results = existingCache.results.concat(filteredResults);
-                        existingCache.results = [...new Set(existingCache.results.map(JSON.stringify))].map(JSON.parse);
-                        categoryCache['popular_movies'] = existingCache;
-                        Lampa.Storage.set('trailer_category_cache_popular_movies', existingCache);
-                    }
-                    oncomplite(result);
-                } else {
-                    onerror();
-                }
-            }, onerror);
-        } else if (params.type === 'new_series_seasons') {
-            var threeMonthsAgo = getFormattedDate(90);
-            var threeMonthsLater = getFormattedDate(-90);
-
-            var cachedData = categoryCache['new_series_seasons'] || Lampa.Storage.get('trailer_category_cache_new_series_seasons', null);
-            if (cachedData && cachedData.results) {
-                var targetCards = 20;
-                var startIdx = (params.page - 1) * targetCards;
-                var endIdx = params.page * targetCards;
-                var result = {
-                    page: params.page,
-                    results: cachedData.results.slice(startIdx, endIdx),
-                    total_pages: Math.ceil(cachedData.results.length / targetCards),
-                    total_results: cachedData.results.length
-                };
-                if (result.results.length > 0) {
-                    oncomplite(result);
-                    return;
-                }
-            }
-
-            get('/discover/tv?air_date.gte=' + threeMonthsAgo + '&air_date.lte=' + threeMonthsLater + '&sort_by=popularity.desc&vote_count.gte=1', params.page, function (result) {
-                if (result && result.results && result.results.length) {
-                    result.results.forEach(function (series) {
-                        series.release_details = { first_air_date: series.first_air_date };
-                    });
-                    if (params.page === 1) {
-                        categoryCache['new_series_seasons'] = {
-                            results: result.results,
-                            timestamp: Date.now()
-                        };
-                        Lampa.Storage.set('trailer_category_cache_new_series_seasons', categoryCache['new_series_seasons']);
-                    } else {
-                        var existingCache = categoryCache['new_series_seasons'] || Lampa.Storage.get('trailer_category_cache_new_series_seasons', { results: [] });
-                        existingCache.results = existingCache.results.concat(result.results);
-                        categoryCache['new_series_seasons'] = existingCache;
-                        Lampa.Storage.set('trailer_category_cache_new_series_seasons', existingCache);
-                    }
-                    oncomplite(result);
-                } else {
-                    onerror();
-                }
-            }, onerror);
-        } else if (params.type === 'upcoming_series') {
-            var today = getFormattedDate(0);
-            var sixMonthsLater = getFormattedDate(-180);
-
-            var cachedData = categoryCache['upcoming_series'] || Lampa.Storage.get('trailer_category_cache_upcoming_series', null);
-            if (cachedData && cachedData.results) {
-                var targetCards = 20;
-                var startIdx = (params.page - 1) * targetCards;
-                var endIdx = params.page * targetCards;
-                var result = {
-                    page: params.page,
-                    results: cachedData.results.slice(startIdx, endIdx),
-                    total_pages: Math.ceil(cachedData.results.length / targetCards),
-                    total_results: cachedData.results.length
-                };
-                if (result.results.length > 0) {
-                    oncomplite(result);
-                    return;
-                }
-            }
-
-            get('/discover/tv?first_air_date.gte=' + today + '&first_air_date.lte=' + sixMonthsLater + '&sort_by=popularity.desc&vote_count.gte=1', params.page, function (result) {
-                if (result && result.results && result.results.length) {
-                    result.results.forEach(function (series) {
-                        series.release_details = { first_air_date: series.first_air_date };
-                    });
-                    if (params.page === 1) {
-                        categoryCache['upcoming_series'] = {
-                            results: result.results,
-                            timestamp: Date.now()
-                        };
-                        Lampa.Storage.set('trailer_category_cache_upcoming_series', categoryCache['upcoming_series']);
-                    } else {
-                        var existingCache = categoryCache['upcoming_series'] || Lampa.Storage.get('trailer_category_cache_upcoming_series', { results: [] });
-                        existingCache.results = existingCache.results.concat(result.results);
-                        categoryCache['upcoming_series'] = existingCache;
-                        Lampa.Storage.set('trailer_category_cache_upcoming_series', existingCache);
-                    }
-                    oncomplite(result);
-                } else {
-                    onerror();
-                }
-            }, onerror);
-        } else {
-            var cachedData = categoryCache[params.type] || Lampa.Storage.get('trailer_category_cache_' + params.type, null);
-            if (cachedData && cachedData.results) {
-                var targetCards = 20;
-                var startIdx = (params.page - 1) * targetCards;
-                var endIdx = params.page * targetCards;
-                var result = {
-                    page: params.page,
-                    results: cachedData.results.slice(startIdx, endIdx),
-                    total_pages: Math.ceil(cachedData.results.length / targetCards),
-                    total_results: cachedData.results.length
-                };
-                if (result.results.length > 0) {
-                    oncomplite(result);
-                    return;
-                }
-            }
-
-            get(params.url, params.page, function (result) {
-                if (result && result.results && result.results.length) {
-                    if (params.page === 1) {
-                        categoryCache[params.type] = {
-                            results: result.results,
-                            timestamp: Date.now()
-                        };
-                        Lampa.Storage.set('trailer_category_cache_' + params.type, categoryCache[params.type]);
-                    } else {
-                        var existingCache = categoryCache[params.type] || Lampa.Storage.get('trailer_category_cache_' + params.type, { results: [] });
-                        existingCache.results = existingCache.results.concat(result.results);
-                        categoryCache[params.type] = existingCache;
-                        Lampa.Storage.set('trailer_category_cache_' + params.type, existingCache);
-                    }
-                    oncomplite(result);
-                } else {
-                    onerror();
-                }
-            }, onerror);
         }
+
+        var fetchFunction = params.type.includes('series') ? get : fetchMovies;
+        var fetchOptions = {
+            nowPlaying: params.type === 'in_theaters',
+            upcoming: params.type === 'upcoming_movies'
+        };
+
+        fetchFunction(params.url || '/discover/' + (params.type.includes('series') ? 'tv' : 'movie'), params.page, function (result) {
+            if (!result?.results?.length) return onerror();
+
+            if (params.type.includes('series')) {
+                result.results.forEach(function (series) {
+                    series.release_details = { first_air_date: series.first_air_date };
+                });
+            }
+
+            var filteredResults = result.results.filter(function (m) {
+                return params.type.includes('series') ? true : !!m.release_date || (m.release_details?.results?.length);
+            });
+
+            result.results = filteredResults;
+            result.total_results = filteredResults.length;
+            result.total_pages = Math.ceil(filteredResults.length / targetCards) || 1;
+
+            if (params.page === 1) {
+                categoryCache[params.type] = { results: filteredResults, timestamp: Date.now() };
+            } else {
+                var existingCache = categoryCache[params.type] || { results: [] };
+                existingCache.results = [...new Set(existingCache.results.concat(filteredResults).map(JSON.stringify))].map(JSON.parse);
+                categoryCache[params.type] = existingCache;
+            }
+            Lampa.Storage.set('trailer_category_cache_' + params.type, categoryCache[params.type]);
+            oncomplite(result);
+        }, onerror, fetchOptions);
     }
 
-    // Функція для отримання трейлерів
+    // Отримання трейлерів
     function videos(card, oncomplite, onerror) {
         var type = card.name ? 'tv' : 'movie';
         var id = card.id;
         var cacheKey = type + '_' + id;
 
-        if (trailerCache[cacheKey]) {
-            oncomplite(trailerCache[cacheKey]);
-            return;
-        }
+        if (trailerCache[cacheKey]) return oncomplite(trailerCache[cacheKey]);
 
         var url = tmdb_base_url + '/' + type + '/' + id + '/videos?api_key=' + tmdb_api_key;
         var preferredLangs = getPreferredLanguage();
         var attempts = 0;
-        var maxAttempts = preferredLangs.length + 1;
         var tmdbTrailers = [];
 
         function tryFetch(langIndex) {
-            if (attempts >= maxAttempts) {
-                var englishTrailer = tmdbTrailers.find(function (v) {
-                    return v.iso_639_1 === 'en';
-                });
-                if (englishTrailer) {
-                    trailerCache[cacheKey] = { id: id, results: [englishTrailer] };
-                    oncomplite({ id: id, results: [englishTrailer] });
-                } else {
-                    trailerCache[cacheKey] = { id: id, results: [] };
-                    onerror();
-                }
-                return;
+            if (attempts >= preferredLangs.length + 1) {
+                var englishTrailer = tmdbTrailers.find(function (v) { return v.iso_639_1 === 'en'; });
+                trailerCache[cacheKey] = { id: id, results: englishTrailer ? [englishTrailer] : [] };
+                return englishTrailer ? oncomplite(trailerCache[cacheKey]) : onerror();
             }
 
-            var fetchUrl = url;
-            if (langIndex < preferredLangs.length) {
-                fetchUrl += '&language=' + preferredLangs[langIndex];
-            }
+            var fetchUrl = langIndex < preferredLangs.length ? url + '&language=' + preferredLangs[langIndex] : url;
             network.silent(fetchUrl, function (result) {
-                var trailers = result.results ? result.results.filter(function (v) {
-                    return v.type === 'Trailer';
-                }) : [];
+                var trailers = result.results?.filter(function (v) { return v.type === 'Trailer'; }) || [];
                 tmdbTrailers = tmdbTrailers.concat(trailers);
-                var preferredTrailer = trailers.find(function (v) {
-                    return preferredLangs.includes(v.iso_639_1);
-                });
+                var preferredTrailer = trailers.find(function (v) { return preferredLangs.includes(v.iso_639_1); });
                 if (preferredTrailer) {
                     trailerCache[cacheKey] = { id: id, results: [preferredTrailer] };
-                    oncomplite({ id: id, results: [preferredTrailer] });
+                    oncomplite(trailerCache[cacheKey]);
                 } else {
                     attempts++;
                     tryFetch(langIndex + 1);
@@ -752,15 +285,9 @@
         });
     }
 
-    var Api = {
-        get: get,
-        main: main,
-        full: full,
-        videos: videos,
-        clear: clear
-    };
+    var Api = { get: get, main: main, full: full, videos: videos, clear: clear };
 
-    // Клас для створення картки трейлера
+    // Картка трейлера
     function Trailer(data, params) {
         this.build = function () {
             this.card = Lampa.Template.get('trailer', data);
@@ -775,13 +302,7 @@
                 var title = data.title || data.name || data.original_title || data.original_name;
                 this.card.find('.card__title').text(title);
                 this.card.find('.card__details').text(create + ' - ' + (data.original_title || data.original_name));
-                if (this.rating !== '-') {
-                    this.card.find('.card__view').append('<div class="card__rating">' + this.rating + '</div>');
-                } else {
-                    this.card.find('.card__view').append('<div class="card__rating">-</div>');
-                }
-                this.card.find('.card__view').append('<div class="card__trailer-lang"></div>');
-                this.card.find('.card__view').append('<div class="card__release-date"></div>');
+                this.card.find('.card__view').append('<div class="card__rating">' + this.rating + '</div><div class="card__trailer-lang"></div><div class="card__release-date"></div>');
             } else {
                 this.card.find('.card__title').text(data.name);
                 this.card.find('.card__details').remove();
@@ -789,77 +310,44 @@
         };
 
         this.cardImgBackground = function (card_data) {
-            if (Lampa.Storage.field('background')) {
-                if (Lampa.Storage.get('background_type', 'complex') === 'poster' && window.innerWidth > 790) {
-                    return card_data.backdrop_path ? Lampa.TMDB.image(card_data.backdrop_path, 'original') : this.is_youtube ? 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg' : '';
-                }
-                return card_data.backdrop_path ? Lampa.TMDB.image(card_data.backdrop_path, 'w500') : this.is_youtube ? 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg' : '';
-            }
-            return '';
+            if (!Lampa.Storage.field('background')) return '';
+            var path = card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, Lampa.Storage.get('background_type', 'complex') === 'poster' && window.innerWidth > 790 ? 'original' : 'w500') : '';
+            return path || (this.is_youtube ? 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg' : '');
         };
 
         this.image = function () {
             var _this = this;
-            this.img.onload = function () {
-                _this.card.addClass('card--loaded');
-            };
-            this.img.onerror = function () {
-                _this.img.src = './img/img_broken.svg';
-            };
+            this.img.onload = function () { _this.card.addClass('card--loaded'); };
+            this.img.onerror = function () { _this.img.src = './img/img_broken.svg'; };
         };
 
         this.loadTrailerInfo = function () {
             var _this = this;
-            if (!this.is_youtube && !this.trailer_lang) {
-                Api.videos(data, function (videos) {
-                    var trailers = videos.results ? videos.results.filter(function (v) {
-                        return v.type === 'Trailer';
-                    }) : [];
-                    var preferredLangs = getPreferredLanguage();
-                    var video = trailers.find(function (v) {
-                        return preferredLangs.includes(v.iso_639_1);
-                    }) || trailers[0];
-                    _this.trailer_lang = video ? video.iso_639_1 : '-';
-                    if (_this.trailer_lang !== '-') {
-                        _this.card.find('.card__trailer-lang').text(_this.trailer_lang.toUpperCase());
-                    } else {
-                        _this.card.find('.card__trailer-lang').text('-');
-                    }
+            if (this.is_youtube || this.trailer_lang) return;
 
-                    if (params.type === 'popular_movies' || params.type === 'in_theaters' || params.type === 'upcoming_movies') {
-                        if (data.release_details && data.release_details.results) {
-                            var region = getRegion();
-                            var releaseInfo = data.release_details.results.find(function (r) {
-                                return r.iso_3166_1 === region;
-                            });
-                            if (releaseInfo && releaseInfo.release_dates && releaseInfo.release_dates.length) {
-                                var releaseDate = releaseInfo.release_dates[0].release_date;
-                                _this.release_date = formatDateToDDMMYYYY(releaseDate);
-                            } else if (data.release_date) {
-                                _this.release_date = formatDateToDDMMYYYY(data.release_date);
-                            }
-                        } else if (data.release_date) {
-                            _this.release_date = formatDateToDDMMYYYY(data.release_date);
-                        }
-                    } else if (params.type === 'new_series_seasons' || params.type === 'upcoming_series') {
-                        if (data.release_details && data.release_details.first_air_date) {
-                            _this.release_date = formatDateToDDMMYYYY(data.release_details.first_air_date);
-                        }
-                    }
-                    _this.card.find('.card__release-date').text(_this.release_date);
-                }, function () {
-                    _this.trailer_lang = '-';
-                    _this.card.find('.card__trailer-lang').text('-');
-                    _this.card.find('.card__release-date').text('-');
-                });
-            }
+            Api.videos(data, function (videos) {
+                var trailers = videos.results?.filter(function (v) { return v.type === 'Trailer'; }) || [];
+                var video = trailers.find(function (v) { return getPreferredLanguage().includes(v.iso_639_1); }) || trailers[0];
+                _this.trailer_lang = video ? video.iso_639_1 : '-';
+                _this.card.find('.card__trailer-lang').text(_this.trailer_lang === '-' ? '-' : _this.trailer_lang.toUpperCase());
+
+                if (params.type === 'popular_movies' || params.type === 'in_theaters' || params.type === 'upcoming_movies') {
+                    var region = getRegion();
+                    var releaseInfo = data.release_details?.results?.find(function (r) { return r.iso_3166_1 === region; });
+                    _this.release_date = formatDateToDDMMYYYY(releaseInfo?.release_dates[0]?.release_date || data.release_date);
+                } else if (params.type === 'new_series_seasons' || params.type === 'upcoming_series') {
+                    _this.release_date = formatDateToDDMMYYYY(data.release_details?.first_air_date);
+                }
+                _this.card.find('.card__release-date').text(_this.release_date);
+            }, function () {
+                _this.trailer_lang = '-';
+                _this.card.find('.card__trailer-lang').text('-');
+                _this.card.find('.card__release-date').text('-');
+            });
         };
 
         this.play = function (id) {
-            if (!id) {
-                Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
-                return;
-            }
+            if (!id) return Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
             try {
                 if (Lampa.Manifest.app_digital >= 183) {
                     var item = {
@@ -888,121 +376,82 @@
                 _this2.onFocus(e.target, data, is_mouse);
                 _this2.loadTrailerInfo();
             }).on('hover:enter', function () {
-                if (_this2.is_youtube) {
-                    _this2.play(data.id);
-                } else {
-                    Api.videos(data, function (videos) {
-                        var preferredLangs = getPreferredLanguage();
-                        var trailers = videos.results ? videos.results.filter(function (v) {
-                            return v.type === 'Trailer';
-                        }) : [];
-                        var video = trailers.find(function (v) {
-                            return preferredLangs.includes(v.iso_639_1);
-                        }) || trailers[0];
-                        if (video && video.key) {
-                            if (preferredLangs[0] === 'uk' && video.iso_639_1 !== 'uk' && video.iso_639_1 !== 'en') {
-                                Lampa.Noty.show(Lampa.Lang.translate('trailers_no_ua_trailer'));
-                            }
-                            _this2.play(video.key);
-                        } else {
-                            Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
-                        }
-                    }, function () {
+                if (_this2.is_youtube) return _this2.play(data.id);
+                Api.videos(data, function (videos) {
+                    var preferredLangs = getPreferredLanguage();
+                    var video = videos.results?.filter(function (v) { return v.type === 'Trailer'; }).find(function (v) { return preferredLangs.includes(v.iso_639_1); }) || videos.results[0];
+                    if (video?.key) {
+                        if (preferredLangs[0] === 'uk' && !['uk', 'en'].includes(video.iso_639_1)) Lampa.Noty.show(Lampa.Lang.translate('trailers_no_ua_trailer'));
+                        else if (preferredLangs[0] === 'ru' && !['ru', 'en'].includes(video.iso_639_1)) Lampa.Noty.show(Lampa.Lang.translate('trailers_no_ru_trailer'));
+                        _this2.play(video.key);
+                    } else {
                         Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
-                    });
-                }
+                    }
+                }, function () {
+                    Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
+                });
             }).on('hover:long', function () {
-                if (!_this2.is_youtube) {
-                    var items = [{
-                        title: Lampa.Lang.translate('trailers_view'),
-                        view: true
-                    }];
-                    Lampa.Loading.start(function () {
-                        Api.clear();
-                        Lampa.Loading.stop();
-                    });
-                    Api.videos(data, function (videos) {
-                        Lampa.Loading.stop();
-                        var preferredLangs = getPreferredLanguage();
-                        var trailers = videos.results ? videos.results.filter(function (v) {
-                            return v.type === 'Trailer';
-                        }) : [];
-                        if (trailers.length) {
-                            items.push({
-                                title: Lampa.Lang.translate('title_trailers'),
-                                separator: true
-                            });
-                            trailers.forEach(function (video) {
-                                if (video.key && preferredLangs.includes(video.iso_639_1)) {
-                                    items.push({
-                                        title: video.name || 'Trailer',
-                                        id: video.key,
-                                        subtitle: video.iso_639_1
-                                    });
-                                }
-                            });
-                        }
-                        Lampa.Select.show({
-                            title: Lampa.Lang.translate('title_action'),
-                            items: items,
-                            onSelect: function (item) {
-                                Lampa.Controller.toggle('content');
-                                if (item.view) {
-                                    Lampa.Activity.push({
-                                        url: '',
-                                        component: 'full',
-                                        id: data.id,
-                                        method: data.name ? 'tv' : 'movie',
-                                        card: data,
-                                        source: 'tmdb'
-                                    });
-                                } else {
-                                    _this2.play(item.id);
-                                }
-                            },
-                            onBack: function () {
-                                Lampa.Controller.toggle('content');
+                if (_this2.is_youtube) return;
+                var items = [{ title: Lampa.Lang.translate('trailers_view'), view: true }];
+                Lampa.Loading.start(function () { Api.clear(); Lampa.Loading.stop(); });
+                Api.videos(data, function (videos) {
+                    Lampa.Loading.stop();
+                    var preferredLangs = getPreferredLanguage();
+                    var trailers = videos.results?.filter(function (v) { return v.type === 'Trailer'; }) || [];
+                    if (trailers.length) {
+                        items.push({ title: Lampa.Lang.translate('title_trailers'), separator: true });
+                        trailers.forEach(function (video) {
+                            if (video.key && preferredLangs.includes(video.iso_639_1)) {
+                                items.push({ title: video.name || 'Trailer', id: video.key, subtitle: video.iso_639_1 });
                             }
                         });
-                    }, function () {
-                        Lampa.Loading.stop();
-                        Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
+                    }
+                    Lampa.Select.show({
+                        title: Lampa.Lang.translate('title_action'),
+                        items: items,
+                        onSelect: function (item) {
+                            Lampa.Controller.toggle('content');
+                            if (item.view) {
+                                Lampa.Activity.push({
+                                    url: '',
+                                    component: 'full',
+                                    id: data.id,
+                                    method: data.name ? 'tv' : 'movie',
+                                    card: data,
+                                    source: 'tmdb'
+                                });
+                            } else {
+                                _this2.play(item.id);
+                            }
+                        },
+                        onBack: function () { Lampa.Controller.toggle('content'); }
                     });
-                }
+                }, function () {
+                    Lampa.Loading.stop();
+                    Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
+                });
             });
             this.image();
             this.loadTrailerInfo();
         };
 
         this.destroy = function () {
-            this.img.onerror = null;
-            this.img.onload = null;
+            this.img.onerror = this.img.onload = null;
             this.img.src = '';
             this.card.remove();
-            this.card = null;
-            this.img = null;
+            this.card = this.img = null;
         };
 
         this.visible = function () {
             if (this.visibled) return;
-            if (params.type === 'rating') {
-                this.img.src = 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg';
-            } else if (data.backdrop_path) {
-                this.img.src = Lampa.TMDB.image(data.backdrop_path, 'w500');
-            } else if (data.poster_path) {
-                this.img.src = Lampa.TMDB.image(data.poster_path);
-            } else {
-                this.img.src = './img/img_broken.svg';
-            }
+            this.img.src = params.type === 'rating' ? 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg' : data.backdrop_path ? Lampa.Api.img(data.backdrop_path, 'w500') : data.poster_path ? Lampa.Api.img(data.poster_path) : './img/img_broken.svg';
             this.visibled = true;
         };
 
-        this.render = function () {
-            return this.card;
-        };
+        this.render = function () { return this.card; };
     }
 
-    // Клас для створення лінії карток
+    // Лінія карток
     function Line(data) {
         var _this = this;
         var content = Lampa.Template.get('items_line', { title: data.title });
@@ -1011,10 +460,7 @@
         var light = Lampa.Storage.field('light_version') && window.innerWidth >= 767;
         var items = [];
         var active = 0;
-        var more;
-        var filter;
-        var moreButton;
-        var last;
+        var more, filter, moreButton, last;
         var visibleCards = light ? 6 : 10;
         var loadedIndex = 0;
         var isLoading = false;
@@ -1023,15 +469,8 @@
             scroll.render().find('.scroll__body').addClass('items-cards');
             content.find('.items-line__title').text(data.title);
 
-            filter = $('<div class="items-line__filter selector"><svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg></div>');
-            filter.css({
-                display: 'inline-block',
-                marginLeft: '10px',
-                cursor: 'pointer',
-                padding: '0.5em',
-                background: 'transparent',
-                border: 'none'
-            });
+            filter = $('<div class="items-line__more selector"><svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor"><path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"/></svg></div>');
+            filter.css({ display: 'inline-block', marginLeft: '10px', cursor: 'pointer', padding: '0.5em', background: 'transparent', border: 'none' });
             filter.on('hover:enter', function () {
                 var items = [
                     { title: Lampa.Lang.translate('trailers_filter_today'), value: 'day', selected: Lampa.Storage.get('trailers_' + data.type + '_filter', 'day') === 'day' },
@@ -1057,9 +496,7 @@
                             page: 1
                         });
                     },
-                    onBack: function () {
-                        Lampa.Controller.toggle('content');
-                    }
+                    onBack: function () { Lampa.Controller.toggle('content'); }
                 });
             });
 
@@ -1074,18 +511,14 @@
                 });
             });
 
-            content.find('.items-line__title').after(filter);
-            filter.after(moreButton);
-
-            this.bind();
+            content.find('.items-line__title').after(filter).after(moreButton);
             body.append(scroll.render());
 
             var debouncedLoad = debounce(function () {
-                if (scroll.isEnd() && !isLoading) {
-                    loadMoreCards();
-                }
+                if (scroll.isEnd() && !isLoading) loadMoreCards();
             }, 200);
             scroll.render().on('scroll', debouncedLoad);
+            this.bind();
         };
 
         function loadMoreCards() {
@@ -1093,7 +526,7 @@
             isLoading = true;
 
             var remainingCards = data.results.slice(loadedIndex, loadedIndex + visibleCards);
-            if (remainingCards.length > 0) {
+            if (remainingCards.length) {
                 remainingCards.forEach(function (element) {
                     var card = new Trailer(element, { type: data.type });
                     card.create();
@@ -1103,6 +536,9 @@
                         active = items.indexOf(card);
                         if (_this.onFocus) _this.onFocus(card_data);
                         scroll.update(card.render(), true);
+                        if (items.length && items.indexOf(card) === items.length - 1) {
+                            Lampa.Noty.show(Lampa.Lang.translate('trailers_last_movie').replace('[title]', card_data.title || card_data.name));
+                        }
                     };
                     scroll.append(card.render());
                     items.push(card);
@@ -1128,19 +564,8 @@
             Lampa.Layer.update();
         };
 
-        this.cardImgBackground = function (card_data) {
-            if (Lampa.Storage.field('background')) {
-                if (Lampa.Storage.get('background_type', 'complex') === 'poster' && window.innerWidth > 790) {
-                    return card_data.backdrop_path ? Lampa.TMDB.image(card_data.backdrop_path, 'original') : '';
-                }
-                return card_data.backdrop_path ? Lampa.TMDB.image(card_data.backdrop_path, 'w500') : '';
-            }
-            return '';
-        };
-
         this.more = function () {
-            more = Lampa.Template.get('more');
-            more.addClass('more--trailers');
+            more = Lampa.Template.get('more').addClass('more--trailers');
             more.on('hover:enter', function () {
                 Lampa.Activity.push({
                     url: data.url,
@@ -1149,8 +574,7 @@
                     type: data.type,
                     page: Math.floor(loadedIndex / visibleCards) + 2
                 });
-            });
-            more.on('hover:focus', function (e) {
+            }).on('hover:focus', function (e) {
                 last = e.target;
                 scroll.update(more, true);
             });
@@ -1158,60 +582,42 @@
         };
 
         this.toggle = function () {
-            var _this2 = this;
             Lampa.Controller.add('items_line', {
                 toggle: function () {
                     Lampa.Controller.collectionSet(scroll.render());
-                    Lampa.Controller.collectionFocus(items.length ? last : false, scroll.render());
-                    if (last && items.length) {
-                        scroll.update($(last), true);
-                    }
+                    Lampa.Controller.collectionFocus(last || false, scroll.render());
+                    if (last && items.length) scroll.update($(last), true);
                 },
                 right: function () {
-                    if (Navigator.canmove('right')) {
-                        Navigator.move('right');
-                        if (last && items.length) {
-                            scroll.update($(last), true);
-                        }
-                    }
-                    Lampa.Controller.enable('items_line');
+                    if (Navigator.canmove('right')) Navigator.move('right');
+                    Lampa.Controller.toggle('items_line');
                 },
                 left: function () {
-                    if (Navigator.canmove('left')) {
-                        Navigator.move('left');
-                        if (last && items.length) {
-                            scroll.update($(last), true);
-                        }
-                    } else if (_this2.onLeft) {
-                        _this2.onLeft();
-                    } else {
-                        Lampa.Controller.toggle('menu');
-                    }
+                    if (Navigator.canmove('left')) Navigator.move('left');
+                    else if (_this.onLeft) _this.onLeft();
+                    else Lampa.Controller.toggle('menu');
                 },
                 down: this.onDown,
                 up: this.onUp,
-                gone: function () {},
                 back: this.onBack
             });
             Lampa.Controller.toggle('items_line');
         };
 
-        this.render = function () {
-            return content;
-        };
+        this.render = function () { return content; };
 
         this.destroy = function () {
             Lampa.Arrays.destroy(items);
             scroll.destroy();
             content.remove();
-            more && more.remove();
-            filter && filter.remove();
-            moreButton && moreButton.remove();
+            more?.remove();
+            filter?.remove();
+            moreButton?.remove();
             items = [];
         };
     }
 
-    // Компонент для головної сторінки
+    // Головна сторінка
     function Component$1(object) {
         var scroll = new Lampa.Scroll({ mask: true, over: true, scroll_by_item: true });
         var items = [];
@@ -1237,12 +643,7 @@
             scroll.minus();
             html.append(scroll.render());
             data.forEach(this.append.bind(this));
-            if (light) {
-                scroll.onWheel = function (step) {
-                    if (step > 0) _this.down();
-                    else _this.up();
-                };
-            }
+            if (light) scroll.onWheel = function (step) { step > 0 ? _this.down() : _this.up(); };
             this.activity.loader(false);
             this.activity.toggle();
         };
@@ -1253,36 +654,23 @@
             item.onDown = this.down.bind(this);
             item.onUp = this.up.bind(this);
             item.onBack = this.back.bind(this);
-            item.onToggle = function () {
-                active = items.indexOf(item);
-            };
+            item.onToggle = function () { active = items.indexOf(item); };
             item.wrap = $('<div></div>');
-            if (light) {
-                scroll.append(item.wrap);
-            } else {
-                scroll.append(item.render());
-            }
+            scroll.append(light ? item.wrap : item.render());
             items.push(item);
         };
 
-        this.back = function () {
-            Lampa.Activity.backward();
-        };
+        this.back = function () { Lampa.Activity.backward(); };
 
         this.detach = function () {
             if (light) {
-                items.forEach(function (item) {
-                    item.render().detach();
-                });
-                items.slice(active, active + 2).forEach(function (item) {
-                    item.wrap.append(item.render());
-                });
+                items.forEach(function (item) { item.render().detach(); });
+                items.slice(active, active + 2).forEach(function (item) { item.wrap.append(item.render()); });
             }
         };
 
         this.down = function () {
-            active++;
-            active = Math.min(active, items.length - 1);
+            active = Math.min(active + 1, items.length - 1);
             this.detach();
             items[active].toggle();
             scroll.update(items[active].render());
@@ -1302,40 +690,25 @@
         };
 
         this.start = function () {
-            var _this2 = this;
             if (Lampa.Activity.active().activity !== this.activity) return;
             Lampa.Controller.add('content', {
                 toggle: function () {
                     if (items.length) {
-                        _this2.detach();
+                        this.detach();
                         items[active].toggle();
                     }
                 },
-                left: function () {
-                    if (Navigator.canmove('left')) Navigator.move('left');
-                    else Lampa.Controller.toggle('menu');
-                },
-                right: function () {
-                    Navigator.move('right');
-                },
-                up: function () {
-                    if (Navigator.canmove('up')) Navigator.move('up');
-                    else Lampa.Controller.toggle('head');
-                },
-                down: function () {
-                    if (Navigator.canmove('down')) Navigator.move('down');
-                },
+                left: function () { Navigator.canmove('left') ? Navigator.move('left') : Lampa.Controller.toggle('menu'); },
+                right: function () { Navigator.move('right'); },
+                up: function () { Navigator.canmove('up') ? Navigator.move('up') : Lampa.Controller.toggle('head'); },
+                down: function () { if (Navigator.canmove('down')) Navigator.move('down'); },
                 back: this.back
             });
             Lampa.Controller.toggle('content');
         };
 
-        this.pause = function () {};
-        this.stop = function () {};
-        this.render = function () {
-            return html;
-        };
-
+        this.pause = this.stop = function () {};
+        this.render = function () { return html; };
         this.destroy = function () {
             Lampa.Arrays.destroy(items);
             scroll.destroy();
@@ -1344,7 +717,7 @@
         };
     }
 
-    // Компонент для повного перегляду категорії
+    // Повна категорія
     function Component(object) {
         var scroll = new Lampa.Scroll({ mask: true, over: true, step: 250, end_ratio: 2 });
         var items = [];
@@ -1353,9 +726,7 @@
         var newlampa = Lampa.Manifest.app_digital >= 166;
         var light = newlampa ? false : Lampa.Storage.field('light_version') && window.innerWidth >= 767;
         var total_pages = 0;
-        var last;
-        var waitload = false;
-        var active = 0;
+        var last, waitload = false, active = 0;
 
         this.create = function () {
             Api.full(object, this.build.bind(this), this.empty.bind(this));
@@ -1372,29 +743,17 @@
 
         this.next = function () {
             var _this = this;
-            if (waitload) return;
-            if (object.page < total_pages && object.page < 30) {
-                waitload = true;
-                object.page++;
-                Api.full(object, function (result) {
-                    if (result.results && result.results.length) {
-                        _this.append(result, true);
-                    }
-                    waitload = false;
-                }, function () {
-                    waitload = false;
-                });
-            }
-        };
-
-        this.cardImgBackground = function (card_data) {
-            if (Lampa.Storage.field('background')) {
-                if (Lampa.Storage.get('background_type', 'complex') === 'poster' && window.innerWidth > 790) {
-                    return card_data.backdrop_path ? Lampa.TMDB.image(card_data.backdrop_path, 'original') : '';
-                }
-                return card_data.backdrop_path ? Lampa.TMDB.image(card_data.backdrop_path, 'w500') : '';
-            }
-            return '';
+            if (waitload || object.page >= total_pages || object.page >= 30) return Lampa.Noty.show(Lampa.Lang.translate('trailers_no_more_data'));
+            waitload = true;
+            object.page++;
+            Api.full(object, function (result) {
+                if (result.results?.length) _this.append(result, true);
+                else Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
+                waitload = false;
+            }, function () {
+                Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
+                waitload = false;
+            });
         };
 
         this.append = function (data, append) {
@@ -1408,30 +767,29 @@
                     last = target;
                     scroll.update(card.render(), true);
                     if (!light && !newlampa && scroll.isEnd()) _this2.next();
+                    if (items.length && items.indexOf(card) === items.length - 1) {
+                        Lampa.Noty.show(Lampa.Lang.translate('trailers_last_movie').replace('[title]', card_data.title || card_data.name));
+                    }
                 };
                 body.append(card.render());
                 items.push(card);
             });
-            var cardCount = data.results.length;
-            if (cardCount < 20) {
-                for (var i = cardCount; i < 20; i++) {
-                    var placeholder = $('<div class="card card--placeholder" style="width: 33.3%; margin-bottom: 1.5em; visibility: hidden;"></div>');
-                    body.append(placeholder);
+            if (data.results.length < 20) {
+                for (var i = data.results.length; i < 20; i++) {
+                    body.append($('<div class="card card--placeholder" style="width: 33.3%; margin-bottom: 1.5em; visibility: hidden;"></div>'));
                 }
             }
         };
 
         this.build = function (data) {
             var _this3 = this;
-            if (data.results && data.results.length) {
+            if (data.results?.length) {
                 total_pages = data.total_pages || 1;
                 scroll.minus();
                 html.append(scroll.render());
                 this.append(data);
                 if (light && items.length) this.back();
-                if (total_pages > data.page && items.length) {
-                    this.more();
-                }
+                if (total_pages > data.page && items.length) this.more();
                 scroll.append(body);
                 if (newlampa) {
                     scroll.onEnd = this.next.bind(this);
@@ -1441,9 +799,7 @@
                         else if (active > 0) Navigator.move('up');
                     }.bind(this);
                     var debouncedLoad = debounce(function () {
-                        if (scroll.isEnd() && !waitload) {
-                            _this3.next();
-                        }
+                        if (scroll.isEnd() && !waitload) _this3.next();
                     }, 100);
                     scroll.render().on('scroll', debouncedLoad);
                 }
@@ -1456,7 +812,6 @@
         };
 
         this.more = function () {
-            var _this = this;
             var more = $('<div class="selector" style="width: 100%; height: 5px"></div>');
             more.on('hover:enter', function () {
                 var next = Lampa.Arrays.clone(object);
@@ -1477,11 +832,8 @@
             last = items[0].render()[0];
             var more = $('<div class="selector" style="width: 100%; height: 5px"></div>');
             more.on('hover:enter', function () {
-                if (object.page > 1) {
-                    Lampa.Activity.backward();
-                } else {
-                    Lampa.Controller.toggle('head');
-                }
+                if (object.page > 1) Lampa.Activity.backward();
+                else Lampa.Controller.toggle('head');
             });
             body.prepend(more);
         };
@@ -1494,33 +846,17 @@
                     Lampa.Controller.collectionSet(scroll.render());
                     Lampa.Controller.collectionFocus(last || false, scroll.render());
                 },
-                left: function () {
-                    if (Navigator.canmove('left')) Navigator.move('left');
-                    else Lampa.Controller.toggle('menu');
-                },
-                right: function () {
-                    Navigator.move('right');
-                },
-                up: function () {
-                    if (Navigator.canmove('up')) Navigator.move('up');
-                    else Lampa.Controller.toggle('head');
-                },
-                down: function () {
-                    if (Navigator.canmove('down')) Navigator.move('down');
-                },
-                back: function () {
-                    Lampa.Activity.backward();
-                }
+                left: function () { Navigator.canmove('left') ? Navigator.move('left') : Lampa.Controller.toggle('menu'); },
+                right: function () { Navigator.move('right'); },
+                up: function () { Navigator.canmove('up') ? Navigator.move('up') : Lampa.Controller.toggle('head'); },
+                down: function () { if (Navigator.canmove('down')) Navigator.move('down'); },
+                back: function () { Lampa.Activity.backward(); }
             });
             Lampa.Controller.toggle('content');
         };
 
-        this.pause = function () {};
-        this.stop = function () {};
-        this.render = function () {
-            return html;
-        };
-
+        this.pause = this.stop = function () {};
+        this.render = function () { return html; };
         this.destroy = function () {
             Lampa.Arrays.destroy(items);
             scroll.destroy();
@@ -1530,200 +866,70 @@
         };
     }
 
-    // Додавання перекладів
+    // Переклади
     Lampa.Lang.add({
-        trailers_popular: {
-            uk: 'Популярне',
-            en: 'Popular'
-        },
-        trailers_in_theaters: {
-            uk: 'В прокаті',
-            en: 'In Theaters'
-        },
-        trailers_upcoming_movies: {
-            uk: 'Очікувані фільми',
-            en: 'Upcoming Movies'
-        },
-        trailers_popular_series: {
-            uk: 'Популярні серіали',
-            en: 'Popular Series'
-        },
-        trailers_new_series_seasons: {
-            uk: 'Нові серіали та сезони',
-            en: 'New Series and Seasons'
-        },
-        trailers_upcoming_series: {
-            uk: 'Очікувані серіали',
-            en: 'Upcoming Series'
-        },
-        trailers_no_trailers: {
-            uk: 'Немає трейлерів',
-            en: 'No trailers'
-        },
-        trailers_no_ua_trailer: {
-            uk: 'Немає українського трейлера',
-            en: 'No Ukrainian trailer'
-        },
-        trailers_view: {
-            uk: 'Докладніше',
-            en: 'More'
-        },
-        title_trailers: {
-            uk: 'Трейлери',
-            en: 'Trailers'
-        },
-        trailers_filter: {
-            uk: 'Фільтр',
-            en: 'Filter'
-        },
-        trailers_filter_today: {
-            uk: 'Сьогодні',
-            en: 'Today'
-        },
-        trailers_filter_week: {
-            uk: 'Тиждень',
-            en: 'Week'
-        },
-        trailers_filter_month: {
-            uk: 'Місяць',
-            en: 'Month'
-        },
-        trailers_filter_year: {
-            uk: 'Рік',
-            en: 'Year'
-        },
-        trailers_movies: {
-            uk: 'Фільми',
-            en: 'Movies'
-        },
-        trailers_series: {
-            uk: 'Серіали',
-            en: 'Series'
-        },
-        trailers_more: {
-            uk: 'Ще',
-            en: 'More'
-        },
-        trailers_popular_movies: {
-            uk: 'Популярні фільми',
-            en: 'Popular Movies'
-        }
+        trailers_popular: { ru: 'Популярное', uk: 'Популярне', en: 'Popular' },
+        trailers_in_theaters: { ru: 'В прокате', uk: 'В прокаті', en: 'In Theaters' },
+        trailers_upcoming_movies: { ru: 'Ожидаемые фильмы', uk: 'Очікувані фільми', en: 'Upcoming Movies' },
+        trailers_popular_series: { ru: 'Популярные сериалы', uk: 'Популярні серіали', en: 'Popular Series' },
+        trailers_new_series_seasons: { ru: 'Новые сериалы и сезоны', uk: 'Нові серіали та сезони', en: 'New Series and Seasons' },
+        trailers_upcoming_series: { ru: 'Ожидаемые сериалы', uk: 'Очікувані серіали', en: 'Upcoming Series' },
+        trailers_no_trailers: { ru: 'Нет трейлеров', uk: 'Немає трейлерів', en: 'No trailers' },
+        trailers_no_ua_trailer: { ru: 'Нет украинского трейлера', uk: 'Немає українського трейлера', en: 'No Ukrainian trailer' },
+        trailers_no_ru_trailer: { ru: 'Нет русского трейлера', uk: 'Немає російського трейлера', en: 'No Russian trailer' },
+        trailers_view: { ru: 'Подробнее', uk: 'Докладніше', en: 'More' },
+        title_trailers: { ru: 'Трейлеры', uk: 'Трейлера', en: 'Trailers' },
+        trailers_filter: { ru: 'Фильтр', uk: 'Фільтр', en: 'Filter' },
+        trailers_filter_today: { ru: 'Сегодня', uk: 'Сьогодні', en: 'Today' },
+        trailers_filter_week: { ru: 'Неделя', uk: 'Тиждень', en: 'Week' },
+        trailers_filter_month: { ru: 'Месяц', uk: 'Місяць', en: 'Month' },
+        trailers_filter_year: { ru: 'Год', uk: 'Рік', en: 'Year' },
+        trailers_movies: { ru: 'Фильмы', uk: 'Фільми', en: 'Movies' },
+        trailers_series: { ru: 'Сериалы', uk: 'Серіалі', en: 'Series' },
+        trailers_more: { ru: 'Ещё', uk: 'Ще', en: 'More' },
+        trailers_popular_movies: { ru: 'Популярные фильмы', uk: 'Популярні фільми', en: 'Popular Movies' },
+        trailers_last_movie: { ru: 'Это последний фильм: [title]', uk: 'Це останній фільм: [title]', en: 'This is the last movie: [title]' },
+        trailers_no_more_data: { ru: 'Больше нет данных для загрузки', uk: 'Більше немає даних для завантаження', en: 'No more data to load' }
     });
 
-    // Функція запуску плагіна
+    // Запуск плагіна
     function startPlugin() {
         if (window.plugin_trailers_ready) return;
         window.plugin_trailers_ready = true;
-
         Lampa.Component.add('trailers_main', Component$1);
         Lampa.Component.add('trailers_full', Component);
+        Lampa.Template.add('trailer', '<div class="card selector card--trailer layer--render layer--visible"><div class="card__view"><img src="./img/img_load.svg" class="card__img"><div class="card__promo"><div class="card__promo-text"><div class="card__title"></div></div><div class="card__details"></div></div></div><div class="card__play"><img src="./img/icons/player/play.svg"></div></div>');
+        Lampa.Template.add('trailer_style', '<style>.card.card--trailer,.card-more.more--trailers{width:25.7em}.card.card--trailer .card__view{padding-bottom:56%;margin-bottom:0}.card.card--trailer .card__details{margin-top:0.8em}.card.card--trailer .card__play{position:absolute;top:50%;transform:translateY(-50%);left:1.5em;background:#000000b8;width:2.2em;height:2.2em;border-radius:100%;text-align:center;padding-top:0.6em}.card.card--trailer .card__play img{width:0.9em;height:1em}.card.card--trailer .card__rating{position:absolute;bottom:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.card.card--trailer .card__trailer-lang{position:absolute;top:0.5em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;text-transform:uppercase;font-size:1.2em}.card.card--trailer .card__release-date{position:absolute;top:2em;right:0.5em;background:#000000b8;padding:0.2em 0.5em;border-radius:3px;font-size:1.2em}.card-more.more--trailers .card-more__box{padding-bottom:56%}.category-full--trailers{display:flex;flex-wrap:wrap;justify-content:space-between}.category-full--trailers .card{width:33.3%;margin-bottom:1.5em}.category-full--trailers .card .card__view{padding-bottom:56%;margin-bottom:0}.items-line__more{display:inline-block;margin-left:10px;cursor:pointer;padding:0.5em 1em}@media screen and (max-width:767px){.category-full--trailers .card{width:50%}}@media screen and (max-width:400px){.category-full--trailers .card{width:100%}}</style>');
 
-        Lampa.Template.add('trailer', `
-            <div class="card selector card--trailer layer--render layer--visible">
-                <div class="card__view">
-                    <img src="./img/img_load.svg" class="card__img">
-                    <div class="card__promo">
-                        <div class="card__promo-text">
-                            <div class="card__title"></div>
-                        </div>
-                        <div class="card__details"></div>
-                    </div>
-                </div>
-                <div class="card__play">
-                    <img src="./img/icons/player/play.svg" />
-                </div>
-            </div>
-        `);
+        function add() {
+            var button = $('<li class="menu__item selector"><div class="menu__ico"><svg height="70" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2397 8.74453 2.0897C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/></svg></div><div class="menu__text">' + Lampa.Lang.translate('title_trailers') + '</div></li>');
+            button.on('hover:enter', function () {
+                Lampa.Activity.push({
+                    url: '',
+                    title: Lampa.Lang.translate('title_trailers'),
+                    component: 'trailers_main',
+                    page: 1
+                });
+            });
+            $('.menu .menu__list').eq(0).append(button);
+            $('body').append(Lampa.Template.get('trailer_style', {}));
+            Lampa.Storage.listener.follow('change', function (event) {
+                if (event.name === 'language') Api.clear();
+            });
+        }
 
-        Lampa.Template.add('trailer_style', `
-            <style>
-                .card.card--trailer, .card-more.more--trailers {
-                    width: 25.7em;
-                }
-                .card.card--trailer .card__view {
-                    padding-bottom: 56%;
-                    margin-bottom: 0;
-                }
-                .card.card--trailer .card__details {
-                    margin-top: 0.8em;
-                }
-                .card.card--trailer .card__play {
-                    position: absolute;
-                    top: 50%;
-                    transform: translateY(-50%);
-                    left: 1.5em;
-                    background: #000000b8;
-                    width: 2.2em;
-                    height: 2.2em;
-                    border-radius: 100%;
-                    text-align: center;
-                    padding-top: 0.6em;
-                }
-                .card.card--trailer .card__play img {
-                    width: 0.9em;
-                    height: 1em;
-                }
-                .card.card--trailer .card__rating {
-                    position: absolute;
-                    bottom: 0.5em;
-                    right: 0.5em;
-                    background: #000000b8;
-                    padding: 0.2em 0.5em;
-                    border-radius: 3px;
-                    font-size: 1.2em;
-                }
-                .card.card--trailer .card__trailer-lang {
-                    position: absolute;
-                    top: 0.5em;
-                    right: 0.5em;
-                    background: #000000b8;
-                    padding: 0.2em 0.5em;
-                    border-radius: 3px;
-                    font-size: 1em;
-                }
-                .card.card--trailer .card__release-date {
-                    position: absolute;
-                    bottom: 0.5em;
-                    left: 0.5em;
-                    background: #000000b8;
-                    padding: 0.2em 0.5em;
-                    border-radius: 3px;
-                    font-size: 1em;
-                    color: #fff;
-                }
-                .category-full--trailers .card {
-                    width: 33.3%;
-                    margin-bottom: 1.5em;
-                }
-            </style>
-        `);
-
-        // Додавання плагіна до меню
-        Lampa.Listener.follow('app', {
-            ready: function () {
-                var menu = $('.menu .menu__item');
-                if (menu.length) {
-                    var menuItem = $('<div class="menu__item selector"><div class="menu__item-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18v12H3z" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 6v12l8-6z"/></svg></div><span>' + Lampa.Lang.translate('trailers_popular') + '</span></div>');
-                    menuItem.on('hover:enter', function () {
-                        Lampa.Activity.push({
-                            url: '',
-                            title: Lampa.Lang.translate('trailers_popular'),
-                            component: 'trailers_main',
-                            page: 1
-                        });
-                    });
-                    menu.append(menuItem);
-                }
-            }
-        });
-
-        // Очищення кешу при зміні мови
-        Lampa.Listener.follow('settings', {
-            lang_changed: function () {
-                Api.clear();
-            }
-        });
+        if (Lampa.TMDB && Lampa.TMDB.key()) {
+            add();
+        } else {
+            Lampa.Noty.show('TMDB API key is missing. Trailers plugin cannot be loaded.');
+        }
     }
 
-    startPlugin();
+    if (!window.appready) {
+        Lampa.Listener.follow('app', function chaos) {
+            if (chaos.type === 'ready') startPlugin();
+        });
+    } else {
+        startPlugin();
+    }
 })();
