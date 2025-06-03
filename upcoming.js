@@ -6,6 +6,13 @@
     var trailerCache = {};
     var categoryCache = {};
 
+    function getInterfaceLanguage() {
+        var lang = Lampa.Storage.get('language', 'ru');
+        if (lang === 'ru') return 'ru-RU';
+        if (lang === 'uk') return 'uk-UA';
+        return 'en-US';
+    }
+
     function fetchTMDB(endpoint, params, resolve, reject) {
         var url = new URL(base_url + endpoint);
         params.api_key = Lampa.TMDB.key();
@@ -62,29 +69,32 @@
         oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
         oneMonthLater = oneMonthLater.toISOString().split('T')[0];
 
-        get('/movie/popular', { language: 'en-US', page: 1 }, 'popular_movies', function (json) {
+        var lang = getInterfaceLanguage();
+
+        get('/movie/popular', { language: lang, page: 1 }, 'popular_movies', function (json) {
             append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/movie/popular', json);
         }, status.error.bind(status));
-        get('/movie/now_playing', { language: 'en-US', page: 1 }, 'in_theaters', function (json) {
+        get('/movie/now_playing', { language: lang, page: 1 }, 'in_theaters', function (json) {
             append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/movie/now_playing', json);
         }, status.error.bind(status));
-        get('/movie/upcoming', { language: 'en-US', page: 1 }, 'upcoming_movies', function (json) {
+        get('/movie/upcoming', { language: lang, page: 1 }, 'upcoming_movies', function (json) {
             append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/movie/upcoming', json);
         }, status.error.bind(status));
-        get('/tv/popular', { language: 'en-US', page: 1 }, 'popular_series', function (json) {
+        get('/tv/popular', { language: lang, page: 1 }, 'popular_series', function (json) {
             append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', '/tv/popular', json);
         }, status.error.bind(status));
-        get('/tv/on_the_air', { language: 'en-US', page: 1 }, 'new_series_seasons', function (json) {
+        get('/tv/on_the_air', { language: lang, page: 1 }, 'new_series_seasons', function (json) {
             append(Lampa.Lang.translate('trailers_new_series_seasons'), 'new_series_seasons', '/tv/on_the_air', json);
         }, status.error.bind(status));
-        get('/tv/airing_today', { language: 'en-US', page: 1 }, 'upcoming_series', function (json) {
+        get('/tv/airing_today', { language: lang, page: 1 }, 'upcoming_series', function (json) {
             append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/tv/airing_today', json);
         }, status.error.bind(status));
     }
 
     function full(params, oncomplite, onerror) {
         var cacheKey = params.url + '_page_' + params.page;
-        get(params.url, { language: 'en-US', page: params.page }, cacheKey, oncomplite, onerror);
+        var lang = getInterfaceLanguage();
+        get(params.url, { language: lang, page: params.page }, cacheKey, oncomplite, onerror);
     }
 
     function videos(card, oncomplite, onerror) {
