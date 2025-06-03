@@ -655,7 +655,7 @@
         this.loadMore = function () {
             console.log('Line: Adding more button');
             more = Lampa.Template.get('more').addClass('more--trailers card--more');
-            console.log('Line: More button styles applied - width: 25.7em, height: 14.42em'); // Додано лог для дебагу
+            console.log('Line: More button styles applied - width: 25.7em, height: 14.42em');
             more.on('hover:enter', function () {
                 console.log('Line: More button entered');
                 Lampa.Activity.push({
@@ -695,9 +695,11 @@
                         scroll.update(more, true);
                         Lampa.Controller.collectionFocus(more[0], scroll.render());
                         console.log('Line: Moved right to More, new active: ' + active);
-                    } else { // Already on "More", go to menu
-                        Lampa.Controller.toggle('menu');
-                        console.log('Line: Moved to menu');
+                    } else { // Cycle back to the first card
+                        active = 0;
+                        scroll.update(items[active].render(), true);
+                        Lampa.Controller.collectionFocus(items[active].render()[0], scroll.render());
+                        console.log('Line: Cycled right to first card, new active: ' + active);
                     }
                 },
                 left: function () {
