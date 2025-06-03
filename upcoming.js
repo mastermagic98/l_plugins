@@ -5,25 +5,14 @@
     var api_url = Lampa.Utils.protocol() + Lampa.Manifest.cub_domain + '/api/trailers/get/';
 
     function get(url, page, resolve, reject) {
-        var account = Lampa.Storage.get('account', '{}');
-        if (account.token) {
-            console.log('API Request: ' + api_url + url + '/' + page + ', Token: ' + account.token);
-            network.silent(api_url + url + '/' + page, function (data) {
-                console.log('API Response for ' + url + ': ', data);
-                resolve(data);
-            }, function (error) {
-                console.log('API Error for ' + url + ': ', error);
-                reject(error);
-            }, false, {
-                headers: {
-                    token: account.token
-                }
-            });
-        } else {
-            console.log('No token found in account');
-            Lampa.Noty.show('Будь ласка, авторизуйтесь у Lampa, щоб переглядати трейлери.');
-            reject(new Error('No token'));
-        }
+        console.log('API Request: ' + api_url + url + '/' + page);
+        network.silent(api_url + url + '/' + page, function (data) {
+            console.log('API Response for ' + url + ': ', data);
+            resolve(data);
+        }, function (error) {
+            console.log('API Error for ' + url + ': ', error);
+            reject(error);
+        }, false);
     }
 
     function main(oncomplite, onerror) {
