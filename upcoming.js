@@ -112,14 +112,41 @@
             this.img = this.card.find('img')[0];
             this.is_youtube = params.type === 'rating';
 
+            // Визначаємо назву відповідно до мови інтерфейсу
+            var lang = Lampa.Storage.get('language', 'ru');
+            var title = data.title || data.name;
+            if (data.translations && data.translations.translations) {
+                var translation = data.translations.translations.find(t => t.iso_639_1 === lang) ||
+                                 data.translations.translations.find(t => t.iso_639_1 === 'en');
+                if (translation && translation.data && (translation.data.title || translation.data.name)) {
+                    title = translation.data.title || translation.data.name;
+                }
+            }
+            this.card.find('.card__title').text(title);
+
             if (!this.is_youtube) {
-                var create = ((data.release_date || data.first_air_date || '0000') + '').slice(0, 4);
-                this.card.find('.card__title').text(data.title || data.name);
-                this.card.find('.card__details').text(create + ' - ' + (data.original_title || data.original_name));
+                var releaseDate = (data.release_date || data.first_air_date || '0000').slice(0, 4);
+                this.card.find('.card__details').text(releaseDate + ' - ' + (data.original_title || data.original_name));
             } else {
-                this.card.find('.card__title').text(data.name);
                 this.card.find('.card__details').remove();
             }
+
+            // Додаємо дату прем'єри у правий верхній кут
+            var premiereDate = data.release_date || data.first_air_date || 'N/A';
+            this.card.find('.card__view').append(`
+                <div class="card__premiere" style="position: absolute; top: 0.5em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${premiereDate.slice(0, 10)}</div>
+            `);
+
+            // Додаємо мову трейлера нижче дати
+            this.card.find('.card__view').append(`
+                <div class="card__trailer-lang" style="position: absolute; top: 2em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;"></div>
+            `);
+
+            // Додаємо рейтинг у правий нижній кут
+            var rating = data.vote_average ? data.vote_average.toFixed(1) : '—';
+            this.card.find('.card__view').append(`
+                <div class="card__rating" style="position: absolute; bottom: 0.5em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${rating}</div>
+            `);
         };
 
         this.cardImgBackground = function (card_data) {
@@ -136,10 +163,28 @@
             var _this = this;
             this.img.onload = function () {
                 _this.card.addClass('card--loaded');
+                _this.updateTrailerLanguage();
             };
             this.img.onerror = function () {
                 _this.img.src = './img/img_broken.svg';
             };
+        };
+
+        this.updateTrailerLanguage = function () {
+            var _this = this;
+            Api.videos(data, function (videos) {
+                var lang = '—';
+                if (videos.results.length) {
+                    var preferredVideo = videos.results.find(v => v.iso_639_1 === Lampa.Storage.get('language', 'ru')) ||
+                                        videos.results.find(v => v.iso_639_1 === 'ru') ||
+                                        videos.results.find(v => v.iso_639_1 === 'en') ||
+                                        videos.results[0];
+                    lang = preferredVideo.iso_639_1.toUpperCase();
+                }
+                _this.card.find('.card__trailer-lang').text(lang);
+            }, function () {
+                _this.card.find('.card__trailer-lang').text('—');
+            });
         };
 
         this.play = function (id) {
@@ -737,6 +782,7 @@
             .card.card--trailer .card__view {
                 padding-bottom: 56%;
                 margin-bottom: 0;
+                position: relative;
             }
             .card.card--trailer .card__details {
                 margin-top: 0.8em;
@@ -772,6 +818,10 @@
                 .category-full--trailers .card {
                     width: 100%;
                 }
+            }
+            .card__premiere, .card__trailer-lang, .card__rating {
+                font-size: 0.9em;
+                z-index: 10;
             }
             </style>
         `);
