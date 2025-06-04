@@ -39,7 +39,7 @@
      * Фільтрує контент (фільми або серіали) за жанрами та рейтингами.
      * Повертає true, якщо контент має хоча б один дозволений жанр, не має заборонених жанрів та має рейтинг (якщо потрібно).
      * @param {Object} content - Об'єкт контенту з масивом genre_ids та vote_average.
-     * @param {string} category - Назва категорії (наприклад, 'upcoming_series'), щоб визначити, чи потрібна перевірка рейтингу.
+     * @param {string} category - Назва категорії (наприклад, 'new_series_seasons'), щоб визначити, чи потрібна перевірка рейтингу.
      * @returns {boolean} - Чи відповідає контент критеріям фільтрації.
      */
     function filterTMDBContentByGenre(content, category) {
@@ -75,8 +75,8 @@
         const hasAllowedGenre = genreIds.some(id => allowedGenreIds.includes(id));
         const hasDisallowedGenre = genreIds.some(id => disallowedGenreIds.includes(id));
 
-        // Для категорії upcoming_series рейтинг не потрібен, оскільки серіали ще не вийшли
-        const requiresRating = category !== 'upcoming_series' && (!content.release_date || new Date(content.release_date) <= new Date());
+        // Для категорій upcoming_series та new_series_seasons рейтинг не потрібен, оскільки серіали/сезони ще не вийшли
+        const requiresRating = category !== 'upcoming_series' && category !== 'new_series_seasons' && (!content.release_date || new Date(content.release_date) <= new Date());
         const hasRating = !requiresRating || (content.vote_average && content.vote_average > 0);
 
         console.log('Filtering content:', content.title || content.name, 'genre_ids:', genreIds, 'hasAllowedGenre:', hasAllowedGenre, 'hasDisallowedGenre:', hasDisallowedGenre, 'vote_average:', content.vote_average, 'hasRating:', hasRating, 'requiresRating:', requiresRating, 'category:', category);
@@ -176,7 +176,7 @@
         sixWeeksAgo.setDate(today.getDate() - 42); // 6 тижнів назад
         var sixWeeksAgoStr = sixWeeksAgo.toISOString().split('T')[0]; // Формат YYYY-MM-DD
 
-        // Обчислюємо дати для категорії "Очікувані фільми" та "Очікувані серіали"
+        // Обчислюємо дати для категорії "Очікувані фільми", "Очікувані серіали" та "Нові сезони"
         var sixMonthsLater = new Date();
         sixMonthsLater.setMonth(today.getMonth() + 6); // 6 місяців вперед
         var sixMonthsLaterStr = sixMonthsLater.toISOString().split('T')[0]; // Формат YYYY-MM-DD (2025-12-04)
@@ -215,8 +215,16 @@
             append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', '/trending/tv/week', json);
         }, status.error.bind(status), 'popular_series');
 
-        get('/tv/on_the_air', { language: lang, page: 1 }, 'new_series_seasons', minItems, function (json) {
-            append(Lampa.Lang.translate('trailers_new_series_seasons'), 'new_series_seasons', '/tv/on_the_air', json);
+        // Оновлений запит для категорії "Нові сезони серіалів" із сортуванням за датою першої серії
+        get('/discover/tv', {
+            language: lang,
+            page: 1,
+            include_adult: false,
+            sort_by: 'first_air_date.asc', // Сортування за найближчими прем’єрами сезонів
+            'first_air_date.gte': todayStr,
+            'first_air_date.lte': sixMonthsLaterStr
+        }, 'new_series_seasons', minItems, function (json) {
+            append(Lampa.Lang.translate('trailers_new_series_seasons'), 'new_series_seasons', '/discover/tv', json);
         }, status.error.bind(status), 'new_series_seasons');
 
         // Оновлений запит для категорії "Очікувані серіали" із сортуванням за датою
@@ -269,6 +277,13 @@
                 requestParams = Object.assign(requestParams, {
                     include_adult: false,
                     sort_by: 'first_air_date.asc', // Сортування за найближчими прем’єрами
+                    'first_air_date.gte': todayStr,
+                    'first_air_date.lte': sixMonthsLaterStr
+                });
+            } else if (params.type === 'new_series_seasons') {
+                requestParams = Object.assign(requestParams, {
+                    include_adult: false,
+                    sort_by: 'first_air_date.asc', // Сортування за найближчими прем’єрами сезонів
                     'first_air_date.gte': todayStr,
                     'first_air_date.lte': sixMonthsLaterStr
                 });
