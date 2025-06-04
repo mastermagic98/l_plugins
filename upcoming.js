@@ -163,79 +163,75 @@
             status.append(name, json);
         };
 
-        var today = new Date().toISOString().split('T')[0];
-        var oneYearLater = new Date();
-        oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
-        oneYearLater = oneYearLater.toISOString().split('T')[0];
+        // Обчислюємо дати для категорії "В прокаті"
+        var today = new Date();
+        var todayStr = today.toISOString().split('T')[0]; // Формат YYYY-MM-DD (2025-06-04)
+        var sixWeeksAgo = new Date();
+        sixWeeksAgo.setDate(today.getDate() - 42); // 6 тижнів назад
+        var sixWeeksAgoStr = sixWeeksAgo.toISOString().split('T')[0]; // Формат YYYY-MM-DD (2025-04-23)
 
         var lang = getInterfaceLanguage();
 
-        // Популярні фільми: сортування за середньою оцінкою (vote_average.desc), мінімум 30 голосів
-        get('/movie/popular', { language: lang, page: 1, sort_by: 'vote_average.desc', vote_count_gte: 30 }, 'popular_movies', minItems, function (json) {
+        get('/movie/popular', { language: lang, page: 1 }, 'popular_movies', minItems, function (json) {
             append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/movie/popular', json);
         }, status.error.bind(status));
 
-        // В прокаті: сортування за датою виходу (release_date.desc)
-        get('/movie/now_playing', { language: lang, page: 1, sort_by: 'release_date.desc' }, 'in_theaters', minItems, function (json) {
-            append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/movie/now_playing', json);
+        // Оновлений запит для категорії "В прокаті"
+        get('/discover/movie', {
+            language: lang,
+            page: 1,
+            include_adult: false,
+            sort_by: 'primary_release_date.desc',
+            'primary_release_date.gte': sixWeeksAgoStr,
+            'primary_release_date.lte': todayStr,
+            'vote_count.gte': 30,
+            region: 'UA'
+        }, 'in_theaters', minItems, function (json) {
+            append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/discover/movie', json);
         }, status.error.bind(status));
 
-        // Очікувані фільми: сортування за датою виходу (release_date.asc), від поточної дати до майбутньої
-        get('/movie/upcoming', { language: lang, page: 1, sort_by: 'release_date.asc', release_date_gte: today, release_date_lte: oneYearLater }, 'upcoming_movies', minItems, function (json) {
+        get('/movie/upcoming', { language: lang, page: 1 }, 'upcoming_movies', minItems, function (json) {
             append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/movie/upcoming', json);
         }, status.error.bind(status));
-
-        // Популярні серіали: сортування за середньою оцінкою (vote_average.desc), мінімум 30 голосів
-        get('/tv/popular', { language: lang, page: 1, sort_by: 'vote_average.desc', vote_count_gte: 30 }, 'popular_series', minItems, function (json) {
+        get('/tv/popular', { language: lang, page: 1 }, 'popular_series', minItems, function (json) {
             append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', '/tv/popular', json);
         }, status.error.bind(status));
-
-        // Нові сезони серіалів: сортування за датою виходу (first_air_date.desc)
-        get('/tv/on_the_air', { language: lang, page: 1, sort_by: 'first_air_date.desc' }, 'new_series_seasons', minItems, function (json) {
+        get('/tv/on_the_air', { language: lang, page: 1 }, 'new_series_seasons', minItems, function (json) {
             append(Lampa.Lang.translate('trailers_new_series_seasons'), 'new_series_seasons', '/tv/on_the_air', json);
         }, status.error.bind(status));
-
-        // Очікувані серіали: сортування за датою виходу (first_air_date.asc), від поточної дати до майбутньої
-        get('/discover/tv', { language: lang, page: 1, sort_by: 'first_air_date.asc', first_air_date_gte: today, first_air_date_lte: oneYearLater }, 'upcoming_series', minItems, function (json) {
-            append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/discover/tv', json);
+        get('/tv/airing_today', { language: lang, page: 1 }, 'upcoming_series', minItems, function (json) {
+            append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/tv/airing_today', json);
         }, status.error.bind(status));
     }
 
     function full(params, oncomplite, onerror) {
         var cacheKey = params.url + '_page_' + params.page;
         var lang = getInterfaceLanguage();
-        var today = new Date().toISOString().split('T')[0];
-        var oneYearLater = new Date();
-        oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
-        oneYearLater = oneYearLater.toISOString().split('T')[0];
+        var requestParams = { language: lang, page: params.page };
 
-        var extraParams = {};
-        if (params.url === '/movie/popular') {
-            extraParams.sort_by = 'vote_average.desc';
-            extraParams.vote_count_gte = 30;
-        } else if (params.url === '/movie/now_playing') {
-            extraParams.sort_by = 'release_date.desc';
-        } else if (params.url === '/movie/upcoming') {
-            extraParams.sort_by = 'release_date.asc';
-            extraParams.release_date_gte = today;
-            extraParams.release_date_lte = oneYearLater;
-        } else if (params.url === '/tv/popular') {
-            extraParams.sort_by = 'vote_average.desc';
-            extraParams.vote_count_gte = 30;
-        } else if (params.url === '/tv/on_the_air') {
-            extraParams.sort_by = 'first_air_date.desc';
-        } else if (params.url === '/discover/tv') {
-            extraParams.sort_by = 'first_air_date.asc';
-            extraParams.first_air_date_gte = today;
-            extraParams.first_air_date_lte = oneYearLater;
+        // Додаємо додаткові параметри для /discover/movie
+        if (params.url === '/discover/movie') {
+            var today = new Date();
+            var todayStr = today.toISOString().split('T')[0];
+            var sixWeeksAgo = new Date();
+            sixWeeksAgo.setDate(today.getDate() - 42);
+            var sixWeeksAgoStr = sixWeeksAgo.toISOString().split('T')[0];
+
+            requestParams = Object.assign(requestParams, {
+                include_adult: false,
+                sort_by: 'primary_release_date.desc',
+                'primary_release_date.gte': sixWeeksAgoStr,
+                'primary_release_date.lte': todayStr,
+                'vote_count.gte': 30,
+                region: 'UA'
+            });
         }
 
-        var requestParams = Object.assign({ language: lang, page: params.page }, extraParams);
         get(params.url, requestParams, cacheKey, 20, oncomplite, onerror);
     }
 
     function videos(card, oncomplite, onerror) {
-        var endpoint = (card.name ? '/tv' : '/movie') + '/' + card.id + '/videos';
+        var endpoint = (card.name ? '/tv/' : '/movie/') + card.id + '/videos';
         var interfaceLang = getInterfaceLanguage();
         // Спочатку пробуємо отримати трейлери мовою інтерфейсу
         fetchTMDB(endpoint, { language: interfaceLang }, function (data) {
@@ -281,7 +277,7 @@
 
             if (!hasTranslation) return; // Не створюємо картку, якщо немає перекладу
 
-            this.card = Lampa.Template.get('trailer', data);
+            this.card = Lampa.Template.get('trailer', {});
             this.img = this.card.find('img')[0];
             this.is_youtube = params.type === 'rating';
 
@@ -309,11 +305,11 @@
 
             // Додаємо мову трейлера нижче дати
             this.card.find('.card__view').append(`
-                <div class="card__trailer-lang" style="position: absolute; top: 2em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;"></div>
+                <div class="card__trailer-lang" style="position: absolute; top: 2.25em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;"></div>
             `);
 
             // Додаємо рейтинг у правий нижній кут
-            var rating = data.vote_average ? data.vote_average.toFixed(1) : '—';
+            var rating = data.vote_average ? data.vote_average.toFixed(1) : 'N/A';
             this.card.find('.card__view').append(`
                 <div class="card__rating" style="position: absolute; bottom: 0.5em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${rating}</div>
             `);
