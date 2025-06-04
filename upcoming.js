@@ -55,35 +55,35 @@
         });
     }
 
-    function fetchSeriesDetails(seriesId, dateField, startDate, endDate, callback) {
-        var cacheKey = `series_${seriesId}_${dateField}`;
+    function fetchSeriesDetails(seriesId, callback) {
+        var cacheKey = `series_${seriesId}`;
         if (trailerCache[cacheKey]) {
-            var episode = trailerCache[cacheKey];
-            if (episode && episode.air_date) {
-                var isWithinRange = episode.air_date >= startDate && episode.air_date <= endDate;
-                console.log('Cached Series ' + seriesId + ' ' + dateField + ':', episode.air_date, 'is within range', startDate, 'to', endDate, ':', isWithinRange);
-                callback(isWithinRange);
-            } else {
-                callback(false);
-            }
+            console.log('Using cached series details for ' + seriesId);
+            callback(trailerCache[cacheKey]);
             return;
         }
 
         var endpoint = '/tv/' + seriesId;
-        var params = { language: getInterfaceLanguage() };
+        var params = { language: getInterfaceLanguage(), append_to_response: 'season' };
         fetchTMDB(endpoint, params, function (data) {
-            var episode = data[dateField];
-            if (episode && episode.air_date) {
-                trailerCache[cacheKey] = episode;
-                var isWithinRange = episode.air_date >= startDate && episode.air_date <= endDate;
-                console.log('Series ' + seriesId + ' ' + dateField + ':', episode.air_date, 'is within range', startDate, 'to', endDate, ':', isWithinRange);
-                callback(isWithinRange);
-            } else {
-                console.log('Series ' + seriesId + ' has no ' + dateField);
-                callback(false);
+            trailerCache[cacheKey] = data;
+            var nextSeasonDate = null;
+            if (data.seasons && data.seasons.length) {
+                var today = new Date('2025-06-04');
+                var sixMonthsLater = new Date('2025-12-04');
+                data.seasons.forEach(function (season) {
+                    if (season.air_date && new Date(season.air_date) > today && new Date(season.air_date) <= sixMonthsLater && season.episode_count === 0 && season.episode_number === 1) {
+                        if (!nextSeasonDate || new Date(season.air_date) < new Date(nextSeasonDate)) {
+                            nextSeasonDate = season.air_date;
+                        }
+                    }
+                });
             }
+            data.nextSeasonDate = nextSeasonDate;
+            console.log('Series ' + seriesId + ' next season date:', nextSeasonDate);
+            callback(data);
         }, function () {
-            callback(false);
+            callback({ nextSeasonDate: null });
         });
     }
 
@@ -107,15 +107,8 @@
                     });
 
                     if (category === 'new_series_seasons' || category === 'upcoming_series') {
-                        var today = new Date();
-                        var todayStr = today.toISOString().split('T')[0]; // 2025-06-04
-                        var sixMonthsAgo = new Date();
-                        sixMonthsAgo.setMonth(today.getMonth() - 6);
-                        var sixMonthsAgoStr = sixMonthsAgo.toISOString().split('T')[0]; // 2024-12-04
-                        var sixMonthsLater = new Date();
-                        sixMonthsLater.setMonth(today.getMonth() + 6);
-                        var sixMonthsLaterStr = sixMonthsLater.toISOString().split('T')[0]; // 2025-12-04
-
+                        var today = new Date('2025-06-04');
+                        var sixMonthsLater = new Date('2025-12-04');
                         var remaining = filteredResults.length;
                         var validResults = [];
 
@@ -126,12 +119,13 @@
 
                         var promises = filteredResults.map(function (series) {
                             return new Promise(function (resolveDetail) {
-                                var dateField = category === 'new_series_seasons' ? 'last_episode_to_air' : 'next_episode_to_air';
-                                var startDate = category === 'new_series_seasons' ? sixMonthsAgoStr : todayStr;
-                                var endDate = category === 'new_series_seasons' ? todayStr : sixMonthsLaterStr;
-
-                                fetchSeriesDetails(series.id, dateField, startDate, endDate, function (isValid) {
-                                    if (isValid) {
+                                fetchSeriesDetails(series.id, function (details) {
+                                    if (category === 'new_series_seasons' && details.last_episode_to_air && details.last_episode_to_air.air_date) {
+                                        var lastAirDate = new Date(details.last_episode_to_air.air_date);
+                                        if (lastAirDate >= new Date('2024-12-04') && lastAirDate <= today) {
+                                            validResults.push(series);
+                                        }
+                                    } else if (category === 'upcoming_series' && details.nextSeasonDate) {
                                         validResults.push(series);
                                     }
                                     resolveDetail();
@@ -142,12 +136,12 @@
                         Promise.all(promises).then(function () {
                             if (category === 'new_series_seasons') {
                                 validResults.sort(function (a, b) {
-                                    return b.vote_average - a.vote_average;
+                                    return (b.vote_average || 0) - (a.vote_average || 0);
                                 });
                             } else if (category === 'upcoming_series') {
                                 validResults.sort(function (a, b) {
-                                    var aDate = a.next_episode_to_air ? a.next_episode_to_air.air_date : '9999-12-31';
-                                    var bDate = b.next_episode_to_air ? b.next_episode_to_air.air_date : '9999-12-31';
+                                    var aDate = trailerCache[`series_${a.id}`]?.nextSeasonDate || '9999-12-31';
+                                    var bDate = trailerCache[`series_${b.id}`]?.nextSeasonDate || '9999-12-31';
                                     return aDate.localeCompare(bDate);
                                 });
                             }
@@ -208,17 +202,15 @@
             status.append(name, json);
         };
 
-        var today = new Date();
-        var todayStr = today.toISOString().split('T')[0]; // 2025-06-04
+        var today = new Date('2025-06-04');
+        var todayStr = today.toISOString().split('T')[0];
         var sixWeeksAgo = new Date();
         sixWeeksAgo.setDate(today.getDate() - 42);
         var sixWeeksAgoStr = sixWeeksAgo.toISOString().split('T')[0];
         var sixMonthsAgo = new Date();
         sixMonthsAgo.setMonth(today.getMonth() - 6);
-        var sixMonthsAgoStr = sixMonthsAgo.toISOString().split('T')[0]; // 2024-12-04
-        var sixMonthsLater = new Date();
-        sixMonthsLater.setMonth(today.getMonth() + 6);
-        var sixMonthsLaterStr = sixMonthsLater.toISOString().split('T')[0]; // 2025-12-04
+        var sixMonthsAgoStr = sixMonthsAgo.toISOString().split('T')[0];
+        var sixMonthsLater = new Date('2025-12-04');
 
         var lang = getInterfaceLanguage();
 
@@ -245,7 +237,7 @@
             include_adult: false,
             sort_by: 'popularity.desc',
             'primary_release_date.gte': todayStr,
-            'primary_release_date.lte': sixMonthsLaterStr
+            'primary_release_date.lte': sixMonthsLater.toISOString().split('T')[0]
         }, 'upcoming_movies', minItems, function (json) {
             append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/discover/movie', json);
         }, status.error.bind(status), 'upcoming_movies');
@@ -269,8 +261,8 @@
             page: 1,
             include_adult: false,
             sort_by: 'first_air_date.asc',
-            'air_date.gte': todayStr,
-            'air_date.lte': sixMonthsLaterStr
+            'first_air_date.gte': todayStr,
+            'first_air_date.lte': sixMonthsLater.toISOString().split('T')[0]
         }, 'upcoming_series', minItems, function (json) {
             append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/discover/tv', json);
         }, status.error.bind(status), 'upcoming_series');
@@ -282,7 +274,7 @@
         var requestParams = { language: lang, page: params.page };
 
         if (params.url === '/discover/movie' || params.url === '/discover/tv') {
-            var today = new Date();
+            var today = new Date('2025-06-04');
             var todayStr = today.toISOString().split('T')[0];
             var sixWeeksAgo = new Date();
             sixWeeksAgo.setDate(today.getDate() - 42);
@@ -290,9 +282,7 @@
             var sixMonthsAgo = new Date();
             sixMonthsAgo.setMonth(today.getMonth() - 6);
             var sixMonthsAgoStr = sixMonthsAgo.toISOString().split('T')[0];
-            var sixMonthsLater = new Date();
-            sixMonthsLater.setMonth(today.getMonth() + 6);
-            var sixMonthsLaterStr = sixMonthsLater.toISOString().split('T')[0];
+            var sixMonthsLater = new Date('2025-12-04');
 
             if (params.type === 'in_theaters') {
                 requestParams = Object.assign(requestParams, {
@@ -308,7 +298,7 @@
                     include_adult: false,
                     sort_by: 'popularity.desc',
                     'primary_release_date.gte': todayStr,
-                    'primary_release_date.lte': sixMonthsLaterStr
+                    'primary_release_date.lte': sixMonthsLater.toISOString().split('T')[0]
                 });
             } else if (params.type === 'new_series_seasons') {
                 requestParams = Object.assign(requestParams, {
@@ -320,8 +310,8 @@
                 requestParams = Object.assign(requestParams, {
                     include_adult: false,
                     sort_by: 'first_air_date.asc',
-                    'air_date.gte': todayStr,
-                    'air_date.lte': sixMonthsLaterStr
+                    'first_air_date.gte': todayStr,
+                    'first_air_date.lte': sixMonthsLater.toISOString().split('T')[0]
                 });
             }
         }
@@ -380,11 +370,9 @@
             this.card.find('.card__title').text(title);
 
             if (!this.is_youtube) {
-                var premiereDate = 'N/A';
-                if (params.type === 'upcoming_series' && data.next_episode_to_air && data.next_episode_to_air.air_date) {
-                    premiereDate = data.next_episode_to_air.air_date;
-                } else if (data.release_date || data.first_air_date) {
-                    premiereDate = data.release_date || data.first_air_date;
+                var premiereDate = data.release_date || data.first_air_date || 'N/A';
+                if (params.type === 'upcoming_series' && trailerCache[`series_${data.id}`]?.nextSeasonDate) {
+                    premiereDate = trailerCache[`series_${data.id}`].nextSeasonDate;
                 }
                 var formattedDate = 'N/A';
                 if (premiereDate !== 'N/A') {
@@ -398,13 +386,6 @@
                 this.card.find('.card__details').remove();
             }
 
-            var formattedDate = 'N/A';
-            if (premiereDate !== 'N/A') {
-                var dateParts = premiereDate.split('-');
-                if (dateParts.length === 3) {
-                    formattedDate = dateParts[2] + '-' + dateParts[1] + '-' + dateParts[0];
-                }
-            }
             this.card.find('.card__view').append(`
                 <div class="card__premiere-date" style="position: absolute; top: 0.5em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${formattedDate}</div>
             `);
