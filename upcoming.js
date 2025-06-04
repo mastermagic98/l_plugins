@@ -508,7 +508,7 @@
                         if (videos.results && videos.results.length) {
                             items.push({ title: Lampa.Lang.translate('title_trailers'), separator: true });
                             videos.results.forEach(function (video) {
-                                items.push({ title: video.name + ' (' + video.iso_639_1.toUpperCase() + ')', id: video.key }));
+                                items.push({ title: video.name + ' (' + video.iso_639_1.toUpperCase() + ')', id: video.key });
                             });
                         }
                         Lampa.Select.show({
@@ -597,7 +597,7 @@
 
         this.bind = function () {
             var maxItems = light ? 6 : data.results.length;
-            data.results.slice(0, maxItems).forEach(this.append);
+            data.results.slice(0, maxItems).forEach(this.append.bind(this));
             if (data.results.length > 0) this.more();
             Lampa.Layer.update();
         };
