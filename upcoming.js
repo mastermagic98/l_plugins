@@ -380,20 +380,24 @@
             this.card.find('.card__title').text(title);
 
             if (!this.is_youtube) {
-                var releaseDate = 'N/A';
+                var premiereDate = 'N/A';
                 if (params.type === 'upcoming_series' && data.next_episode_to_air && data.next_episode_to_air.air_date) {
-                    releaseDate = data.next_episode_to_air.air_date.split('-').reverse().join('-'); // DD-MM-YYYY
-                } else if (params.type === 'new_series_seasons' && data.last_episode_to_air && data.last_episode_to_air.air_date) {
-                    releaseDate = data.last_episode_to_air.air_date.split('-').reverse().join('-'); // DD-MM-YYYY
-                } else {
-                    releaseDate = (data.release_date || data.first_air_date || '0000').slice(0, 4);
+                    premiereDate = data.next_episode_to_air.air_date;
+                } else if (data.release_date || data.first_air_date) {
+                    premiereDate = data.release_date || data.first_air_date;
                 }
-                this.card.find('.card__details').text(releaseDate + ' - ' + (data.original_title || data.original_name));
+                var formattedDate = 'N/A';
+                if (premiereDate !== 'N/A') {
+                    var dateParts = premiereDate.split('-');
+                    if (dateParts.length === 3) {
+                        formattedDate = dateParts[2] + '-' + dateParts[1] + '-' + dateParts[0];
+                    }
+                }
+                this.card.find('.card__details').text(formattedDate + ' - ' + (data.original_title || data.original_name));
             } else {
                 this.card.find('.card__details').remove();
             }
 
-            var premiereDate = data.release_date || data.first_air_date || 'N/A';
             var formattedDate = 'N/A';
             if (premiereDate !== 'N/A') {
                 var dateParts = premiereDate.split('-');
