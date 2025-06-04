@@ -172,14 +172,9 @@
 
         var lang = getInterfaceLanguage();
 
-        // Оновлений запит для "Популярні фільми" з сортуванням за рейтингом
-        get('/movie/popular', {
-            language: lang,
-            page: 1,
-            sort_by: 'vote_average.desc',
-            'vote_count.gte': 50 // Фільтруємо фільми з мінімальною кількістю голосів
-        }, 'popular_movies', minItems, function (json) {
-            append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/movie/popular', json);
+        // Оновлений запит для "Популярні фільми" з ендпоінтом /trending/movie/day
+        get('/trending/movie/day', { language: lang, page: 1 }, 'popular_movies', minItems, function (json) {
+            append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/trending/movie/day', json);
         }, status.error.bind(status));
 
         // Оновлений запит для категорії "В прокаті"
@@ -231,14 +226,8 @@
                 'vote_count.gte': 30,
                 region: 'UA'
             });
-        }
-
-        // Додаємо параметри для /movie/popular
-        if (params.url === '/movie/popular') {
-            requestParams = Object.assign(requestParams, {
-                sort_by: 'vote_average.desc',
-                'vote_count.gte': 50
-            });
+        } else if (params.url === '/trending/movie/day') {
+            requestParams = { language: lang, page: params.page }; // Для /trending/movie/day додаткові параметри не потрібні
         }
 
         get(params.url, requestParams, cacheKey, 20, oncomplite, onerror);
