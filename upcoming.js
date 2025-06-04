@@ -36,9 +36,9 @@
     }
 
     /**
-     * Фільтрує контент (фільми або серіали) за жанрами.
-     * Повертає true, якщо контент має хоча б один дозволений жанр і не має жодного забороненого.
-     * @param {Object} content - Об'єкт контенту з масивом genre_ids.
+     * Фільтрує контент (фільми або серіали) за жанрами та рейтингом.
+     * Повертає true, якщо контент має хоча б один дозволений жанр, не має заборонених жанрів і має рейтинг > 0.
+     * @param {Object} content - Об'єкт контенту з масивом genre_ids і vote_average.
      * @returns {boolean} - Чи відповідає контент критеріям фільтрації.
      */
     function filterTMDBContentByGenre(content) {
@@ -71,13 +71,14 @@
         ];
 
         const genreIds = content.genre_ids || [];
+        const hasRating = content.vote_average && content.vote_average > 0;
 
         const hasAllowedGenre = genreIds.some(id => allowedGenreIds.includes(id));
         const hasDisallowedGenre = genreIds.some(id => disallowedGenreIds.includes(id));
 
-        console.log('Filtering content by genre:', content.title || content.name, 'genre_ids:', genreIds, 'hasAllowedGenre:', hasAllowedGenre, 'hasDisallowedGenre:', hasDisallowedGenre);
+        console.log('Filtering content by genre and rating:', content.title || content.name, 'genre_ids:', genreIds, 'vote_average:', content.vote_average, 'hasAllowedGenre:', hasAllowedGenre, 'hasDisallowedGenre:', hasDisallowedGenre, 'hasRating:', hasRating);
 
-        return hasAllowedGenre && !hasDisallowedGenre;
+        return hasAllowedGenre && !hasDisallowedGenre && hasRating;
     }
 
     function fetchTMDB(endpoint, params, resolve, reject) {
@@ -172,9 +173,15 @@
 
         var lang = getInterfaceLanguage();
 
-        // Оновлений запит для "Популярні фільми" з ендпоінтом /trending/movie/day
-        get('/trending/movie/day', { language: lang, page: 1 }, 'popular_movies', minItems, function (json) {
-            append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/trending/movie/day', json);
+        // Оновлений запит для "Популярні фільми" з сортуванням за рейтингом
+        get('/discover/movie', {
+            language: lang,
+            page: 1,
+            include_adult: false,
+            sort_by: 'vote_average.desc',
+            'vote_count.gte': 10 // Мінімальна кількість голосів для стабільного рейтингу
+        }, 'popular_movies', minItems, function (json) {
+            append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/discover/movie', json);
         }, status.error.bind(status));
 
         // Оновлений запит для категорії "В прокаті"
@@ -212,22 +219,28 @@
 
         // Додаємо додаткові параметри для /discover/movie
         if (params.url === '/discover/movie') {
-            var today = new Date();
-            var todayStr = today.toISOString().split('T')[0];
-            var sixWeeksAgo = new Date();
-            sixWeeksAgo.setDate(today.getDate() - 42);
-            var sixWeeksAgoStr = sixWeeksAgo.toISOString().split('T')[0];
+            if (params.type === 'popular_movies') {
+                requestParams = Object.assign(requestParams, {
+                    include_adult: false,
+                    sort_by: 'vote_average.desc',
+                    'vote_count.gte': 10 // Мінімальна кількість голосів
+                });
+            } else if (params.type === 'in_theaters') {
+                var today = new Date();
+                var todayStr = today.toISOString().split('T')[0];
+                var sixWeeksAgo = new Date();
+                sixWeeksAgo.setDate(today.getDate() - 42);
+                var sixWeeksAgoStr = sixWeeksAgo.toISOString().split('T')[0];
 
-            requestParams = Object.assign(requestParams, {
-                include_adult: false,
-                sort_by: 'primary_release_date.desc',
-                'primary_release_date.gte': sixWeeksAgoStr,
-                'primary_release_date.lte': todayStr,
-                'vote_count.gte': 30,
-                region: 'UA'
-            });
-        } else if (params.url === '/trending/movie/day') {
-            requestParams = { language: lang, page: params.page }; // Для /trending/movie/day додаткові параметри не потрібні
+                requestParams = Object.assign(requestParams, {
+                    include_adult: false,
+                    sort_by: 'primary_release_date.desc',
+                    'primary_release_date.gte': sixWeeksAgoStr,
+                    'primary_release_date.lte': todayStr,
+                    'vote_count.gte': 30,
+                    region: 'UA'
+                });
+            }
         }
 
         get(params.url, requestParams, cacheKey, 20, oncomplite, onerror);
