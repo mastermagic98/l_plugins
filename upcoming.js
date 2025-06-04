@@ -165,24 +165,24 @@
 
         // Обчислюємо дати для категорії "В прокаті"
         var today = new Date();
-        var todayStr = today.toISOString().split('T')[0]; // Формат YYYY-MM-DD
+        var todayStr = today.toISOString().split('T')[0]; // Формат YYYY-MM-DD (2025-06-04)
         var sixWeeksAgo = new Date();
         sixWeeksAgo.setDate(today.getDate() - 42); // 6 тижнів назад
-        var sixWeeksAgoStr = sixWeeksAgo.toISOString().split('T')[0]; // Формат YYYY-MM-DD
+        var sixWeeksAgoStr = sixWeeksAgo.toISOString().split('T')[0]; // Формат YYYY-MM-DD (2025-04-23)
 
         var lang = getInterfaceLanguage();
 
-        // Оновлений запит для категорії "Популярні фільми"
-        get('/discover/movie', {
+        // Оновлений запит для "Популярні фільми" з сортуванням за рейтингом
+        get('/movie/popular', {
             language: lang,
             page: 1,
-            include_adult: false,
             sort_by: 'vote_average.desc',
-            'vote_count.gte': 30
+            'vote_count.gte': 50 // Фільтруємо фільми з мінімальною кількістю голосів
         }, 'popular_movies', minItems, function (json) {
-            append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/discover/movie', json);
+            append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/movie/popular', json);
         }, status.error.bind(status));
 
+        // Оновлений запит для категорії "В прокаті"
         get('/discover/movie', {
             language: lang,
             page: 1,
@@ -217,28 +217,28 @@
 
         // Додаємо додаткові параметри для /discover/movie
         if (params.url === '/discover/movie') {
-            if (params.type === 'popular_movies') {
-                requestParams = Object.assign(requestParams, {
-                    include_adult: false,
-                    sort_by: 'vote_average.desc',
-                    'vote_count.gte': 30
-                });
-            } else if (params.type === 'in_theaters') {
-                var today = new Date();
-                var todayStr = today.toISOString().split('T')[0];
-                var sixWeeksAgo = new Date();
-                sixWeeksAgo.setDate(today.getDate() - 42);
-                var sixWeeksAgoStr = sixWeeksAgo.toISOString().split('T')[0];
+            var today = new Date();
+            var todayStr = today.toISOString().split('T')[0];
+            var sixWeeksAgo = new Date();
+            sixWeeksAgo.setDate(today.getDate() - 42);
+            var sixWeeksAgoStr = sixWeeksAgo.toISOString().split('T')[0];
 
-                requestParams = Object.assign(requestParams, {
-                    include_adult: false,
-                    sort_by: 'primary_release_date.desc',
-                    'primary_release_date.gte': sixWeeksAgoStr,
-                    'primary_release_date.lte': todayStr,
-                    'vote_count.gte': 30,
-                    region: 'UA'
-                });
-            }
+            requestParams = Object.assign(requestParams, {
+                include_adult: false,
+                sort_by: 'primary_release_date.desc',
+                'primary_release_date.gte': sixWeeksAgoStr,
+                'primary_release_date.lte': todayStr,
+                'vote_count.gte': 30,
+                region: 'UA'
+            });
+        }
+
+        // Додаємо параметри для /movie/popular
+        if (params.url === '/movie/popular') {
+            requestParams = Object.assign(requestParams, {
+                sort_by: 'vote_average.desc',
+                'vote_count.gte': 50
+            });
         }
 
         get(params.url, requestParams, cacheKey, 20, oncomplite, onerror);
