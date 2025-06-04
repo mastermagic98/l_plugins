@@ -39,9 +39,10 @@
      * Фільтрує контент (фільми або серіали) за жанрами та рейтингами.
      * Повертає true, якщо контент має хоча б один дозволений жанр, не має заборонених жанрів та має рейтинг (якщо потрібно).
      * @param {Object} content - Об'єкт контенту з масивом genre_ids та vote_average.
+     * @param {string} category - Назва категорії (наприклад, 'upcoming_series'), щоб визначити, чи потрібна перевірка рейтингу.
      * @returns {boolean} - Чи відповідає контент критеріям фільтрації.
      */
-    function filterTMDBContentByGenre(content) {
+    function filterTMDBContentByGenre(content, category) {
         const allowedGenreIds = [
             28,    // Action (боевики)
             12,    // Adventure (приключения)
@@ -73,11 +74,12 @@
         const genreIds = content.genre_ids || [];
         const hasAllowedGenre = genreIds.some(id => allowedGenreIds.includes(id));
         const hasDisallowedGenre = genreIds.some(id => disallowedGenreIds.includes(id));
-        // Для категорій, де рейтинг не потрібен (наприклад, upcoming_movies), пропускаємо перевірку
-        const requiresRating = !content.release_date || new Date(content.release_date) <= new Date();
+
+        // Для категорії upcoming_series рейтинг не потрібен, оскільки серіали ще не вийшли
+        const requiresRating = category !== 'upcoming_series' && (!content.release_date || new Date(content.release_date) <= new Date());
         const hasRating = !requiresRating || (content.vote_average && content.vote_average > 0);
 
-        console.log('Filtering content:', content.title || content.name, 'genre_ids:', genreIds, 'hasAllowedGenre:', hasAllowedGenre, 'hasDisallowedGenre:', hasDisallowedGenre, 'vote_average:', content.vote_average, 'hasRating:', hasRating, 'requiresRating:', requiresRating);
+        console.log('Filtering content:', content.title || content.name, 'genre_ids:', genreIds, 'hasAllowedGenre:', hasAllowedGenre, 'hasDisallowedGenre:', hasDisallowedGenre, 'vote_average:', content.vote_average, 'hasRating:', hasRating, 'requiresRating:', requiresRating, 'category:', category);
 
         return hasAllowedGenre && !hasDisallowedGenre && hasRating;
     }
@@ -97,7 +99,7 @@
         });
     }
 
-    function get(endpoint, params, cacheKey, minItems, resolve, reject) {
+    function get(endpoint, params, cacheKey, minItems, resolve, reject, category) {
         if (cacheKey && trailerCache[cacheKey]) {
             console.log('Using cache for ' + cacheKey);
             resolve(trailerCache[cacheKey]);
@@ -112,7 +114,9 @@
             var currentParams = Object.assign({}, params, { page: page });
             fetchTMDB(endpoint, currentParams, function (data) {
                 if (data.results) {
-                    var filteredResults = data.results.filter(filterTMDBContentByGenre);
+                    var filteredResults = data.results.filter(function (content) {
+                        return filterTMDBContentByGenre(content, category);
+                    });
                     results = results.concat(filteredResults);
                     console.log('Fetched page ' + page + ' for ' + endpoint + ', filtered results: ', filteredResults);
                     console.log('Total accumulated results: ', results.length);
@@ -181,7 +185,7 @@
 
         get('/trending/movie/week', { language: lang, page: 1 }, 'popular_movies', minItems, function (json) {
             append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/trending/movie/week', json);
-        }, status.error.bind(status));
+        }, status.error.bind(status), 'popular_movies');
 
         get('/discover/movie', {
             language: lang,
@@ -194,7 +198,7 @@
             region: 'UA'
         }, 'in_theaters', minItems, function (json) {
             append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/discover/movie', json);
-        }, status.error.bind(status));
+        }, status.error.bind(status), 'in_theaters');
 
         get('/discover/movie', {
             language: lang,
@@ -205,27 +209,27 @@
             'primary_release_date.lte': sixMonthsLaterStr
         }, 'upcoming_movies', minItems, function (json) {
             append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/discover/movie', json);
-        }, status.error.bind(status));
+        }, status.error.bind(status), 'upcoming_movies');
 
         get('/trending/tv/week', { language: lang, page: 1 }, 'popular_series', minItems, function (json) {
             append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', '/trending/tv/week', json);
-        }, status.error.bind(status));
+        }, status.error.bind(status), 'popular_series');
 
         get('/tv/on_the_air', { language: lang, page: 1 }, 'new_series_seasons', minItems, function (json) {
             append(Lampa.Lang.translate('trailers_new_series_seasons'), 'new_series_seasons', '/tv/on_the_air', json);
-        }, status.error.bind(status));
+        }, status.error.bind(status), 'new_series_seasons');
 
-        // Оновлений запит для категорії "Очікувані серіали"
+        // Оновлений запит для категорії "Очікувані серіали" із сортуванням за датою
         get('/discover/tv', {
             language: lang,
             page: 1,
             include_adult: false,
-            sort_by: 'popularity.desc',
+            sort_by: 'first_air_date.asc', // Сортування за найближчими прем’єрами
             'first_air_date.gte': todayStr,
             'first_air_date.lte': sixMonthsLaterStr
         }, 'upcoming_series', minItems, function (json) {
             append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/discover/tv', json);
-        }, status.error.bind(status));
+        }, status.error.bind(status), 'upcoming_series');
     }
 
     function full(params, oncomplite, onerror) {
@@ -264,14 +268,14 @@
             } else if (params.type === 'upcoming_series') {
                 requestParams = Object.assign(requestParams, {
                     include_adult: false,
-                    sort_by: 'popularity.desc',
+                    sort_by: 'first_air_date.asc', // Сортування за найближчими прем’єрами
                     'first_air_date.gte': todayStr,
                     'first_air_date.lte': sixMonthsLaterStr
                 });
             }
         }
 
-        get(params.url, requestParams, cacheKey, 20, oncomplite, onerror);
+        get(params.url, requestParams, cacheKey, 20, oncomplite, onerror, params.type);
     }
 
     function videos(card, oncomplite, onerror) {
@@ -978,7 +982,7 @@
                     </div>
                 </div>
                 <div class="card__play">
-                    <img src="./img/icons/player/play.svg">
+                    <img src="./img/icons/player/play.svg" />
                 </div>
             </div>
         `);
