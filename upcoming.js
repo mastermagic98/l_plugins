@@ -111,13 +111,83 @@
         }, reject);
     }
 
+    function main(oncomplite, onerror) {
+        var status = new Lampa.Status(6);
+        status.onComplite = function () {
+            var fulldata = [];
+            var categories = ['popular_movies', 'in_theaters', 'upcoming_movies', 'popular_series', 'new_series_seasons', 'upcoming_series'];
+            categories.forEach(function (key) {
+                if (status.data[key] && status.data[key].results && status.data[key].results.length) {
+                    fulldata.push(status.data[key]);
+                }
+            });
+            console.log('Main: Fetched categories with data: ', fulldata);
+            if (fulldata.length) oncomplite(fulldata);
+            else onerror();
+        };
+
+        var append = function (title, name, url, json) {
+            json.title = title;
+            json.type = name;
+            json.url = url;
+            status.append(name, json);
+        };
+
+        var today = new Date().toISOString().split('T')[0];
+        var oneMonthAgo = new Date();
+        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+        oneMonthAgo = oneMonthAgo.toISOString().split('T')[0];
+        var oneMonthLater = new Date();
+        oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+        oneMonthLater = oneMonthLater.toISOString().split('T')[0];
+
+        var lang = getInterfaceLanguage();
+
+        get('/movie/popular', { language: lang, page: 1 }, 'popular_movies', function (json) {
+            append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/movie/popular', json);
+        }, status.error.bind(status));
+        get('/movie/now_playing', { language: lang, page: 1 }, 'in_theaters', function (json) {
+            append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/movie/now_playing', json);
+        }, status.error.bind(status));
+        get('/movie/upcoming', { language: lang, page: 1 }, 'upcoming_movies', function (json) {
+            append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/movie/upcoming', json);
+        }, status.error.bind(status));
+        get('/tv/popular', { language: lang, page: 1 }, 'popular_series', function (json) {
+            append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', '/tv/popular', json);
+        }, status.error.bind(status));
+        get('/tv/on_the_air', { language: lang, page: 1 }, 'new_series_seasons', function (json) {
+            append(Lampa.Lang.translate('trailers_new_series_seasons'), 'new_series_seasons', '/tv/on_the_air', json);
+        }, status.error.bind(status));
+        get('/tv/airing_today', { language: lang, page: 1 }, 'upcoming_series', function (json) {
+            append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/tv/airing_today', json);
+        }, status.error.bind(status));
+    }
+
+    function full(params, oncomplite, onerror) {
+        var cacheKey = params.url + '_page_' + params.page;
+        var lang = getInterfaceLanguage();
+        get(params.url, { language: lang, page: params.page }, cacheKey, oncomplite, onerror);
+    }
+
     function videos(card, oncomplite, onerror) {
         var endpoint = (card.name ? '/tv' : '/movie') + '/' + card.id + '/videos';
-        var lang = getInterfaceLanguage();
-        fetchTMDB(endpoint, { language: lang }, function (data) {
-            console.log('Videos response for ' + card.id + ': ', data.results);
-            oncomplite(data);
-        }, onerror);
+        var interfaceLang = getInterfaceLanguage();
+        // Спочатку пробуємо отримати трейлери мовою інтерфейсу
+        fetchTMDB(endpoint, { language: interfaceLang }, function (data) {
+            if (data.results && data.results.length) {
+                oncomplite(data);
+            } else {
+                // Якщо трейлерів немає, робимо запит для англійської мови
+                console.log('No trailers found for language ' + interfaceLang + ', trying English...');
+                fetchTMDB(endpoint, { language: 'en-US' }, function (dataEn) {
+                    oncomplite(dataEn);
+                }, function (error) {
+                    onerror(error);
+                });
+            }
+        }, function (error) {
+            onerror(error);
+        });
     }
 
     function clear() {
@@ -207,15 +277,10 @@
 
         this.updateTrailerLanguage = function () {
             var _this = this;
-            var interfaceLang = getShortLanguageCode();
             Api.videos(data, function (videos) {
-                console.log('Available videos for ' + data.id + ': ', videos.results);
                 var lang = '—';
                 if (videos.results && videos.results.length) {
-                    var preferredVideo = videos.results.find(v => v.iso_639_1 === interfaceLang) ||
-                                        videos.results.find(v => v.iso_639_1 === 'en') ||
-                                        videos.results.find(v => v.type === 'Trailer');
-                    lang = preferredVideo ? preferredVideo.iso_639_1.toUpperCase() : '—';
+                    lang = videos.results[0].iso_639_1.toUpperCase();
                 }
                 _this.card.find('.card__trailer-lang').text(lang);
             }, function () {
@@ -251,14 +316,9 @@
                 if (_this2.is_youtube) {
                     _this2.play(data.id);
                 } else {
-                    var interfaceLang = getShortLanguageCode();
                     Api.videos(data, function (videos) {
-                        console.log('Play videos response for ' + data.id + ': ', videos.results);
-                        var video = videos.results.find(v => v.iso_639_1 === interfaceLang) ||
-                                    videos.results.find(v => v.iso_639_1 === 'en') ||
-                                    videos.results.find(v => v.type === 'Trailer');
-                        if (video && video.key) {
-                            _this2.play(video.key);
+                        if (videos.results && videos.results.length) {
+                            _this2.play(videos.results[0].key);
                         } else {
                             Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
                         }
@@ -276,10 +336,9 @@
                         Api.clear();
                         Lampa.Loading.stop();
                     });
-                    var interfaceLang = getShortLanguageCode();
                     Api.videos(data, function (videos) {
                         Lampa.Loading.stop();
-                        if (videos.results.length) {
+                        if (videos.results && videos.results.length) {
                             items.push({
                                 title: Lampa.Lang.translate('title_trailers'),
                                 separator: true
