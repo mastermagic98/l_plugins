@@ -95,24 +95,54 @@
         });
     }
 
-    function get(endpoint, params, cacheKey, resolve, reject) {
+    function get(endpoint, params, cacheKey, minItems, resolve, reject) {
         if (cacheKey && trailerCache[cacheKey]) {
             console.log('Using cache for ' + cacheKey);
             resolve(trailerCache[cacheKey]);
             return;
         }
-        fetchTMDB(endpoint, params, function (data) {
-            if (data.results) {
-                data.results = data.results.filter(filterTMDBContentByGenre);
-                console.log('Filtered results for ' + endpoint + ': ', data.results);
-            }
-            if (cacheKey) trailerCache[cacheKey] = data;
-            resolve(data);
-        }, reject);
+
+        var results = [];
+        var page = params.page || 1;
+        var totalPages = 1;
+
+        function fetchPage() {
+            var currentParams = Object.assign({}, params, { page: page });
+            fetchTMDB(endpoint, currentParams, function (data) {
+                if (data.results) {
+                    var filteredResults = data.results.filter(filterTMDBContentByGenre);
+                    results = results.concat(filteredResults);
+                    console.log('Fetched page ' + page + ' for ' + endpoint + ', filtered results: ', filteredResults);
+                    console.log('Total accumulated results: ', results.length);
+
+                    totalPages = data.total_pages || 1;
+
+                    // Якщо зібрано достатньо елементів або досягнуто останньої сторінки, завершуємо
+                    if (results.length >= minItems || page >= totalPages || page >= 30) {
+                        data.results = results.slice(0, minItems); // Обрізаємо до потрібної кількості
+                        if (cacheKey) trailerCache[cacheKey] = data;
+                        console.log('Final results for ' + endpoint + ': ', data.results);
+                        resolve(data);
+                    } else {
+                        // Інакше запитуємо наступну сторінку
+                        page++;
+                        fetchPage();
+                    }
+                } else {
+                    if (cacheKey) trailerCache[cacheKey] = data;
+                    resolve(data);
+                }
+            }, reject);
+        }
+
+        fetchPage();
     }
 
     function main(oncomplite, onerror) {
         var status = new Lampa.Status(6);
+        var light = Lampa.Storage.field('light_version') && window.innerWidth >= 767;
+        var minItems = light ? 6 : 20; // Мінімальна кількість елементів для кожної категорії
+
         status.onComplite = function () {
             var fulldata = [];
             var categories = ['popular_movies', 'in_theaters', 'upcoming_movies', 'popular_series', 'new_series_seasons', 'upcoming_series'];
@@ -143,22 +173,22 @@
 
         var lang = getInterfaceLanguage();
 
-        get('/movie/popular', { language: lang, page: 1 }, 'popular_movies', function (json) {
+        get('/movie/popular', { language: lang, page: 1 }, 'popular_movies', minItems, function (json) {
             append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/movie/popular', json);
         }, status.error.bind(status));
-        get('/movie/now_playing', { language: lang, page: 1 }, 'in_theaters', function (json) {
+        get('/movie/now_playing', { language: lang, page: 1 }, 'in_theaters', minItems, function (json) {
             append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/movie/now_playing', json);
         }, status.error.bind(status));
-        get('/movie/upcoming', { language: lang, page: 1 }, 'upcoming_movies', function (json) {
+        get('/movie/upcoming', { language: lang, page: 1 }, 'upcoming_movies', minItems, function (json) {
             append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/movie/upcoming', json);
         }, status.error.bind(status));
-        get('/tv/popular', { language: lang, page: 1 }, 'popular_series', function (json) {
+        get('/tv/popular', { language: lang, page: 1 }, 'popular_series', minItems, function (json) {
             append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', '/tv/popular', json);
         }, status.error.bind(status));
-        get('/tv/on_the_air', { language: lang, page: 1 }, 'new_series_seasons', function (json) {
+        get('/tv/on_the_air', { language: lang, page: 1 }, 'new_series_seasons', minItems, function (json) {
             append(Lampa.Lang.translate('trailers_new_series_seasons'), 'new_series_seasons', '/tv/on_the_air', json);
         }, status.error.bind(status));
-        get('/tv/airing_today', { language: lang, page: 1 }, 'upcoming_series', function (json) {
+        get('/tv/airing_today', { language: lang, page: 1 }, 'upcoming_series', minItems, function (json) {
             append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/tv/airing_today', json);
         }, status.error.bind(status));
     }
@@ -166,7 +196,7 @@
     function full(params, oncomplite, onerror) {
         var cacheKey = params.url + '_page_' + params.page;
         var lang = getInterfaceLanguage();
-        get(params.url, { language: lang, page: params.page }, cacheKey, oncomplite, onerror);
+        get(params.url, { language: lang, page: params.page }, cacheKey, 20, oncomplite, onerror);
     }
 
     function videos(card, oncomplite, onerror) {
@@ -432,8 +462,10 @@
         };
 
         this.bind = function () {
-            data.results.slice(0, light ? 6 : data.results.length).forEach(this.append.bind(this));
-            this.more();
+            // Відображаємо до 6 карток у легкій версії або всі доступні у повній
+            var maxItems = light ? 6 : data.results.length;
+            data.results.slice(0, maxItems).forEach(this.append.bind(this));
+            if (data.results.length > 0) this.more(); // Додаємо кнопку "ЩЕ", якщо є хоч один елемент
             Lampa.Layer.update();
         };
 
