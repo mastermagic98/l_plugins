@@ -333,7 +333,7 @@
                     'air_date.lte': todayStr
                 });
             } else if (params.type === 'upcoming_series') {
-                this.activate = Object.assign(requestParams, {
+                requestParams = Object.assign(requestParams, {
                     include_adult: false,
                     sort_by: 'popularity.desc',
                     'first_air_date.gte': todayStr,
@@ -343,7 +343,7 @@
         }
 
         get(params.url, requestParams, cacheKey, 20, oncomplite, onerror, params.type);
-}
+    }
 
     function videos(card, oncomplite, onerror) {
         var endpoint = (card.name ? '/tv/' : '/movie/') + card.id + '/videos';
@@ -406,28 +406,28 @@
             var formattedDate = 'N/A';
             if (premiereDate !== 'N/A') {
                 var dateParts = premiereDate.split('-');
-                if (dateParts[0].length === 3) {
+                if (dateParts.length === 3) {
                     formattedDate = dateParts[2] + '-' + dateParts[1] + '-' + dateParts[0];
                 }
             }
             this.card.find('.card__view').append(`
-                <div class="card__premiere-date" style="position: absolute; top: 0.5em; right: 0.5em; color: white; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${formattedDate.format}</div>
+                <div class="card__premiere-date" style="position: absolute; top: 0.5em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${formattedDate}</div>
             `);
 
             this.card.find('.card__view').append(`
-                <div class="card__trailer-lang" style="position: absolute; top: 2.25em; right: 0.5em; color: white; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;"></div>
+                <div class="card__trailer-lang" style="position: absolute; top: 2.25em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;"></div>
             `);
 
             var rating = data.vote_average ? data.vote_average.toFixed(1) : '—';
             this.card.find('.card__view').append(`
-                <div class="card__rating" style="position: absolute; bottom: 0.5em; right: 0.5em; color: white; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${rating.rating}</div>
+                <div class="card__rating" style="position: absolute; bottom: 0.5em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${rating}</div>
             `);
         };
 
         this.cardImgBackground = function (card_data) {
             if (Lampa.Storage.field('background')) {
-                if (Lampa.Storage.get('backgroundImage_type', 'complex') === 'poster' && window.innerWidth > 790) {
-                    return card_data.backdrop_path ? Lampa.Api.img(card_data.submit_img_path, 'original') : this.is_youtube ? 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg' : '';
+                if (Lampa.Storage.get('background_type', 'complex') === 'poster' && window.innerWidth > 790) {
+                    return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'original') : this.is_youtube ? 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg' : '';
                 }
                 return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'w500') : this.is_youtube ? 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg' : '';
             }
@@ -440,7 +440,7 @@
                 _this.card.addClass('card--loaded');
                 _this.updateTrailerLanguage();
             };
-            this.image.onerror = function () {
+            this.img.onerror = function () {
                 _this.img.src = './img/img_broken.svg';
             };
         };
@@ -450,14 +450,16 @@
             Api.videos(data, function (videos) {
                 var lang = '—';
                 if (videos.results && videos.results.length) {
-                    lang = videos.results[0].iso_639_1.toUpperCase().replace;
-                var _this.card.find('.card__trailer-lang').text(lang);
+                    lang = videos.results[0].iso_639_1.toUpperCase();
+                }
+                _this.card.find('.card__trailer-lang').text(lang);
+            }, function () {
                 _this.card.find('.card__trailer-lang').text('—');
             });
         };
 
         this.play = function (id) {
-            if (Lampa.Manifest.Manifest_digital >= 183) {
+            if (Lampa.Manifest.app_digital >= 183) {
                 var item = {
                     title: Lampa.Utils.shortText(data.title || data.name, 50),
                     id: id,
@@ -469,7 +471,7 @@
                 Lampa.Player.play(item);
                 Lampa.Player.playlist([item]);
             } else {
-                Lampa.YouTube.Play(id);
+                Lampa.YouTube.play(id);
             }
         };
 
@@ -489,51 +491,44 @@
                             _this2.play(videos.results[0].key);
                         } else {
                             Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
-                        } else {
-                            Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
                         }
+                    }, function () {
+                        Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
                     });
-                });
+                }
             }).on('hover:long', function () {
                 if (!_this2.is_youtube) {
-                    var items = [{
-                        title: Lampa.Lang.translate('trailers_view'),
-                        view: true
-                    }];
+                    var items = [{ title: Lampa.Lang.translate('trailers_view'), view: true }];
                     Lampa.Loading.start(function () {
-                        Api.clearCache();
+                        Api.clear();
                         Lampa.Loading.stop();
                     });
                     Api.videos(data, function (videos) {
                         Lampa.Loading.stop();
                         if (videos.results && videos.results.length) {
-                            items.push({
-                                title: Lampa.Lang.translate('title_trailers'),
-                                separator: true
-                            });
+                            items.push({ title: Lampa.Lang.translate('title_trailers'), separator: true });
                             videos.results.forEach(function (video) {
-                                items.push({
-                                    title: video.name + ' (' + video.iso_639_1.toUpperCase().replace(/\s+/g, '') + ')',
-                                    id: video.id
-                                });
+                                items.push({ title: video.name + ' (' + video.iso_639_1.toUpperCase() + ')', id: video.key }));
                             });
                         }
                         Lampa.Select.show({
                             title: Lampa.Lang.translate('title_action'),
-                            items: items.items,
+                            items: items,
                             onSelect: function (item) {
                                 Lampa.Controller.toggle('content');
-                                Lampa.Activity.push({
-                                    url: '',
-                                    component: 'full',
-                                    id: data.id,
-                                    method: data.name ? 'tv' : 'movie',
-                                    card: data,
-                                    source: 'tmdb'
-                                });
-                            } else {
-                                _this2.play(item.id);
-                            }
+                                if (item.view) {
+                                    Lampa.Activity.push({
+                                        url: '',
+                                        component: 'full',
+                                        id: data.id,
+                                        method: data.name ? 'tv' : 'movie',
+                                        card: data,
+                                        source: 'tmdb'
+                                    });
+                                } else {
+                                    _this2.play(item.id);
+                                }
+                            },
                             onBack: function () {
                                 Lampa.Controller.toggle('content');
                             }
@@ -542,27 +537,23 @@
                 } else if (Lampa.Search) {
                     Lampa.Select.show({
                         title: Lampa.Lang.translate('title_action'),
-                        items: [{
-                            title: Lampa.Lang.translate('search')
-                        }],
-                        }),
+                        items: [{ title: Lampa.Lang.translate('search') }],
                         onSelect: function (item) {
                             Lampa.Controller.toggle('content');
-                            Lampa.Search.open({
-                                input: data.title || data.name
-                            });
+                            Lampa.Search.open({ input: data.title || data.name });
                         },
                         onBack: function () {
                             Lampa.Controller.toggle('content');
                         }
                     });
-                });
+                }
             });
             this.image();
         };
 
         this.destroy = function () {
-            this.img.onerror = this.img.onload = null;
+            this.img.onerror = null;
+            this.img.onload = null;
             this.img.src = '';
             this.card.remove();
             this.card = this.img = null;
@@ -570,10 +561,15 @@
 
         this.visible = function () {
             if (this.visibled) return;
-            if (params.type === 'rating') this.img.src = 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg';
-            else if (data.backdrop_path) this.img.src = Lampa.Api.img(data.backdrop_path, 'w500');
-            else if (data.poster_path) this.img.src = Lampa.Api.img(data.poster_path);
-            else this.img.src = './img/img_broken.svg';
+            if (params.type === 'rating') {
+                this.img.src = 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg';
+            } else if (data.backdrop_path) {
+                this.img.src = Lampa.Api.img(data.backdrop_path, 'w500');
+            } else if (data.poster_path) {
+                this.img.src = Lampa.Api.img(data.poster_path);
+            } else {
+                this.img.src = './img/img_broken.svg';
+            }
             this.visibled = true;
         };
 
@@ -583,16 +579,17 @@
     }
 
     function Line(data) {
-        var content = Lampa.Lampa.Template.get('items_line', { title: data.title });
+        var content = Lampa.Template.get('items_line', { title: data.title });
         var body = content.find('.items-line__body');
         var scroll = new Lampa.Scroll({ horizontal: true, step: 600 });
-        var light = Lampa.Lampa.Storage.field('light_version') && window.innerWidth >= 767;
+        var light = Lampa.Storage.get('light_version', false) && window.innerWidth >= 767;
         var items = [];
         var active = 0;
-        var more, last;
+        var more;
+        var last;
 
         this.create = function () {
-            scroll.render().find('.scroll__body').addClass('cards');
+            scroll.render().find('.scroll__body').addClass('items-cards');
             content.find('.items-line__title').text(data.title);
             body.append(scroll.render());
             this.bind();
@@ -600,14 +597,14 @@
 
         this.bind = function () {
             var maxItems = light ? 6 : data.results.length;
-            data.results.slice(0, maxItems).forEach(this.append.bind(this));
-            if (data.results.length > 0) this.appendMore(this);
-            Lampa.Lambda.Layer.update();
+            data.results.slice(0, maxItems).forEach(this.append);
+            if (data.results.length > 0) this.more();
+            Lampa.Layer.update();
         };
 
         this.cardImgBackground = function (card_data) {
             if (Lampa.Storage.field('background')) {
-                if (Lampa.Storage.Lampa.get('background_type', 'complex') === 'poster' && window.innerWidth > 790) {
+                if (Lampa.Storage.get('background_type', 'complex') === 'poster' && window.innerWidth > 790) {
                     return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'original') : '';
                 }
                 return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'w500') : '';
@@ -624,15 +621,15 @@
             card.onFocus = function (target, card_data, is_mouse) {
                 last = target;
                 active = items.indexOf(card);
-                if (!is_mouse.active) scroll.update(items.items[active].render(), true);
+                if (!is_mouse) scroll.update(items[active].render(), true);
                 if (_this.onFocus) _this.onFocus(card_data);
             };
             scroll.append(card.render());
             items.push(card);
         };
 
-        this.append = function () {
-            more = Lampa.Template.getMore('more').addClass('more--trailers');
+        this.more = function () {
+            more = Lampa.Template.get('more').addClass('more--trailers');
             more.on('hover:enter', function () {
                 Lampa.Activity.push({
                     url: data.url,
@@ -655,7 +652,7 @@
                 toggle: function () {
                     Lampa.Controller.collectionSet(scroll.render());
                     Lampa.Controller.collectionFocus(items.length ? last : false, scroll.render());
-                }),
+                },
                 right: function () {
                     console.log('Line: Right navigation, active: ' + active + ', items length: ' + items.length);
                     if (active < items.length - 1) {
@@ -666,33 +663,35 @@
                     } else if (active === items.length - 1) {
                         active = items.length;
                         scroll.update(more, true);
-                        Lampa.Controller.collectionFocus(more[0], true), scroll.render());
+                        Lampa.Controller.collectionFocus(more[0], scroll.render());
                         console.log('Line: Moved right to More, new active: ' + active);
                     } else {
                         active = 0;
-                        scroll.update(items[0].render(), true);
-                        Lampa.Controller.collectionFocus(items[0].render(), scroll.render());
+                        scroll.update(items[active].render(), true);
+                        Lampa.Controller.collectionFocus(items[active].render()[0], scroll.render());
                         console.log('Line: Cycled right to first card, new active: ' + active);
-                    },
-                    left: function () {
-                        console.log('Line: Left navigation, active: ' + active);
-                        if (active > 0) {
-                            active--;
-                            if (active === items.length) {
-                                scroll.update(items[items.length - 1].render(), true);
-                                Lampa.Controller.collectionFocus(items[items.length - 1].render(), scroll.render());
-                                console.log('Line: Moved left from More to last card, new active: ' + active);
-                            } else {
-                                Navigator.move('left');
-                                scroll.update(items.active].render(), true);
-                                console.log('Line: Moved left to card, new active: ' + active);
-                            }
-                            } else if (active === 0) {
-                                active = items.length;
-                                scroll.update(more, true);
-                                Lampa.Controller.collectionFocus(more[0], scroll.render());
-                                console.log('Line: Cycled left to More, new active: ' + active);
-                            }),
+                    }
+                },
+                left: function () {
+                    console.log('Line: Left navigation, active: ' + active);
+                    if (active > 0) {
+                        active--;
+                        if (active === items.length) {
+                            scroll.update(items[items.length - 1].render(), true);
+                            Lampa.Controller.collectionFocus(items[items.length - 1].render()[0], scroll.render());
+                            console.log('Line: Moved left from More to last card, new active: ' + active);
+                        } else {
+                            Navigator.move('left');
+                            scroll.update(items[active].render(), true);
+                            console.log('Line: Moved left to card, new active: ' + active);
+                        }
+                    } else if (active === 0) {
+                        active = items.length;
+                        scroll.update(more, true);
+                        Lampa.Controller.collectionFocus(more[0], scroll.render());
+                        console.log('Line: Cycled left to More, new active: ' + active);
+                    }
+                },
                 down: this.onDown,
                 up: this.onUp,
                 gone: function () {},
@@ -857,7 +856,8 @@
         var newlampa = Lampa.Manifest.app_digital >= 166;
         var light = newlampa ? false : Lampa.Storage.field('light_version') && window.innerWidth >= 767;
         var total_pages = 0;
-        var last, waitload;
+        var last;
+        var waitload;
         var active = 0;
 
         this.create = function () {
