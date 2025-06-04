@@ -37,7 +37,7 @@
 
     /**
      * Фільтрує контент (фільми або серіали) за жанрами та рейтингами.
-     * Повертає true, якщо контент має хоча б один дозволений жанр, не має заборонених жанрів та має рейтинг.
+     * Повертає true, якщо контент має хоча б один дозволений жанр, не має заборонених жанрів та має рейтинг (якщо потрібно).
      * @param {Object} content - Об'єкт контенту з масивом genre_ids та vote_average.
      * @returns {boolean} - Чи відповідає контент критеріям фільтрації.
      */
@@ -73,9 +73,11 @@
         const genreIds = content.genre_ids || [];
         const hasAllowedGenre = genreIds.some(id => allowedGenreIds.includes(id));
         const hasDisallowedGenre = genreIds.some(id => disallowedGenreIds.includes(id));
-        const hasRating = content.vote_average && content.vote_average > 0;
+        // Для категорій, де рейтинг не потрібен (наприклад, upcoming_movies), пропускаємо перевірку
+        const requiresRating = !content.release_date || new Date(content.release_date) <= new Date();
+        const hasRating = !requiresRating || (content.vote_average && content.vote_average > 0);
 
-        console.log('Filtering content:', content.title || content.name, 'genre_ids:', genreIds, 'hasAllowedGenre:', hasAllowedGenre, 'hasDisallowedGenre:', hasDisallowedGenre, 'vote_average:', content.vote_average, 'hasRating:', hasRating);
+        console.log('Filtering content:', content.title || content.name, 'genre_ids:', genreIds, 'hasAllowedGenre:', hasAllowedGenre, 'hasDisallowedGenre:', hasDisallowedGenre, 'vote_average:', content.vote_average, 'hasRating:', hasRating, 'requiresRating:', requiresRating);
 
         return hasAllowedGenre && !hasDisallowedGenre && hasRating;
     }
@@ -165,14 +167,18 @@
 
         // Обчислюємо дати для категорії "В прокаті"
         var today = new Date();
-        var todayStr = today.toISOString().split('T')[0]; // Формат YYYY-MM-DD
+        var todayStr = today.toISOString().split('T')[0]; // Формат YYYY-MM-DD (2025-06-04)
         var sixWeeksAgo = new Date();
         sixWeeksAgo.setDate(today.getDate() - 42); // 6 тижнів назад
         var sixWeeksAgoStr = sixWeeksAgo.toISOString().split('T')[0]; // Формат YYYY-MM-DD
 
+        // Обчислюємо дати для категорії "Очікувані фільми"
+        var sixMonthsLater = new Date();
+        sixMonthsLater.setMonth(today.getMonth() + 6); // 6 місяців вперед
+        var sixMonthsLaterStr = sixMonthsLater.toISOString().split('T')[0]; // Формат YYYY-MM-DD (2025-12-04)
+
         var lang = getInterfaceLanguage();
 
-        // Змінено ендпоінт для "Популярні фільми" на /trending/movie/week
         get('/trending/movie/week', { language: lang, page: 1 }, 'popular_movies', minItems, function (json) {
             append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/trending/movie/week', json);
         }, status.error.bind(status));
@@ -190,9 +196,18 @@
             append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/discover/movie', json);
         }, status.error.bind(status));
 
-        get('/movie/upcoming', { language: lang, page: 1 }, 'upcoming_movies', minItems, function (json) {
-            append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/movie/upcoming', json);
+        // Оновлений запит для категорії "Очікувані фільми"
+        get('/discover/movie', {
+            language: lang,
+            page: 1,
+            include_adult: false,
+            sort_by: 'popularity.desc',
+            'primary_release_date.gte': todayStr,
+            'primary_release_date.lte': sixMonthsLaterStr
+        }, 'upcoming_movies', minItems, function (json) {
+            append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/discover/movie', json);
         }, status.error.bind(status));
+
         get('/tv/popular', { language: lang, page: 1 }, 'popular_series', minItems, function (json) {
             append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', '/tv/popular', json);
         }, status.error.bind(status));
@@ -217,14 +232,27 @@
             sixWeeksAgo.setDate(today.getDate() - 42);
             var sixWeeksAgoStr = sixWeeksAgo.toISOString().split('T')[0];
 
-            requestParams = Object.assign(requestParams, {
-                include_adult: false,
-                sort_by: 'primary_release_date.desc',
-                'primary_release_date.gte': sixWeeksAgoStr,
-                'primary_release_date.lte': todayStr,
-                'vote_count.gte': 30,
-                region: 'UA'
-            });
+            var sixMonthsLater = new Date();
+            sixMonthsLater.setMonth(today.getMonth() + 6);
+            var sixMonthsLaterStr = sixMonthsLater.toISOString().split('T')[0];
+
+            if (params.type === 'in_theaters') {
+                requestParams = Object.assign(requestParams, {
+                    include_adult: false,
+                    sort_by: 'primary_release_date.desc',
+                    'primary_release_date.gte': sixWeeksAgoStr,
+                    'primary_release_date.lte': todayStr,
+                    'vote_count.gte': 30,
+                    region: 'UA'
+                });
+            } else if (params.type === 'upcoming_movies') {
+                requestParams = Object.assign(requestParams, {
+                    include_adult: false,
+                    sort_by: 'popularity.desc',
+                    'primary_release_date.gte': todayStr,
+                    'primary_release_date.lte': sixMonthsLaterStr
+                });
+            }
         }
 
         get(params.url, requestParams, cacheKey, 20, oncomplite, onerror);
@@ -300,7 +328,7 @@
                 }
             }
             this.card.find('.card__view').append(`
-                <div class="card__premiere" style="position: absolute; top: 0.5em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${formattedDate}</div>
+                <div class="card__premiere-date" style="position: absolute; top: 0.5em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${formattedDate}</div>
             `);
 
             // Додаємо мову трейлера нижче дати
@@ -438,21 +466,25 @@
                     Lampa.Select.show({
                         title: Lampa.Lang.translate('title_action'),
                         items: [{
-                            title: Lampa.Lang.translate('search')
+                            title: 'search'
                         }],
-                        onSelect: function (item) {
-                            Lampa.Controller.toggle('content');
-                            Lampa.Search.open({
-                                input: data.title || data.name
+                        onSelect: function (error) {
+                            console.log('Lampa.Search error: ', error));
+                            Lampa.Search,
                             });
-                        },
-                        onBack: function () {
-                            Lampa.Controller.toggle('content');
-                        }
+                            onClose: function () {
+                                Lampa.Controller.back();
+                            }
                     });
-                }
+                    Lampa.Controller.toggle('content');
+                    Lampa.Search.open({
+                        input: data.title || data.name
+                    });
+                },
+                onBack: function () {
+                    Lampa.Controller.back();
+                });
             });
-            this.image();
         };
 
         this.destroy = function () {
@@ -490,15 +522,15 @@
             content.find('.items-line__title').text(data.title);
             body.append(scroll.render());
             this.bind();
-        };
+        }
 
         this.bind = function () {
-            // Відображаємо до 6 карток у легкій версії або всі доступні у повній
+            // Відображаємо до 6 карток у легкій версії або всіх доступних у повній
             var maxItems = light ? 6 : data.results.length;
             data.results.slice(0, maxItems).forEach(this.append.bind(this));
             if (data.results.length > 0) this.more(); // Додаємо кнопку "ЩЕ", якщо є хоч один елемент
             Lampa.Layer.update();
-        };
+        }
 
         this.cardImgBackground = function (card_data) {
             if (Lampa.Storage.field('background')) {
@@ -800,7 +832,7 @@
                 card.create();
                 if (!card.render()) return; // Пропускаємо, якщо картка не створена через відсутність перекладу
                 card.visible();
-                card.onFocus = function (target, element) {
+                card.onFocus = function (target, card_data) {
                     last = target;
                     scroll.update(card.render(), true);
                     if (!light && !newlampa && scroll.isEnd()) _this2.next();
@@ -984,7 +1016,7 @@
                     width: 100%;
                 }
             }
-            .card__premiere, .card__trailer-lang, .card__rating {
+            .card__premiere-date, .card__trailer-lang, .card__rating {
                 font-size: 0.9em;
                 z-index: 10;
             }
@@ -995,7 +1027,7 @@
             var button = $(`<li class="menu__item selector">
                 <div class="menu__ico">
                     <svg height="70" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/>
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.74-3.2397 77.4083 6.62804 78.328-4 10.9306C80 18.729-1 80 35 80 35C80 35 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.239 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/>
                     </svg>
                 </div>
                 <div class="menu__text">${Lampa.Lang.translate('title_trailers')}</div>
