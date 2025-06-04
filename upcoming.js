@@ -64,17 +64,18 @@
         }
 
         var endpoint = '/tv/' + seriesId;
-        var params = { language: getInterfaceLanguage(), append_to_response: 'season' };
+        var params = { language: getInterfaceLanguage(), append_to_response: 'seasons' };
         fetchTMDB(endpoint, params, function (data) {
             trailerCache[cacheKey] = data;
             var nextSeasonDate = null;
             if (data.seasons && data.seasons.length) {
                 var today = new Date('2025-06-04');
-                var sixMonthsLater = new Date('2025-12-04');
+                var endDate = new Date('2026-06-04'); // Розширений діапазон для тестування
                 data.seasons.forEach(function (season) {
-                    if (season.air_date && new Date(season.air_date) > today && new Date(season.air_date) <= sixMonthsLater && season.episode_count === 0 && season.episode_number === 1) {
+                    if (season.air_date && new Date(season.air_date) > today && new Date(season.air_date) <= endDate && season.episode_count === 0) {
                         if (!nextSeasonDate || new Date(season.air_date) < new Date(nextSeasonDate)) {
                             nextSeasonDate = season.air_date;
+                            console.log('Found upcoming season for series ' + seriesId + ': Season ' + season.season_number + ', air_date: ' + season.air_date);
                         }
                     }
                 });
@@ -88,6 +89,12 @@
     }
 
     function get(endpoint, params, cacheKey, minItems, resolve, reject, category) {
+        // Примусове очищення кешу для категорії "Скоро на ТБ"
+        if (category === 'upcoming_series' && cacheKey && trailerCache[cacheKey]) {
+            console.log('Clearing cache for ' + cacheKey);
+            delete trailerCache[cacheKey];
+        }
+
         if (cacheKey && trailerCache[cacheKey]) {
             console.log('Using cache for ' + cacheKey);
             resolve(trailerCache[cacheKey]);
@@ -106,9 +113,11 @@
                         return filterTMDBContentByGenre(content, category);
                     });
 
+                    console.log('Category ' + category + ': Initial filtered results on page ' + page + ': ', filteredResults.length);
+
                     if (category === 'new_series_seasons' || category === 'upcoming_series') {
                         var today = new Date('2025-06-04');
-                        var sixMonthsLater = new Date('2025-12-04');
+                        var endDate = new Date('2026-06-04'); // Розширений діапазон для тестування
                         var remaining = filteredResults.length;
                         var validResults = [];
 
@@ -145,6 +154,7 @@
                                     return aDate.localeCompare(bDate);
                                 });
                             }
+                            console.log('Category ' + category + ': Valid results after detailed filtering: ', validResults.length);
                             processResults(data, validResults);
                         });
                     } else {
@@ -210,7 +220,7 @@
         var sixMonthsAgo = new Date();
         sixMonthsAgo.setMonth(today.getMonth() - 6);
         var sixMonthsAgoStr = sixMonthsAgo.toISOString().split('T')[0];
-        var sixMonthsLater = new Date('2025-12-04');
+        var endDate = new Date('2026-06-04'); // Розширений діапазон для тестування
 
         var lang = getInterfaceLanguage();
 
@@ -237,7 +247,7 @@
             include_adult: false,
             sort_by: 'popularity.desc',
             'primary_release_date.gte': todayStr,
-            'primary_release_date.lte': sixMonthsLater.toISOString().split('T')[0]
+            'primary_release_date.lte': endDate.toISOString().split('T')[0]
         }, 'upcoming_movies', minItems, function (json) {
             append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/discover/movie', json);
         }, status.error.bind(status), 'upcoming_movies');
@@ -262,7 +272,7 @@
             include_adult: false,
             sort_by: 'first_air_date.asc',
             'first_air_date.gte': todayStr,
-            'first_air_date.lte': sixMonthsLater.toISOString().split('T')[0]
+            'first_air_date.lte': endDate.toISOString().split('T')[0]
         }, 'upcoming_series', minItems, function (json) {
             append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/discover/tv', json);
         }, status.error.bind(status), 'upcoming_series');
@@ -282,7 +292,7 @@
             var sixMonthsAgo = new Date();
             sixMonthsAgo.setMonth(today.getMonth() - 6);
             var sixMonthsAgoStr = sixMonthsAgo.toISOString().split('T')[0];
-            var sixMonthsLater = new Date('2025-12-04');
+            var endDate = new Date('2026-06-04'); // Розширений діапазон для тестування
 
             if (params.type === 'in_theaters') {
                 requestParams = Object.assign(requestParams, {
@@ -298,7 +308,7 @@
                     include_adult: false,
                     sort_by: 'popularity.desc',
                     'primary_release_date.gte': todayStr,
-                    'primary_release_date.lte': sixMonthsLater.toISOString().split('T')[0]
+                    'primary_release_date.lte': endDate.toISOString().split('T')[0]
                 });
             } else if (params.type === 'new_series_seasons') {
                 requestParams = Object.assign(requestParams, {
@@ -311,7 +321,7 @@
                     include_adult: false,
                     sort_by: 'first_air_date.asc',
                     'first_air_date.gte': todayStr,
-                    'first_air_date.lte': sixMonthsLater.toISOString().split('T')[0]
+                    'first_air_date.lte': endDate.toISOString().split('T')[0]
                 });
             }
         }
