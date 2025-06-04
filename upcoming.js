@@ -172,7 +172,7 @@
         sixWeeksAgo.setDate(today.getDate() - 42); // 6 тижнів назад
         var sixWeeksAgoStr = sixWeeksAgo.toISOString().split('T')[0]; // Формат YYYY-MM-DD
 
-        // Обчислюємо дати для категорії "Очікувані фільми"
+        // Обчислюємо дати для категорії "Очікувані фільми" та "Очікувані серіали"
         var sixMonthsLater = new Date();
         sixMonthsLater.setMonth(today.getMonth() + 6); // 6 місяців вперед
         var sixMonthsLaterStr = sixMonthsLater.toISOString().split('T')[0]; // Формат YYYY-MM-DD (2025-12-04)
@@ -215,8 +215,16 @@
             append(Lampa.Lang.translate('trailers_new_series_seasons'), 'new_series_seasons', '/tv/on_the_air', json);
         }, status.error.bind(status));
 
-        get('/tv/airing_today', { language: lang, page: 1 }, 'upcoming_series', minItems, function (json) {
-            append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/tv/airing_today', json);
+        // Оновлений запит для категорії "Очікувані серіали"
+        get('/discover/tv', {
+            language: lang,
+            page: 1,
+            include_adult: false,
+            sort_by: 'popularity.desc',
+            'first_air_date.gte': todayStr,
+            'first_air_date.lte': sixMonthsLaterStr
+        }, 'upcoming_series', minItems, function (json) {
+            append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/discover/tv', json);
         }, status.error.bind(status));
     }
 
@@ -225,8 +233,8 @@
         var lang = getInterfaceLanguage();
         var requestParams = { language: lang, page: params.page };
 
-        // Додаємо додаткові параметри для /discover/movie
-        if (params.url === '/discover/movie') {
+        // Додаємо додаткові параметри для /discover/movie та /discover/tv
+        if (params.url === '/discover/movie' || params.url === '/discover/tv') {
             var today = new Date();
             var todayStr = today.toISOString().split('T')[0];
             var sixWeeksAgo = new Date();
@@ -252,6 +260,13 @@
                     sort_by: 'popularity.desc',
                     'primary_release_date.gte': todayStr,
                     'primary_release_date.lte': sixMonthsLaterStr
+                });
+            } else if (params.type === 'upcoming_series') {
+                requestParams = Object.assign(requestParams, {
+                    include_adult: false,
+                    sort_by: 'popularity.desc',
+                    'first_air_date.gte': todayStr,
+                    'first_air_date.lte': sixMonthsLaterStr
                 });
             }
         }
