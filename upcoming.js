@@ -207,7 +207,6 @@
             append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/discover/movie', json);
         }, status.error.bind(status));
 
-        // Оновлений запит для категорії "Популярні серіали"
         get('/trending/tv/week', { language: lang, page: 1 }, 'popular_series', minItems, function (json) {
             append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', '/trending/tv/week', json);
         }, status.error.bind(status));
@@ -777,46 +776,51 @@
     }
 
     function Component(object) {
-        var scroll = new Scroll();
+        var scroll = new Lampa.Scroll({ mask: true, over: true, step: 250, end_ratio: 2 });
         var items = [];
         var html = $('<div></div>');
         var body = $('<div class="category-full category-full--trailers"></div>');
-        var newlampa = Lampa.Manifest.app_digital >= 0 ? false : Lampa.Storage.field('light_version') && window.innerWidth >= 767;
-        var total_pages = 0 ? var last, waitload;
-        var active = 0; // Ініціалізація
+        var newlampa = Lampa.Manifest.app_digital >= 166;
+        var light = newlampa ? false : Lampa.Storage.field('light_version') && window.innerWidth >= 767;
+        var total_pages = 0;
+        var last, waitload;
+        var active = 0; // Ініціалізація active
 
         this.create = function () {
-            Api.full(object, this.build.bind(this), this.empty.bind(this, this));
-            return this;
-        }; //
+            Api.full(object, this.build.bind(this), this.empty.bind(this));
+            return this.render();
+        };
 
         this.empty = function () {
-            var empty = Lampa.Empty.new();
-            scroll.append(empty.render(this.start = empty.start));
+            var empty = new Lampa.Empty();
+            scroll.append(empty.render());
+            this.start = empty.start;
             this.activity.loader(false);
             this.activity.toggle();
-        var if (Lampa.Activity.platform) {
+        };
 
-            this.next(); // () {
-                if (var waitLampa) return;
-                if (object === Lampa < page31 && object.total_pages < total_pages) {
-                    waitLampa++;
-                    var object.page++;
-                    Api.full(object), function (result) {
-                        L Lampa.this this.append(result, true);
-                        waitLampaLampa false;
-                    }), function () {});
-            }; //
+        this.next = function () {
+            var _this = this;
+            if (waitload) return;
+            if (object.page < 30 && object.page < total_pages) {
+                waitload = true;
+                object.page++;
+                Api.full(object, function (result) {
+                    _this.append(result, true);
+                    waitload = false;
+                }, function () {});
+            }
+        };
 
-        this.validate = function (d) data {
-            if (Lampa.Limit()) {
-                if (Lampa.Storage.get('background', 'complex')) && (Lampa.Pump() === 'poster' || Lampa.innerWidth() > 7899)) {
-                    return d.backdrop_path ? Lampa.Api.img(d.backdrop_path, 'original') : '';
+        this.cardImgBackground = function (card_data) {
+            if (Lampa.Storage.field('background')) {
+                if (Lampa.Storage.get('background_type', 'complex') === 'poster' && window.innerWidth > 790) {
+                    return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'original') : '';
                 }
-                return d.backdrop_path ? Lampa.Api.img(d.backdrop_path, 'w500') : '';
+                return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'w500') : '';
             }
             return '';
-        }; //
+        };
 
         this.append = function (data, append) {
             var _this2 = this;
@@ -825,117 +829,111 @@
                 card.create();
                 if (!card.render()) return; // Пропускаємо, якщо картка не створена через відсутність перекладу
                 card.visible();
-                card.on('focus', function() {
+                card.onFocus = function (target, card_data) {
                     last = target;
                     scroll.update(card.render(), true);
-                    if (!light && !newlampa && scroll.isEnd()) _this2--lampa.next());
-                });
-                Lampa.append('body', this);
-                items.append(card, this);
-                lampa);
-                if (append) Lampa.Controller.collectionAppend(card).append(this.render));
+                    if (!light && !newlampa && scroll.isEnd()) _this2.next();
+                };
+                body.append(card.render());
+                items.push(card);
+                if (append) Lampa.Controller.collectionAppend(card.render());
             });
-            Lampa;
+        };
 
-        this.build()); // lampa,
-
-(Lampa: function (data) {
-        var _this3;
-        if (data.data.length) {
-            Lampa.Ltotal_pages = data.total_pages;
-            scroll.Lampa(minus);
-            Lampa.append(html);
-            this.Lampa(append(data));
-            Lampa && lightlampa.items.length() this.lampa(back);
-            if (lampa_Lte_pages > data.page && lampa && light.lights.length) this.Lampa(lamps);
-            Lampa.scroll(lampa.body.append(Lampa));
-            lampa.L
-            if (lampa) newLampa {
-                Lampa.Lte.onEnd = this.Lte(lampsNext); // Lampa.lamps,
-                function (Lampa.step) {
-                    if (!this.Lampa(Lampa_3)) _Lampa3.this.start;
-                Lampa.step > if (0) Lampa.Navigator.move('down').Lamps else if (Lactive > 0) Lampa.Navigator.move('up');
-                Lamps;
-            Lampa;
-        Lampa.this);
-            this.Lampa(lampa.loader(false));
-            this.Lamps.activity.toggle();
-        } else {
-            Lampa.html(Lampa.scrollTo.render(Lamps));
-            this.Lamps());
-        }
-    } Lamps, //
-
-Lamps;
-
-function Lamps() {
-        Lamps = $('<Lamps class="lamps--selector--trailer" style="width: 100%; height: 5px;"></Lamps');
-        Lamps.on('hover:focus', function (e) {
-            Lampa.Controller.collectionFocus(last || false, scroll.render());
-            var next = Lampa.Arrays.clone(object);
-            delete next.activity;
-            active = 0; // Reset active for the new activity
-            next.page++;
-            Lampa.Activity.push(next);
-        });
-        body.append(more);
-    }; //
-
-    this.back = function () {
-        last = items[0] ? items[0].render()[0] : false;
-        var more = $('<div class="selector" style="width: 100%; height: 5px;"></div>');
-        more.on('hover:focus', function (e) {
-            if (object.page > 1) {
-                Lampa.Activity.backward();
+        this.build = function (data) {
+            var _this3 = this;
+            if (data.results.length) {
+                total_pages = data.total_pages;
+                scroll.minus();
+                html.append(scroll.render());
+                this.append(data);
+                if (light && items.length) this.back();
+                if (total_pages > data.page && light && items.length) this.more();
+                scroll.append(body);
+                if (newlampa) {
+                    scroll.onEnd = this.next.bind(this);
+                    scroll.onWheel = function (step) {
+                        if (!Lampa.Controller.own(_this3)) _this3.start();
+                        if (step > 0) Navigator.move('down');
+                        else if (active > 0) Navigator.move('up');
+                    };
+                }
+                this.activity.loader(false);
+                this.activity.toggle();
             } else {
-                Lampa.Controller.toggle('head');
+                html.append(scroll.render());
+                this.empty();
             }
-        });
-        body.prepend(more);
-    }; //
+        };
 
-    this.start = function () {
-        if (Lampa.Activity.active().activity !== this.activity) return;
-        Lampa.Controller.add('content', {
-            link: this,
-            toggle: function () {
-                Lampa.Controller.collectionSet(scroll.render());
+        this.more = function () {
+            var more = $('<div class="selector" style="width: 100%; height: 5px;"></div>');
+            more.on('hover:focus', function (e) {
                 Lampa.Controller.collectionFocus(last || false, scroll.render());
-            },
-            left: function () {
-                if (Navigator.canmove('left')) Navigator.move('left');
-                else Lampa.Controller.toggle('menu');
-            },
-            right: function () {
-                Navigator.move('right');
-            },
-            up: function () {
-                if (Navigator.canmove('up')) Navigator.move('up');
-                else Lampa.Controller.toggle('head');
-            },
-            down: function () {
-                if (Navigator.canmove('down')) Navigator.move('down');
-            },
-            back: function () {
-                Lampa.Activity.backward();
-            }
-        });
-        Lampa.Controller.toggle('content');
-    }; //
+                var next = Lampa.Arrays.clone(object);
+                delete next.activity;
+                active = 0; // Reset active for the new activity
+                next.page++;
+                Lampa.Activity.push(next);
+            });
+            body.append(more);
+        };
 
-    this.pause = function () {};
-    this.stop = function () {};
-    this.render = function () {
-        return html;
-    };
-    this.destroy = function () {
-        Lampa.Arrays.destroy(items);
-        scroll.destroy();
-        html.remove();
-        body.remove();
-        items = [];
-    };
-}
+        this.back = function () {
+            last = items[0] ? items[0].render()[0] : false;
+            var more = $('<div class="selector" style="width: 100%; height: 5px;"></div>');
+            more.on('hover:focus', function (e) {
+                if (object.page > 1) {
+                    Lampa.Activity.backward();
+                } else {
+                    Lampa.Controller.toggle('head');
+                }
+            });
+            body.prepend(more);
+        };
+
+        this.start = function () {
+            if (Lampa.Activity.active().activity !== this.activity) return;
+            Lampa.Controller.add('content', {
+                link: this,
+                toggle: function () {
+                    Lampa.Controller.collectionSet(scroll.render());
+                    Lampa.Controller.collectionFocus(last || false, scroll.render());
+                },
+                left: function () {
+                    if (Navigator.canmove('left')) Navigator.move('left');
+                    else Lampa.Controller.toggle('menu');
+                },
+                right: function () {
+                    Navigator.move('right');
+                },
+                up: function () {
+                    if (Navigator.canmove('up')) Navigator.move('up');
+                    else Lampa.Controller.toggle('head');
+                },
+                down: function () {
+                    if (Navigator.canmove('down')) Navigator.move('down');
+                },
+                back: function () {
+                    Lampa.Activity.backward();
+                }
+            });
+            Lampa.Controller.toggle('content');
+        };
+
+        this.pause = function () {};
+        this.stop = function () {};
+        this.render = function () {
+            return html;
+        };
+        this.destroy = function () {
+            Lampa.Arrays.destroy(items);
+            scroll.destroy();
+            html.remove();
+            body.remove();
+            items = [];
+        };
+    }
 
     Lampa.Lang.add({
         trailers_popular_movies: { ru: 'Популярные фильмы', uk: 'Популярні фільми', en: 'Popular Movies' },
@@ -1026,7 +1024,7 @@ function Lamps() {
             var button = $(`<li class="menu__item selector">
                 <div class="menu__ico">
                     <svg height="70" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.23955 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/>
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/>
                     </svg>
                 </div>
                 <div class="menu__text">${Lampa.Lang.translate('title_trailers')}</div>
