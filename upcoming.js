@@ -466,25 +466,21 @@
                     Lampa.Select.show({
                         title: Lampa.Lang.translate('title_action'),
                         items: [{
-                            title: 'search'
+                            title: Lampa.Lang.translate('search')
                         }],
-                        onSelect: function (error) {
-                            console.log('Lampa.Search error: ', error));
-                            Lampa.Search,
+                        onSelect: function (item) {
+                            Lampa.Controller.toggle('content');
+                            Lampa.Search.open({
+                                input: data.title || data.name
                             });
-                            onClose: function () {
-                                Lampa.Controller.back();
-                            }
+                        },
+                        onBack: function () {
+                            Lampa.Controller.toggle('content');
+                        }
                     });
-                    Lampa.Controller.toggle('content');
-                    Lampa.Search.open({
-                        input: data.title || data.name
-                    });
-                },
-                onBack: function () {
-                    Lampa.Controller.back();
-                });
+                }
             });
+            this.image();
         };
 
         this.destroy = function () {
@@ -522,7 +518,7 @@
             content.find('.items-line__title').text(data.title);
             body.append(scroll.render());
             this.bind();
-        }
+        };
 
         this.bind = function () {
             // Відображаємо до 6 карток у легкій версії або всіх доступних у повній
@@ -530,7 +526,7 @@
             data.results.slice(0, maxItems).forEach(this.append.bind(this));
             if (data.results.length > 0) this.more(); // Додаємо кнопку "ЩЕ", якщо є хоч один елемент
             Lampa.Layer.update();
-        }
+        };
 
         this.cardImgBackground = function (card_data) {
             if (Lampa.Storage.field('background')) {
@@ -1027,7 +1023,7 @@
             var button = $(`<li class="menu__item selector">
                 <div class="menu__ico">
                     <svg height="70" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.74-3.2397 77.4083 6.62804 78.328-4 10.9306C80 18.729-1 80 35 80 35C80 35 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.239 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/>
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/>
                     </svg>
                 </div>
                 <div class="menu__text">${Lampa.Lang.translate('title_trailers')}</div>
