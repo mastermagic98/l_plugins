@@ -20,7 +20,7 @@
 
     function applyWithoutKeywords(params) {
         var baseExcludedKeywords = [
-            '346488', '158718', '41278', '13141', '345822', '315535', '290667', '323477', '290609', '210024'
+            '346448', '158718', '4178', '196034', '272265', '13141', '345822', '315535', '290667', '323447', '290637', '290607', '290643', '290664'
         ];
         params.without_keywords = baseExcludedKeywords.join(',');
         return params;
@@ -55,46 +55,56 @@
         });
     }
 
-    function fetchSeriesDetails(seriesId, callback) {
-        var cacheKey = `series_${seriesId}`;
+    function fetchSeriesDetails(seriesId, dateField, startDate, endDate, callback) {
+        var cacheKey = `series_${seriesId}_${dateField}`;
         if (trailerCache[cacheKey]) {
-            console.log('Using cached series details for ' + seriesId);
-            callback(trailerCache[cacheKey]);
+            var data = trailerCache[cacheKey];
+            if (dateField === 'season_check') {
+                var isFirstSeason = data.number_of_seasons === 1;
+                var airDate = data.first_air_date;
+                var isWithinRange = airDate >= startDate && airDate <= endDate;
+                console.log('Cached Series ' + seriesId + ' first_air_date:', airDate, 'is within range', startDate, 'to', endDate, ':', isWithinRange, 'isFirstSeason:', isFirstSeason);
+                callback(isWithinRange && isFirstSeason);
+            } else {
+                var episode = data.last_episode_to_air;
+                if (episode && episode.air_date) {
+                    var isWithinRange = episode.air_date >= startDate && episode.air_date <= endDate;
+                    console.log('Cached Series ' + seriesId + ' last_episode_to_air:', episode.air_date, 'is within range', startDate, 'to', endDate, ':', isWithinRange);
+                    callback(isWithinRange);
+                } else {
+                    callback(false);
+                }
+            }
             return;
         }
 
         var endpoint = '/tv/' + seriesId;
-        var params = { language: getInterfaceLanguage(), append_to_response: 'seasons' };
+        var params = { language: getInterfaceLanguage() };
         fetchTMDB(endpoint, params, function (data) {
             trailerCache[cacheKey] = data;
-            var nextSeasonDate = null;
-            if (data.seasons && data.seasons.length) {
-                var today = new Date('2025-06-04');
-                var endDate = new Date('2026-06-04'); // Розширений діапазон для тестування
-                data.seasons.forEach(function (season) {
-                    if (season.air_date && new Date(season.air_date) > today && new Date(season.air_date) <= endDate && season.episode_count === 0) {
-                        if (!nextSeasonDate || new Date(season.air_date) < new Date(nextSeasonDate)) {
-                            nextSeasonDate = season.air_date;
-                            console.log('Found upcoming season for series ' + seriesId + ': Season ' + season.season_number + ', air_date: ' + season.air_date);
-                        }
-                    }
-                });
+            if (dateField === 'season_check') {
+                var isFirstSeason = data.number_of_seasons === 1;
+                var airDate = data.first_air_date;
+                var isWithinRange = airDate >= startDate && airDate <= endDate;
+                console.log('Series ' + seriesId + ' first_air_date:', airDate, 'is within range', startDate, 'to', endDate, ':', isWithinRange, 'isFirstSeason:', isFirstSeason);
+                callback(isWithinRange && isFirstSeason);
+            } else {
+                var episode = data.last_episode_to_air;
+                if (episode && episode.air_date) {
+                    var isWithinRange = episode.air_date >= startDate && episode.air_date <= endDate;
+                    console.log('Series ' + seriesId + ' last_episode_to_air:', episode.air_date, 'is within range', startDate, 'to', endDate, ':', isWithinRange);
+                    callback(isWithinRange);
+                } else {
+                    console.log('Series ' + seriesId + ' has no last_episode_to_air');
+                    callback(false);
+                }
             }
-            data.nextSeasonDate = nextSeasonDate;
-            console.log('Series ' + seriesId + ' next season date:', nextSeasonDate);
-            callback(data);
         }, function () {
-            callback({ nextSeasonDate: null });
+            callback(false);
         });
     }
 
     function get(endpoint, params, cacheKey, minItems, resolve, reject, category) {
-        // Примусове очищення кешу для категорії "Скоро на ТБ"
-        if (category === 'upcoming_series' && cacheKey && trailerCache[cacheKey]) {
-            console.log('Clearing cache for ' + cacheKey);
-            delete trailerCache[cacheKey];
-        }
-
         if (cacheKey && trailerCache[cacheKey]) {
             console.log('Using cache for ' + cacheKey);
             resolve(trailerCache[cacheKey]);
@@ -113,28 +123,31 @@
                         return filterTMDBContentByGenre(content, category);
                     });
 
-                    console.log('Category ' + category + ': Initial filtered results on page ' + page + ': ', filteredResults.length);
-
                     if (category === 'new_series_seasons' || category === 'upcoming_series') {
-                        var today = new Date('2025-06-04');
-                        var endDate = new Date('2026-06-04'); // Розширений діапазон для тестування
-                        var remaining = filteredResults.length;
+                        var today = new Date();
+                        var todayStr = today.toISOString().split('T')[0]; // 2025-06-04
+                        var twoMonthsAgo = new Date();
+                        twoMonthsAgo.setDate(today.getDate() - 60);
+                        var twoMonthsAgoStr = twoMonthsAgo.toISOString().split('T')[0]; // 2025-04-05
+                        var threeMonthsLater = new Date();
+                        threeMonthsLater.setMonth(today.getMonth() + 3);
+                        var threeMonthsLaterStr = threeMonthsLater.toISOString().split('T')[0]; // 2025-09-04
+
                         var validResults = [];
 
-                        if (remaining === 0) {
+                        if (filteredResults.length === 0) {
                             processResults(data, []);
                             return;
                         }
 
                         var promises = filteredResults.map(function (series) {
                             return new Promise(function (resolveDetail) {
-                                fetchSeriesDetails(series.id, function (details) {
-                                    if (category === 'new_series_seasons' && details.last_episode_to_air && details.last_episode_to_air.air_date) {
-                                        var lastAirDate = new Date(details.last_episode_to_air.air_date);
-                                        if (lastAirDate >= new Date('2024-12-04') && lastAirDate <= today) {
-                                            validResults.push(series);
-                                        }
-                                    } else if (category === 'upcoming_series' && details.nextSeasonDate) {
+                                var dateField = category === 'new_series_seasons' ? 'last_episode_to_air' : 'season_check';
+                                var startDate = category === 'new_series_seasons' ? twoMonthsAgoStr : todayStr;
+                                var endDate = category === 'new_series_seasons' ? todayStr : threeMonthsLaterStr;
+
+                                fetchSeriesDetails(series.id, dateField, startDate, endDate, function (isValid) {
+                                    if (isValid) {
                                         validResults.push(series);
                                     }
                                     resolveDetail();
@@ -143,18 +156,9 @@
                         });
 
                         Promise.all(promises).then(function () {
-                            if (category === 'new_series_seasons') {
-                                validResults.sort(function (a, b) {
-                                    return (b.vote_average || 0) - (a.vote_average || 0);
-                                });
-                            } else if (category === 'upcoming_series') {
-                                validResults.sort(function (a, b) {
-                                    var aDate = trailerCache[`series_${a.id}`]?.nextSeasonDate || '9999-12-31';
-                                    var bDate = trailerCache[`series_${b.id}`]?.nextSeasonDate || '9999-12-31';
-                                    return aDate.localeCompare(bDate);
-                                });
-                            }
-                            console.log('Category ' + category + ': Valid results after detailed filtering: ', validResults.length);
+                            validResults.sort(function (a, b) {
+                                return b.popularity - a.popularity;
+                            });
                             processResults(data, validResults);
                         });
                     } else {
@@ -212,15 +216,20 @@
             status.append(name, json);
         };
 
-        var today = new Date('2025-06-04');
-        var todayStr = today.toISOString().split('T')[0];
+        var today = new Date();
+        var todayStr = today.toISOString().split('T')[0]; // 2025-06-04
         var sixWeeksAgo = new Date();
         sixWeeksAgo.setDate(today.getDate() - 42);
         var sixWeeksAgoStr = sixWeeksAgo.toISOString().split('T')[0];
-        var sixMonthsAgo = new Date();
-        sixMonthsAgo.setMonth(today.getMonth() - 6);
-        var sixMonthsAgoStr = sixMonthsAgo.toISOString().split('T')[0];
-        var endDate = new Date('2026-06-04'); // Розширений діапазон для тестування
+        var twoMonthsAgo = new Date();
+        twoMonthsAgo.setDate(today.getDate() - 60);
+        var twoMonthsAgoStr = twoMonthsAgo.toISOString().split('T')[0]; // 2025-04-05
+        var threeMonthsLater = new Date();
+        threeMonthsLater.setMonth(today.getMonth() + 3);
+        var threeMonthsLaterStr = threeMonthsLater.toISOString().split('T')[0]; // 2025-09-04
+        var sixMonthsLater = new Date();
+        sixMonthsLater.setMonth(today.getMonth() + 6);
+        var sixMonthsLaterStr = sixMonthsLater.toISOString().split('T')[0];
 
         var lang = getInterfaceLanguage();
 
@@ -247,7 +256,7 @@
             include_adult: false,
             sort_by: 'popularity.desc',
             'primary_release_date.gte': todayStr,
-            'primary_release_date.lte': endDate.toISOString().split('T')[0]
+            'primary_release_date.lte': sixMonthsLaterStr
         }, 'upcoming_movies', minItems, function (json) {
             append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/discover/movie', json);
         }, status.error.bind(status), 'upcoming_movies');
@@ -260,8 +269,9 @@
             language: lang,
             page: 1,
             include_adult: false,
-            sort_by: 'vote_average.desc',
-            'vote_count.gte': 30
+            sort_by: 'popularity.desc',
+            'air_date.gte': twoMonthsAgoStr,
+            'air_date.lte': todayStr
         }, 'new_series_seasons', minItems, function (json) {
             append(Lampa.Lang.translate('trailers_new_series_seasons'), 'new_series_seasons', '/discover/tv', json);
         }, status.error.bind(status), 'new_series_seasons');
@@ -270,9 +280,9 @@
             language: lang,
             page: 1,
             include_adult: false,
-            sort_by: 'first_air_date.asc',
+            sort_by: 'popularity.desc',
             'first_air_date.gte': todayStr,
-            'first_air_date.lte': endDate.toISOString().split('T')[0]
+            'first_air_date.lte': threeMonthsLaterStr
         }, 'upcoming_series', minItems, function (json) {
             append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/discover/tv', json);
         }, status.error.bind(status), 'upcoming_series');
@@ -284,15 +294,20 @@
         var requestParams = { language: lang, page: params.page };
 
         if (params.url === '/discover/movie' || params.url === '/discover/tv') {
-            var today = new Date('2025-06-04');
+            var today = new Date();
             var todayStr = today.toISOString().split('T')[0];
             var sixWeeksAgo = new Date();
             sixWeeksAgo.setDate(today.getDate() - 42);
             var sixWeeksAgoStr = sixWeeksAgo.toISOString().split('T')[0];
-            var sixMonthsAgo = new Date();
-            sixMonthsAgo.setMonth(today.getMonth() - 6);
-            var sixMonthsAgoStr = sixMonthsAgo.toISOString().split('T')[0];
-            var endDate = new Date('2026-06-04'); // Розширений діапазон для тестування
+            var twoMonthsAgo = new Date();
+            twoMonthsAgo.setDate(today.getDate() - 60);
+            var twoMonthsAgoStr = twoMonthsAgo.toISOString().split('T')[0];
+            var threeMonthsLater = new Date();
+            threeMonthsLater.setMonth(today.getMonth() + 3);
+            var threeMonthsLaterStr = threeMonthsLater.toISOString().split('T')[0];
+            var sixMonthsLater = new Date();
+            sixMonthsLater.setMonth(today.getMonth() + 6);
+            var sixMonthsLaterStr = sixMonthsLater.toISOString().split('T')[0];
 
             if (params.type === 'in_theaters') {
                 requestParams = Object.assign(requestParams, {
@@ -308,26 +323,27 @@
                     include_adult: false,
                     sort_by: 'popularity.desc',
                     'primary_release_date.gte': todayStr,
-                    'primary_release_date.lte': endDate.toISOString().split('T')[0]
+                    'primary_release_date.lte': sixMonthsLaterStr
                 });
             } else if (params.type === 'new_series_seasons') {
                 requestParams = Object.assign(requestParams, {
                     include_adult: false,
-                    sort_by: 'vote_average.desc',
-                    'vote_count.gte': 30
+                    sort_by: 'popularity.desc',
+                    'air_date.gte': twoMonthsAgoStr,
+                    'air_date.lte': todayStr
                 });
             } else if (params.type === 'upcoming_series') {
-                requestParams = Object.assign(requestParams, {
+                this.activate = Object.assign(requestParams, {
                     include_adult: false,
-                    sort_by: 'first_air_date.asc',
+                    sort_by: 'popularity.desc',
                     'first_air_date.gte': todayStr,
-                    'first_air_date.lte': endDate.toISOString().split('T')[0]
+                    'first_air_date.lte': threeMonthsLaterStr
                 });
             }
         }
 
         get(params.url, requestParams, cacheKey, 20, oncomplite, onerror, params.type);
-    }
+}
 
     function videos(card, oncomplite, onerror) {
         var endpoint = (card.name ? '/tv/' : '/movie/') + card.id + '/videos';
@@ -380,40 +396,38 @@
             this.card.find('.card__title').text(title);
 
             if (!this.is_youtube) {
-                var premiereDate = data.release_date || data.first_air_date || 'N/A';
-                if (params.type === 'upcoming_series' && trailerCache[`series_${data.id}`]?.nextSeasonDate) {
-                    premiereDate = trailerCache[`series_${data.id}`].nextSeasonDate;
-                }
-                var formattedDate = 'N/A';
-                if (premiereDate !== 'N/A') {
-                    var dateParts = premiereDate.split('-');
-                    if (dateParts.length === 3) {
-                        formattedDate = dateParts[2] + '-' + dateParts[1] + '-' + dateParts[0];
-                    }
-                }
-                this.card.find('.card__details').text(formattedDate + ' - ' + (data.original_title || data.original_name));
+                var releaseDate = (data.release_date || data.first_air_date || '0000').slice(0, 4);
+                this.card.find('.card__details').text(releaseDate + ' - ' + (data.original_title || data.original_name));
             } else {
                 this.card.find('.card__details').remove();
             }
 
+            var premiereDate = data.release_date || data.first_air_date || 'N/A';
+            var formattedDate = 'N/A';
+            if (premiereDate !== 'N/A') {
+                var dateParts = premiereDate.split('-');
+                if (dateParts[0].length === 3) {
+                    formattedDate = dateParts[2] + '-' + dateParts[1] + '-' + dateParts[0];
+                }
+            }
             this.card.find('.card__view').append(`
-                <div class="card__premiere-date" style="position: absolute; top: 0.5em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${formattedDate}</div>
+                <div class="card__premiere-date" style="position: absolute; top: 0.5em; right: 0.5em; color: white; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${formattedDate.format}</div>
             `);
 
             this.card.find('.card__view').append(`
-                <div class="card__trailer-lang" style="position: absolute; top: 2.25em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;"></div>
+                <div class="card__trailer-lang" style="position: absolute; top: 2.25em; right: 0.5em; color: white; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;"></div>
             `);
 
             var rating = data.vote_average ? data.vote_average.toFixed(1) : '—';
             this.card.find('.card__view').append(`
-                <div class="card__rating" style="position: absolute; bottom: 0.5em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${rating}</div>
+                <div class="card__rating" style="position: absolute; bottom: 0.5em; right: 0.5em; color: white; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${rating.rating}</div>
             `);
         };
 
         this.cardImgBackground = function (card_data) {
             if (Lampa.Storage.field('background')) {
-                if (Lampa.Storage.get('background_type', 'complex') === 'poster' && window.innerWidth > 790) {
-                    return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'original') : this.is_youtube ? 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg' : '';
+                if (Lampa.Storage.get('backgroundImage_type', 'complex') === 'poster' && window.innerWidth > 790) {
+                    return card_data.backdrop_path ? Lampa.Api.img(card_data.submit_img_path, 'original') : this.is_youtube ? 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg' : '';
                 }
                 return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'w500') : this.is_youtube ? 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg' : '';
             }
@@ -426,7 +440,7 @@
                 _this.card.addClass('card--loaded');
                 _this.updateTrailerLanguage();
             };
-            this.img.onerror = function () {
+            this.image.onerror = function () {
                 _this.img.src = './img/img_broken.svg';
             };
         };
@@ -436,16 +450,14 @@
             Api.videos(data, function (videos) {
                 var lang = '—';
                 if (videos.results && videos.results.length) {
-                    lang = videos.results[0].iso_639_1.toUpperCase();
-                }
-                _this.card.find('.card__trailer-lang').text(lang);
-            }, function () {
+                    lang = videos.results[0].iso_639_1.toUpperCase().replace;
+                var _this.card.find('.card__trailer-lang').text(lang);
                 _this.card.find('.card__trailer-lang').text('—');
             });
         };
 
         this.play = function (id) {
-            if (Lampa.Manifest.app_digital >= 183) {
+            if (Lampa.Manifest.Manifest_digital >= 183) {
                 var item = {
                     title: Lampa.Utils.shortText(data.title || data.name, 50),
                     id: id,
@@ -457,7 +469,7 @@
                 Lampa.Player.play(item);
                 Lampa.Player.playlist([item]);
             } else {
-                Lampa.YouTube.play(id);
+                Lampa.YouTube.Play(id);
             }
         };
 
@@ -477,44 +489,51 @@
                             _this2.play(videos.results[0].key);
                         } else {
                             Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
+                        } else {
+                            Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
                         }
-                    }, function () {
-                        Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
                     });
-                }
+                });
             }).on('hover:long', function () {
                 if (!_this2.is_youtube) {
-                    var items = [{ title: Lampa.Lang.translate('trailers_view'), view: true }];
+                    var items = [{
+                        title: Lampa.Lang.translate('trailers_view'),
+                        view: true
+                    }];
                     Lampa.Loading.start(function () {
-                        Api.clear();
+                        Api.clearCache();
                         Lampa.Loading.stop();
                     });
                     Api.videos(data, function (videos) {
                         Lampa.Loading.stop();
                         if (videos.results && videos.results.length) {
-                            items.push({ title: Lampa.Lang.translate('title_trailers'), separator: true });
+                            items.push({
+                                title: Lampa.Lang.translate('title_trailers'),
+                                separator: true
+                            });
                             videos.results.forEach(function (video) {
-                                items.push({ title: video.name + ' (' + video.iso_639_1.toUpperCase() + ')', id: video.key });
+                                items.push({
+                                    title: video.name + ' (' + video.iso_639_1.toUpperCase().replace(/\s+/g, '') + ')',
+                                    id: video.id
+                                });
                             });
                         }
                         Lampa.Select.show({
                             title: Lampa.Lang.translate('title_action'),
-                            items: items,
+                            items: items.items,
                             onSelect: function (item) {
                                 Lampa.Controller.toggle('content');
-                                if (item.view) {
-                                    Lampa.Activity.push({
-                                        url: '',
-                                        component: 'full',
-                                        id: data.id,
-                                        method: data.name ? 'tv' : 'movie',
-                                        card: data,
-                                        source: 'tmdb'
-                                    });
-                                } else {
-                                    _this2.play(item.id);
-                                }
-                            },
+                                Lampa.Activity.push({
+                                    url: '',
+                                    component: 'full',
+                                    id: data.id,
+                                    method: data.name ? 'tv' : 'movie',
+                                    card: data,
+                                    source: 'tmdb'
+                                });
+                            } else {
+                                _this2.play(item.id);
+                            }
                             onBack: function () {
                                 Lampa.Controller.toggle('content');
                             }
@@ -523,16 +542,21 @@
                 } else if (Lampa.Search) {
                     Lampa.Select.show({
                         title: Lampa.Lang.translate('title_action'),
-                        items: [{ title: Lampa.Lang.translate('search') }],
+                        items: [{
+                            title: Lampa.Lang.translate('search')
+                        }],
+                        }),
                         onSelect: function (item) {
                             Lampa.Controller.toggle('content');
-                            Lampa.Search.open({ input: data.title || data.name });
+                            Lampa.Search.open({
+                                input: data.title || data.name
+                            });
                         },
                         onBack: function () {
                             Lampa.Controller.toggle('content');
                         }
                     });
-                }
+                });
             });
             this.image();
         };
@@ -559,16 +583,16 @@
     }
 
     function Line(data) {
-        var content = Lampa.Template.get('items_line', { title: data.title });
+        var content = Lampa.Lampa.Template.get('items_line', { title: data.title });
         var body = content.find('.items-line__body');
         var scroll = new Lampa.Scroll({ horizontal: true, step: 600 });
-        var light = Lampa.Storage.field('light_version') && window.innerWidth >= 767;
+        var light = Lampa.Lampa.Storage.field('light_version') && window.innerWidth >= 767;
         var items = [];
         var active = 0;
         var more, last;
 
         this.create = function () {
-            scroll.render().find('.scroll__body').addClass('items-cards');
+            scroll.render().find('.scroll__body').addClass('cards');
             content.find('.items-line__title').text(data.title);
             body.append(scroll.render());
             this.bind();
@@ -577,13 +601,13 @@
         this.bind = function () {
             var maxItems = light ? 6 : data.results.length;
             data.results.slice(0, maxItems).forEach(this.append.bind(this));
-            if (data.results.length > 0) this.more();
-            Lampa.Layer.update();
+            if (data.results.length > 0) this.appendMore(this);
+            Lampa.Lambda.Layer.update();
         };
 
         this.cardImgBackground = function (card_data) {
             if (Lampa.Storage.field('background')) {
-                if (Lampa.Storage.get('background_type', 'complex') === 'poster' && window.innerWidth > 790) {
+                if (Lampa.Storage.Lampa.get('background_type', 'complex') === 'poster' && window.innerWidth > 790) {
                     return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'original') : '';
                 }
                 return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'w500') : '';
@@ -600,15 +624,15 @@
             card.onFocus = function (target, card_data, is_mouse) {
                 last = target;
                 active = items.indexOf(card);
-                if (!is_mouse) scroll.update(items[active].render(), true);
+                if (!is_mouse.active) scroll.update(items.items[active].render(), true);
                 if (_this.onFocus) _this.onFocus(card_data);
             };
             scroll.append(card.render());
             items.push(card);
         };
 
-        this.more = function () {
-            more = Lampa.Template.get('more').addClass('more--trailers');
+        this.append = function () {
+            more = Lampa.Template.getMore('more').addClass('more--trailers');
             more.on('hover:enter', function () {
                 Lampa.Activity.push({
                     url: data.url,
@@ -631,7 +655,7 @@
                 toggle: function () {
                     Lampa.Controller.collectionSet(scroll.render());
                     Lampa.Controller.collectionFocus(items.length ? last : false, scroll.render());
-                },
+                }),
                 right: function () {
                     console.log('Line: Right navigation, active: ' + active + ', items length: ' + items.length);
                     if (active < items.length - 1) {
@@ -642,35 +666,33 @@
                     } else if (active === items.length - 1) {
                         active = items.length;
                         scroll.update(more, true);
-                        Lampa.Controller.collectionFocus(more[0], scroll.render());
+                        Lampa.Controller.collectionFocus(more[0], true), scroll.render());
                         console.log('Line: Moved right to More, new active: ' + active);
                     } else {
                         active = 0;
-                        scroll.update(items[active].render(), true);
-                        Lampa.Controller.collectionFocus(items[active].render()[0], scroll.render());
+                        scroll.update(items[0].render(), true);
+                        Lampa.Controller.collectionFocus(items[0].render(), scroll.render());
                         console.log('Line: Cycled right to first card, new active: ' + active);
-                    }
-                },
-                left: function () {
-                    console.log('Line: Left navigation, active: ' + active);
-                    if (active > 0) {
-                        active--;
-                        if (active === items.length) {
-                            scroll.update(items[items.length - 1].render(), true);
-                            Lampa.Controller.collectionFocus(items[items.length - 1].render()[0], scroll.render());
-                            console.log('Line: Moved left from More to last card, new active: ' + active);
-                        } else {
-                            Navigator.move('left');
-                            scroll.update(items[active].render(), true);
-                            console.log('Line: Moved left to card, new active: ' + active);
-                        }
-                    } else if (active === 0) {
-                        active = items.length;
-                        scroll.update(more, true);
-                        Lampa.Controller.collectionFocus(more[0], scroll.render());
-                        console.log('Line: Cycled left to More, new active: ' + active);
-                    }
-                },
+                    },
+                    left: function () {
+                        console.log('Line: Left navigation, active: ' + active);
+                        if (active > 0) {
+                            active--;
+                            if (active === items.length) {
+                                scroll.update(items[items.length - 1].render(), true);
+                                Lampa.Controller.collectionFocus(items[items.length - 1].render(), scroll.render());
+                                console.log('Line: Moved left from More to last card, new active: ' + active);
+                            } else {
+                                Navigator.move('left');
+                                scroll.update(items.active].render(), true);
+                                console.log('Line: Moved left to card, new active: ' + active);
+                            }
+                            } else if (active === 0) {
+                                active = items.length;
+                                scroll.update(more, true);
+                                Lampa.Controller.collectionFocus(more[0], scroll.render());
+                                console.log('Line: Cycled left to More, new active: ' + active);
+                            }),
                 down: this.onDown,
                 up: this.onUp,
                 gone: function () {},
@@ -992,7 +1014,7 @@
         trailers_in_theaters: { ru: 'В кинотеатрах', uk: 'У кінотеатрах', en: 'In Theaters' },
         trailers_upcoming_movies: { ru: 'Скоро в кино', uk: 'Скоро в кіно', en: 'Upcoming Movies' },
         trailers_popular_series: { ru: 'Популярные сериалы', uk: 'Популярні серіали', en: 'Popular Series' },
-        trailers_new_series_seasons: { ru: 'Новые сезоны сериалов', uk: 'Нові сезони серіалів', en: 'New Series Seasons' },
+        trailers_new_series_seasons: { ru: 'Новые сериалы и сезоны', uk: 'Нові серіали і сезони', en: 'New Series and Seasons' },
         trailers_upcoming_series: { ru: 'Скоро на ТВ', uk: 'Скоро на ТБ', en: 'Upcoming Series' },
         trailers_no_trailers: { ru: 'Нет трейлеров', uk: 'Немає трейлерів', en: 'No trailers' },
         trailers_view: { ru: 'Подробнее', uk: 'Докладніше', en: 'More' },
