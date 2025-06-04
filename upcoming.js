@@ -39,7 +39,7 @@
      * Фільтрує контент (фільми або серіали) за жанрами та рейтингами.
      * Повертає true, якщо контент має хоча б один дозволений жанр, не має заборонених жанрів та має рейтинг (якщо потрібно).
      * @param {Object} content - Об'єкт контенту з масивом genre_ids та vote_average.
-     * @param {string} category - Назва категорії (наприклад, 'new_series_seasons'), щоб визначити, чи потрібна перевірка рейтингу.
+     * @param {string} category - Назва категорії (наприклад, 'upcoming_series'), щоб визначити, чи потрібна перевірка рейтингу.
      * @returns {boolean} - Чи відповідає контент критеріям фільтрації.
      */
     function filterTMDBContentByGenre(content, category) {
@@ -75,8 +75,8 @@
         const hasAllowedGenre = genreIds.some(id => allowedGenreIds.includes(id));
         const hasDisallowedGenre = genreIds.some(id => disallowedGenreIds.includes(id));
 
-        // Для категорій upcoming_series та new_series_seasons рейтинг не потрібен, оскільки серіали/сезони ще не вийшли
-        const requiresRating = category !== 'upcoming_series' && category !== 'new_series_seasons' && (!content.release_date || new Date(content.release_date) <= new Date());
+        // Для категорії upcoming_series рейтинг не потрібен, оскільки серіали ще не вийшли
+        const requiresRating = category !== 'upcoming_series' && (!content.release_date || new Date(content.release_date) <= new Date());
         const hasRating = !requiresRating || (content.vote_average && content.vote_average > 0);
 
         console.log('Filtering content:', content.title || content.name, 'genre_ids:', genreIds, 'hasAllowedGenre:', hasAllowedGenre, 'hasDisallowedGenre:', hasDisallowedGenre, 'vote_average:', content.vote_average, 'hasRating:', hasRating, 'requiresRating:', requiresRating, 'category:', category);
@@ -99,6 +99,33 @@
         });
     }
 
+    /**
+     * Отримує деталі серіалу (last_episode_to_air або next_episode_to_air) для перевірки дат сезону.
+     * @param {number} seriesId - ID серіалу.
+     * @param {string} dateField - Поле для перевірки ('last_episode_to_air' або 'next_episode_to_air').
+     * @param {string} startDate - Початкова дата (YYYY-MM-DD).
+     * @param {string} endDate - Кінцева дата (YYYY-MM-DD).
+     * @param {Function} callback - Колбек для повернення результату (true/false).
+     */
+    function fetchSeriesDetails(seriesId, dateField, startDate, endDate, callback) {
+        var endpoint = '/tv/' + seriesId;
+        var params = { language: getInterfaceLanguage() };
+        fetchTMDB(endpoint, params, function (data) {
+            var episode = data[dateField];
+            if (episode && episode.air_date) {
+                var airDate = episode.air_date;
+                var isWithinRange = airDate >= startDate && airDate <= endDate;
+                console.log('Series ' + seriesId + ' ' + dateField + ':', airDate, 'is within range', startDate, 'to', endDate, ':', isWithinRange);
+                callback(isWithinRange);
+            } else {
+                console.log('Series ' + seriesId + ' has no ' + dateField);
+                callback(false);
+            }
+        }, function () {
+            callback(false);
+        });
+    }
+
     function get(endpoint, params, cacheKey, minItems, resolve, reject, category) {
         if (cacheKey && trailerCache[cacheKey]) {
             console.log('Using cache for ' + cacheKey);
@@ -117,22 +144,57 @@
                     var filteredResults = data.results.filter(function (content) {
                         return filterTMDBContentByGenre(content, category);
                     });
-                    results = results.concat(filteredResults);
-                    console.log('Fetched page ' + page + ' for ' + endpoint + ', filtered results: ', filteredResults);
-                    console.log('Total accumulated results: ', results.length);
 
-                    totalPages = data.total_pages || 1;
+                    // Додаткова фільтрація для категорій new_series_seasons та upcoming_series
+                    if (category === 'new_series_seasons' || category === 'upcoming_series') {
+                        var today = new Date();
+                        var todayStr = today.toISOString().split('T')[0]; // 2025-06-04
+                        var sixMonthsAgo = new Date();
+                        sixMonthsAgo.setMonth(today.getMonth() - 6);
+                        var sixMonthsAgoStr = sixMonthsAgo.toISOString().split('T')[0]; // 2024-12-04
+                        var sixMonthsLater = new Date();
+                        sixMonthsLater.setMonth(today.getMonth() + 6);
+                        var sixMonthsLaterStr = sixMonthsLater.toISOString().split('T')[0]; // 2025-12-04
 
-                    // Якщо зібрано достатньо елементів або досягнуто останньої сторінки, завершуємо
-                    if (results.length >= minItems || page >= totalPages || page >= 30) {
-                        data.results = results.slice(0, minItems); // Обрізаємо до потрібної кількості
-                        if (cacheKey) trailerCache[cacheKey] = data;
-                        console.log('Final results for ' + endpoint + ': ', data.results);
-                        resolve(data);
+                        var remaining = filteredResults.length;
+                        var validResults = [];
+
+                        if (remaining === 0) {
+                            processResults(data, []);
+                            return;
+                        }
+
+                        filteredResults.forEach(function (series) {
+                            var dateField = category === 'new_series_seasons' ? 'last_episode_to_air' : 'next_episode_to_air';
+                            var startDate = category === 'new_series_seasons' ? sixMonthsAgoStr : todayStr;
+                            var endDate = category === 'new_series_seasons' ? todayStr : sixMonthsLaterStr;
+
+                            fetchSeriesDetails(series.id, dateField, startDate, endDate, function (isValid) {
+                                if (isValid) {
+                                    validResults.push(series);
+                                }
+                                remaining--;
+                                if (remaining === 0) {
+                                    // Сортування після фільтрації
+                                    if (category === 'new_series_seasons') {
+                                        // Сортування за рейтингом (vote_average.desc)
+                                        validResults.sort(function (a, b) {
+                                            return b.vote_average - a.vote_average;
+                                        });
+                                    } else if (category === 'upcoming_series') {
+                                        // Сортування за датою наступного епізоду (next_episode_to_air)
+                                        validResults.sort(function (a, b) {
+                                            var aDate = a.next_episode_to_air ? a.next_episode_to_air.air_date : '9999-12-31';
+                                            var bDate = b.next_episode_to_air ? b.next_episode_to_air.air_date : '9999-12-31';
+                                            return aDate.localeCompare(bDate);
+                                        });
+                                    }
+                                    processResults(data, validResults);
+                                }
+                            });
+                        });
                     } else {
-                        // Інакше запитуємо наступну сторінку
-                        page++;
-                        fetchPage();
+                        processResults(data, filteredResults);
                     }
                 } else {
                     if (cacheKey) trailerCache[cacheKey] = data;
@@ -141,13 +203,31 @@
             }, reject);
         }
 
+        function processResults(data, filteredResults) {
+            results = results.concat(filteredResults);
+            console.log('Fetched page ' + page + ' for ' + endpoint + ', filtered results: ', filteredResults);
+            console.log('Total accumulated results: ', results.length);
+
+            totalPages = data.total_pages || 1;
+
+            if (results.length >= minItems || page >= totalPages || page >= 30) {
+                data.results = results.slice(0, minItems);
+                if (cacheKey) trailerCache[cacheKey] = data;
+                console.log('Final results for ' + endpoint + ': ', data.results);
+                resolve(data);
+            } else {
+                page++;
+                fetchPage();
+            }
+        }
+
         fetchPage();
     }
 
     function main(oncomplite, onerror) {
         var status = new Lampa.Status(6);
         var light = Lampa.Storage.field('light_version') && window.innerWidth >= 767;
-        var minItems = light ? 6 : 20; // Мінімальна кількість елементів для кожної категорії
+        var minItems = light ? 6 : 20;
 
         status.onComplite = function () {
             var fulldata = [];
@@ -169,17 +249,17 @@
             status.append(name, json);
         };
 
-        // Обчислюємо дати для категорії "В прокаті"
         var today = new Date();
-        var todayStr = today.toISOString().split('T')[0]; // Формат YYYY-MM-DD (2025-06-04)
+        var todayStr = today.toISOString().split('T')[0]; // 2025-06-04
         var sixWeeksAgo = new Date();
-        sixWeeksAgo.setDate(today.getDate() - 42); // 6 тижнів назад
-        var sixWeeksAgoStr = sixWeeksAgo.toISOString().split('T')[0]; // Формат YYYY-MM-DD
-
-        // Обчислюємо дати для категорії "Очікувані фільми", "Очікувані серіали" та "Нові сезони"
+        sixWeeksAgo.setDate(today.getDate() - 42);
+        var sixWeeksAgoStr = sixWeeksAgo.toISOString().split('T')[0];
+        var sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(today.getMonth() - 6);
+        var sixMonthsAgoStr = sixMonthsAgo.toISOString().split('T')[0]; // 2024-12-04
         var sixMonthsLater = new Date();
-        sixMonthsLater.setMonth(today.getMonth() + 6); // 6 місяців вперед
-        var sixMonthsLaterStr = sixMonthsLater.toISOString().split('T')[0]; // Формат YYYY-MM-DD (2025-12-04)
+        sixMonthsLater.setMonth(today.getMonth() + 6);
+        var sixMonthsLaterStr = sixMonthsLater.toISOString().split('T')[0]; // 2025-12-04
 
         var lang = getInterfaceLanguage();
 
@@ -215,26 +295,23 @@
             append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', '/trending/tv/week', json);
         }, status.error.bind(status), 'popular_series');
 
-        // Оновлений запит для категорії "Нові сезони серіалів" із сортуванням за датою першої серії
+        // Оновлений запит для "Нові сезони серіалів"
         get('/discover/tv', {
             language: lang,
             page: 1,
             include_adult: false,
-            sort_by: 'first_air_date.asc', // Сортування за найближчими прем’єрами сезонів
-            'first_air_date.gte': todayStr,
-            'first_air_date.lte': sixMonthsLaterStr
+            sort_by: 'vote_average.desc',
+            'vote_count.gte': 30
         }, 'new_series_seasons', minItems, function (json) {
             append(Lampa.Lang.translate('trailers_new_series_seasons'), 'new_series_seasons', '/discover/tv', json);
         }, status.error.bind(status), 'new_series_seasons');
 
-        // Оновлений запит для категорії "Очікувані серіали" із сортуванням за датою
+        // Оновлений запит для "Скоро на ТБ"
         get('/discover/tv', {
             language: lang,
             page: 1,
             include_adult: false,
-            sort_by: 'first_air_date.asc', // Сортування за найближчими прем’єрами
-            'first_air_date.gte': todayStr,
-            'first_air_date.lte': sixMonthsLaterStr
+            sort_by: 'first_air_date.asc'
         }, 'upcoming_series', minItems, function (json) {
             append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/discover/tv', json);
         }, status.error.bind(status), 'upcoming_series');
@@ -245,14 +322,15 @@
         var lang = getInterfaceLanguage();
         var requestParams = { language: lang, page: params.page };
 
-        // Додаємо додаткові параметри для /discover/movie та /discover/tv
         if (params.url === '/discover/movie' || params.url === '/discover/tv') {
             var today = new Date();
             var todayStr = today.toISOString().split('T')[0];
             var sixWeeksAgo = new Date();
             sixWeeksAgo.setDate(today.getDate() - 42);
             var sixWeeksAgoStr = sixWeeksAgo.toISOString().split('T')[0];
-
+            var sixMonthsAgo = new Date();
+            sixMonthsAgo.setMonth(today.getMonth() - 6);
+            var sixMonthsAgoStr = sixMonthsAgo.toISOString().split('T')[0];
             var sixMonthsLater = new Date();
             sixMonthsLater.setMonth(today.getMonth() + 6);
             var sixMonthsLaterStr = sixMonthsLater.toISOString().split('T')[0];
@@ -273,19 +351,16 @@
                     'primary_release_date.gte': todayStr,
                     'primary_release_date.lte': sixMonthsLaterStr
                 });
-            } else if (params.type === 'upcoming_series') {
-                requestParams = Object.assign(requestParams, {
-                    include_adult: false,
-                    sort_by: 'first_air_date.asc', // Сортування за найближчими прем’єрами
-                    'first_air_date.gte': todayStr,
-                    'first_air_date.lte': sixMonthsLaterStr
-                });
             } else if (params.type === 'new_series_seasons') {
                 requestParams = Object.assign(requestParams, {
                     include_adult: false,
-                    sort_by: 'first_air_date.asc', // Сортування за найближчими прем’єрами сезонів
-                    'first_air_date.gte': todayStr,
-                    'first_air_date.lte': sixMonthsLaterStr
+                    sort_by: 'vote_average.desc',
+                    'vote_count.gte': 30
+                });
+            } else if (params.type === 'upcoming_series') {
+                requestParams = Object.assign(requestParams, {
+                    include_adult: false,
+                    sort_by: 'first_air_date.asc'
                 });
             }
         }
@@ -296,12 +371,10 @@
     function videos(card, oncomplite, onerror) {
         var endpoint = (card.name ? '/tv/' : '/movie/') + card.id + '/videos';
         var interfaceLang = getInterfaceLanguage();
-        // Спочатку пробуємо отримати трейлери мовою інтерфейсу
         fetchTMDB(endpoint, { language: interfaceLang }, function (data) {
             if (data.results && data.results.length) {
                 oncomplite(data);
             } else {
-                // Якщо трейлерів немає, робимо запит для англійської мови
                 console.log('No trailers found for language ' + interfaceLang + ', trying English...');
                 fetchTMDB(endpoint, { language: 'en-US' }, function (dataEn) {
                     oncomplite(dataEn);
@@ -330,7 +403,6 @@
 
     function Trailer(data, params) {
         this.build = function () {
-            // Перевірка наявності перекладу назви
             var lang = getShortLanguageCode();
             var title = data.title || data.name;
             var originalTitle = data.original_title || data.original_name;
@@ -338,7 +410,7 @@
 
             console.log('Checking translation for:', title, 'original:', originalTitle, 'lang:', lang, 'hasTranslation:', hasTranslation);
 
-            if (!hasTranslation) return; // Не створюємо картку, якщо немає перекладу
+            if (!hasTranslation) return;
 
             this.card = Lampa.Template.get('trailer', {});
             this.img = this.card.find('img')[0];
@@ -353,26 +425,23 @@
                 this.card.find('.card__details').remove();
             }
 
-            // Додаємо дату прем'єри у правий верхній кут у форматі DD-MM-YYYY
             var premiereDate = data.release_date || data.first_air_date || 'N/A';
             var formattedDate = 'N/A';
             if (premiereDate !== 'N/A') {
                 var dateParts = premiereDate.split('-');
                 if (dateParts.length === 3) {
-                    formattedDate = dateParts[2] + '-' + dateParts[1] + '-' + dateParts[0]; // Перетворюємо YYYY-MM-DD на DD-MM-YYYY
+                    formattedDate = dateParts[2] + '-' + dateParts[1] + '-' + dateParts[0];
                 }
             }
             this.card.find('.card__view').append(`
                 <div class="card__premiere-date" style="position: absolute; top: 0.5em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${formattedDate}</div>
             `);
 
-            // Додаємо мову трейлера нижче дати
             this.card.find('.card__view').append(`
                 <div class="card__trailer-lang" style="position: absolute; top: 2.25em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;"></div>
             `);
 
-            // Додаємо рейтинг у правий нижній кут
-            var rating = data.vote_average ? data.vote_average.toFixed(1) : '—'; // Замінюємо N/A на прочерк
+            var rating = data.vote_average ? data.vote_average.toFixed(1) : '—';
             this.card.find('.card__view').append(`
                 <div class="card__rating" style="position: absolute; bottom: 0.5em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${rating}</div>
             `);
@@ -432,7 +501,7 @@
         this.create = function () {
             var _this2 = this;
             this.build();
-            if (!this.card) return; // Не продовжуємо, якщо картка не створена через відсутність перекладу
+            if (!this.card) return;
             this.card.on('hover:focus', function (e, is_mouse) {
                 Lampa.Background.change(_this2.cardImgBackground(data));
                 _this2.onFocus(e.target, data, is_mouse);
@@ -556,10 +625,9 @@
         };
 
         this.bind = function () {
-            // Відображаємо до 6 карток у легкій версії або всіх доступних у повній
             var maxItems = light ? 6 : data.results.length;
             data.results.slice(0, maxItems).forEach(this.append.bind(this));
-            if (data.results.length > 0) this.more(); // Додаємо кнопку "ЩЕ", якщо є хоч один елемент
+            if (data.results.length > 0) this.more();
             Lampa.Layer.update();
         };
 
@@ -577,7 +645,7 @@
             var _this = this;
             var card = new Trailer(element, { type: data.type });
             card.create();
-            if (!card.render()) return; // Пропускаємо, якщо картка не створена через відсутність перекладу
+            if (!card.render()) return;
             card.visible();
             card.onFocus = function (target, card_data, is_mouse) {
                 last = target;
@@ -601,7 +669,7 @@
             });
             more.on('hover:focus', function (e) {
                 last = e.target;
-                active = items.length; // Set active to "More" index
+                active = items.length;
                 scroll.update(more, true);
             });
             scroll.append(more);
@@ -616,17 +684,17 @@
                 },
                 right: function () {
                     console.log('Line: Right navigation, active: ' + active + ', items length: ' + items.length);
-                    if (active < items.length - 1) { // Move to next card
+                    if (active < items.length - 1) {
                         active++;
                         Navigator.move('right');
                         scroll.update(items[active].render(), true);
                         console.log('Line: Moved right to card, new active: ' + active);
-                    } else if (active === items.length - 1) { // Move to "More"
+                    } else if (active === items.length - 1) {
                         active = items.length;
                         scroll.update(more, true);
                         Lampa.Controller.collectionFocus(more[0], scroll.render());
                         console.log('Line: Moved right to More, new active: ' + active);
-                    } else { // Cycle back to first card
+                    } else {
                         active = 0;
                         scroll.update(items[active].render(), true);
                         Lampa.Controller.collectionFocus(items[active].render()[0], scroll.render());
@@ -637,7 +705,7 @@
                     console.log('Line: Left navigation, active: ' + active);
                     if (active > 0) {
                         active--;
-                        if (active === items.length) { // Moving from "More" to last card
+                        if (active === items.length) {
                             scroll.update(items[items.length - 1].render(), true);
                             Lampa.Controller.collectionFocus(items[items.length - 1].render()[0], scroll.render());
                             console.log('Line: Moved left from More to last card, new active: ' + active);
@@ -646,7 +714,7 @@
                             scroll.update(items[active].render(), true);
                             console.log('Line: Moved left to card, new active: ' + active);
                         }
-                    } else if (active === 0) { // Cycle to "More"
+                    } else if (active === 0) {
                         active = items.length;
                         scroll.update(more, true);
                         Lampa.Controller.collectionFocus(more[0], scroll.render());
@@ -818,7 +886,7 @@
         var light = newlampa ? false : Lampa.Storage.field('light_version') && window.innerWidth >= 767;
         var total_pages = 0;
         var last, waitload;
-        var active = 0; // Ініціалізація active
+        var active = 0;
 
         this.create = function () {
             Api.full(object, this.build.bind(this), this.empty.bind(this));
@@ -861,7 +929,7 @@
             data.results.forEach(function (element) {
                 var card = new Trailer(element, { type: object.type });
                 card.create();
-                if (!card.render()) return; // Пропускаємо, якщо картка не створена через відсутність перекладу
+                if (!card.render()) return;
                 card.visible();
                 card.onFocus = function (target, card_data) {
                     last = target;
@@ -906,7 +974,7 @@
                 Lampa.Controller.collectionFocus(last || false, scroll.render());
                 var next = Lampa.Arrays.clone(object);
                 delete next.activity;
-                active = 0; // Reset active for the new activity
+                active = 0;
                 next.page++;
                 Lampa.Activity.push(next);
             });
