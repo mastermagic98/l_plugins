@@ -71,9 +71,17 @@
                     var isWithinRange = episode.air_date >= startDate && episode.air_date <= endDate;
                     console.log('Cached Series ' + seriesId + ' last_episode_to_air:', episode.air_date, 'is within range', startDate, 'to', endDate, ':', isWithinRange);
                     callback(isWithinRange);
-                } else {
-                    callback(false);
+                    return;
                 }
+                // Якщо last_episode_to_air відсутнє, спробуємо отримати дату останньої серії з останнього сезону
+                var lastSeason = data.seasons && data.seasons.length ? data.seasons[data.seasons.length - 1] : null;
+                if (lastSeason && lastSeason.air_date) {
+                    var isWithinRange = lastSeason.air_date >= startDate && lastSeason.air_date <= endDate;
+                    console.log('Cached Series ' + seriesId + ' last_season_air_date:', lastSeason.air_date, 'is within range', startDate, 'to', endDate, ':', isWithinRange);
+                    callback(isWithinRange);
+                    return;
+                }
+                callback(false);
             }
             return;
         }
@@ -95,8 +103,16 @@
                     console.log('Series ' + seriesId + ' last_episode_to_air:', episode.air_date, 'is within range', startDate, 'to', endDate, ':', isWithinRange);
                     callback(isWithinRange);
                 } else {
-                    console.log('Series ' + seriesId + ' has no last_episode_to_air');
-                    callback(false);
+                    // Якщо last_episode_to_air відсутнє, перевіряємо дату останнього сезону
+                    var lastSeason = data.seasons && data.seasons.length ? data.seasons[data.seasons.length - 1] : null;
+                    if (lastSeason && lastSeason.air_date) {
+                        var isWithinRange = lastSeason.air_date >= startDate && lastSeason.air_date <= endDate;
+                        console.log('Series ' + seriesId + ' last_season_air_date:', lastSeason.air_date, 'is within range', startDate, 'to', endDate, ':', isWithinRange);
+                        callback(isWithinRange);
+                    } else {
+                        console.log('Series ' + seriesId + ' has no last_episode_to_air or last_season_air_date');
+                        callback(false);
+                    }
                 }
             }
         }, function () {
@@ -412,8 +428,10 @@
             if (params.type === 'new_series_seasons' || params.type === 'upcoming_series') {
                 fetchSeriesDetails(data.id, 'last_episode_to_air', '', '', function (isValid) {
                     if (isValid && trailerCache[`series_${data.id}_last_episode_to_air`]) {
-                        var episode = trailerCache[`series_${data.id}_last_episode_to_air`].last_episode_to_air;
-                        premiereDate = episode && episode.air_date ? episode.air_date : data.first_air_date || 'N/A';
+                        var data = trailerCache[`series_${data.id}_last_episode_to_air`];
+                        var episode = data.last_episode_to_air;
+                        var lastSeason = data.seasons && data.seasons.length ? data.seasons[data.seasons.length - 1] : null;
+                        premiereDate = episode && episode.air_date ? episode.air_date : (lastSeason && lastSeason.air_date ? lastSeason.air_date : data.first_air_date || 'N/A');
                     } else {
                         premiereDate = data.first_air_date || 'N/A';
                     }
