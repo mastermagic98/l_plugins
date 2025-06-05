@@ -28,7 +28,7 @@
 
     function filterTMDBContentByGenre(content, category) {
         const allowedGenreIds = [28, 12, 16, 35, 80, 99, 18, 10751, 14, 36, 27, 10402, 9648, 10749, 878, 53, 10752, 37];
-        const disallowedGenreIds = [10767, 10764, 10766, 10763];
+        const disallowedGenreIds = [10767, 10764, 10766, '10763'];
         const genreIds = content.genre_ids || [];
         const hasAllowedGenre = genreIds.some(id => allowedGenreIds.includes(id));
         const hasDisallowedGenre = genreIds.some(id => disallowedGenreIds.includes(id));
@@ -47,6 +47,11 @@
         Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
         console.log('TMDB Request: ' + url.toString());
         network.silent(url.toString(), function (data) {
+            if (!data) {
+                console.log('TMDB Response for ' + endpoint + ': data is undefined');
+                reject(new Error('Data is undefined'));
+                return;
+            }
             console.log('TMDB Response for ' + endpoint + ': ', data);
             resolve(data);
         }, function (error) {
@@ -64,24 +69,23 @@
                 var airDate = data.first_air_date;
                 var isWithinRange = airDate >= startDate && airDate <= endDate;
                 console.log('Cached Series ' + seriesId + ' first_air_date:', airDate, 'is within range', startDate, 'to', endDate, ':', isWithinRange, 'isFirstSeason:', isFirstSeason);
-                callback(isWithinRange && isFirstSeason);
+                callback(isWithinRange && isFirstSeason, airDate);
             } else {
                 var episode = data.last_episode_to_air;
                 if (episode && episode.air_date) {
                     var isWithinRange = episode.air_date >= startDate && episode.air_date <= endDate;
                     console.log('Cached Series ' + seriesId + ' last_episode_to_air:', episode.air_date, 'is within range', startDate, 'to', endDate, ':', isWithinRange);
-                    callback(isWithinRange);
+                    callback(isWithinRange, episode.air_date);
                     return;
                 }
-                // Якщо last_episode_to_air відсутнє, спробуємо отримати дату останньої серії з останнього сезону
                 var lastSeason = data.seasons && data.seasons.length ? data.seasons[data.seasons.length - 1] : null;
                 if (lastSeason && lastSeason.air_date) {
                     var isWithinRange = lastSeason.air_date >= startDate && lastSeason.air_date <= endDate;
                     console.log('Cached Series ' + seriesId + ' last_season_air_date:', lastSeason.air_date, 'is within range', startDate, 'to', endDate, ':', isWithinRange);
-                    callback(isWithinRange);
+                    callback(isWithinRange, lastSeason.air_date);
                     return;
                 }
-                callback(false);
+                callback(false, data.first_air_date);
             }
             return;
         }
@@ -89,34 +93,38 @@
         var endpoint = '/tv/' + seriesId;
         var params = { language: getInterfaceLanguage() };
         fetchTMDB(endpoint, params, function (data) {
+            if (!data) {
+                console.log('Series ' + seriesId + ' fetch failed: data is undefined');
+                callback(false, 'N/A');
+                return;
+            }
             trailerCache[cacheKey] = data;
             if (dateField === 'season_check') {
                 var isFirstSeason = data.number_of_seasons === 1;
                 var airDate = data.first_air_date;
                 var isWithinRange = airDate >= startDate && airDate <= endDate;
                 console.log('Series ' + seriesId + ' first_air_date:', airDate, 'is within range', startDate, 'to', endDate, ':', isWithinRange, 'isFirstSeason:', isFirstSeason);
-                callback(isWithinRange && isFirstSeason);
+                callback(isWithinRange && isFirstSeason, airDate);
             } else {
                 var episode = data.last_episode_to_air;
                 if (episode && episode.air_date) {
                     var isWithinRange = episode.air_date >= startDate && episode.air_date <= endDate;
                     console.log('Series ' + seriesId + ' last_episode_to_air:', episode.air_date, 'is within range', startDate, 'to', endDate, ':', isWithinRange);
-                    callback(isWithinRange);
+                    callback(isWithinRange, episode.air_date);
                 } else {
-                    // Якщо last_episode_to_air відсутнє, перевіряємо дату останнього сезону
                     var lastSeason = data.seasons && data.seasons.length ? data.seasons[data.seasons.length - 1] : null;
                     if (lastSeason && lastSeason.air_date) {
                         var isWithinRange = lastSeason.air_date >= startDate && lastSeason.air_date <= endDate;
                         console.log('Series ' + seriesId + ' last_season_air_date:', lastSeason.air_date, 'is within range', startDate, 'to', endDate, ':', isWithinRange);
-                        callback(isWithinRange);
+                        callback(isWithinRange, lastSeason.air_date);
                     } else {
                         console.log('Series ' + seriesId + ' has no last_episode_to_air or last_season_air_date');
-                        callback(false);
+                        callback(false, data.first_air_date);
                     }
                 }
             }
         }, function () {
-            callback(false);
+            callback(false, 'N/A');
         });
     }
 
@@ -139,9 +147,47 @@
                         return filterTMDBContentByGenre(content, category);
                     });
 
-                    // Тимчасово відключимо асинхронну фільтрацію за датами
-                    console.log('Fetched page ' + page + ' for ' + endpoint + ', filtered results (without date filter): ', filteredResults.length);
-                    processResults(data, filteredResults);
+                    if (category === 'new_series_seasons' || category === 'upcoming_series') {
+                        var today = new Date();
+                        var todayStr = today.toISOString().split('T')[0];
+                        var sixMonthsAgo = new Date();
+                        sixMonthsAgo.setMonth(today.getMonth() - 6);
+                        var sixMonthsAgoStr = sixMonthsAgo.toISOString().split('T')[0];
+                        var sixMonthsLater = new Date();
+                        sixMonthsLater.setMonth(today.getMonth() + 6);
+                        var sixMonthsLaterStr = sixMonthsLater.toISOString().split('T')[0];
+
+                        var validResults = [];
+
+                        if (filteredResults.length === 0) {
+                            processResults(data, []);
+                            return;
+                        }
+
+                        var promises = filteredResults.map(function (series) {
+                            return new Promise(function (resolveDetail) {
+                                var dateField = category === 'new_series_seasons' ? 'last_episode_to_air' : 'season_check';
+                                var startDate = category === 'new_series_seasons' ? sixMonthsAgoStr : todayStr;
+                                var endDate = category === 'new_series_seasons' ? todayStr : sixMonthsLaterStr;
+
+                                fetchSeriesDetails(series.id, dateField, startDate, endDate, function (isValid) {
+                                    if (isValid) {
+                                        validResults.push(series);
+                                    }
+                                    resolveDetail();
+                                });
+                            });
+                        });
+
+                        Promise.all(promises).then(function () {
+                            validResults.sort(function (a, b) {
+                                return b.popularity - a.popularity;
+                            });
+                            processResults(data, validResults);
+                        });
+                    } else {
+                        processResults(data, filteredResults);
+                    }
                 } else {
                     if (cacheKey) trailerCache[cacheKey] = data;
                     resolve(data);
@@ -195,16 +241,16 @@
         };
 
         var today = new Date();
-        var todayStr = today.toISOString().split('T')[0]; // 2025-06-05
+        var todayStr = today.toISOString().split('T')[0];
         var sixWeeksAgo = new Date();
         sixWeeksAgo.setDate(today.getDate() - 42);
         var sixWeeksAgoStr = sixWeeksAgo.toISOString().split('T')[0];
         var twoMonthsAgo = new Date();
         twoMonthsAgo.setDate(today.getDate() - 60);
-        var twoMonthsAgoStr = twoMonthsAgo.toISOString().split('T')[0]; // 2025-04-06
+        var twoMonthsAgoStr = twoMonthsAgo.toISOString().split('T')[0];
         var threeMonthsLater = new Date();
         threeMonthsLater.setMonth(today.getMonth() + 3);
-        var threeMonthsLaterStr = threeMonthsLater.toISOString().split('T')[0]; // 2025-09-05
+        var threeMonthsLaterStr = threeMonthsLater.toISOString().split('T')[0];
         var sixMonthsLater = new Date();
         sixMonthsLater.setMonth(today.getMonth() + 6);
         var sixMonthsLaterStr = sixMonthsLater.toISOString().split('T')[0];
@@ -388,17 +434,24 @@
             `);
 
             if (params.type === 'new_series_seasons' || params.type === 'upcoming_series') {
-                fetchSeriesDetails(data.id, 'last_episode_to_air', '', '', function (isValid) {
-                    if (isValid && trailerCache[`series_${data.id}_last_episode_to_air`]) {
-                        var data = trailerCache[`series_${data.id}_last_episode_to_air`];
-                        var episode = data.last_episode_to_air;
-                        var lastSeason = data.seasons && data.seasons.length ? data.seasons[data.seasons.length - 1] : null;
-                        premiereDate = episode && episode.air_date ? episode.air_date : (lastSeason && lastSeason.air_date ? lastSeason.air_date : data.first_air_date || 'N/A');
-                    } else {
-                        premiereDate = data.first_air_date || 'N/A';
+                fetchSeriesDetails(data.id, 'last_episode_to_air', '', '', function (isValid, airDate) {
+                    try {
+                        if (isValid && trailerCache[`series_${data.id}_last_episode_to_air`]) {
+                            var cachedData = trailerCache[`series_${data.id}_last_episode_to_air`];
+                            var episode = cachedData.last_episode_to_air;
+                            var lastSeason = cachedData.seasons && cachedData.seasons.length ? cachedData.seasons[cachedData.seasons.length - 1] : null;
+                            premiereDate = episode && episode.air_date ? episode.air_date : (lastSeason && lastSeason.air_date ? lastSeason.air_date : data.first_air_date || 'N/A');
+                        } else {
+                            premiereDate = airDate || data.first_air_date || 'N/A';
+                        }
+                        formattedDate = premiereDate !== 'N/A' ? premiereDate.split('-').reverse().join('-') : 'N/A';
+                        _this.card.find('.card__premiere-date').text(formattedDate);
+                    } catch (e) {
+                        console.log('Error updating premiere date for series ' + data.id + ': ', e);
+                        premiereDate = airDate || data.first_air_date || 'N/A';
+                        formattedDate = premiereDate !== 'N/A' ? premiereDate.split('-').reverse().join('-') : 'N/A';
+                        _this.card.find('.card__premiere-date').text(formattedDate);
                     }
-                    formattedDate = premiereDate !== 'N/A' ? premiereDate.split('-').reverse().join('-') : 'N/A';
-                    _this.card.find('.card__premiere-date').text(formattedDate);
                 });
             }
 
@@ -1005,7 +1058,7 @@
         trailers_new_series_seasons: { ru: 'Новые сериалы и сезоны', uk: 'Нові серіали і сезони', en: 'New Series and Seasons' },
         trailers_upcoming_series: { ru: 'Скоро на ТВ', uk: 'Скоро на ТБ', en: 'Upcoming Series' },
         trailers_no_trailers: { ru: 'Нет трейлеров', uk: 'Немає трейлерів', en: 'No trailers' },
-        trailers_view: { ru: 'Подробнее', uk: 'Докладніше', en: 'More' },
+        trailers_view: { ru: 'Подробнее', uk: 'Докладніше', en: 'Details' },
         title_trailers: { ru: 'Трейлеры', uk: 'Трейлери', en: 'Trailers' }
     });
 
