@@ -28,7 +28,7 @@
 
     function filterTMDBContentByGenre(content, category) {
         const allowedGenreIds = [28, 12, 16, 35, 80, 99, 18, 10751, 14, 36, 27, 10402, 9648, 10749, 878, 53, 10752, 37];
-        const disallowedGenreIds = [10767, 10764, 10766, '10763'];
+        const disallowedGenreIds = [10767, 10764, '10766', '10763'];
         const genreIds = content.genre_ids || [];
         const hasAllowedGenre = genreIds.some(id => allowedGenreIds.includes(id));
         const hasDisallowedGenre = genreIds.some(id => disallowedGenreIds.includes(id));
@@ -372,15 +372,18 @@
     function videos(card, oncomplite, onerror) {
         var endpoint = (card.name ? '/tv/' : '/movie/') + card.id + '/videos';
         var interfaceLang = getInterfaceLanguage();
+        console.log('Fetching videos for ' + (card.name || card.title) + ' (ID: ' + card.id + ') with language ' + interfaceLang);
         fetchTMDB(endpoint, { language: interfaceLang }, function (data) {
             if (data.results && data.results.length) {
+                console.log('Videos found for ' + (card.name || card.title) + ': ', data.results);
                 oncomplite(data);
             } else {
                 console.log('No trailers found for language ' + interfaceLang + ', trying English...');
                 fetchTMDB(endpoint, { language: 'en-US' }, function (dataEn) {
+                    console.log('Videos (English) for ' + (card.name || card.title) + ': ', dataEn.results);
                     oncomplite(dataEn);
                 }, function (error) {
-                    console.log('TMDB Error for ' + endpoint + ': ', error);
+                    console.log('TMDB Error for ' + endpoint + ' (English): ', error);
                     onerror(error);
                 });
             }
@@ -479,7 +482,6 @@
             var _this = this;
             this.img.onload = function () {
                 _this.card.addClass('card--loaded');
-                _this.updateTrailerLanguage();
             };
             this.img.onerror = function () {
                 _this.img.src = './img/img_broken.svg';
@@ -489,12 +491,14 @@
         this.updateTrailerLanguage = function () {
             var _this = this;
             Api.videos(data, function (videos) {
+                console.log('Trailer language update for ' + (data.title || data.name) + ': ', videos);
                 var lang = '—';
                 if (videos.results && videos.results.length) {
                     lang = videos.results[0].iso_639_1.toUpperCase();
                 }
                 _this.card.find('.card__trailer-lang').text(lang);
             }, function () {
+                console.log('Failed to fetch trailer language for ' + (data.title || data.name));
                 _this.card.find('.card__trailer-lang').text('—');
             });
         };
@@ -590,6 +594,7 @@
                 }
             });
             this.image();
+            this.updateTrailerLanguage();
         };
 
         this.destroy = function () {
@@ -602,6 +607,7 @@
 
         this.visible = function () {
             if (this.visibled) return;
+            console.log('Visible called for ' + (data.title || data.name) + ': backdrop_path=' + data.backdrop_path + ', poster_path=' + data.poster_path);
             if (params.type === 'rating') {
                 this.img.src = 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg';
             } else if (data.backdrop_path) {
