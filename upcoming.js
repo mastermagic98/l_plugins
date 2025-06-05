@@ -285,8 +285,8 @@
             sort_by: 'popularity.desc',
             'primary_release_date.gte': todayStr,
             'primary_release_date.lte': sixMonthsLaterStr
-        }, 'upcoming_movies', minItems, function (jsonSites) {
-            append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/discover/movie', jsonSites);
+        }, 'upcoming_movies', minItems, function (json) {
+            append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/discover/movie', json);
         }, status.error.bind(status), 'upcoming_movies');
 
         get('/trending/tv/week', { language: lang, page: 1 }, 'popular_series', minItems, function (json) {
@@ -298,8 +298,8 @@
             page: 1,
             include_adult: false,
             sort_by: 'popularity.desc',
-            'air_date.gte': '',
-            'air_date.lte': ''
+            'air_date.gte': twoMonthsAgoStr,
+            'air_date.lte': todayStr
         }, 'new_series_seasons', minItems, function (json) {
             append(Lampa.Lang.translate('trailers_new_series_seasons'), 'new_series_seasons', '/discover/tv', json);
         }, status.error.bind(status), 'new_series_seasons');
@@ -331,9 +331,9 @@
             var threeMonthsLater = new Date();
             threeMonthsLater.setDate(today.getDate() + 180);
             var threeMonthsLaterStr = threeMonthsLater.toISOString().split('T')[0];
-            var sixMonthsAhead = new Date();
-            sixMonthsAhead.setMonth(today.getMonth() + 6);
-            var sixMonthsAheadStr = sixMonthsAhead.toISOString().split('T')[0];
+            var sixMonthsLater = new Date();
+            sixMonthsLater.setMonth(today.getMonth() + 6);
+            var sixMonthsLaterStr = sixMonthsLater.toISOString().split('T')[0];
 
             if (params.type === 'in_theaters') {
                 requestParams = Object.assign(requestParams, {
@@ -342,14 +342,14 @@
                     'primary_release_date.gte': sixWeeksAgoStr,
                     'primary_release_date.lte': todayStr,
                     'vote_count.gte': 30,
-                    region: 'EU'
+                    region: 'UA'
                 });
             } else if (params.type === 'upcoming_movies') {
                 requestParams = Object.assign(requestParams, {
                     include_adult: false,
                     sort_by: 'popularity.desc',
                     'primary_release_date.gte': todayStr,
-                    'primary_release_date.lte': sixMonthsAheadStr
+                    'primary_release_date.lte': sixMonthsLaterStr
                 });
             } else if (params.type === 'new_series_seasons') {
                 requestParams = Object.assign(requestParams, {
@@ -426,7 +426,6 @@
                 this.card.find('.card__details').remove();
             }
 
-            var _this = this;
             var premiereDate = data.release_date || data.first_air_date || 'N/A';
             var formattedDate = premiereDate !== 'N/A' ? premiereDate.split('-').reverse().join('-') : 'N/A';
             this.card.find('.card__view').append(`
@@ -434,7 +433,7 @@
             `);
 
             if (params.type === 'new_series_seasons' || params.type === 'upcoming_series') {
-                fetchSeriesDetails(data.id, 'last_episode_to_air', '', '', function (isValid, airDate) {
+                fetchSeriesDetails(data.id, 'last_episode_to_air', '', '', (isValid, airDate) => {
                     try {
                         if (isValid && trailerCache[`series_${data.id}_last_episode_to_air`]) {
                             var cachedData = trailerCache[`series_${data.id}_last_episode_to_air`];
@@ -445,12 +444,12 @@
                             premiereDate = airDate || data.first_air_date || 'N/A';
                         }
                         formattedDate = premiereDate !== 'N/A' ? premiereDate.split('-').reverse().join('-') : 'N/A';
-                        _this.card.find('.card__premiere-date').text(formattedDate);
+                        this.card.find('.card__premiere-date').text(formattedDate);
                     } catch (e) {
                         console.log('Error updating premiere date for series ' + data.id + ': ', e);
                         premiereDate = airDate || data.first_air_date || 'N/A';
                         formattedDate = premiereDate !== 'N/A' ? premiereDate.split('-').reverse().join('-') : 'N/A';
-                        _this.card.find('.card__premiere-date').text(formattedDate);
+                        this.card.find('.card__premiere-date').text(formattedDate);
                     }
                 });
             }
@@ -720,17 +719,17 @@
                         if (active === items.length) {
                             scroll.update(items[items.length - 1].render(), true);
                             Lampa.Controller.collectionFocus(items[items.length - 1].render()[0], scroll.render());
-                            console.log('Line: Moved left from More to last card, active: ' + active);
+                            console.log('Line: Moved left from More to last card, new active: ' + active);
                         } else {
                             Navigator.move('left');
                             scroll.update(items[active].render(), true);
-                            console.log('Line: Moved left to card, active: ' + active);
+                            console.log('Line: Moved left to card, new active: ' + active);
                         }
                     } else if (active === 0) {
                         active = items.length;
                         scroll.update(more, true);
                         Lampa.Controller.collectionFocus(more[0], scroll.render());
-                        console.log('Line: Cycled left to More, active: ' + active);
+                        console.log('Line: Cycled left to More, new active: ' + active);
                     }
                 },
                 down: this.onDown,
@@ -746,7 +745,7 @@
         };
 
         this.destroy = function () {
-            Lampa.Arrays.delete(items);
+            Lampa.Arrays.destroy(items);
             scroll.destroy();
             content.remove();
             more.remove();
@@ -762,7 +761,7 @@
         var light = Lampa.Storage.field('light_version') && window.innerWidth >= 767;
 
         this.create = function () {
-            Api.main(this.build.bind(this.languages));
+            Api.main(this.build.bind(this), this.empty.bind(this));
             return this.render();
         };
 
@@ -882,7 +881,7 @@
             return html;
         };
         this.destroy = function () {
-            Lampa.Arrays.delete(items);
+            Lampa.Arrays.destroy(items);
             scroll.destroy();
             html.remove();
             items = [];
@@ -1042,7 +1041,7 @@
             return html;
         };
         this.destroy = function () {
-            Lampa.Arrays.delete(items);
+            Lampa.Arrays.destroy(items);
             scroll.destroy();
             html.remove();
             body.remove();
