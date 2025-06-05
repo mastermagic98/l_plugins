@@ -158,7 +158,7 @@
                         sixMonthsAgo.setMonth(today.getMonth() - 6);
                         var sixMonthsAgoStr = sixMonthsAgo.toISOString().split('T')[0];
                         var threeMonthsLater = new Date();
-                        threeMonthsLater.setMonth(today.getMonth() + 3);
+                        threeMonthsLater.setDate(today.getDate() + 180); // Зміна на 180 днів
                         var threeMonthsLaterStr = threeMonthsLater.toISOString().split('T')[0];
 
                         var validResults = [];
@@ -253,7 +253,7 @@
         twoMonthsAgo.setDate(today.getDate() - 60);
         var twoMonthsAgoStr = twoMonthsAgo.toISOString().split('T')[0];
         var threeMonthsLater = new Date();
-        threeMonthsLater.setMonth(today.getMonth() + 3);
+        threeMonthsLater.setDate(today.getDate() + 180); // Зміна на 180 днів
         var threeMonthsLaterStr = threeMonthsLater.toISOString().split('T')[0];
         var sixMonthsLater = new Date();
         sixMonthsLater.setMonth(today.getMonth() + 6);
@@ -331,7 +331,7 @@
             twoMonthsAgo.setDate(today.getDate() - 60);
             var twoMonthsAgoStr = twoMonthsAgo.toISOString().split('T')[0];
             var threeMonthsLater = new Date();
-            threeMonthsLater.setMonth(today.getMonth() + 3);
+            threeMonthsLater.setDate(today.getDate() + 180); // Зміна на 180 днів
             var threeMonthsLaterStr = threeMonthsLater.toISOString().split('T')[0];
             var sixMonthsLater = new Date();
             sixMonthsLater.setMonth(today.getMonth() + 6);
