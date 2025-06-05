@@ -68,24 +68,35 @@
                 var seasons = data.seasons || [];
                 var futureSeasons = seasons.filter(season => season.air_date && new Date(season.air_date) > new Date() && season.air_date >= startDate && season.air_date <= endDate);
                 var nextSeason = futureSeasons.length ? futureSeasons.reduce((earliest, current) => new Date(earliest.air_date) < new Date(current.air_date) ? earliest : current) : null;
-                var airDate = nextSeason ? nextSeason.air_date : data.first_air_date;
-                var isValid = !!nextSeason || (data.number_of_seasons === 1 && airDate >= startDate && airDate <= endDate);
+                var airDate;
+                var isValid;
+                if (nextSeason) {
+                    airDate = nextSeason.air_date;
+                    isValid = true;
+                } else if (data.next_episode_to_air && data.next_episode_to_air.air_date) {
+                    var nextEpisodeDate = data.next_episode_to_air.air_date;
+                    isValid = nextEpisodeDate >= startDate && nextEpisodeDate <= endDate;
+                    airDate = nextEpisodeDate;
+                } else {
+                    airDate = data.first_air_date;
+                    isValid = data.number_of_seasons === 1 && airDate >= startDate && airDate <= endDate;
+                }
                 console.log('Cached Series ' + seriesId + ' next_season_air_date:', airDate, 'is within range', startDate, 'to', endDate, ':', isValid, 'number_of_seasons:', data.number_of_seasons);
                 callback(isValid, airDate);
             } else {
-                var episode = data.last_episode_to_air;
-                if (episode && episode.air_date) {
-                    var isWithinRange = episode.air_date >= startDate && episode.air_date <= endDate;
-                    console.log('Cached Series ' + seriesId + ' last_episode_to_air:', episode.air_date, 'is within range', startDate, 'to', endDate, ':', isWithinRange);
-                    callback(isWithinRange, episode.air_date);
-                    return;
-                }
-                var lastSeason = data.seasons && data.seasons.length ? data.seasons[data.seasons.length - 1] : null;
-                if (lastSeason && lastSeason.air_date) {
-                    var isWithinRange = lastSeason.air_date >= startDate && lastSeason.air_date <= endDate;
-                    console.log('Cached Series ' + seriesId + ' last_season_air_date:', lastSeason.air_date, 'is within range', startDate, 'to', endDate, ':', isWithinRange);
-                    callback(isWithinRange, lastSeason.air_date);
-                    return;
+                var seasons = data.seasons || [];
+                var lastSeason = seasons.length ? seasons[seasons.length - 1] : null;
+                if (lastSeason && lastSeason.season_number > 0) {
+                    var seasonCacheKey = `series_${seriesId}_season_${lastSeason.season_number}`;
+                    if (trailerCache[seasonCacheKey]) {
+                        var seasonData = trailerCache[seasonCacheKey];
+                        var firstEpisode = seasonData.episodes && seasonData.episodes.length ? seasonData.episodes[0] : null;
+                        var airDate = firstEpisode && firstEpisode.air_date ? firstEpisode.air_date : lastSeason.air_date || data.first_air_date;
+                        var isWithinRange = airDate >= startDate && airDate <= endDate;
+                        console.log('Cached Series ' + seriesId + ' first_episode_of_last_season:', airDate, 'is within range', startDate, 'to', endDate, ':', isWithinRange);
+                        callback(isWithinRange, airDate);
+                        return;
+                    }
                 }
                 callback(false, data.first_air_date);
             }
@@ -105,26 +116,37 @@
                 var seasons = data.seasons || [];
                 var futureSeasons = seasons.filter(season => season.air_date && new Date(season.air_date) > new Date() && season.air_date >= startDate && season.air_date <= endDate);
                 var nextSeason = futureSeasons.length ? futureSeasons.reduce((earliest, current) => new Date(earliest.air_date) < new Date(current.air_date) ? earliest : current) : null;
-                var airDate = nextSeason ? nextSeason.air_date : data.first_air_date;
-                var isValid = !!nextSeason || (data.number_of_seasons === 1 && airDate >= startDate && airDate <= endDate);
+                var airDate;
+                var isValid;
+                if (nextSeason) {
+                    airDate = nextSeason.air_date;
+                    isValid = true;
+                } else if (data.next_episode_to_air && data.next_episode_to_air.air_date) {
+                    var nextEpisodeDate = data.next_episode_to_air.air_date;
+                    isValid = nextEpisodeDate >= startDate && nextEpisodeDate <= endDate;
+                    airDate = nextEpisodeDate;
+                } else {
+                    airDate = data.first_air_date;
+                    isValid = data.number_of_seasons === 1 && airDate >= startDate && airDate <= endDate;
+                }
                 console.log('Series ' + seriesId + ' next_season_air_date:', airDate, 'is within range', startDate, 'to', endDate, ':', isValid, 'number_of_seasons:', data.number_of_seasons);
                 callback(isValid, airDate);
             } else {
-                var episode = data.last_episode_to_air;
-                if (episode && episode.air_date) {
-                    var isWithinRange = episode.air_date >= startDate && episode.air_date <= endDate;
-                    console.log('Series ' + seriesId + ' last_episode_to_air:', episode.air_date, 'is within range', startDate, 'to', endDate, ':', isWithinRange);
-                    callback(isWithinRange, episode.air_date);
-                } else {
-                    var lastSeason = data.seasons && data.seasons.length ? data.seasons[data.seasons.length - 1] : null;
-                    if (lastSeason && lastSeason.air_date) {
-                        var isWithinRange = lastSeason.air_date >= startDate && lastSeason.air_date <= endDate;
-                        console.log('Series ' + seriesId + ' last_season_air_date:', lastSeason.air_date, 'is within range', startDate, 'to', endDate, ':', isWithinRange);
-                        callback(isWithinRange, lastSeason.air_date);
-                    } else {
-                        console.log('Series ' + seriesId + ' has no last_episode_to_air or last_season_air_date');
+                var seasons = data.seasons || [];
+                var lastSeason = seasons.length ? seasons[seasons.length - 1] : null;
+                if (lastSeason && lastSeason.season_number > 0) {
+                    fetchTMDB(`/tv/${seriesId}/season/${lastSeason.season_number}`, params, function (seasonData) {
+                        trailerCache[`series_${seriesId}_season_${lastSeason.season_number}`] = seasonData;
+                        var firstEpisode = seasonData.episodes && seasonData.episodes.length ? seasonData.episodes[0] : null;
+                        var airDate = firstEpisode && firstEpisode.air_date ? firstEpisode.air_date : lastSeason.air_date || data.first_air_date;
+                        var isWithinRange = airDate >= startDate && airDate <= endDate;
+                        console.log('Series ' + seriesId + ' first_episode_of_last_season:', airDate, 'is within range', startDate, 'to', endDate, ':', isWithinRange);
+                        callback(isWithinRange, airDate);
+                    }, function () {
                         callback(false, data.first_air_date);
-                    }
+                    });
+                } else {
+                    callback(false, data.first_air_date);
                 }
             }
         }, function () {
@@ -304,13 +326,27 @@
             append(Lampa.Lang.translate('trailers_new_series_seasons'), 'new_series_seasons', '/discover/tv', json);
         }, status.error.bind(status), 'new_series_seasons');
 
+        // Запит для старих серіалів із новими сезонами
         get('/discover/tv', {
             language: lang,
             page: 1,
             include_adult: false,
             sort_by: 'popularity.desc'
-        }, 'upcoming_series', minItems, function (json) {
-            append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/discover/tv', json);
+        }, 'upcoming_series_old', minItems, function (jsonOld) {
+            // Запит для нових серіалів (1 сезон)
+            get('/discover/tv', {
+                language: lang,
+                page: 1,
+                include_adult: false,
+                sort_by: 'popularity.desc',
+                'first_air_date.gte': todayStr,
+                'first_air_date.lte': threeMonthsLaterStr
+            }, 'upcoming_series_new', minItems, function (jsonNew) {
+                // Об'єднуємо результати
+                var combinedResults = [...(jsonOld.results || []), ...(jsonNew.results || [])];
+                jsonOld.results = combinedResults;
+                append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/discover/tv', jsonOld);
+            }, status.error.bind(status), 'upcoming_series');
         }, status.error.bind(status), 'upcoming_series');
     }
 
@@ -359,10 +395,25 @@
                     'air_date.lte': todayStr
                 });
             } else if (params.type === 'upcoming_series') {
-                requestParams = Object.assign(requestParams, {
+                // Запит для старих серіалів
+                get('/discover/tv', Object.assign({}, requestParams, {
                     include_adult: false,
                     sort_by: 'popularity.desc'
-                });
+                }), cacheKey + '_old', 20, function (jsonOld) {
+                    // Запит для нових серіалів
+                    get('/discover/tv', Object.assign({}, requestParams, {
+                        include_adult: false,
+                        sort_by: 'popularity.desc',
+                        'first_air_date.gte': todayStr,
+                        'first_air_date.lte': threeMonthsLaterStr
+                    }), cacheKey + '_new', 20, function (jsonNew) {
+                        // Об'єднуємо результати
+                        var combinedResults = [...(jsonOld.results || []), ...(jsonNew.results || [])];
+                        jsonOld.results = combinedResults;
+                        oncomplite(jsonOld);
+                    }, onerror, params.type);
+                }, onerror, params.type);
+                return;
             }
         }
 
@@ -426,7 +477,7 @@
                 this.card.find('.card__details').remove();
             }
 
-            var premiereDate = data.release_date || data.first_air_date || 'N/A';
+            var premiereDate = data.first_air_date || 'N/A';
             var formattedDate = premiereDate !== 'N/A' ? premiereDate.split('-').reverse().join('-') : 'N/A';
             this.card.find('.card__view').append(`
                 <div class="card__premiere-date" style="position: absolute; top: 0.5em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${formattedDate}</div>
@@ -435,14 +486,7 @@
             if (params.type === 'new_series_seasons' || params.type === 'upcoming_series') {
                 fetchSeriesDetails(data.id, 'last_episode_to_air', '', '', (isValid, airDate) => {
                     try {
-                        if (isValid && trailerCache[`series_${data.id}_last_episode_to_air`]) {
-                            var cachedData = trailerCache[`series_${data.id}_last_episode_to_air`];
-                            var episode = cachedData.last_episode_to_air;
-                            var lastSeason = cachedData.seasons && cachedData.seasons.length ? cachedData.seasons[cachedData.seasons.length - 1] : null;
-                            premiereDate = episode && episode.air_date ? episode.air_date : (lastSeason && lastSeason.air_date ? lastSeason.air_date : data.first_air_date || 'N/A');
-                        } else {
-                            premiereDate = airDate || data.first_air_date || 'N/A';
-                        }
+                        premiereDate = airDate || data.first_air_date || 'N/A';
                         formattedDate = premiereDate !== 'N/A' ? premiereDate.split('-').reverse().join('-') : 'N/A';
                         this.card.find('.card__premiere-date').text(formattedDate);
                     } catch (e) {
