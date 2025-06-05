@@ -373,18 +373,20 @@
         var endpoint = (card.name ? '/tv/' : '/movie/') + card.id + '/videos';
         var interfaceLang = getInterfaceLanguage();
         fetchTMDB(endpoint, { language: interfaceLang }, function (data) {
-            if (data.results) {
-                onPageLoad(data, results);
+            if (data.results && data.results.length) {
+                oncomplite(data);
             } else {
-                console.log('Page loaded for ' + language + ': ', results.length);
-                fetchPageLoad(endpoint, { language: 'en-US' }, function (dataEn) {
-                    onPageLoad(dataEn, results);
+                console.log('No trailers found for language ' + interfaceLang + ', trying English...');
+                fetchTMDB(endpoint, { language: 'en-US' }, function (dataEn) {
+                    oncomplite(dataEn);
                 }, function (error) {
-                    console.log(error, 'An error occurred while fetching data');
+                    console.log('TMDB Error for ' + endpoint + ': ', error);
+                    onerror(error);
                 });
             }
         }, function (error) {
-            console.log(error, 'An error occurred while fetching data');
+            console.log('TMDB Error for ' + endpoint + ': ', error);
+            onerror(error);
         });
     }
 
@@ -605,7 +607,7 @@
             } else if (data.backdrop_path) {
                 this.img.src = Lampa.Api.img(data.backdrop_path, 'w500');
             } else if (data.poster_path) {
-                this.img.src = Lampa.Api.img(data.poster_path);
+                this.img.src = Lampa.Api.img(data.poster_path, 'w500');
             } else {
                 this.img.src = './img/img_broken.svg';
             }
