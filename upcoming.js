@@ -125,13 +125,13 @@
 
                     if (category === 'new_series_seasons' || category === 'upcoming_series') {
                         var today = new Date();
-                        var todayStr = today.toISOString().split('T')[0]; // 2025-06-04
+                        var todayStr = today.toISOString().split('T')[0]; // 2025-06-05
                         var twoMonthsAgo = new Date();
                         twoMonthsAgo.setDate(today.getDate() - 60);
-                        var twoMonthsAgoStr = twoMonthsAgo.toISOString().split('T')[0]; // 2025-04-05
+                        var twoMonthsAgoStr = twoMonthsAgo.toISOString().split('T')[0]; // 2025-04-06
                         var threeMonthsLater = new Date();
                         threeMonthsLater.setMonth(today.getMonth() + 3);
-                        var threeMonthsLaterStr = threeMonthsLater.toISOString().split('T')[0]; // 2025-09-04
+                        var threeMonthsLaterStr = threeMonthsLater.toISOString().split('T')[0]; // 2025-09-05
 
                         var validResults = [];
 
@@ -217,16 +217,16 @@
         };
 
         var today = new Date();
-        var todayStr = today.toISOString().split('T')[0]; // 2025-06-04
+        var todayStr = today.toISOString().split('T')[0]; // 2025-06-05
         var sixWeeksAgo = new Date();
         sixWeeksAgo.setDate(today.getDate() - 42);
         var sixWeeksAgoStr = sixWeeksAgo.toISOString().split('T')[0];
         var twoMonthsAgo = new Date();
         twoMonthsAgo.setDate(today.getDate() - 60);
-        var twoMonthsAgoStr = twoMonthsAgo.toISOString().split('T')[0]; // 2025-04-05
+        var twoMonthsAgoStr = twoMonthsAgo.toISOString().split('T')[0]; // 2025-04-06
         var threeMonthsLater = new Date();
         threeMonthsLater.setMonth(today.getMonth() + 3);
-        var threeMonthsLaterStr = threeMonthsLater.toISOString().split('T')[0]; // 2025-09-04
+        var threeMonthsLaterStr = threeMonthsLater.toISOString().split('T')[0]; // 2025-09-05
         var sixMonthsLater = new Date();
         sixMonthsLater.setMonth(today.getMonth() + 6);
         var sixMonthsLaterStr = sixMonthsLater.toISOString().split('T')[0];
@@ -403,7 +403,12 @@
             }
 
             var _this = this;
-            var premiereDate = 'N/A';
+            var premiereDate = data.release_date || data.first_air_date || 'N/A';
+            var formattedDate = premiereDate !== 'N/A' ? premiereDate.split('-').reverse().join('-') : 'N/A';
+            this.card.find('.card__view').append(`
+                <div class="card__premiere-date" style="position: absolute; top: 0.5em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${formattedDate}</div>
+            `);
+
             if (params.type === 'new_series_seasons' || params.type === 'upcoming_series') {
                 fetchSeriesDetails(data.id, 'last_episode_to_air', '', '', function (isValid) {
                     if (isValid && trailerCache[`series_${data.id}_last_episode_to_air`]) {
@@ -412,15 +417,9 @@
                     } else {
                         premiereDate = data.first_air_date || 'N/A';
                     }
-                    var formattedDate = premiereDate !== 'N/A' ? premiereDate.split('-').reverse().join('-') : 'N/A';
+                    formattedDate = premiereDate !== 'N/A' ? premiereDate.split('-').reverse().join('-') : 'N/A';
                     _this.card.find('.card__premiere-date').text(formattedDate);
                 });
-            } else {
-                premiereDate = data.release_date || data.first_air_date || 'N/A';
-                var formattedDate = premiereDate !== 'N/A' ? premiereDate.split('-').reverse().join('-') : 'N/A';
-                this.card.find('.card__view').append(`
-                    <div class="card__premiere-date" style="position: absolute; top: 0.5em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${formattedDate}</div>
-                `);
             }
 
             this.card.find('.card__view').append(`
