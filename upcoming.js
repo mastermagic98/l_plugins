@@ -482,9 +482,11 @@
             var _this = this;
             this.img.onload = function () {
                 _this.card.addClass('card--loaded');
+                console.log('Image loaded successfully for ' + (data.title || data.name) + ': ' + this.src);
             };
             this.img.onerror = function () {
-                _this.img.src = './img/img_broken.svg';
+                console.log('Image failed to load for ' + (data.title || data.name) + ': ' + this.src + ' - Error: Network or CORS issue');
+                this.src = './img/img_broken.svg';
             };
         };
 
@@ -615,23 +617,25 @@
                 this.img.src = 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg';
                 console.log('Set image URL for YouTube: ' + this.img.src);
             } else if (data.backdrop_path) {
-                this.img.src = Lampa.Api.img(data.backdrop_path, 'w500');
-                console.log('Set image URL for backdrop: ' + this.img.src);
+                var imgUrl = Lampa.Api.img(data.backdrop_path, 'w500').replace('//t/p/', '/t/p/');
+                this.img.src = imgUrl;
+                console.log('Set image URL for backdrop: ' + imgUrl);
                 this.img.onload = function () {
                     console.log('Image loaded successfully for ' + (data.title || data.name) + ': ' + this.src);
                 };
                 this.img.onerror = function () {
-                    console.log('Image failed to load for ' + (data.title || data.name) + ': ' + this.src);
+                    console.log('Image failed to load for ' + (data.title || data.name) + ': ' + this.src + ' - Error: Network or CORS issue');
                     this.src = './img/img_broken.svg';
                 };
             } else if (data.poster_path) {
-                this.img.src = Lampa.Api.img(data.poster_path, 'w500');
-                console.log('Set image URL for poster: ' + this.img.src);
+                var imgUrl = Lampa.Api.img(data.poster_path, 'w500').replace('//t/p/', '/t/p/');
+                this.img.src = imgUrl;
+                console.log('Set image URL for poster: ' + imgUrl);
                 this.img.onload = function () {
                     console.log('Image loaded successfully for ' + (data.title || data.name) + ': ' + this.src);
                 };
                 this.img.onerror = function () {
-                    console.log('Image failed to load for ' + (data.title || data.name) + ': ' + this.src);
+                    console.log('Image failed to load for ' + (data.title || data.name) + ': ' + this.src + ' - Error: Network or CORS issue');
                     this.src = './img/img_broken.svg';
                 };
             } else {
@@ -1120,6 +1124,7 @@
                 padding-bottom: 56%;
                 margin-bottom: 0;
                 position: relative;
+                overflow: hidden;
             }
             .card.card--trailer .card__details {
                 margin-top: 0.8em;
@@ -1168,6 +1173,7 @@
                 top: 0;
                 left: 0;
                 object-fit: cover;
+                z-index: 1;
             }
             </style>
         `);
