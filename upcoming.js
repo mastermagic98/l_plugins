@@ -139,47 +139,9 @@
                         return filterTMDBContentByGenre(content, category);
                     });
 
-                    if (category === 'new_series_seasons' || category === 'upcoming_series') {
-                        var today = new Date();
-                        var todayStr = today.toISOString().split('T')[0]; // 2025-06-05
-                        var twoMonthsAgo = new Date();
-                        twoMonthsAgo.setDate(today.getDate() - 60);
-                        var twoMonthsAgoStr = twoMonthsAgo.toISOString().split('T')[0]; // 2025-04-06
-                        var threeMonthsLater = new Date();
-                        threeMonthsLater.setMonth(today.getMonth() + 3);
-                        var threeMonthsLaterStr = threeMonthsLater.toISOString().split('T')[0]; // 2025-09-05
-
-                        var validResults = [];
-
-                        if (filteredResults.length === 0) {
-                            processResults(data, []);
-                            return;
-                        }
-
-                        var promises = filteredResults.map(function (series) {
-                            return new Promise(function (resolveDetail) {
-                                var dateField = category === 'new_series_seasons' ? 'last_episode_to_air' : 'season_check';
-                                var startDate = category === 'new_series_seasons' ? twoMonthsAgoStr : todayStr;
-                                var endDate = category === 'new_series_seasons' ? todayStr : threeMonthsLaterStr;
-
-                                fetchSeriesDetails(series.id, dateField, startDate, endDate, function (isValid) {
-                                    if (isValid) {
-                                        validResults.push(series);
-                                    }
-                                    resolveDetail();
-                                });
-                            });
-                        });
-
-                        Promise.all(promises).then(function () {
-                            validResults.sort(function (a, b) {
-                                return b.popularity - a.popularity;
-                            });
-                            processResults(data, validResults);
-                        });
-                    } else {
-                        processResults(data, filteredResults);
-                    }
+                    // Тимчасово відключимо асинхронну фільтрацію за датами
+                    console.log('Fetched page ' + page + ' for ' + endpoint + ', filtered results (without date filter): ', filteredResults.length);
+                    processResults(data, filteredResults);
                 } else {
                     if (cacheKey) trailerCache[cacheKey] = data;
                     resolve(data);
@@ -189,7 +151,7 @@
 
         function processResults(data, filteredResults) {
             results = results.concat(filteredResults);
-            console.log('Fetched page ' + page + ' for ' + endpoint + ', filtered results: ', filteredResults.length, 'total results:', results.length);
+            console.log('Processed page ' + page + ' for ' + endpoint + ', total results: ', results.length);
 
             totalPages = data.total_pages || 1;
 
