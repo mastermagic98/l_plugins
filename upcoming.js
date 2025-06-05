@@ -278,8 +278,8 @@
         threeMonthsLater.setDate(today.getDate() + 180);
         var threeMonthsLaterStr = threeMonthsLater.toISOString().split('T')[0];
         var sixMonthsLater = new Date();
-        sixMonthsLater.setMonth(today.getMonth() + 6);
-        var sixMonthsLaterStr = sixMonthsLater.toISOString().split('T')[0];
+        sixMonthsLater.setMonth(today.getMonth() - 6); // Зміна на 180 днів тому
+        var sixMonthsAgoStr = sixMonthsLater.toISOString().split('T')[0];
 
         var lang = getInterfaceLanguage();
 
@@ -320,7 +320,7 @@
             page: 1,
             include_adult: false,
             sort_by: 'popularity.desc',
-            'air_date.gte': twoMonthsAgoStr,
+            'air_date.gte': sixMonthsAgoStr, // Зміна на 180 днів
             'air_date.lte': todayStr
         }, 'new_series_seasons', minItems, function (json) {
             append(Lampa.Lang.translate('trailers_new_series_seasons'), 'new_series_seasons', '/discover/tv', json);
@@ -368,8 +368,8 @@
             threeMonthsLater.setDate(today.getDate() + 180);
             var threeMonthsLaterStr = threeMonthsLater.toISOString().split('T')[0];
             var sixMonthsLater = new Date();
-            sixMonthsLater.setMonth(today.getMonth() + 6);
-            var sixMonthsLaterStr = sixMonthsLater.toISOString().split('T')[0];
+            sixMonthsLater.setMonth(today.getMonth() - 6); // Зміна на 180 днів тому
+            var sixMonthsAgoStr = sixMonthsLater.toISOString().split('T')[0];
 
             if (params.type === 'in_theaters') {
                 requestParams = Object.assign(requestParams, {
@@ -391,7 +391,7 @@
                 requestParams = Object.assign(requestParams, {
                     include_adult: false,
                     sort_by: 'popularity.desc',
-                    'air_date.gte': twoMonthsAgoStr,
+                    'air_date.gte': sixMonthsAgoStr, // Зміна на 180 днів
                     'air_date.lte': todayStr
                 });
             } else if (params.type === 'upcoming_series') {
