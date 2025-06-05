@@ -402,17 +402,26 @@
                 this.card.find('.card__details').remove();
             }
 
-            var premiereDate = data.release_date || data.first_air_date || 'N/A';
-            var formattedDate = 'N/A';
-            if (premiereDate !== 'N/A') {
-                var dateParts = premiereDate.split('-');
-                if (dateParts.length === 3) {
-                    formattedDate = dateParts[2] + '-' + dateParts[1] + '-' + dateParts[0];
-                }
+            var _this = this;
+            var premiereDate = 'N/A';
+            if (params.type === 'new_series_seasons' || params.type === 'upcoming_series') {
+                fetchSeriesDetails(data.id, 'last_episode_to_air', '', '', function (isValid) {
+                    if (isValid && trailerCache[`series_${data.id}_last_episode_to_air`]) {
+                        var episode = trailerCache[`series_${data.id}_last_episode_to_air`].last_episode_to_air;
+                        premiereDate = episode && episode.air_date ? episode.air_date : data.first_air_date || 'N/A';
+                    } else {
+                        premiereDate = data.first_air_date || 'N/A';
+                    }
+                    var formattedDate = premiereDate !== 'N/A' ? premiereDate.split('-').reverse().join('-') : 'N/A';
+                    _this.card.find('.card__premiere-date').text(formattedDate);
+                });
+            } else {
+                premiereDate = data.release_date || data.first_air_date || 'N/A';
+                var formattedDate = premiereDate !== 'N/A' ? premiereDate.split('-').reverse().join('-') : 'N/A';
+                this.card.find('.card__view').append(`
+                    <div class="card__premiere-date" style="position: absolute; top: 0.5em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${formattedDate}</div>
+                `);
             }
-            this.card.find('.card__view').append(`
-                <div class="card__premiere-date" style="position: absolute; top: 0.5em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${formattedDate}</div>
-            `);
 
             this.card.find('.card__view').append(`
                 <div class="card__trailer-lang" style="position: absolute; top: 2.25em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;"></div>
