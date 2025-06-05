@@ -65,11 +65,13 @@
         if (trailerCache[cacheKey]) {
             var data = trailerCache[cacheKey];
             if (dateField === 'season_check') {
-                var isFirstSeason = data.number_of_seasons === 1;
-                var airDate = data.first_air_date;
-                var isWithinRange = airDate >= startDate && airDate <= endDate;
-                console.log('Cached Series ' + seriesId + ' first_air_date:', airDate, 'is within range', startDate, 'to', endDate, ':', isWithinRange, 'isFirstSeason:', isFirstSeason);
-                callback(isWithinRange && isFirstSeason, airDate);
+                var seasons = data.seasons || [];
+                var futureSeasons = seasons.filter(season => season.air_date && new Date(season.air_date) > new Date() && season.air_date >= startDate && season.air_date <= endDate);
+                var nextSeason = futureSeasons.length ? futureSeasons.reduce((earliest, current) => new Date(earliest.air_date) < new Date(current.air_date) ? earliest : current) : null;
+                var airDate = nextSeason ? nextSeason.air_date : data.first_air_date;
+                var isValid = !!nextSeason || (data.number_of_seasons === 1 && airDate >= startDate && airDate <= endDate);
+                console.log('Cached Series ' + seriesId + ' next_season_air_date:', airDate, 'is within range', startDate, 'to', endDate, ':', isValid, 'number_of_seasons:', data.number_of_seasons);
+                callback(isValid, airDate);
             } else {
                 var episode = data.last_episode_to_air;
                 if (episode && episode.air_date) {
@@ -100,11 +102,13 @@
             }
             trailerCache[cacheKey] = data;
             if (dateField === 'season_check') {
-                var isFirstSeason = data.number_of_seasons === 1;
-                var airDate = data.first_air_date;
-                var isWithinRange = airDate >= startDate && airDate <= endDate;
-                console.log('Series ' + seriesId + ' first_air_date:', airDate, 'is within range', startDate, 'to', endDate, ':', isWithinRange, 'isFirstSeason:', isFirstSeason);
-                callback(isWithinRange && isFirstSeason, airDate);
+                var seasons = data.seasons || [];
+                var futureSeasons = seasons.filter(season => season.air_date && new Date(season.air_date) > new Date() && season.air_date >= startDate && season.air_date <= endDate);
+                var nextSeason = futureSeasons.length ? futureSeasons.reduce((earliest, current) => new Date(earliest.air_date) < new Date(current.air_date) ? earliest : current) : null;
+                var airDate = nextSeason ? nextSeason.air_date : data.first_air_date;
+                var isValid = !!nextSeason || (data.number_of_seasons === 1 && airDate >= startDate && airDate <= endDate);
+                console.log('Series ' + seriesId + ' next_season_air_date:', airDate, 'is within range', startDate, 'to', endDate, ':', isValid, 'number_of_seasons:', data.number_of_seasons);
+                callback(isValid, airDate);
             } else {
                 var episode = data.last_episode_to_air;
                 if (episode && episode.air_date) {
@@ -153,9 +157,9 @@
                         var sixMonthsAgo = new Date();
                         sixMonthsAgo.setMonth(today.getMonth() - 6);
                         var sixMonthsAgoStr = sixMonthsAgo.toISOString().split('T')[0];
-                        var sixMonthsLater = new Date();
-                        sixMonthsLater.setMonth(today.getMonth() + 6);
-                        var sixMonthsLaterStr = sixMonthsLater.toISOString().split('T')[0];
+                        var threeMonthsLater = new Date();
+                        threeMonthsLater.setMonth(today.getMonth() + 3);
+                        var threeMonthsLaterStr = threeMonthsLater.toISOString().split('T')[0];
 
                         var validResults = [];
 
@@ -168,9 +172,9 @@
                             return new Promise(function (resolveDetail) {
                                 var dateField = category === 'new_series_seasons' ? 'last_episode_to_air' : 'season_check';
                                 var startDate = category === 'new_series_seasons' ? sixMonthsAgoStr : todayStr;
-                                var endDate = category === 'new_series_seasons' ? todayStr : sixMonthsLaterStr;
+                                var endDate = category === 'new_series_seasons' ? todayStr : threeMonthsLaterStr;
 
-                                fetchSeriesDetails(series.id, dateField, startDate, endDate, function (isValid) {
+                                fetchSeriesDetails(series.id, dateField, startDate, endDate, function (isValid, airDate) {
                                     if (isValid) {
                                         validResults.push(series);
                                     }
