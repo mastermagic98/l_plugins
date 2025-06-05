@@ -158,7 +158,7 @@
                         sixMonthsAgo.setMonth(today.getMonth() - 6);
                         var sixMonthsAgoStr = sixMonthsAgo.toISOString().split('T')[0];
                         var threeMonthsLater = new Date();
-                        threeMonthsLater.setDate(today.getDate() + 180); // Зміна на 180 днів
+                        threeMonthsLater.setDate(today.getDate() + 180);
                         var threeMonthsLaterStr = threeMonthsLater.toISOString().split('T')[0];
 
                         var validResults = [];
@@ -253,7 +253,7 @@
         twoMonthsAgo.setDate(today.getDate() - 60);
         var twoMonthsAgoStr = twoMonthsAgo.toISOString().split('T')[0];
         var threeMonthsLater = new Date();
-        threeMonthsLater.setDate(today.getDate() + 180); // Зміна на 180 днів
+        threeMonthsLater.setDate(today.getDate() + 180);
         var threeMonthsLaterStr = threeMonthsLater.toISOString().split('T')[0];
         var sixMonthsLater = new Date();
         sixMonthsLater.setMonth(today.getMonth() + 6);
@@ -285,8 +285,8 @@
             sort_by: 'popularity.desc',
             'primary_release_date.gte': todayStr,
             'primary_release_date.lte': sixMonthsLaterStr
-        }, 'upcoming_movies', minItems, function (json) {
-            append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/discover/movie', json);
+        }, 'upcoming_movies', minItems, function (jsonSites) {
+            append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/discover/movie', jsonSites);
         }, status.error.bind(status), 'upcoming_movies');
 
         get('/trending/tv/week', { language: lang, page: 1 }, 'popular_series', minItems, function (json) {
@@ -298,8 +298,8 @@
             page: 1,
             include_adult: false,
             sort_by: 'popularity.desc',
-            'air_date.gte': twoMonthsAgoStr,
-            'air_date.lte': todayStr
+            'air_date.gte': '',
+            'air_date.lte': ''
         }, 'new_series_seasons', minItems, function (json) {
             append(Lampa.Lang.translate('trailers_new_series_seasons'), 'new_series_seasons', '/discover/tv', json);
         }, status.error.bind(status), 'new_series_seasons');
@@ -308,9 +308,7 @@
             language: lang,
             page: 1,
             include_adult: false,
-            sort_by: 'popularity.desc',
-            'first_air_date.gte': todayStr,
-            'first_air_date.lte': threeMonthsLaterStr
+            sort_by: 'popularity.desc'
         }, 'upcoming_series', minItems, function (json) {
             append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/discover/tv', json);
         }, status.error.bind(status), 'upcoming_series');
@@ -331,11 +329,11 @@
             twoMonthsAgo.setDate(today.getDate() - 60);
             var twoMonthsAgoStr = twoMonthsAgo.toISOString().split('T')[0];
             var threeMonthsLater = new Date();
-            threeMonthsLater.setDate(today.getDate() + 180); // Зміна на 180 днів
+            threeMonthsLater.setDate(today.getDate() + 180);
             var threeMonthsLaterStr = threeMonthsLater.toISOString().split('T')[0];
-            var sixMonthsLater = new Date();
-            sixMonthsLater.setMonth(today.getMonth() + 6);
-            var sixMonthsLaterStr = sixMonthsLater.toISOString().split('T')[0];
+            var sixMonthsAhead = new Date();
+            sixMonthsAhead.setMonth(today.getMonth() + 6);
+            var sixMonthsAheadStr = sixMonthsAhead.toISOString().split('T')[0];
 
             if (params.type === 'in_theaters') {
                 requestParams = Object.assign(requestParams, {
@@ -344,14 +342,14 @@
                     'primary_release_date.gte': sixWeeksAgoStr,
                     'primary_release_date.lte': todayStr,
                     'vote_count.gte': 30,
-                    region: 'UA'
+                    region: 'EU'
                 });
             } else if (params.type === 'upcoming_movies') {
                 requestParams = Object.assign(requestParams, {
                     include_adult: false,
                     sort_by: 'popularity.desc',
                     'primary_release_date.gte': todayStr,
-                    'primary_release_date.lte': sixMonthsLaterStr
+                    'primary_release_date.lte': sixMonthsAheadStr
                 });
             } else if (params.type === 'new_series_seasons') {
                 requestParams = Object.assign(requestParams, {
@@ -363,9 +361,7 @@
             } else if (params.type === 'upcoming_series') {
                 requestParams = Object.assign(requestParams, {
                     include_adult: false,
-                    sort_by: 'popularity.desc',
-                    'first_air_date.gte': todayStr,
-                    'first_air_date.lte': threeMonthsLaterStr
+                    sort_by: 'popularity.desc'
                 });
             }
         }
@@ -724,17 +720,17 @@
                         if (active === items.length) {
                             scroll.update(items[items.length - 1].render(), true);
                             Lampa.Controller.collectionFocus(items[items.length - 1].render()[0], scroll.render());
-                            console.log('Line: Moved left from More to last card, new active: ' + active);
+                            console.log('Line: Moved left from More to last card, active: ' + active);
                         } else {
                             Navigator.move('left');
                             scroll.update(items[active].render(), true);
-                            console.log('Line: Moved left to card, new active: ' + active);
+                            console.log('Line: Moved left to card, active: ' + active);
                         }
                     } else if (active === 0) {
                         active = items.length;
                         scroll.update(more, true);
                         Lampa.Controller.collectionFocus(more[0], scroll.render());
-                        console.log('Line: Cycled left to More, new active: ' + active);
+                        console.log('Line: Cycled left to More, active: ' + active);
                     }
                 },
                 down: this.onDown,
@@ -750,7 +746,7 @@
         };
 
         this.destroy = function () {
-            Lampa.Arrays.destroy(items);
+            Lampa.Arrays.delete(items);
             scroll.destroy();
             content.remove();
             more.remove();
@@ -766,7 +762,7 @@
         var light = Lampa.Storage.field('light_version') && window.innerWidth >= 767;
 
         this.create = function () {
-            Api.main(this.build.bind(this), this.empty.bind(this));
+            Api.main(this.build.bind(this.languages));
             return this.render();
         };
 
@@ -886,7 +882,7 @@
             return html;
         };
         this.destroy = function () {
-            Lampa.Arrays.destroy(items);
+            Lampa.Arrays.delete(items);
             scroll.destroy();
             html.remove();
             items = [];
@@ -1046,7 +1042,7 @@
             return html;
         };
         this.destroy = function () {
-            Lampa.Arrays.destroy(items);
+            Lampa.Arrays.delete(items);
             scroll.destroy();
             html.remove();
             body.remove();
