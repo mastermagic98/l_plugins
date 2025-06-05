@@ -495,6 +495,9 @@
                 var lang = '—';
                 if (videos.results && videos.results.length) {
                     lang = videos.results[0].iso_639_1.toUpperCase();
+                    console.log('Trailer language set to: ' + lang);
+                } else {
+                    console.log('No trailer language data available');
                 }
                 _this.card.find('.card__trailer-lang').text(lang);
             }, function () {
@@ -610,12 +613,30 @@
             console.log('Visible called for ' + (data.title || data.name) + ': backdrop_path=' + data.backdrop_path + ', poster_path=' + data.poster_path);
             if (params.type === 'rating') {
                 this.img.src = 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg';
+                console.log('Set image URL for YouTube: ' + this.img.src);
             } else if (data.backdrop_path) {
                 this.img.src = Lampa.Api.img(data.backdrop_path, 'w500');
+                console.log('Set image URL for backdrop: ' + this.img.src);
+                this.img.onload = function () {
+                    console.log('Image loaded successfully for ' + (data.title || data.name) + ': ' + this.src);
+                };
+                this.img.onerror = function () {
+                    console.log('Image failed to load for ' + (data.title || data.name) + ': ' + this.src);
+                    this.src = './img/img_broken.svg';
+                };
             } else if (data.poster_path) {
                 this.img.src = Lampa.Api.img(data.poster_path, 'w500');
+                console.log('Set image URL for poster: ' + this.img.src);
+                this.img.onload = function () {
+                    console.log('Image loaded successfully for ' + (data.title || data.name) + ': ' + this.src);
+                };
+                this.img.onerror = function () {
+                    console.log('Image failed to load for ' + (data.title || data.name) + ': ' + this.src);
+                    this.src = './img/img_broken.svg';
+                };
             } else {
                 this.img.src = './img/img_broken.svg';
+                console.log('No backdrop or poster, using broken image: ' + this.img.src);
             }
             this.visibled = true;
         };
@@ -1138,6 +1159,15 @@
             .card__premiere-date, .card__trailer-lang, .card__rating {
                 font-size: 0.9em;
                 z-index: 10;
+            }
+            .card.card--trailer .card__img {
+                display: block !important;
+                width: 100%;
+                height: 100%;
+                position: absolute;
+                top: 0;
+                left: 0;
+                object-fit: cover;
             }
             </style>
         `);
