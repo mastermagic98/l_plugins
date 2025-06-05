@@ -313,7 +313,7 @@
     }
 
     function full(params, oncomplite, onerror) {
-        var cacheKey = params.url + '_page_' + params.page;
+        var cacheKey = params.url + '_page_' + params.page + '_' + params.type;
         var lang = getInterfaceLanguage();
         var requestParams = { language: lang, page: params.page };
 
@@ -373,18 +373,18 @@
         var endpoint = (card.name ? '/tv/' : '/movie/') + card.id + '/videos';
         var interfaceLang = getInterfaceLanguage();
         fetchTMDB(endpoint, { language: interfaceLang }, function (data) {
-            if (data.results && data.results.length) {
-                oncomplite(data);
+            if (data.results) {
+                onPageLoad(data, results);
             } else {
-                console.log('No trailers found for language ' + interfaceLang + ', trying English...');
-                fetchTMDB(endpoint, { language: 'en-US' }, function (dataEn) {
-                    oncomplite(dataEn);
+                console.log('Page loaded for ' + language + ': ', results.length);
+                fetchPageLoad(endpoint, { language: 'en-US' }, function (dataEn) {
+                    onPageLoad(dataEn, results);
                 }, function (error) {
-                    onerror(error);
+                    console.log(error, 'An error occurred while fetching data');
                 });
             }
         }, function (error) {
-            onerror(error);
+            console.log(error, 'An error occurred while fetching data');
         });
     }
 
@@ -405,16 +405,14 @@
     function Trailer(data, params) {
         this.build = function () {
             var lang = getShortLanguageCode();
-            var title = data.title || data.name;
-            var originalTitle = data.original_title || data.original_name;
+            var title = data.name || data.title;
+            var originalTitle = data.original_name || data.original_title;
             var hasTranslation = lang === 'en' || (title !== originalTitle && title.trim() !== '');
-
-            console.log('Checking translation for:', title, 'original:', originalTitle, 'lang:', lang, 'hasTranslation:', hasTranslation);
 
             if (!hasTranslation) return;
 
             this.card = Lampa.Template.get('trailer', {});
-            this.img = this.card.find('img')[0];
+            this.img = this.card.find('img');
             this.is_youtube = params.type === 'rating';
 
             this.card.find('.card__title').text(title);
@@ -429,7 +427,7 @@
             var _this = this;
             var premiereDate = data.release_date || data.first_air_date || 'N/A';
             var formattedDate = premiereDate !== 'N/A' ? premiereDate.split('-').reverse().join('-') : 'N/A';
-            this.card.find('.card__view').append(`
+            this.card.find('.card__view').prepend(`
                 <div class="card__premiere-date" style="position: absolute; top: 0.5em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${formattedDate}</div>
             `);
 
@@ -440,7 +438,7 @@
                             var cachedData = trailerCache[`series_${data.id}_last_episode_to_air`];
                             var episode = cachedData.last_episode_to_air;
                             var lastSeason = cachedData.seasons && cachedData.seasons.length ? cachedData.seasons[cachedData.seasons.length - 1] : null;
-                            premiereDate = episode && episode.air_date ? episode.air_date : (lastSeason && lastSeason.air_date ? lastSeason.air_date : data.first_air_date || 'N/A');
+                            premiereDate = episode && episode.air_date ? episode.air_date : (lastSeason && lastSeason.air_date ? lastSeason.air_date : airDate || 'N/A');
                         } else {
                             premiereDate = airDate || data.first_air_date || 'N/A';
                         }
@@ -672,6 +670,7 @@
         this.more = function () {
             more = Lampa.Template.get('more').addClass('more--trailers');
             more.on('hover:enter', function () {
+                Api.clear();
                 Lampa.Activity.push({
                     url: data.url,
                     component: 'trailers_full',
