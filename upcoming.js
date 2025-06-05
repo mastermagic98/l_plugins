@@ -477,12 +477,13 @@
                 this.card.find('.card__details').remove();
             }
 
-            var premiereDate = data.first_air_date || 'N/A';
+            var premiereDate = data.release_date || data.first_air_date || 'N/A'; // Для фільмів використовуємо release_date
             var formattedDate = premiereDate !== 'N/A' ? premiereDate.split('-').reverse().join('-') : 'N/A';
             this.card.find('.card__view').append(`
                 <div class="card__premiere-date" style="position: absolute; top: 0.5em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${formattedDate}</div>
             `);
 
+            // Логіка для серіалів залишається
             if (params.type === 'new_series_seasons' || params.type === 'upcoming_series') {
                 fetchSeriesDetails(data.id, 'last_episode_to_air', '', '', (isValid, airDate) => {
                     try {
