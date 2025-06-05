@@ -919,24 +919,19 @@
         this.build = function (data) {
             var _this3 = this;
             if (data.results && data.results.length) {
-                totalPages = data.results = data.results || [];
-                totalPages = data.total_pages || 1;
-                scroll.append(body); // Переміщено сюди перед використанням data
+                total_pages = data.total_pages || 1;
                 scroll.minus();
                 html.append(scroll.render());
-                this.append(data.results);
-                if (light && items.length > 0) this.back();
-                if (totalPages > data.page && light && items.length > 0) this.more();
+                this.append(data);
+                if (light && items.length) this.back();
+                if (total_pages > data.page && light && items.length) this.more();
                 scroll.append(body);
                 if (newlampa) {
                     scroll.onEnd = this.next.bind(this);
                     scroll.onWheel = function (step) {
-                        if (!Lampa.Lambda.Controller.active().own(_this3)) _this3.start();
-                        if (step > 0) {
-                            Navigator.move('down');
-                        } else if (active > 0) {
-                            Navigator.move('up');
-                        }
+                        if (!Lampa.Controller.own(_this3)) _this3.start();
+                        if (step > 0) Navigator.move('down');
+                        else if (active > 0) Navigator.move('up');
                     };
                 }
                 this.activity.loader(false);
@@ -948,67 +943,66 @@
         };
 
         this.more = function () {
-            var more = $('<div class="selector" style="width: 100%; height: 5px;"></div>>');
+            var more = $('<div class="selector" style="width: 100%; height: 5px;"></div>');
             more.on('hover:focus', function (e) {
-                Lampa.Lampa.Controller.collectionFocus(last || false, scroll.render());
-                var next = Lampa.Lampa.Arrays.prototype.clone(object);
+                Lampa.Controller.collectionFocus(last || false, scroll.render());
+                var next = Lampa.Arrays.clone(object);
                 delete next.activity;
                 active = 0;
                 next.page++;
-                Lampa.Lampa.Activity.push(next);
-                });
+                Lampa.Activity.push(next);
+            });
             body.append(more);
         };
 
-        this.back = function() {
-            last = items[0] ? items[0].render() : false;
+        this.back = function () {
+            last = items[0] ? items[0].render()[0] : false;
             var more = $('<div class="selector" style="width: 100%; height: 5px;"></div>');
-            more.on('hover:focus', function() {
+            more.on('hover:focus', function (e) {
                 if (object.page > 1) {
-                    Lampa.Lampa.Activity.backward();
-                    return;
+                    Lampa.Activity.backward();
                 } else {
-                    Lampa.Lampa.Controller.toggle('head');
-                });
-            body.prepend(more);
-            });
-        };
-
-        this.start = function() {
-            if (Lampa.Lampa.Activity.active().activity() !== this.activity) return;
-            Lampa.Lampa.Controller.add('content', {
-                link: this,
-                toggle: function() {
-                    Lampa.Lampa.Controller.collectionSet(scroll.render());
-                    Lampa.Lampa.Controller.collectionFocus(last || false, scroll.render());
-                },
-                left: function() {
-                    if (Navigator.canmove('left')) Navigator.move('left');
-                    else Lampa.Lampa.Controller.toggle('menu');
-                },
-                right: function() {
-                    Navigator.move('right');
-                },
-                up: function() {
-                    if (Navigator.canmove('up')) Navigator.move('up');
-                    else Lampa.Lampa.Controller.toggle('head');
-                },
-                down: function() {
-                    if (Navigator.canmove('down')) Navigator.move('down');
-                },
-                back: function() {
-                    Lampa.Lampa.Activity.backward();
+                    Lampa.Controller.toggle('head');
                 }
             });
-            Lampa.Lampa.Controller.toggle('content');
+            body.prepend(more);
         };
 
-        this.pause = function() {};
-        this.stop = function() {};
-        this.render = function() {
+        this.start = function () {
+            if (Lampa.Activity.active().activity !== this.activity) return;
+            Lampa.Controller.add('content', {
+                link: this,
+                toggle: function () {
+                    Lampa.Controller.collectionSet(scroll.render());
+                    Lampa.Controller.collectionFocus(last || false, scroll.render());
+                },
+                left: function () {
+                    if (Navigator.canmove('left')) Navigator.move('left');
+                    else Lampa.Controller.toggle('menu');
+                },
+                right: function () {
+                    Navigator.move('right');
+                },
+                up: function () {
+                    if (Navigator.canmove('up')) Navigator.move('up');
+                    else Lampa.Controller.toggle('head');
+                },
+                down: function () {
+                    if (Navigator.canmove('down')) Navigator.move('down');
+                },
+                back: function () {
+                    Lampa.Activity.backward();
+                }
+            });
+            Lampa.Controller.toggle('content');
+        };
+
+        this.pause = function () {};
+        this.stop = function () {};
+        this.render = function () {
             return html;
         };
-        this.destroy = function() {
+        this.destroy = function () {
             Lampa.Arrays.destroy(items);
             scroll.destroy();
             html.remove();
