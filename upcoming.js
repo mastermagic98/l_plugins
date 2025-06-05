@@ -28,7 +28,7 @@
 
     function filterTMDBContentByGenre(content, category) {
         const allowedGenreIds = [28, 12, 16, 35, 80, 99, 18, 10751, 14, 36, 27, 10402, 9648, 10749, 878, 53, 10752, 37];
-        const disallowedGenreIds = [10767, 10764, '10766', '10763'];
+        const disallowedGenreIds = [10767, 10764, '10763', 10766];
         const genreIds = content.genre_ids || [];
         const hasAllowedGenre = genreIds.some(id => allowedGenreIds.includes(id));
         const hasDisallowedGenre = genreIds.some(id => disallowedGenreIds.includes(id));
@@ -197,7 +197,7 @@
 
         function processResults(data, filteredResults) {
             results = results.concat(filteredResults);
-            console.log('Processed page ' + page + ' for ' + endpoint + ', total results: ', results.length);
+            console.log('Processed page ' + page + ' for ' + endpoint + ', category: ' + category + ', total results: ', results.length, 'results: ', results.map(r => r.title || r.name));
 
             totalPages = data.total_pages || 1;
 
@@ -313,7 +313,7 @@
     }
 
     function full(params, oncomplite, onerror) {
-        var cacheKey = params.url + '_page_' + params.page + '_' + params.type;
+        var cacheKey = params.url + '_' + params.type + '_page_' + params.page;
         var lang = getInterfaceLanguage();
         var requestParams = { language: lang, page: params.page };
 
@@ -372,23 +372,18 @@
     function videos(card, oncomplite, onerror) {
         var endpoint = (card.name ? '/tv/' : '/movie/') + card.id + '/videos';
         var interfaceLang = getInterfaceLanguage();
-        console.log('Fetching videos for ' + (card.name || card.title) + ' (ID: ' + card.id + ') with language ' + interfaceLang);
         fetchTMDB(endpoint, { language: interfaceLang }, function (data) {
             if (data.results && data.results.length) {
-                console.log('Videos found for ' + (card.name || card.title) + ': ', data.results);
                 oncomplite(data);
             } else {
                 console.log('No trailers found for language ' + interfaceLang + ', trying English...');
                 fetchTMDB(endpoint, { language: 'en-US' }, function (dataEn) {
-                    console.log('Videos (English) for ' + (card.name || card.title) + ': ', dataEn.results);
                     oncomplite(dataEn);
                 }, function (error) {
-                    console.log('TMDB Error for ' + endpoint + ' (English): ', error);
                     onerror(error);
                 });
             }
         }, function (error) {
-            console.log('TMDB Error for ' + endpoint + ': ', error);
             onerror(error);
         });
     }
@@ -410,14 +405,16 @@
     function Trailer(data, params) {
         this.build = function () {
             var lang = getShortLanguageCode();
-            var title = data.name || data.title;
-            var originalTitle = data.original_name || data.original_title;
+            var title = data.title || data.name;
+            var originalTitle = data.original_title || data.original_name;
             var hasTranslation = lang === 'en' || (title !== originalTitle && title.trim() !== '');
+
+            console.log('Checking translation for:', title, 'original:', originalTitle, 'lang:', lang, 'hasTranslation:', hasTranslation);
 
             if (!hasTranslation) return;
 
             this.card = Lampa.Template.get('trailer', {});
-            this.img = this.card.find('img');
+            this.img = this.card.find('img')[0];
             this.is_youtube = params.type === 'rating';
 
             this.card.find('.card__title').text(title);
@@ -432,7 +429,7 @@
             var _this = this;
             var premiereDate = data.release_date || data.first_air_date || 'N/A';
             var formattedDate = premiereDate !== 'N/A' ? premiereDate.split('-').reverse().join('-') : 'N/A';
-            this.card.find('.card__view').prepend(`
+            this.card.find('.card__view').append(`
                 <div class="card__premiere-date" style="position: absolute; top: 0.5em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${formattedDate}</div>
             `);
 
@@ -443,7 +440,7 @@
                             var cachedData = trailerCache[`series_${data.id}_last_episode_to_air`];
                             var episode = cachedData.last_episode_to_air;
                             var lastSeason = cachedData.seasons && cachedData.seasons.length ? cachedData.seasons[cachedData.seasons.length - 1] : null;
-                            premiereDate = episode && episode.air_date ? episode.air_date : (lastSeason && lastSeason.air_date ? lastSeason.air_date : airDate || 'N/A');
+                            premiereDate = episode && episode.air_date ? episode.air_date : (lastSeason && lastSeason.air_date ? lastSeason.air_date : data.first_air_date || 'N/A');
                         } else {
                             premiereDate = airDate || data.first_air_date || 'N/A';
                         }
@@ -482,28 +479,22 @@
             var _this = this;
             this.img.onload = function () {
                 _this.card.addClass('card--loaded');
-                console.log('Image loaded successfully for ' + (data.title || data.name) + ': ' + this.src);
+                _this.updateTrailerLanguage();
             };
             this.img.onerror = function () {
-                console.log('Image failed to load for ' + (data.title || data.name) + ': ' + this.src + ' - Error: Network or CORS issue');
-                this.src = './img/img_broken.svg';
+                _this.img.src = './img/img_broken.svg';
             };
         };
 
         this.updateTrailerLanguage = function () {
             var _this = this;
             Api.videos(data, function (videos) {
-                console.log('Trailer language update for ' + (data.title || data.name) + ': ', videos);
                 var lang = '—';
                 if (videos.results && videos.results.length) {
                     lang = videos.results[0].iso_639_1.toUpperCase();
-                    console.log('Trailer language set to: ' + lang);
-                } else {
-                    console.log('No trailer language data available');
                 }
                 _this.card.find('.card__trailer-lang').text(lang);
             }, function () {
-                console.log('Failed to fetch trailer language for ' + (data.title || data.name));
                 _this.card.find('.card__trailer-lang').text('—');
             });
         };
@@ -599,7 +590,6 @@
                 }
             });
             this.image();
-            this.updateTrailerLanguage();
         };
 
         this.destroy = function () {
@@ -612,35 +602,14 @@
 
         this.visible = function () {
             if (this.visibled) return;
-            console.log('Visible called for ' + (data.title || data.name) + ': backdrop_path=' + data.backdrop_path + ', poster_path=' + data.poster_path);
             if (params.type === 'rating') {
                 this.img.src = 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg';
-                console.log('Set image URL for YouTube: ' + this.img.src);
             } else if (data.backdrop_path) {
-                var imgUrl = Lampa.Api.img(data.backdrop_path, 'w500').replace('//t/p/', '/t/p/');
-                this.img.src = imgUrl;
-                console.log('Set image URL for backdrop: ' + imgUrl);
-                this.img.onload = function () {
-                    console.log('Image loaded successfully for ' + (data.title || data.name) + ': ' + this.src);
-                };
-                this.img.onerror = function () {
-                    console.log('Image failed to load for ' + (data.title || data.name) + ': ' + this.src + ' - Error: Network or CORS issue');
-                    this.src = './img/img_broken.svg';
-                };
+                this.img.src = Lampa.Api.img(data.backdrop_path, 'w500');
             } else if (data.poster_path) {
-                var imgUrl = Lampa.Api.img(data.poster_path, 'w500').replace('//t/p/', '/t/p/');
-                this.img.src = imgUrl;
-                console.log('Set image URL for poster: ' + imgUrl);
-                this.img.onload = function () {
-                    console.log('Image loaded successfully for ' + (data.title || data.name) + ': ' + this.src);
-                };
-                this.img.onerror = function () {
-                    console.log('Image failed to load for ' + (data.title || data.name) + ': ' + this.src + ' - Error: Network or CORS issue');
-                    this.src = './img/img_broken.svg';
-                };
+                this.img.src = Lampa.Api.img(data.poster_path);
             } else {
                 this.img.src = './img/img_broken.svg';
-                console.log('No backdrop or poster, using broken image: ' + this.img.src);
             }
             this.visibled = true;
         };
@@ -703,7 +672,6 @@
         this.more = function () {
             more = Lampa.Template.get('more').addClass('more--trailers');
             more.on('hover:enter', function () {
-                Api.clear();
                 Lampa.Activity.push({
                     url: data.url,
                     component: 'trailers_full',
@@ -1124,7 +1092,6 @@
                 padding-bottom: 56%;
                 margin-bottom: 0;
                 position: relative;
-                overflow: hidden;
             }
             .card.card--trailer .card__details {
                 margin-top: 0.8em;
@@ -1164,16 +1131,6 @@
             .card__premiere-date, .card__trailer-lang, .card__rating {
                 font-size: 0.9em;
                 z-index: 10;
-            }
-            .card.card--trailer .card__img {
-                display: block !important;
-                width: 100%;
-                height: 100%;
-                position: absolute;
-                top: 0;
-                left: 0;
-                object-fit: cover;
-                z-index: 1;
             }
             </style>
         `);
