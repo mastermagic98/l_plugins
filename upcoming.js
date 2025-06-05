@@ -3,8 +3,6 @@
 
     var network = new Lampa.Reguest();
     var base_url = 'https://api.themoviedb.org/3';
-    var trailerCache = {};
-    var categoryCache = {};
 
     function getInterfaceLanguage() {
         var lang = Lampa.Storage.get('language', 'ru');
@@ -47,9 +45,9 @@
         Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
         console.log('TMDB Request: ' + url.toString());
         network.silent(url.toString(), function (data) {
-            if (!data) {
-                console.log('TMDB Response for ' + endpoint + ': data is undefined');
-                reject(new Error('Data is undefined'));
+            if (!data || data.status_code) {
+                console.log('TMDB Response error for ' + endpoint + ': ', data ? data.status_message : 'No data');
+                reject(data ? new Error(data.status_message) : new Error('No response'));
                 return;
             }
             console.log('TMDB Response for ' + endpoint + ': ', data);
@@ -61,48 +59,6 @@
     }
 
     function fetchSeriesDetails(seriesId, dateField, startDate, endDate, callback) {
-        var cacheKey = `series_${seriesId}_${dateField}`;
-        if (trailerCache[cacheKey]) {
-            var data = trailerCache[cacheKey];
-            if (dateField === 'season_check') {
-                var seasons = data.seasons || [];
-                var futureSeasons = seasons.filter(season => season.air_date && new Date(season.air_date) > new Date() && season.air_date >= startDate && season.air_date <= endDate);
-                var nextSeason = futureSeasons.length ? futureSeasons.reduce((earliest, current) => new Date(earliest.air_date) < new Date(current.air_date) ? earliest : current) : null;
-                var airDate;
-                var isValid;
-                if (nextSeason) {
-                    airDate = nextSeason.air_date;
-                    isValid = true;
-                } else if (data.next_episode_to_air && data.next_episode_to_air.air_date) {
-                    var nextEpisodeDate = data.next_episode_to_air.air_date;
-                    isValid = nextEpisodeDate >= startDate && nextEpisodeDate <= endDate;
-                    airDate = nextEpisodeDate;
-                } else {
-                    airDate = data.first_air_date;
-                    isValid = data.number_of_seasons === 1 && airDate >= startDate && airDate <= endDate;
-                }
-                console.log('Cached Series ' + seriesId + ' next_season_air_date:', airDate, 'is within range', startDate, 'to', endDate, ':', isValid, 'number_of_seasons:', data.number_of_seasons);
-                callback(isValid, airDate);
-            } else {
-                var seasons = data.seasons || [];
-                var lastSeason = seasons.length ? seasons[seasons.length - 1] : null;
-                if (lastSeason && lastSeason.season_number > 0) {
-                    var seasonCacheKey = `series_${seriesId}_season_${lastSeason.season_number}`;
-                    if (trailerCache[seasonCacheKey]) {
-                        var seasonData = trailerCache[seasonCacheKey];
-                        var firstEpisode = seasonData.episodes && seasonData.episodes.length ? seasonData.episodes[0] : null;
-                        var airDate = firstEpisode && firstEpisode.air_date ? firstEpisode.air_date : lastSeason.air_date || data.first_air_date;
-                        var isWithinRange = airDate >= startDate && airDate <= endDate;
-                        console.log('Cached Series ' + seriesId + ' first_episode_of_last_season:', airDate, 'is within range', startDate, 'to', endDate, ':', isWithinRange);
-                        callback(isWithinRange, airDate);
-                        return;
-                    }
-                }
-                callback(false, data.first_air_date);
-            }
-            return;
-        }
-
         var endpoint = '/tv/' + seriesId;
         var params = { language: getInterfaceLanguage() };
         fetchTMDB(endpoint, params, function (data) {
@@ -111,7 +67,6 @@
                 callback(false, 'N/A');
                 return;
             }
-            trailerCache[cacheKey] = data;
             if (dateField === 'season_check') {
                 var seasons = data.seasons || [];
                 var futureSeasons = seasons.filter(season => season.air_date && new Date(season.air_date) > new Date() && season.air_date >= startDate && season.air_date <= endDate);
@@ -136,7 +91,6 @@
                 var lastSeason = seasons.length ? seasons[seasons.length - 1] : null;
                 if (lastSeason && lastSeason.season_number > 0) {
                     fetchTMDB(`/tv/${seriesId}/season/${lastSeason.season_number}`, params, function (seasonData) {
-                        trailerCache[`series_${seriesId}_season_${lastSeason.season_number}`] = seasonData;
                         var firstEpisode = seasonData.episodes && seasonData.episodes.length ? seasonData.episodes[0] : null;
                         var airDate = firstEpisode && firstEpisode.air_date ? firstEpisode.air_date : lastSeason.air_date || data.first_air_date;
                         var isWithinRange = airDate >= startDate && airDate <= endDate;
@@ -154,13 +108,7 @@
         });
     }
 
-    function get(endpoint, params, cacheKey, minItems, resolve, reject, category) {
-        if (cacheKey && trailerCache[cacheKey]) {
-            console.log('Using cache for ' + cacheKey);
-            resolve(trailerCache[cacheKey]);
-            return;
-        }
-
+    function get(endpoint, params, minItems, resolve, reject, category) {
         var results = [];
         var page = params.page || 1;
         var totalPages = 1;
@@ -215,7 +163,6 @@
                         processResults(data, filteredResults);
                     }
                 } else {
-                    if (cacheKey) trailerCache[cacheKey] = data;
                     resolve(data);
                 }
             }, reject);
@@ -229,7 +176,6 @@
 
             if (results.length >= minItems || page >= totalPages || page >= 30) {
                 data.results = results.slice(0, minItems);
-                if (cacheKey) trailerCache[cacheKey] = data;
                 console.log('Final results for ' + endpoint + ': ', data.results.length);
                 resolve(data);
             } else {
@@ -271,19 +217,19 @@
         var sixWeeksAgo = new Date();
         sixWeeksAgo.setDate(today.getDate() - 42);
         var sixWeeksAgoStr = sixWeeksAgo.toISOString().split('T')[0];
-        var twoMonthsAgo = new Date();
-        twoMonthsAgo.setDate(today.getDate() - 60);
-        var twoMonthsAgoStr = twoMonthsAgo.toISOString().split('T')[0];
+        var sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(today.getMonth() - 6);
+        var sixMonthsAgoStr = sixMonthsAgo.toISOString().split('T')[0];
         var threeMonthsLater = new Date();
         threeMonthsLater.setDate(today.getDate() + 180);
         var threeMonthsLaterStr = threeMonthsLater.toISOString().split('T')[0];
         var sixMonthsLater = new Date();
-        sixMonthsLater.setMonth(today.getMonth() - 6); // Зміна на 180 днів тому
-        var sixMonthsAgoStr = sixMonthsLater.toISOString().split('T')[0];
+        sixMonthsLater.setMonth(today.getMonth() + 6);
+        var sixMonthsLaterStr = sixMonthsLater.toISOString().split('T')[0];
 
         var lang = getInterfaceLanguage();
 
-        get('/trending/movie/week', { language: lang, page: 1 }, 'popular_movies', minItems, function (json) {
+        get('/trending/movie/week', { language: lang, page: 1 }, minItems, function (json) {
             append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/trending/movie/week', json);
         }, status.error.bind(status), 'popular_movies');
 
@@ -296,22 +242,22 @@
             'primary_release_date.lte': todayStr,
             'vote_count.gte': 30,
             region: 'UA'
-        }, 'in_theaters', minItems, function (json) {
+        }, minItems, function (json) {
             append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/discover/movie', json);
         }, status.error.bind(status), 'in_theaters');
 
-        get('/discover/movie', {
+        get('/movie/upcoming', {
             language: lang,
             page: 1,
             include_adult: false,
             sort_by: 'popularity.desc',
             'primary_release_date.gte': todayStr,
             'primary_release_date.lte': sixMonthsLaterStr
-        }, 'upcoming_movies', minItems, function (json) {
-            append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/discover/movie', json);
+        }, minItems, function (json) {
+            append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/movie/upcoming', json);
         }, status.error.bind(status), 'upcoming_movies');
 
-        get('/trending/tv/week', { language: lang, page: 1 }, 'popular_series', minItems, function (json) {
+        get('/trending/tv/week', { language: lang, page: 1 }, minItems, function (json) {
             append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', '/trending/tv/week', json);
         }, status.error.bind(status), 'popular_series');
 
@@ -320,56 +266,43 @@
             page: 1,
             include_adult: false,
             sort_by: 'popularity.desc',
-            'air_date.gte': sixMonthsAgoStr, // Зміна на 180 днів
+            'air_date.gte': sixMonthsAgoStr,
             'air_date.lte': todayStr
-        }, 'new_series_seasons', minItems, function (json) {
+        }, minItems, function (json) {
             append(Lampa.Lang.translate('trailers_new_series_seasons'), 'new_series_seasons', '/discover/tv', json);
         }, status.error.bind(status), 'new_series_seasons');
 
-        // Запит для старих серіалів із новими сезонами
-        get('/discover/tv', {
+        get('/tv/upcoming', {
             language: lang,
             page: 1,
             include_adult: false,
-            sort_by: 'popularity.desc'
-        }, 'upcoming_series_old', minItems, function (jsonOld) {
-            // Запит для нових серіалів (1 сезон)
-            get('/discover/tv', {
-                language: lang,
-                page: 1,
-                include_adult: false,
-                sort_by: 'popularity.desc',
-                'first_air_date.gte': todayStr,
-                'first_air_date.lte': threeMonthsLaterStr
-            }, 'upcoming_series_new', minItems, function (jsonNew) {
-                // Об'єднуємо результати
-                var combinedResults = [...(jsonOld.results || []), ...(jsonNew.results || [])];
-                jsonOld.results = combinedResults;
-                append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/discover/tv', jsonOld);
-            }, status.error.bind(status), 'upcoming_series');
+            sort_by: 'popularity.desc',
+            'first_air_date.gte': todayStr,
+            'first_air_date.lte': threeMonthsLaterStr
+        }, minItems, function (json) {
+            append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/tv/upcoming', json);
         }, status.error.bind(status), 'upcoming_series');
     }
 
     function full(params, oncomplite, onerror) {
-        var cacheKey = params.url + '_' + params.type + '_page_' + params.page;
         var lang = getInterfaceLanguage();
         var requestParams = { language: lang, page: params.page };
 
-        if (params.url === '/discover/movie' || params.url === '/discover/tv') {
+        if (params.url === '/discover/movie' || params.url === '/movie/upcoming' || params.url === '/discover/tv' || params.url === '/tv/upcoming') {
             var today = new Date();
             var todayStr = today.toISOString().split('T')[0];
             var sixWeeksAgo = new Date();
             sixWeeksAgo.setDate(today.getDate() - 42);
             var sixWeeksAgoStr = sixWeeksAgo.toISOString().split('T')[0];
-            var twoMonthsAgo = new Date();
-            twoMonthsAgo.setDate(today.getDate() - 60);
-            var twoMonthsAgoStr = twoMonthsAgo.toISOString().split('T')[0];
+            var sixMonthsAgo = new Date();
+            sixMonthsAgo.setMonth(today.getMonth() - 6);
+            var sixMonthsAgoStr = sixMonthsAgo.toISOString().split('T')[0];
             var threeMonthsLater = new Date();
             threeMonthsLater.setDate(today.getDate() + 180);
             var threeMonthsLaterStr = threeMonthsLater.toISOString().split('T')[0];
             var sixMonthsLater = new Date();
-            sixMonthsLater.setMonth(today.getMonth() - 6); // Зміна на 180 днів тому
-            var sixMonthsAgoStr = sixMonthsLater.toISOString().split('T')[0];
+            sixMonthsLater.setMonth(today.getMonth() + 6);
+            var sixMonthsLaterStr = sixMonthsLater.toISOString().split('T')[0];
 
             if (params.type === 'in_theaters') {
                 requestParams = Object.assign(requestParams, {
@@ -391,33 +324,20 @@
                 requestParams = Object.assign(requestParams, {
                     include_adult: false,
                     sort_by: 'popularity.desc',
-                    'air_date.gte': sixMonthsAgoStr, // Зміна на 180 днів
+                    'air_date.gte': sixMonthsAgoStr,
                     'air_date.lte': todayStr
                 });
             } else if (params.type === 'upcoming_series') {
-                // Запит для старих серіалів
-                get('/discover/tv', Object.assign({}, requestParams, {
+                requestParams = Object.assign(requestParams, {
                     include_adult: false,
-                    sort_by: 'popularity.desc'
-                }), cacheKey + '_old', 20, function (jsonOld) {
-                    // Запит для нових серіалів
-                    get('/discover/tv', Object.assign({}, requestParams, {
-                        include_adult: false,
-                        sort_by: 'popularity.desc',
-                        'first_air_date.gte': todayStr,
-                        'first_air_date.lte': threeMonthsLaterStr
-                    }), cacheKey + '_new', 20, function (jsonNew) {
-                        // Об'єднуємо результати
-                        var combinedResults = [...(jsonOld.results || []), ...(jsonNew.results || [])];
-                        jsonOld.results = combinedResults;
-                        oncomplite(jsonOld);
-                    }, onerror, params.type);
-                }, onerror, params.type);
-                return;
+                    sort_by: 'popularity.desc',
+                    'first_air_date.gte': todayStr,
+                    'first_air_date.lte': threeMonthsLaterStr
+                });
             }
         }
 
-        get(params.url, requestParams, cacheKey, 20, oncomplite, onerror, params.type);
+        get(params.url, requestParams, 20, oncomplite, onerror, params.type);
     }
 
     function videos(card, oncomplite, onerror) {
@@ -441,8 +361,6 @@
 
     function clear() {
         network.clear();
-        trailerCache = {};
-        categoryCache = {};
     }
 
     var Api = {
@@ -477,13 +395,12 @@
                 this.card.find('.card__details').remove();
             }
 
-            var premiereDate = data.release_date || data.first_air_date || 'N/A'; // Для фільмів використовуємо release_date
+            var premiereDate = data.release_date || data.first_air_date || 'N/A';
             var formattedDate = premiereDate !== 'N/A' ? premiereDate.split('-').reverse().join('-') : 'N/A';
             this.card.find('.card__view').append(`
                 <div class="card__premiere-date" style="position: absolute; top: 0.5em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${formattedDate}</div>
             `);
 
-            // Логіка для серіалів залишається
             if (params.type === 'new_series_seasons' || params.type === 'upcoming_series') {
                 fetchSeriesDetails(data.id, 'last_episode_to_air', '', '', (isValid, airDate) => {
                     try {
@@ -1001,7 +918,7 @@
 
         this.build = function (data) {
             var _this3 = this;
-            if (data.results.length) {
+            if (data.results && data.results.length) {
                 total_pages = data.total_pages;
                 scroll.minus();
                 html.append(scroll.render());
