@@ -630,8 +630,8 @@
             if (!this.card) return;
             this.card.on('hover:focus', function (e, is_mouse) {
                 Lampa.Background.change(that.cardImgBackground(that.data));
-                that.onFocus(e.target, that.data, is_mouse);
-            }).on('hover:enter', function () {
+                that.onFocus(e.target || that.card[0], that.data, is_mouse); // Використовуйте that.card[0] як запасний варіант
+            }.bind(this)).on('hover:enter', function () {
                 if (that.is_youtube) {
                     that.play(that.data.id);
                 } else {
@@ -797,7 +797,7 @@
                 });
             });
             this.more.on('hover:focus', function (e) {
-                that.last = e.target;
+                that.last = e.target || that.more[0]; // Використовуйте that.more[0] як запасний варіант
                 that.active = that.items.length;
                 that.scroll.update(that.more, true);
             });
@@ -1076,10 +1076,13 @@
                     that.scroll.update(card.render(), true);
                     if (!that.light && !that.newlampa && that.scroll.isEnd()) that.next();
                 };
-                this.body.appendChild(card.render().get(0));
-                this.items.push(card);
-                this.seenIds.add(element.id);
-                if (append) Lampa.Controller.collectionAppend(card.render());
+                var cardRender = card.render();
+                if (cardRender && cardRender.length) {
+                    this.body.appendChild(cardRender.get(0));
+                    this.items.push(card);
+                    this.seenIds.add(element.id);
+                    if (append) Lampa.Controller.collectionAppend(cardRender);
+                }
             }
         };
 
