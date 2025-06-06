@@ -34,12 +34,11 @@
         const requiresRating = category !== 'upcoming_series' && (!content.release_date || new Date(content.release_date) <= new Date());
         const hasRating = !requiresRating || (content.vote_average && content.vote_average > 0);
 
-        // Додаткова перевірка для upcoming_movies: дата релізу має бути після сьогодні
         let isFutureRelease = true;
         if (category === 'upcoming_movies') {
             const today = new Date();
             const todayStr = today.toISOString().split('T')[0];
-            const releaseDate = content.release_date || '9999-12-31'; // Якщо дати немає, вважаємо її в майбутньому
+            const releaseDate = content.release_date || '9999-12-31';
             isFutureRelease = releaseDate >= todayStr;
             console.log('Checking release date for', content.title || content.name, 'release_date:', releaseDate, 'today:', todayStr, 'isFutureRelease:', isFutureRelease);
         }
@@ -903,6 +902,7 @@
         var last;
         var waitload;
         var active = 0;
+        var seenIds = new Set(); // Додаємо Set для відстеження унікальних id
 
         this.create = function () {
             Api.full(object, this.build.bind(this), this.empty.bind(this));
@@ -943,6 +943,12 @@
         this.append = function (data, append) {
             var _this2 = this;
             data.results.forEach(function (element) {
+                // Перевіряємо, чи вже є картка з таким id
+                if (seenIds.has(element.id)) {
+                    console.log('Duplicate card skipped:', element.title || element.name, 'ID:', element.id);
+                    return;
+                }
+
                 var card = new Trailer(element, { type: object.type });
                 card.create();
                 if (!card.render()) return;
@@ -954,6 +960,7 @@
                 };
                 body.append(card.render());
                 items.push(card);
+                seenIds.add(element.id); // Додаємо id до Set
                 if (append) Lampa.Controller.collectionAppend(card.render());
             });
         };
@@ -1055,6 +1062,7 @@
             html.remove();
             body.remove();
             items = [];
+            seenIds.clear(); // Очищаємо Set при знищенні компонента
         };
     }
 
