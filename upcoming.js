@@ -252,8 +252,7 @@
             include_adult: false,
             sort_by: 'popularity.desc',
             'primary_release_date.gte': todayStr,
-            'primary_release_date.lte': sixMonthsLaterStr,
-            region: 'UA'
+            'primary_release_date.lte': sixMonthsLaterStr
         }, minItems, function (json) {
             append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/movie/upcoming', json);
         }, status.error.bind(status), 'upcoming_movies');
@@ -319,8 +318,7 @@
                     include_adult: false,
                     sort_by: 'popularity.desc',
                     'primary_release_date.gte': todayStr,
-                    'primary_release_date.lte': sixMonthsLaterStr,
-                    region: 'UA'
+                    'primary_release_date.lte': sixMonthsLaterStr
                 });
             } else if (params.type === 'new_series_seasons') {
                 requestParams = Object.assign(requestParams, {
@@ -938,6 +936,11 @@
                 }
                 this.activity.loader(false);
                 this.activity.toggle();
+            } else if (object.page > 1) {
+                var emptyMessage = $('<div class="empty__message" style="text-align: center; padding: 20px; color: #fff;">' + Lampa.Lang.translate('trailers_no_more_items') + '</div>');
+                scroll.append(emptyMessage);
+                this.activity.loader(false);
+                this.activity.toggle();
             } else {
                 html.append(scroll.render());
                 this.empty();
@@ -1022,7 +1025,8 @@
         trailers_upcoming_series: { ru: 'Скоро на ТВ', uk: 'Скоро на ТБ', en: 'Upcoming Series' },
         trailers_no_trailers: { ru: 'Нет трейлеров', uk: 'Немає трейлерів', en: 'No trailers' },
         trailers_view: { ru: 'Подробнее', uk: 'Докладніше', en: 'Details' },
-        title_trailers: { ru: 'Трейлеры', uk: 'Трейлери', en: 'Trailers' }
+        title_trailers: { ru: 'Трейлеры', uk: 'Трейлери', en: 'Trailers' },
+        trailers_no_more_items: { ru: 'Больше фильмов нет', uk: 'Більше фільмів немає', en: 'No more movies' }
     });
 
     function startPlugin() {
