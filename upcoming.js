@@ -96,6 +96,11 @@
                     airDate = nextEpisodeDate;
                     seasonNumber = data.next_episode_to_air.season_number;
                     console.log('Series ' + seriesId + ': Found next episode, air_date:', airDate, 'isValid:', isValid, 'season_number:', seasonNumber);
+                } else if (futureSeasons.length > 0) {
+                    airDate = futureSeasons[0].air_date; // Беремо найближчий майбутній сезон
+                    isValid = true;
+                    seasonNumber = futureSeasons[0].season_number;
+                    console.log('Series ' + seriesId + ': Found future seasons, using first available, air_date:', airDate, 'season_number:', seasonNumber);
                 } else {
                     airDate = 'N/A';
                     console.log('Series ' + seriesId + ': No future seasons or next episode found within range', startDate, 'to', endDate);
@@ -300,7 +305,7 @@
             page: 1,
             include_adult: false,
             sort_by: 'popularity.desc',
-            'air_date.gte': todayStr, // Додаємо фільтрацію за датою на рівні запиту
+            'air_date.gte': todayStr,
             'air_date.lte': threeMonthsLaterStr
         }, minItems, function (json) {
             var today = new Date();
@@ -388,7 +393,7 @@
                 requestParams = Object.assign(requestParams, {
                     include_adult: false,
                     sort_by: 'popularity.desc',
-                    'air_date.gte': todayStr, // Додаємо фільтрацію за датою
+                    'air_date.gte': todayStr,
                     'air_date.lte': threeMonthsLaterStr
                 });
             }
@@ -452,8 +457,8 @@
                 this.card.find('.card__details').remove();
             }
 
-            var premiereDate = data.release_date || data.first_air_date || 'N/A';
-            var formattedDate = premiereDate !== 'N/A' ? premiereDate.split('-').reverse().join('-') : 'N/A';
+            var premiereDate = 'N/A'; // Ініціалізуємо як 'N/A' для уникнення використання first_air_date
+            var formattedDate = 'N/A';
             this.card.find('.card__view').append(`
                 <div class="card__premiere-date" style="position: absolute; top: 0.5em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${formattedDate}</div>
             `);
@@ -476,40 +481,41 @@
                 // Якщо сезон і серія вже є в даних (для upcoming_series), використовуємо їх
                 if (params.type === 'upcoming_series' && data.season_number && data.episode_number) {
                     this.card.find('.card__season-episode').text(`S${data.season_number}E${data.episode_number}`);
-                } else {
-                    var today = new Date();
-                    var todayStr = today.toISOString().split('T')[0];
-                    var sixMonthsAgo = new Date();
-                    sixMonthsAgo.setMonth(today.getMonth() - 6);
-                    var sixMonthsAgoStr = sixMonthsAgo.toISOString().split('T')[0];
-                    var threeMonthsLater = new Date();
-                    threeMonthsLater.setDate(today.getDate() + 180);
-                    var threeMonthsLaterStr = threeMonthsLater.toISOString().split('T')[0];
+                }
 
-                    var dateField = params.type === 'upcoming_series' ? 'season_check' : 'last_episode_to_air';
-                    var startDate = params.type === 'new_series_seasons' ? sixMonthsAgoStr : todayStr;
-                    var endDate = params.type === 'new_series_seasons' ? todayStr : threeMonthsLaterStr;
+                var today = new Date();
+                var todayStr = today.toISOString().split('T')[0];
+                var sixMonthsAgo = new Date();
+                sixMonthsAgo.setMonth(today.getMonth() - 6);
+                var sixMonthsAgoStr = sixMonthsAgo.toISOString().split('T')[0];
+                var threeMonthsLater = new Date();
+                threeMonthsLater.setDate(today.getDate() + 180);
+                var threeMonthsLaterStr = threeMonthsLater.toISOString().split('T')[0];
 
-                    fetchSeriesDetails(data.id, dateField, startDate, endDate, (isValid, airDate, seasonNumber, episodeNumber) => {
-                        try {
-                            if (seasonNumber > 0 && episodeNumber > 0) {
-                                this.card.find('.card__season-episode').text(`S${seasonNumber}E${episodeNumber}`);
-                            } else {
-                                this.card.find('.card__season-episode').text('—');
-                            }
+                var dateField = params.type === 'upcoming_series' ? 'season_check' : 'last_episode_to_air';
+                var startDate = params.type === 'new_series_seasons' ? sixMonthsAgoStr : todayStr;
+                var endDate = params.type === 'new_series_seasons' ? todayStr : threeMonthsLaterStr;
 
-                            // Оновлюємо дату прем'єри для серіалів
-                            if (params.type === 'new_series_seasons' || params.type === 'upcoming_series') {
-                                premiereDate = airDate || data.first_air_date || 'N/A';
-                                formattedDate = premiereDate !== 'N/A' ? premiereDate.split('-').reverse().join('-') : 'N/A';
-                                this.card.find('.card__premiere-date').text(formattedDate);
-                            }
-                        } catch (e) {
-                            console.log('Error updating season-episode for series ' + data.id + ': ', e);
+                fetchSeriesDetails(data.id, dateField, startDate, endDate, (isValid, airDate, seasonNumber, episodeNumber) => {
+                    try {
+                        if (seasonNumber > 0 && episodeNumber > 0) {
+                            this.card.find('.card__season-episode').text(`S${seasonNumber}E${episodeNumber}`);
+                        } else {
                             this.card.find('.card__season-episode').text('—');
                         }
-                    });
-                }
+
+                        // Оновлюємо дату прем'єри для серіалів
+                        if (params.type === 'new_series_seasons' || params.type === 'upcoming_series') {
+                            premiereDate = airDate || 'N/A'; // Використовуємо тільки airDate, без fallback на first_air_date
+                            formattedDate = premiereDate !== 'N/A' ? premiereDate.split('-').reverse().join('-') : 'N/A';
+                            this.card.find('.card__premiere-date').text(formattedDate);
+                            console.log('Updated premiere date for', data.name, 'to', formattedDate);
+                        }
+                    } catch (e) {
+                        console.log('Error updating season-episode for series ' + data.id + ': ', e);
+                        this.card.find('.card__season-episode').text('—');
+                    }
+                });
             }
         };
 
