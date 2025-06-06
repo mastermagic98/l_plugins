@@ -26,8 +26,8 @@
     }
 
     function filterTMDBContentByGenre(content, category) {
-        const allowedGenreIds = [28, 12, 16, 35, 80, 99, 18, 10751, 14, 36, 27, 10402, 9648, 10749, 878, 53, 10752, 37];
-        const disallowedGenreIds = [10767, '10763', 10764, 10766];
+        const allowedGenreIds = [28, 12, 16, 35, 80, 18, 10751, 14, 36, 27, 10402, 9648, 10749, 878, 53, 10752, 37];
+        const disallowedGenreIds = [10763, 10767, 10770, 10764, 10766];
         const genreIds = content.genre_ids || [];
         const hasAllowedGenre = genreIds.some(id => allowedGenreIds.includes(id));
         const hasDisallowedGenre = genreIds.some(id => disallowedGenreIds.includes(id));
@@ -902,7 +902,7 @@
         var last;
         var waitload;
         var active = 0;
-        var seenIds = new Set(); // Додаємо Set для відстеження унікальних id
+        var seenIds = new Set();
 
         this.create = function () {
             Api.full(object, this.build.bind(this), this.empty.bind(this));
@@ -943,7 +943,6 @@
         this.append = function (data, append) {
             var _this2 = this;
             data.results.forEach(function (element) {
-                // Перевіряємо, чи вже є картка з таким id
                 if (seenIds.has(element.id)) {
                     console.log('Duplicate card skipped:', element.title || element.name, 'ID:', element.id);
                     return;
@@ -960,7 +959,7 @@
                 };
                 body.append(card.render());
                 items.push(card);
-                seenIds.add(element.id); // Додаємо id до Set
+                seenIds.add(element.id);
                 if (append) Lampa.Controller.collectionAppend(card.render());
             });
         };
@@ -1062,7 +1061,7 @@
             html.remove();
             body.remove();
             items = [];
-            seenIds.clear(); // Очищаємо Set при знищенні компонента
+            seenIds.clear();
         };
     }
 
