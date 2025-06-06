@@ -74,7 +74,7 @@
         fetchTMDB(endpoint, params, function (data) {
             if (!data) {
                 console.log('Series ' + seriesId + ' fetch failed: data is undefined');
-                callback(false, 'N/A');
+                callback(false, 'N/A', 0, 0);
                 return;
             }
             if (dateField === 'season_check') {
@@ -83,38 +83,46 @@
                 var nextSeason = futureSeasons.length ? futureSeasons.reduce((earliest, current) => new Date(earliest.air_date) < new Date(current.air_date) ? earliest : current) : null;
                 var airDate;
                 var isValid;
+                var seasonNumber = 0;
+                var episodeNumber = 1; // Для "Скоро на ТБ" завжди перша серія
                 if (nextSeason) {
                     airDate = nextSeason.air_date;
                     isValid = true;
+                    seasonNumber = nextSeason.season_number;
                 } else if (data.next_episode_to_air && data.next_episode_to_air.air_date) {
                     var nextEpisodeDate = data.next_episode_to_air.air_date;
                     isValid = nextEpisodeDate >= startDate && nextEpisodeDate <= endDate;
                     airDate = nextEpisodeDate;
+                    seasonNumber = data.next_episode_to_air.season_number;
                 } else {
                     airDate = data.first_air_date || 'N/A';
                     isValid = futureSeasons.length > 0 || (data.first_air_date && new Date(data.first_air_date) >= new Date(startDate) && new Date(data.first_air_date) <= new Date(endDate));
+                    seasonNumber = data.number_of_seasons || 0;
                 }
-                console.log('Series ' + seriesId + ' next_season_air_date:', airDate, 'is within range', startDate, 'to', endDate, ':', isValid, 'number_of_seasons:', data.number_of_seasons);
-                callback(isValid, airDate);
+                console.log('Series ' + seriesId + ' next_season_air_date:', airDate, 'is within range', startDate, 'to', endDate, ':', isValid, 'season_number:', seasonNumber, 'episode_number:', episodeNumber);
+                callback(isValid, airDate, seasonNumber, episodeNumber);
             } else {
                 var seasons = data.seasons || [];
                 var lastSeason = seasons.length ? seasons[seasons.length - 1] : null;
                 if (lastSeason && lastSeason.season_number > 0) {
                     fetchTMDB(`/tv/${seriesId}/season/${lastSeason.season_number}`, params, function (seasonData) {
-                        var firstEpisode = seasonData.episodes && seasonData.episodes.length ? seasonData.episodes[0] : null;
-                        var airDate = firstEpisode && firstEpisode.air_date ? firstEpisode.air_date : lastSeason.air_date || data.first_air_date;
+                        var episodes = seasonData.episodes || [];
+                        var lastEpisode = episodes.length ? episodes[episodes.length - 1] : null;
+                        var airDate = lastEpisode && lastEpisode.air_date ? lastEpisode.air_date : lastSeason.air_date || data.first_air_date;
                         var isWithinRange = airDate >= startDate && airDate <= endDate;
-                        console.log('Series ' + seriesId + ' first_episode_of_last_season:', airDate, 'is within range', startDate, 'to', endDate, ':', isWithinRange);
-                        callback(isWithinRange, airDate);
+                        var seasonNumber = lastSeason.season_number;
+                        var episodeNumber = lastEpisode ? lastEpisode.episode_number : 0;
+                        console.log('Series ' + seriesId + ' first_episode_of_last_season:', airDate, 'is within range', startDate, 'to', endDate, ':', isWithinRange, 'season_number:', seasonNumber, 'episode_number:', episodeNumber);
+                        callback(isWithinRange, airDate, seasonNumber, episodeNumber);
                     }, function () {
-                        callback(false, data.first_air_date);
+                        callback(false, data.first_air_date, 0, 0);
                     });
                 } else {
-                    callback(false, data.first_air_date);
+                    callback(false, data.first_air_date, 0, 0);
                 }
             }
         }, function () {
-            callback(false, 'N/A');
+            callback(false, 'N/A', 0, 0);
         });
     }
 
@@ -154,8 +162,10 @@
                                 var startDate = category === 'new_series_seasons' ? sixMonthsAgoStr : todayStr;
                                 var endDate = category === 'new_series_seasons' ? todayStr : threeMonthsLaterStr;
 
-                                fetchSeriesDetails(series.id, dateField, startDate, endDate, function (isValid, airDate) {
+                                fetchSeriesDetails(series.id, dateField, startDate, endDate, function (isValid, airDate, seasonNumber, episodeNumber) {
                                     if (isValid) {
+                                        series.season_number = seasonNumber;
+                                        series.episode_number = episodeNumber;
                                         validResults.push(series);
                                     }
                                     resolveDetail();
@@ -299,8 +309,10 @@
             if (json.results && json.results.length) {
                 var promises = json.results.map(function (series) {
                     return new Promise(function (resolveDetail) {
-                        fetchSeriesDetails(series.id, 'season_check', todayStr, threeMonthsLaterStr, function (isValid, airDate) {
+                        fetchSeriesDetails(series.id, 'season_check', todayStr, threeMonthsLaterStr, function (isValid, airDate, seasonNumber, episodeNumber) {
                             if (isValid || (!series.first_air_date && airDate >= todayStr && airDate <= threeMonthsLaterStr)) {
+                                series.season_number = seasonNumber;
+                                series.episode_number = episodeNumber;
                                 validResults.push(series);
                             }
                             resolveDetail();
@@ -442,21 +454,6 @@
                 <div class="card__premiere-date" style="position: absolute; top: 0.5em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${formattedDate}</div>
             `);
 
-            if (params.type === 'new_series_seasons' || params.type === 'upcoming_series') {
-                fetchSeriesDetails(data.id, 'last_episode_to_air', '', '', (isValid, airDate) => {
-                    try {
-                        premiereDate = airDate || data.first_air_date || 'N/A';
-                        formattedDate = premiereDate !== 'N/A' ? premiereDate.split('-').reverse().join('-') : 'N/A';
-                        this.card.find('.card__premiere-date').text(formattedDate);
-                    } catch (e) {
-                        console.log('Error updating premiere date for series ' + data.id + ': ', e);
-                        premiereDate = airDate || data.first_air_date || 'N/A';
-                        formattedDate = premiereDate !== 'N/A' ? premiereDate.split('-').reverse().join('-') : 'N/A';
-                        this.card.find('.card__premiere-date').text(formattedDate);
-                    }
-                });
-            }
-
             this.card.find('.card__view').append(`
                 <div class="card__trailer-lang" style="position: absolute; top: 2.25em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;"></div>
             `);
@@ -465,6 +462,51 @@
             this.card.find('.card__view').append(`
                 <div class="card__rating" style="position: absolute; bottom: 0.5em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${rating}</div>
             `);
+
+            // Додаємо інформацію про сезон і серію лише для серіалів
+            if (data.name && !this.is_youtube) {
+                this.card.find('.card__view').append(`
+                    <div class="card__season-episode" style="position: absolute; bottom: 0.5em; left: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">—</div>
+                `);
+
+                // Якщо сезон і серія вже є в даних (для upcoming_series), використовуємо їх
+                if (params.type === 'upcoming_series' && data.season_number && data.episode_number) {
+                    this.card.find('.card__season-episode').text(`S${data.season_number}E${data.episode_number}`);
+                } else {
+                    var today = new Date();
+                    var todayStr = today.toISOString().split('T')[0];
+                    var sixMonthsAgo = new Date();
+                    sixMonthsAgo.setMonth(today.getMonth() - 6);
+                    var sixMonthsAgoStr = sixMonthsAgo.toISOString().split('T')[0];
+                    var threeMonthsLater = new Date();
+                    threeMonthsLater.setDate(today.getDate() + 180);
+                    var threeMonthsLaterStr = threeMonthsLater.toISOString().split('T')[0];
+
+                    var dateField = params.type === 'upcoming_series' ? 'season_check' : 'last_episode_to_air';
+                    var startDate = params.type === 'new_series_seasons' ? sixMonthsAgoStr : todayStr;
+                    var endDate = params.type === 'new_series_seasons' ? todayStr : threeMonthsLaterStr;
+
+                    fetchSeriesDetails(data.id, dateField, startDate, endDate, (isValid, airDate, seasonNumber, episodeNumber) => {
+                        try {
+                            if (seasonNumber > 0 && episodeNumber > 0) {
+                                this.card.find('.card__season-episode').text(`S${seasonNumber}E${episodeNumber}`);
+                            } else {
+                                this.card.find('.card__season-episode').text('—');
+                            }
+
+                            // Оновлюємо дату прем'єри для серіалів
+                            if (params.type === 'new_series_seasons' || params.type === 'upcoming_series') {
+                                premiereDate = airDate || data.first_air_date || 'N/A';
+                                formattedDate = premiereDate !== 'N/A' ? premiereDate.split('-').reverse().join('-') : 'N/A';
+                                this.card.find('.card__premiere-date').text(formattedDate);
+                            }
+                        } catch (e) {
+                            console.log('Error updating season-episode for series ' + data.id + ': ', e);
+                            this.card.find('.card__season-episode').text('—');
+                        }
+                    });
+                }
+            }
         };
 
         this.cardImgBackground = function (card_data) {
@@ -1031,7 +1073,7 @@
                 },
                 left: function () {
                     if (Navigator.canmove('left')) Navigator.move('left');
-                    else Lampa.Controller.toggle('menu');
+                    else Lampa.Limit.toggle('menu');
                 },
                 right: function () {
                     Navigator.move('right');
@@ -1070,16 +1112,16 @@
         trailers_in_theaters: { ru: 'В кинотеатрах', uk: 'У кінотеатрах', en: 'In Theaters' },
         trailers_upcoming_movies: { ru: 'Скоро в кино', uk: 'Скоро в кіно', en: 'Upcoming Movies' },
         trailers_popular_series: { ru: 'Популярные сериалы', uk: 'Популярні серіали', en: 'Popular Series' },
-        trailers_new_series_seasons: { ru: 'Новые сериалы и сезоны', uk: 'Нові серіали і сезони', en: 'New Series and Seasons' },
+        trailers_new_series_seasons: { ru: 'Новы сезоны', uk: 'Нові серіали та сезони', en: 'New Series and Seasons' },
         trailers_upcoming_series: { ru: 'Скоро на ТВ', uk: 'Скоро на ТБ', en: 'Upcoming Series' },
         trailers_no_trailers: { ru: 'Нет трейлеров', uk: 'Немає трейлерів', en: 'No trailers' },
         trailers_view: { ru: 'Подробнее', uk: 'Докладніше', en: 'Details' },
         title_trailers: { ru: 'Трейлеры', uk: 'Трейлери', en: 'Trailers' },
-        trailers_no_more_items: { ru: 'Больше фильмов нет', uk: 'Більше фільмів немає', en: 'No more movies' }
+        trailers_no_more_items: { ru: 'Больше фильмов нет', uk: 'Більше фільмів немає', en: 'No more movies' },
     });
 
     function startPlugin() {
-        window.plugin_trailers_ready = true;
+        window.plugin_trailer_ready = true;
         Lampa.Component.add('trailers_main', Component$1);
         Lampa.Component.add('trailers_full', Component);
         Lampa.Template.add('trailer', `
@@ -1127,12 +1169,12 @@
                 width: 0.9em;
                 height: 1em;
             }
-            .card-more.more--trailers .card-more__box {
+            .card-more--trailers .card-more__box {
                 padding-bottom: 56%;
             }
             .category-full--trailers .card {
                 margin-bottom: 1.5em;
-                width: 33.3%;
+                width: 33.3%
             }
             @media screen and (max-width: 767px) {
                 .category-full--trailers .card {
@@ -1144,7 +1186,7 @@
                     width: 100%;
                 }
             }
-            .card__premiere-date, .card__trailer-lang, .card__rating {
+            .card__premiere-date, .card__trailer-lang, .card__rating, .card__season-episode {
                 font-size: 0.9em;
                 z-index: 10;
             }
