@@ -81,8 +81,8 @@
                     isValid = nextEpisodeDate >= startDate && nextEpisodeDate <= endDate;
                     airDate = nextEpisodeDate;
                 } else {
-                    airDate = data.first_air_date;
-                    isValid = data.number_of_seasons === 1 && airDate >= startDate && airDate <= endDate;
+                    airDate = data.first_air_date || 'N/A';
+                    isValid = futureSeasons.length > 0 || (data.first_air_date && new Date(data.first_air_date) >= new Date(startDate) && new Date(data.first_air_date) <= new Date(endDate));
                 }
                 console.log('Series ' + seriesId + ' next_season_air_date:', airDate, 'is within range', startDate, 'to', endDate, ':', isValid, 'number_of_seasons:', data.number_of_seasons);
                 callback(isValid, airDate);
@@ -252,7 +252,8 @@
             include_adult: false,
             sort_by: 'popularity.desc',
             'primary_release_date.gte': todayStr,
-            'primary_release_date.lte': sixMonthsLaterStr
+            'primary_release_date.lte': sixMonthsLaterStr,
+            region: 'UA'
         }, minItems, function (json) {
             append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/movie/upcoming', json);
         }, status.error.bind(status), 'upcoming_movies');
@@ -318,7 +319,8 @@
                     include_adult: false,
                     sort_by: 'popularity.desc',
                     'primary_release_date.gte': todayStr,
-                    'primary_release_date.lte': sixMonthsLaterStr
+                    'primary_release_date.lte': sixMonthsLaterStr,
+                    region: 'UA'
                 });
             } else if (params.type === 'new_series_seasons') {
                 requestParams = Object.assign(requestParams, {
