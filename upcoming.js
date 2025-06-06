@@ -286,12 +286,40 @@
             language: lang,
             page: 1,
             include_adult: false,
-            sort_by: 'popularity.desc',
-            'first_air_date.gte': todayStr,
-            'first_air_date.lte': threeMonthsLaterStr
+            sort_by: 'popularity.desc'
         }, minItems, function (json) {
-            append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/discover/tv', json);
+            var today = new Date();
+            var todayStr = today.toISOString().split('T')[0];
+            var threeMonthsLater = new Date();
+            threeMonthsLater.setDate(today.getDate() + 180);
+            var threeMonthsLaterStr = threeMonthsLater.toISOString().split('T')[0];
+
+            var validResults = [];
+
+            if (json.results && json.results.length) {
+                var promises = json.results.map(function (series) {
+                    return new Promise(function (resolveDetail) {
+                        fetchSeriesDetails(series.id, 'season_check', todayStr, threeMonthsLaterStr, function (isValid, airDate) {
+                            if (isValid || (!series.first_air_date && airDate >= todayStr && airDate <= threeMonthsLaterStr)) {
+                                validResults.push(series);
+                            }
+                            resolveDetail();
+                        });
+                    });
+                });
+
+                Promise.all(promises).then(function () {
+                    validResults.sort(function (a, b) {
+                        return b.popularity - a.popularity;
+                    });
+                    json.results = validResults.slice(0, minItems);
+                    append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/discover/tv', json);
+                });
+            } else {
+                append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/discover/tv', json);
+            }
         }, status.error.bind(status), 'upcoming_series');
+
     }
 
     function full(params, oncomplite, onerror) {
@@ -338,11 +366,15 @@
                     'air_date.lte': todayStr
                 });
             } else if (params.type === 'upcoming_series') {
+                var today = new Date();
+                var todayStr = today.toISOString().split('T')[0];
+                var threeMonthsLater = new Date();
+                threeMonthsLater.setDate(today.getDate() + 180);
+                var threeMonthsLaterStr = threeMonthsLater.toISOString().split('T')[0];
+
                 requestParams = Object.assign(requestParams, {
                     include_adult: false,
-                    sort_by: 'popularity.desc',
-                    'first_air_date.gte': todayStr,
-                    'first_air_date.lte': threeMonthsLaterStr
+                    sort_by: 'popularity.desc'
                 });
             }
         }
