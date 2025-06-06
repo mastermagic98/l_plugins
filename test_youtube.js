@@ -27,7 +27,7 @@
 
     function filterTMDBContentByGenre(content, category) {
         const allowedGenreIds = [28, 12, 16, 35, 80, 18, 10751, 14, 36, 27, 10402, 9648, '10749', 878, 53, 10752, 37];
-        const disallowedGenreIds = [10763, 10767, '10770', 10764, 10766];
+        const disallowedGenreIds = [10763, '10770', 10764, 10766];
         const genreIds = content.genre_ids || [];
         const hasAllowedGenre = genreIds.some(id => allowedGenreIds.includes(id));
         const hasDisallowedGenre = genreIds.some(id => disallowedGenreIds.includes(id));
@@ -617,336 +617,340 @@
                                         card: data,
                                         source: 'tmdb'
                                     });
-                            } else {
-                                _this2.play(item.id);
+                                } else {
+                                    _this2.play(item.id);
+                                }
+                            },
+                            onBack: function () {
+                                Lampa.Controller.toggle('content');
                             }
+                        });
+                    });
+                } else if (Lampa.Search) {
+                    Lampa.Select.show({
+                        title: Lampa.Lang.translate('title_action'),
+                        items: [{ title: Lampa.Lang.translate('search') }],
+                        onSelect: function (item) {
+                            Lampa.Controller.toggle('content');
+                            Lampa.Search.open({ input: data.title || data.name });
                         },
                         onBack: function () {
                             Lampa.Controller.toggle('content');
                         }
                     });
-                });
-            } else if (Lampa.Search) {
-                Lampa.Select.show({
-                    title: Lampa.Lang.translate('title_action'),
-                    items: [{ title: Lampa.Lang.translate('search') }],
-                    onSelect: function (item) {
-                        Lampa.Controller.toggle('content');
-                        Lampa.Search.open({ input: data.title || data.name });
-                    },
-                    onBack: function () {
-                        Lampa.Controller.toggle('content');
-                    }
-                });
-            }
-        });
-        this.image();
-    };
-
-    this.destroy = function () {
-        this.img.onerror = null;
-        this.img.onload = null;
-        this.img.src = '';
-        this.card.remove();
-        this.card = this.img = null;
-    };
-
-    this.visible = function () {
-        if (this.visibled) return;
-        if (params.type === 'rating') {
-            this.img.src = 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg';
-        } else if (data.backdrop_path) {
-            this.img.src = Lampa.Api.img(data.backdrop_path, 'w500');
-        } else if (data.poster_path) {
-            this.img.src = Lampa.Api.img(data.poster_path);
-        } else {
-            this.img.src = './img/img_broken.svg';
-        }
-        this.visibled = true;
-    };
-
-    this.render = function () {
-        return this.card;
-    };
-}
-
-function Line(data) {
-    var content = Lampa.Template.get('items_line', { title: data.title });
-    var body = content.find('.items-line__body');
-    var scroll = new Lampa.Scroll({ horizontal: true, step: 600 });
-    var light = Lampa.Storage.get('light_version', false) && window.innerWidth >= 767;
-    var items = [];
-    var active = 0;
-    var more;
-    var last;
-
-    this.create = function () {
-        scroll.render().find('.scroll__body').addClass('items-cards');
-        content.find('.items-line__title').text(data.title);
-        body.append(scroll.render());
-        this.bind();
-    };
-
-    this.bind = function () {
-        var maxItems = light ? 6 : data.results.length;
-        data.results.slice(0, maxItems).forEach(this.append.bind(this));
-        if (data.results.length > 0) this.more();
-        Lampa.Layer.update();
-    };
-
-    this.cardImgBackground = function (card_data) {
-        if (Lampa.Storage.field('background')) {
-            if (Lampa.Storage.get('background_type', 'complex') === 'poster' && window.innerWidth > 790) {
-                return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'original') : '';
-            }
-            return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'w500') : '';
-        }
-        return '';
-    };
-
-    this.append = function (element) {
-        var _this = this;
-        var card = new Trailer(element, { type: data.type });
-        card.create();
-        if (!card.render()) return;
-        card.visible();
-        card.onFocus = function (target, card_data, is_mouse) {
-            last = target;
-            active = items.indexOf(card);
-            if (!is_mouse) scroll.update(items[active].render(), true);
-            if (_this.onFocus) _this.onFocus(card_data);
-        };
-        scroll.append(card.render());
-        items.push(card);
-    };
-
-    this.more = function () {
-        more = Lampa.Template.get('more').addClass('tmdb_more--trailers');
-        more.on('hover:enter', function () {
-            Lampa.Activity.push({
-                url: data.url,
-                component: 'tmdb_trailers_full',
-                type: data.type,
-                page: light ? 1 : 2
+                }
             });
-        });
-        more.on('hover:focus', function (e) {
-            last = e.target;
-            active = items.length;
-            scroll.update(more, true);
-        });
-        scroll.append(more);
-    };
+            this.image();
+        };
 
-    this.toggle = function () {
-        var _this2 = this;
-        Lampa.Controller.add('items_line', {
-            toggle: function () {
-                Lampa.Controller.collectionSet(scroll.render());
-                Lampa.Controller.collectionFocus(items.length ? last : false, scroll.render());
-            },
-            right: function () {
-                console.log('Line: Right navigation, active: ' + active + ', items length: ' + items.length);
-                if (active < items.length - 1) {
-                    active++;
-                    Navigator.move('right');
-                    scroll.update(items[active].render(), true);
-                    console.log('Line: Moved right to card, new active: ' + active);
-                } else if (active === items.length - 1) {
-                    active = items.length;
-                    scroll.update(more, true);
-                    Lampa.Controller.collectionFocus(more[0], scroll.render());
-                    console.log('Line: Moved right to More, new active: ' + active);
-                } else {
-                    active = 0;
-                    scroll.update(items[active].render(), true);
-                    Lampa.Controller.collectionFocus(items[active].render()[0], scroll.render());
-                    console.log('Line: Cycled right to first card, new active: ' + active);
+        this.destroy = function () {
+            this.img.onerror = null;
+            this.img.onload = null;
+            this.img.src = '';
+            this.card.remove();
+            this.card = this.img = null;
+        };
+
+        this.visible = function () {
+            if (this.visibled) return;
+            if (params.type === 'rating') {
+                this.img.src = 'https://img.youtube.com/vi/' + data.id + '/hqdefault.jpg';
+            } else if (data.backdrop_path) {
+                this.img.src = Lampa.Api.img(data.backdrop_path, 'w500');
+            } else if (data.poster_path) {
+                this.img.src = Lampa.Api.img(data.poster_path);
+            } else {
+                this.img.src = './img/img_broken.svg';
+            }
+            this.visibled = true;
+        };
+
+        this.render = function () {
+            return this.card;
+        };
+    }
+
+    function Line(data) {
+        var content = Lampa.Template.get('items_line', { title: data.title });
+        var body = content.find('.items-line__body');
+        var scroll = new Lampa.Scroll({ horizontal: true, step: 600 });
+        var light = Lampa.Storage.get('light_version', false) && window.innerWidth >= 767;
+        var items = [];
+        var active = 0;
+        var more;
+        var last;
+
+        this.create = function () {
+            scroll.render().find('.scroll__body').addClass('items-cards');
+            content.find('.items-line__title').text(data.title);
+            body.append(scroll.render());
+            this.bind();
+        };
+
+        this.bind = function () {
+            var maxItems = light ? 6 : data.results.length;
+            data.results.slice(0, maxItems).forEach(this.append.bind(this));
+            if (data.results.length > 0) this.more();
+            Lampa.Layer.update();
+        };
+
+        this.cardImgBackground = function (card_data) {
+            if (Lampa.Storage.field('background')) {
+                if (Lampa.Storage.get('background_type', 'complex') === 'poster' && window.innerWidth > 790) {
+                    return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'original') : '';
                 }
-            },
-            left: function () {
-                console.log('Line: Left navigation, active: ' + active);
-                if (active > 0) {
-                    active--;
-                    if (active === items.length) {
-                        scroll.update(items[items.length - 1].render(), true);
-                        Lampa.Controller.collectionFocus(items[items.length - 1].render()[0], scroll.render());
-                        console.log('Line: Moved left from More to last card, new active: ' + active);
-                    } else {
-                        Navigator.move('left');
-                        scroll.update(items[active].render(), true);
-                        console.log('Line: Moved left to card, new active: ' + active);
-                    }
-                } else if (active === 0) {
-                    active = items.length;
-                    scroll.update(more, true);
-                    Lampa.Controller.collectionFocus(more[0], scroll.render());
-                    console.log('Line: Cycled left to More, new active: ' + active);
-                }
-            },
-            down: this.onDown,
-            up: this.onUp,
-            gone: function () {},
-            back: this.onBack
-        });
-        Lampa.Controller.toggle('items_line');
-    };
+                return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'w500') : '';
+            }
+            return '';
+        };
 
-    this.render = function () {
-        return content;
-    };
-
-    this.destroy = function () {
-        Lampa.Arrays.destroy(items);
-        scroll.destroy();
-        content.remove();
-        more.remove();
-        items = [];
-    };
-}
-
-function Component$1(object) {
-    var scroll = new Lampa.Scroll({ mask: true, over: true, scroll_by_item: true });
-    var items = [];
-    var html = $('<div></div>');
-    var active = 0;
-    var light = Lampa.Storage.field('light_version') && window.innerWidth >= 767;
-
-    this.create = function () {
-        Api.main(this.build.bind(this), this.empty.bind(this));
-        return this.render();
-    };
-
-    this.empty = function () {
-        var empty = new Lampa.Empty();
-        html.append(empty.render());
-        this.start = empty.start;
-        this.activity.loader(false);
-        this.activity.toggle();
-    };
-
-    this.build = function (data) {
-        var _this = this;
-        scroll.minus();
-        html.append(scroll.render());
-        data.forEach(function (element) {
-            _this.append(element);
-        });
-
-        if (light) {
-            scroll.onWheel = function (step) {
-                if (step > 0) _this.down();
-                else _this.up();
+        this.append = function (element) {
+            var _this = this;
+            var card = new Trailer(element, { type: data.type });
+            card.create();
+            if (!card.render()) return;
+            card.visible();
+            card.onFocus = function (target, card_data, is_mouse) {
+                last = target;
+                active = items.indexOf(card);
+                if (!is_mouse) scroll.update(items[active].render(), true);
+                if (_this.onFocus) _this.onFocus(card_data);
             };
-        }
-
-        this.activity.loader(false);
-        this.activity.toggle();
-    };
-
-    this.append = function (element) {
-        var item = new Line(element);
-        item.create();
-        item.onDown = this.down.bind(this);
-        item.onUp = this.up.bind(this);
-        item.onBack = this.back.bind(this);
-        item.onToggle = function () {
-            active = items.indexOf(item);
+            scroll.append(card.render());
+            items.push(card);
         };
-        item.wrap = $('<div></div>');
-        if (light) {
-            scroll.append(item.wrap);
-        } else {
-            scroll.append(item.render());
-        }
-        items.push(item);
-    };
 
-    this.back = function () {
-        Lampa.Activity.backward();
-    };
-
-    this.detach = function () {
-        if (light) {
-            items.forEach(function (item) {
-                item.render().detach();
+        this.more = function () {
+            more = Lampa.Template.get('more').addClass('tmdb_more--trailers');
+            more.on('hover:enter', function () {
+                Lampa.Activity.push({
+                    url: data.url,
+                    component: 'tmdb_trailers_full',
+                    type: data.type,
+                    page: light ? 1 : 2
+                });
             });
-            items.slice(active, active + 2).forEach(function (item) {
-                item.wrap.append(item.render());
+            more.on('hover:focus', function (e) {
+                last = e.target;
+                active = items.length;
+                scroll.update(more, true);
             });
-        }
-    };
+            scroll.append(more);
+        };
 
-    this.down = function () {
-        active++;
-        active = Math.min(active, items.length - 1);
-        this.detach();
-        items[active].toggle();
-        scroll.update(items[active].render());
-    };
+        this.toggle = function () {
+            var _this2 = this;
+            Lampa.Controller.add('items_line', {
+                toggle: function () {
+                    Lampa.Controller.collectionSet(scroll.render());
+                    Lampa.Controller.collectionFocus(items.length ? last : false, scroll.render());
+                },
+                right: function () {
+                    console.log('Line: Right navigation, active: ' + active + ', items length: ' + items.length);
+                    if (active < items.length - 1) {
+                        active++;
+                        Navigator.move('right');
+                        scroll.update(items[active].render(), true);
+                        console.log('Line: Moved right to card, new active: ' + active);
+                    } else if (active === items.length - 1) {
+                        active = items.length;
+                        scroll.update(more, true);
+                        Lampa.Controller.collectionFocus(more[0], scroll.render());
+                        console.log('Line: Moved right to More, new active: ' + active');
+                    } else {
+                        active = 0;
+                        scroll.update(items[active].render(), true);
+                        Lampa.Controller.collectionFocus(items[active].render()[0], scroll.render());
+                        console.log('Line: Cycled right to first card, new active: ' + active);
+                    }
+                },
+                left: function () {
+                    console.log('Line: Left navigation, active: ' + active);
+                    if (active > 0) {
+                        active--;
+                        if (active === items.length) {
+                            scroll.update(items[items.length - 1].render(), true);
+                            Lampa.Controller.collectionFocus(items[items.length - 1].render()[0], scroll.render());
+                            console.log('Line: Moved left from More to last card, new active: ' + active);
+                        } else {
+                            Navigator.move('left');
+                            scroll.update(items[active].render(), true);
+                            console.log('Line: Moved left to card, new active: ' + active);
+                        }
+                    } else {
+ if (active === 0) {
+                        active = items.length;
+                        scroll.update(more, true);
+                        Lampa.Controller.collectionFocus(more[0], scroll.render());
+                        console.log('Line: Cycled left to More, new active: ' + active);
+                    }
+                },
+                down: this.onDown,
+                up: this.onUp,
+                gone: function () {},
+                back: this.onBack
+            });
+            Lampa.Controller.toggle('items_line');
+        };
 
-    this.up = function () {
-        active--;
-        if (active < 0) {
-            active = 0;
-            this.detach();
-            Lampa.Controller.toggle('head');
-        } else {
+        this.render = function () {
+            return content;
+        };
+
+        this.destroy = function () {
+            Lampa.Arrays.destroy(items);
+            scroll.destroy();
+            content.remove();
+            more.remove();
+            items = [];
+        };
+    }
+
+    function Component$1(object) {
+        var scroll = new Lampa.Scroll({ mask: true, over: true, scroll_by_item: true });
+        var items = [];
+        var html = $('<div></div>');
+        var active = 0;
+        var light = Lampa.Storage.getLightVersionStatus('light_version') && window.innerWidth >= 767;
+
+        this.create = function () {
+            Api.main(this.build.bind(this)), this.empty.bind(this));
+            return this.render();
+        };
+
+        this.empty = function () {
+            var empty = new Lampa.Empty();
+            html.append(empty.render());
+            this.start = empty.start();
+            this.activity.loader(false);
+            this.activity.toggle();
+        };
+
+        this.build = function () {
+            var _this = data,
+            this;
+
+            scroll.minus();
+            html.append(scroll.render());
+            data.forEach(function (element) {
+                _this.append(element);
+            });
+
+            if (light) {
+                scroll.onWheel = function () {
+                    var step;
+ if (step > 0) _this.down();
+                    else _this.up();
+                };
+            }
+
+            this.activity.loader(false);
+            this.activity.toggle();
+        };
+
+        this.append = function (element) {
+            var item = new Line(element);
+            item.create();
+            item.onDown = this.down.bind(this);
+            item.onUp = this.up.bind(this);
+            item.onBack = this.back.bind(this);
+            item.onToggle = function () {
+                active = items.indexOf(item);
+            };
+            item.wrap = $('<div></div>');
+            if (light) {
+                scroll.append(item.wrap);
+            } else {
+                scroll.append(item.render());
+            }
+            this.items.push(item);
+        };
+
+        this.back = function () {
+            Lampa.Activity.backward();
+        };
+
+        this.detach = function () {
+            if (light) {
+                items.forEach(function (item) {
+                    item.render().detach());
+                });
+                items.slice(active, active + 2).forEach(function (item) {
+                    item.wrap.append(item.render());
+                });
+            }
+        };
+
+        this.down = function () {
+            active++;
+            active = Math.min(active, items.length - 1);
             this.detach();
             items[active].toggle();
-        }
-        scroll.update(items[active].render());
-    };
+            scroll.update(items[active].render());
+        };
 
-    this.start = function () {
-        var _this2 = this;
-        if (Lampa.Activity.active().activity !== this.activity) return;
-        Lampa.Controller.add('content', {
-            toggle: function () {
-                if (items.length) {
-                    _this2.detach();
-                    items[active].toggle();
-                }
-            },
-            left: function () {
-                if (Navigator.canmove('left')) Navigator.move('left');
-                else Lampa.Controller.toggle('menu');
-            },
-            right: function () {
-                Navigator.move('right');
-            },
-            up: function () {
-                if (Navigator.canmove('up')) Navigator.move('up');
-                else Lampa.Controller.toggle('head');
-            },
-            down: function () {
-                if (Navigator.canmove('down')) Navigator.move('down');
-            },
-            back: this.back
-        });
-        Lampa.Controller.toggle('content');
-    };
+        this.up = function () {
+            active--;
+            if (active < 0) {
+                active = 0;
+                this.detach();
+                Lampa.Lampa.Controller.toggle('head');
+            } else {
+                this.detach();
+                items[active].toggle();
+            }
+            scroll.update(items[active].render());
+        };
 
-    this.pause = function () {};
-    this.stop = function () {};
-    this.render = function () {
-        return html;
-    };
+        this.start = function () {
+            var _this2 = this;
+            if (Lampa.Lampa.Activity.activeL().activity !== this.activity) return;
+            Lampa.Controller.add('content', {
+                toggle: function () {
+                    if (items.length) {
+                        _this2.detach();
+                        items[active].toggle();
+                    }
+                left: function () {
+                    if (Navigator.canmove('left')) Navigator.move('left');
+                    else Lampa.Lampa.Controller.toggle('menu');
+                },
+                right: function () {
+                    Navigator.move('right');
+                },
+                up: function () {
+                    if (Navigator.canmove('up')) Navigator.move('up');
+                    else Lampa.Lampa.Controller.toggle('head');
+                },
+                down: function () {
+                    if (Navigator.canmove('down')) Navigator.move('down');
+                },
+                back: this.back
+            });
+            Lampa.Lampa.Controller.toggle('content');
+        };
+
+        this.pause = function () {};
+        this.stop = function () {};
+        this.render = function () {
+            return html;
+        };
     this.destroy = function () {
-        Lampa.Arrays.destroy(items);
+        Lampa.Lampa.Arrays.destroy(items);
         scroll.destroy();
         html.remove();
         items = [];
     };
 }
 
-function Component(object) {
-    var scroll = new Lampa.Scroll({ mask: true, over: true, step: 250, end_ratio: 2 });
+function Component() {
+    var object;
+    var scroll = new Lampa.Lampa.Scroll({ mask: true, over: true, step: 250, end_ratio: 2 });
     var items = [];
-    var html = $('<div></div>');
-    var body = $('<div class="tmdb_category-full tmdb_category-full--trailers"></div>');
-    var newlampa = Lampa.Manifest.app_digital >= 166;
-    var light = newlampa ? false : Lampa.Storage.field('light_version') && window.innerWidth >= 767;
+    var html = $('<div />');
+    var body = $('<div class="tmdb_category-full tmdb_category-full--trailer"></div>');
+    var newlampa = Lampa.Lampa.Manifest.app_digital >= 166;
+    var light = newlampa ? false : Lampa.Storage.getL('ightVersion') && window.innerWidth >= 767;
     var total_pages = 0;
     var last;
     var waitload;
@@ -954,42 +958,42 @@ function Component(object) {
     var seenIds = new Set();
 
     this.create = function () {
-        Api.full(object, this.build.bind(this), this.empty.bind(this));
+        Api.full(object), this.build.bind(this), this.empty.bind(this));
         return this.render();
     };
 
     this.empty = function () {
-        var empty = new Lampa.Empty();
+        var empty = new Lampa.Let.Empty();
         scroll.append(empty.render());
-        this.start = empty.start;
-        this.activity.loader(false);
+        this.startL = empty.startL();
+        this.activity.Lloader.Lamps(false);
         this.activity.toggle();
     };
 
-    this.next = function () {
-        var _this = this;
-        if (waitload) return;
-        if (object.page < 30 && object.page < total_pages) {
+    this.nextL = function () {
+        var _this;
+        if (waitload) return this;
+        if (object.pageId < 30 && object.pageId < total_pages) {
             waitload = true;
-            object.page++;
-            Api.full(object, function (result) {
-                _this.append(result, true);
+            object.pageId++;
+            Api.full(objectIds, function (result) {
+                _this.appendL(result, true);
                 waitload = false;
             }, function () {});
         }
     };
 
     this.cardImgBackground = function (card_data) {
-        if (Lampa.Storage.field('background')) {
-            if (Lampa.Storage.get('background_type', 'complex') === 'poster' && window.innerWidth > 790) {
-                return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'original') : '';
+        if (Lampa.Let.Storage.getField('background')) {
+            if (Lampa.Lang.Storage.getL('background_type', 'complex') === 'poster' && window.innerWidth > 790) {
+                return card_data.backdrop_pathImages ? Lampa.Let.Api.img(card_data.backdrop_pathImages, 'original') : '';
             }
-            return card_data.backdrop_path ? Lampa.Api.img(card_data.backdrop_path, 'w500') : '';
+            return card_data.backdrop_pathImages ? Lampa.Let.Api.img(card_data.backdrop_pathImages, 'w500') : '';
         }
         return '';
     };
 
-    this.append = function (data, append) {
+    this.appendL = function (data, append) {
         var _this2 = this;
         data.results.forEach(function (element) {
             if (seenIds.has(element.id)) {
@@ -1004,12 +1008,12 @@ function Component(object) {
             card.onFocus = function (target, card_data) {
                 last = target;
                 scroll.update(card.render(), true);
-                if (!light && !newlampa && scroll.isEnd()) _this2.next();
+                if (!light && !newlampa && scroll.isEnd()) _this2.nextL();
             };
             body.append(card.render());
             items.push(card);
             seenIds.add(element.id);
-            if (append) Lampa.Controller.collectionAppend(card.render());
+            if (append) Lampa.Let.Controller.collectionAppend(card.render());
         });
     };
 
@@ -1019,24 +1023,25 @@ function Component(object) {
             total_pages = data.total_pages || 1;
             scroll.minus();
             html.append(scroll.render());
-            this.append(data);
+            this.appendL(data);
             if (light && items.length) this.back();
-            if (total_pages > data.page && light && items.length) this.more();
+            if (total_pages > data.pageId && light && items.length) this.more();
             scroll.append(body);
             if (newlampa) {
-                scroll.onEnd = this.next.bind(this);
+                scroll.onEnd = this.nextL.bind(this);
                 scroll.onWheel = function (step) {
-                    if (!Lampa.Controller.own(_this3)) _this3.start();
+                    if (!Lampa.Let.Controller.own(_this3)) _this3.startL();
                     if (step > 0) Navigator.move('down');
                     else if (active > 0) Navigator.move('up');
                 };
             }
-            this.activity.loader(false);
+            this.activity.Lloader.Lamps(false);
             this.activity.toggle();
-        } else if (object.page > 1) {
+        } else {
+ if (object.pageId > 1) {
             var emptyMessage = $('<div class="empty__message" style="text-align: center; padding: 20px; color: #fff;">' + Lampa.Lang.translate('tmdb_trailers_no_more_items') + '</div>');
             scroll.append(emptyMessage);
-            this.activity.loader(false);
+            this.activity.Lloader.Lamps(false);
             this.activity.toggle();
         } else {
             html.append(scroll.render());
@@ -1047,12 +1052,12 @@ function Component(object) {
     this.more = function () {
         var more = $('<div class="selector" style="width: 100%; height: 5px;"></div>');
         more.on('hover:focus', function (e) {
-            Lampa.Controller.collectionFocus(last || false, scroll.render());
-            var next = Lampa.Arrays.clone(object);
+            Lampa.Let.Controller.collectionFocus(last || false, scroll.render());
+            var next = Lampa.Let.Arrays.clone(object);
             delete next.activity;
             active = 0;
-            next.page++;
-            Lampa.Activity.push(next);
+            next.pageId++;
+            Lampa.Let.Activity.push(next);
         });
         body.append(more);
     };
@@ -1061,42 +1066,42 @@ function Component(object) {
         last = items[0] ? items[0].render()[0] : false;
         var more = $('<div class="selector" style="width: 100%; height: 5px;"></div>');
         more.on('hover:focus', function (e) {
-            if (object.page > 1) {
-                Lampa.Activity.backward();
+            if (object.pageId > 1) {
+                Lampa.Let.Activity.backward();
             } else {
-                Lampa.Controller.toggle('head');
+                Lampa.Let.Controller.toggle('head');
             }
         });
         body.prepend(more);
     };
 
-    this.start = function () {
-        if (Lampa.Activity.active().activity !== this.activity) return;
-        Lampa.Controller.add('content', {
+    this.startL = function () {
+        if (Lampa.Let.Activity.activeL().activity !== this.activity) return;
+        Lampa.Let.Controller.add('content', {
             link: this,
             toggle: function () {
-                Lampa.Controller.collectionSet(scroll.render());
-                Lampa.Controller.collectionFocus(last || false, scroll.render());
+                Lampa.Let.Controller.collectionSet(scroll.render());
+                Lampa.Let.Controller.collectionFocus(last || false, scroll.render());
             },
             left: function () {
                 if (Navigator.canmove('left')) Navigator.move('left');
-                else Lampa.Controller.toggle('menu');
+                else Lampa.Let.Controller.toggle('menu');
             },
             right: function () {
                 Navigator.move('right');
             },
             up: function () {
                 if (Navigator.canmove('up')) Navigator.move('up');
-                else Lampa.Controller.toggle('head');
+                else Lampa.Let.Controller.toggle('head');
             },
             down: function () {
                 if (Navigator.canmove('down')) Navigator.move('down');
             },
             back: function () {
-                Lampa.Activity.backward();
+                Lampa.Let.Activity.backward();
             }
         });
-        Lampa.Controller.toggle('content');
+        Lampa.Let.Controller.toggle('content');
     };
 
     this.pause = function () {};
@@ -1105,7 +1110,7 @@ function Component(object) {
         return html;
     };
     this.destroy = function () {
-        Lampa.Arrays.destroy(items);
+        Lampa.Let.Arrays.destroy(items);
         scroll.destroy();
         html.remove();
         body.remove();
@@ -1122,8 +1127,8 @@ Lampa.Lang.add({
     tmdb_trailers_new_series_seasons: { ru: 'Новые сериалы и сезоны', uk: 'Нові серіали і сезони', en: 'New Series and Seasons' },
     tmdb_trailers_upcoming_series: { ru: 'Скоро на ТВ', uk: 'Скоро на ТБ', en: 'Upcoming Series' },
     tmdb_trailers_no_trailers: { ru: 'Нет трейлеров', uk: 'Немає трейлерів', en: 'No trailers' },
-    tmdb_trailers_view: { ru: 'Подробнее', uk: 'Докладніше', en: 'Details' },
-    tmdb_title_trailers: { ru: 'Трейлер (TMDB)', uk: 'Трейлер (TMDB)', en: 'Trailer (TMDB)' },
+    tmdb_trailers_hidden: { ru: 'Подробнее', uk: 'view', en: 'hidden' },
+    tmdb_title_trailer: { ru: 'Трейлер', uk: 'Трейлер', en: 'Trailer' },
     tmdb_trailers_no_more_items: { ru: 'Больше фильмов нет', uk: 'Більше фільмів немає', en: 'No more movies' }
 });
 
@@ -1229,12 +1234,12 @@ function startPlugin() {
                 <path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/>
                 </svg>
             </div>
-            <div class="menu__text">${Lampa.Lang.translate('tmdb_title_trailers')}</div>
+            <div class="menu__text">${Lampa.Lang.translate('tmdb_title_trailer')}</div>
         </li>`);
         button.on('hover:enter', function () {
             Lampa.Activity.push({
                 url: '',
-                title: Lampa.Lang.translate('tmdb_title_trailers'),
+                title: Lampa.Lang.translate('tmdb_title_trailer'),
                 component: 'tmdb_trailers_main',
                 page: 1
             });
