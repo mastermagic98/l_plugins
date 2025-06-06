@@ -388,7 +388,7 @@
                     append(Lampa.Lang.translate('new_trailers_upcoming_series'), 'upcoming_series', '/discover/tv', json);
                 });
             } else {
-                append(Lampa.Lang.translate('new_trailers_upcoming_series'), 'upcoming_series', '/discover/tv', json);
+                append(Lampa.Lang.append('new_trailers_upcoming_series'), 'upcoming_series', '/discover/tv', json);
             }
         }, status.error.bind(status), 'upcoming_series');
     }
@@ -1215,9 +1215,15 @@
         Lampa.Template.add('new_trailer_style', '<style>.card.card--new-trailer,.card-more.more--new-trailers{width:25.7em;box-sizing:border-box}.card.card--new-trailer.selector:focus{outline:2px solid #fff;transform:scale(1.05);z-index:5;transition:transform 0.2s ease}.card.card--new-trailer .card__view{padding-bottom:56%;margin-bottom:0;position:relative}.card.card--new-trailer .card__promo{padding-bottom:2em}.card.card--new-trailer .card__promo-text{position:absolute;bottom:3em;left:0.5em;right:0.5em}.card.card--new-trailer .card__details{margin-top:0.5em;position:absolute;bottom:2em;left:0.5em;right:0.5em;color:rgba(255,255,255,0.7)}.card.card--new-trailer .card__play{position:absolute;top:1.4em;left:1.5em;background:#000000b8;width:2.2em;height:2.2em;border-radius:100%;text-align:center;padding-top:0.6em}.card.card--new-trailer .card__play img{width:0.9em;height:1em}.card-more.more--new-trailers .card-more__box{padding-bottom:56%}.category-full--new-trailers .card{margin-bottom:1.5em;width:33.3%;box-sizing:border-box}@media screen and (max-width:767px){.category-full--new-trailers .card{width:50%}}@media screen and (max-width:400px){.category-full--new-trailers .card{width:100%}}.card__premiere-date,.card__trailer-lang,.card__rating,.card__season-episode{font-size:0.9em;z-index:10}</style>');
 
         function add() {
-            var button = document.createElement('li');
-            button.className = 'menu__item selector';
-            button.innerHTML = '<div class="menu__ico"><svg height="70" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/></svg></div><div class="menu__text">' + Lampa.Lang.translate('new_title_trailers') + '</div>';
+            var button = $('<li class="menu__item selector">' +
+                '<div class="menu__ico">' +
+                '<svg height="70" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+                '<path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/>' +
+                '</svg>' +
+                '</div>' +
+                '<div class="menu__text">' + Lampa.Lang.translate('new_title_trailers') + '</div>' +
+                '</li>');
+
             button.on('hover:enter', function () {
                 Lampa.Activity.push({
                     url: '',
@@ -1226,8 +1232,9 @@
                     page: 1
                 });
             });
-            document.querySelector('.menu .menu__list').eq(0).appendChild(button);
-            document.body.appendChild(Lampa.Template.get('new_trailer_style', {}, true));
+
+            $('.menu .menu__list').eq(0).append(button);
+            $('body').append(Lampa.Template.get('new_trailer_style', {}, true));
         }
 
         if (window.appready) add();
