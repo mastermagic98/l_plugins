@@ -26,7 +26,7 @@
     }
 
     function filterTMDBContentByGenre(content, category) {
-        const allowedGenreIds = [28, 12, 16, 35, 80, 18, 10751, 14, 36, 27, 10402, 9648, 10749, 878, 53, 10752, 37];
+        const allowedGenreIds = [28, 12, 16, 35, 80, 18, 10751, 14, 36, 27, 10402, 9648, '10749', 878, 53, 10752, 37];
         const disallowedGenreIds = [10763, 10767, 10770, 10764, 10766];
         const genreIds = content.genre_ids || [];
         const hasAllowedGenre = genreIds.some(id => allowedGenreIds.includes(id));
@@ -1073,7 +1073,7 @@
                 },
                 left: function () {
                     if (Navigator.canmove('left')) Navigator.move('left');
-                    else Lampa.Limit.toggle('menu');
+                    else Lampa.Controller.toggle('menu');
                 },
                 right: function () {
                     Navigator.move('right');
@@ -1112,16 +1112,16 @@
         trailers_in_theaters: { ru: 'В кинотеатрах', uk: 'У кінотеатрах', en: 'In Theaters' },
         trailers_upcoming_movies: { ru: 'Скоро в кино', uk: 'Скоро в кіно', en: 'Upcoming Movies' },
         trailers_popular_series: { ru: 'Популярные сериалы', uk: 'Популярні серіали', en: 'Popular Series' },
-        trailers_new_series_seasons: { ru: 'Новы сезоны', uk: 'Нові серіали та сезони', en: 'New Series and Seasons' },
+        trailers_new_series_seasons: { ru: 'Новые сериалы и сезоны', uk: 'Нові серіали і сезони', en: 'New Series and Seasons' },
         trailers_upcoming_series: { ru: 'Скоро на ТВ', uk: 'Скоро на ТБ', en: 'Upcoming Series' },
         trailers_no_trailers: { ru: 'Нет трейлеров', uk: 'Немає трейлерів', en: 'No trailers' },
         trailers_view: { ru: 'Подробнее', uk: 'Докладніше', en: 'Details' },
         title_trailers: { ru: 'Трейлеры', uk: 'Трейлери', en: 'Trailers' },
-        trailers_no_more_items: { ru: 'Больше фильмов нет', uk: 'Більше фільмів немає', en: 'No more movies' },
+        trailers_no_more_items: { ru: 'Больше фильмов нет', uk: 'Більше фільмів немає', en: 'No more movies' }
     });
 
     function startPlugin() {
-        window.plugin_trailer_ready = true;
+        window.plugin_trailers_ready = true;
         Lampa.Component.add('trailers_main', Component$1);
         Lampa.Component.add('trailers_full', Component);
         Lampa.Template.add('trailer', `
@@ -1145,14 +1145,30 @@
             .card.card--trailer,
             .card-more.more--trailers {
                 width: 25.7em;
+                box-sizing: border-box;
             }
             .card.card--trailer .card__view {
                 padding-bottom: 56%;
                 margin-bottom: 0;
                 position: relative;
+                overflow: hidden;
+            }
+            .card.card--trailer .card__promo {
+                padding-bottom: 2em; /* Додаємо відступ знизу, щоб уникнути перекриття з нижніми елементами */
+            }
+            .card.card--trailer .card__promo-text {
+                position: absolute;
+                bottom: 3em; /* Піднімаємо текст вище */
+                left: 0.5em;
+                right: 0.5em;
             }
             .card.card--trailer .card__details {
-                margin-top: 0.8em;
+                margin-top: 0.5em; /* Зменшуємо відступ зверху для оригінальної назви */
+                position: absolute;
+                bottom: 2em; /* Піднімаємо оригінальну назву */
+                left: 0.5em;
+                right: 0.5em;
+                color: rgba(255, 255, 255, 0.7);
             }
             .card.card--trailer .card__play {
                 position: absolute;
@@ -1169,12 +1185,13 @@
                 width: 0.9em;
                 height: 1em;
             }
-            .card-more--trailers .card-more__box {
+            .card-more.more--trailers .card-more__box {
                 padding-bottom: 56%;
             }
             .category-full--trailers .card {
                 margin-bottom: 1.5em;
-                width: 33.3%
+                width: 33.3%;
+                box-sizing: border-box;
             }
             @media screen and (max-width: 767px) {
                 .category-full--trailers .card {
