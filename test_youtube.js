@@ -388,7 +388,7 @@
                     append(Lampa.Lang.translate('new_trailers_upcoming_series'), 'upcoming_series', '/discover/tv', json);
                 });
             } else {
-                append(Lampa.Lang.append('new_trailers_upcoming_series'), 'upcoming_series', '/discover/tv', json);
+                append(Lampa.Lang.translate('new_trailers_upcoming_series'), 'upcoming_series', '/discover/tv', json);
             }
         }, status.error.bind(status), 'upcoming_series');
     }
@@ -886,7 +886,7 @@
 
         this.empty = function () {
             var empty = new Lampa.Empty();
-            this.html.appendChild(empty.render());
+            this.html.appendChild(empty.render().get(0));
             this.start = empty.start;
             this.activity.loader(false);
             this.activity.toggle();
@@ -895,7 +895,7 @@
         this.build = function (data) {
             var that = this;
             this.scroll.minus();
-            this.html.appendChild(this.scroll.render());
+            this.html.appendChild(this.scroll.render().get(0));
             for (var i = 0; i < data.length; i++) {
                 this.append(data[i]);
             }
@@ -939,7 +939,7 @@
                     this.items[i].render().detach();
                 }
                 for (var j = this.active; j < this.active + 2 && j < this.items.length; j++) {
-                    this.items[j].wrap.appendChild(this.items[j].render());
+                    this.items[j].wrap.appendChild(this.items[j].render().get(0));
                 }
             }
         };
@@ -1076,7 +1076,7 @@
                     that.scroll.update(card.render(), true);
                     if (!that.light && !that.newlampa && that.scroll.isEnd()) that.next();
                 };
-                this.body.appendChild(card.render());
+                this.body.appendChild(card.render().get(0));
                 this.items.push(card);
                 this.seenIds.add(element.id);
                 if (append) Lampa.Controller.collectionAppend(card.render());
@@ -1088,7 +1088,7 @@
             if (data.results && data.results.length) {
                 this.total_pages = data.total_pages || 1;
                 this.scroll.minus();
-                this.html.appendChild(this.scroll.render());
+                this.html.appendChild(this.scroll.render().get(0));
                 this.append(data);
                 if (this.light && this.items.length) this.back();
                 if (this.total_pages > data.page && this.light && this.items.length) this.more();
@@ -1112,7 +1112,7 @@
                 this.activity.loader(false);
                 this.activity.toggle();
             } else {
-                this.html.appendChild(this.scroll.render());
+                this.html.appendChild(this.scroll.render().get(0));
                 this.empty();
             }
         };
