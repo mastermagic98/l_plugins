@@ -27,7 +27,7 @@
 
     function filterTMDBContentByGenre(content, category) {
         const allowedGenreIds = [28, 12, 16, 35, 80, 18, 10751, 14, 36, 27, 10402, 9648, '10749', 878, 53, 10752, 37];
-        const disallowedGenreIds = [10763, 10767, 10770, 10764, 10766];
+        const disallowedGenreIds = [10763, 10767, '10770', 10764, 10766];
         const genreIds = content.genre_ids || [];
         const hasAllowedGenre = genreIds.some(id => allowedGenreIds.includes(id));
         const hasDisallowedGenre = genreIds.some(id => disallowedGenreIds.includes(id));
@@ -1147,25 +1147,31 @@
                 width: 25.7em;
                 box-sizing: border-box;
             }
+            .card.card--trailer.selector:focus {
+                outline: 2px solid #fff; /* Відновлюємо стандартний фокус Lampa */
+                transform: scale(1.05); /* Легке масштабування при фокусі */
+                z-index: 5; /* Піднімаємо над іншими елементами */
+                transition: transform 0.2s ease; /* Додаємо плавну анімацію */
+            }
             .card.card--trailer .card__view {
                 padding-bottom: 56%;
                 margin-bottom: 0;
                 position: relative;
-                overflow: hidden;
+                /* Прибираємо overflow: hidden, щоб не обрізати ефект фокусу */
             }
             .card.card--trailer .card__promo {
-                padding-bottom: 2em; /* Додаємо відступ знизу, щоб уникнути перекриття з нижніми елементами */
+                padding-bottom: 2em; /* Відступ знизу для уникнення перекриття */
             }
             .card.card--trailer .card__promo-text {
                 position: absolute;
-                bottom: 3em; /* Піднімаємо текст вище */
+                bottom: 3em; /* Назва вище */
                 left: 0.5em;
                 right: 0.5em;
             }
             .card.card--trailer .card__details {
-                margin-top: 0.5em; /* Зменшуємо відступ зверху для оригінальної назви */
+                margin-top: 0.5em;
                 position: absolute;
-                bottom: 2em; /* Піднімаємо оригінальну назву */
+                bottom: 2em; /* Оригінальна назва вище */
                 left: 0.5em;
                 right: 0.5em;
                 color: rgba(255, 255, 255, 0.7);
