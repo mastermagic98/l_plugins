@@ -82,24 +82,24 @@
                 var futureSeasons = seasons.filter(season => season.air_date && new Date(season.air_date) > new Date() && season.air_date >= startDate && season.air_date <= endDate);
                 var nextSeason = futureSeasons.length ? futureSeasons.reduce((earliest, current) => new Date(earliest.air_date) < new Date(current.air_date) ? earliest : current) : null;
                 var airDate;
-                var isValid;
+                var isValid = false;
                 var seasonNumber = 0;
                 var episodeNumber = 1; // Для "Скоро на ТБ" завжди перша серія
                 if (nextSeason) {
                     airDate = nextSeason.air_date;
                     isValid = true;
                     seasonNumber = nextSeason.season_number;
+                    console.log('Series ' + seriesId + ': Found future season, air_date:', airDate, 'season_number:', seasonNumber);
                 } else if (data.next_episode_to_air && data.next_episode_to_air.air_date) {
                     var nextEpisodeDate = data.next_episode_to_air.air_date;
                     isValid = nextEpisodeDate >= startDate && nextEpisodeDate <= endDate;
                     airDate = nextEpisodeDate;
                     seasonNumber = data.next_episode_to_air.season_number;
+                    console.log('Series ' + seriesId + ': Found next episode, air_date:', airDate, 'isValid:', isValid, 'season_number:', seasonNumber);
                 } else {
-                    airDate = data.first_air_date || 'N/A';
-                    isValid = futureSeasons.length > 0 || (data.first_air_date && new Date(data.first_air_date) >= new Date(startDate) && new Date(data.first_air_date) <= new Date(endDate));
-                    seasonNumber = data.number_of_seasons || 0;
+                    airDate = 'N/A';
+                    console.log('Series ' + seriesId + ': No future seasons or next episode found within range', startDate, 'to', endDate);
                 }
-                console.log('Series ' + seriesId + ' next_season_air_date:', airDate, 'is within range', startDate, 'to', endDate, ':', isValid, 'season_number:', seasonNumber, 'episode_number:', episodeNumber);
                 callback(isValid, airDate, seasonNumber, episodeNumber);
             } else {
                 var seasons = data.seasons || [];
@@ -167,6 +167,9 @@
                                         series.season_number = seasonNumber;
                                         series.episode_number = episodeNumber;
                                         validResults.push(series);
+                                        console.log('Added series to upcoming_series:', series.name, 'air_date:', airDate, 'season:', seasonNumber, 'episode:', episodeNumber);
+                                    } else {
+                                        console.log('Filtered out series:', series.name, 'air_date:', airDate, 'reason: Not within 180 days or no upcoming episodes');
                                     }
                                     resolveDetail();
                                 });
@@ -296,7 +299,9 @@
             language: lang,
             page: 1,
             include_adult: false,
-            sort_by: 'popularity.desc'
+            sort_by: 'popularity.desc',
+            'air_date.gte': todayStr, // Додаємо фільтрацію за датою на рівні запиту
+            'air_date.lte': threeMonthsLaterStr
         }, minItems, function (json) {
             var today = new Date();
             var todayStr = today.toISOString().split('T')[0];
@@ -314,6 +319,9 @@
                                 series.season_number = seasonNumber;
                                 series.episode_number = episodeNumber;
                                 validResults.push(series);
+                                console.log('Main: Added to upcoming_series:', series.name, 'air_date:', airDate, 'season:', seasonNumber, 'episode:', episodeNumber);
+                            } else {
+                                console.log('Main: Filtered out from upcoming_series:', series.name, 'air_date:', airDate, 'reason: Not within 180 days');
                             }
                             resolveDetail();
                         });
@@ -377,15 +385,11 @@
                     'air_date.lte': todayStr
                 });
             } else if (params.type === 'upcoming_series') {
-                var today = new Date();
-                var todayStr = today.toISOString().split('T')[0];
-                var threeMonthsLater = new Date();
-                threeMonthsLater.setDate(today.getDate() + 180);
-                var threeMonthsLaterStr = threeMonthsLater.toISOString().split('T')[0];
-
                 requestParams = Object.assign(requestParams, {
                     include_adult: false,
-                    sort_by: 'popularity.desc'
+                    sort_by: 'popularity.desc',
+                    'air_date.gte': todayStr, // Додаємо фільтрацію за датою
+                    'air_date.lte': threeMonthsLaterStr
                 });
             }
         }
