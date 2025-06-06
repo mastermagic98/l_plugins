@@ -223,9 +223,9 @@
         var threeMonthsLater = new Date();
         threeMonthsLater.setDate(today.getDate() + 180);
         var threeMonthsLaterStr = threeMonthsLater.toISOString().split('T')[0];
-        var sixMonthsLater = new Date();
-        sixMonthsLater.setMonth(today.getMonth() + 6);
-        var sixMonthsLaterStr = sixMonthsLater.toISOString().split('T')[0];
+        var twelveMonthsLater = new Date();
+        twelveMonthsLater.setMonth(today.getMonth() + 12);
+        var twelveMonthsLaterStr = twelveMonthsLater.toISOString().split('T')[0];
 
         var lang = getInterfaceLanguage();
 
@@ -252,7 +252,7 @@
             include_adult: false,
             sort_by: 'popularity.desc',
             'primary_release_date.gte': todayStr,
-            'primary_release_date.lte': sixMonthsLaterStr
+            'primary_release_date.lte': twelveMonthsLaterStr
         }, minItems, function (json) {
             append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/movie/upcoming', json);
         }, status.error.bind(status), 'upcoming_movies');
@@ -300,9 +300,9 @@
             var threeMonthsLater = new Date();
             threeMonthsLater.setDate(today.getDate() + 180);
             var threeMonthsLaterStr = threeMonthsLater.toISOString().split('T')[0];
-            var sixMonthsLater = new Date();
-            sixMonthsLater.setMonth(today.getMonth() + 6);
-            var sixMonthsLaterStr = sixMonthsLater.toISOString().split('T')[0];
+            var twelveMonthsLater = new Date();
+            twelveMonthsLater.setMonth(today.getMonth() + 12);
+            var twelveMonthsLaterStr = twelveMonthsLater.toISOString().split('T')[0];
 
             if (params.type === 'in_theaters') {
                 requestParams = Object.assign(requestParams, {
@@ -318,7 +318,7 @@
                     include_adult: false,
                     sort_by: 'popularity.desc',
                     'primary_release_date.gte': todayStr,
-                    'primary_release_date.lte': sixMonthsLaterStr
+                    'primary_release_date.lte': twelveMonthsLaterStr
                 });
             } else if (params.type === 'new_series_seasons') {
                 requestParams = Object.assign(requestParams, {
