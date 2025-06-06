@@ -1,14 +1,6 @@
 (function () {
     'use strict';
-//остаточний варіант
-/* Плагін trailers_plugin.js для платформи Lampa додає розділ із трейлерами, інтегруючись із API The Movie Database (TMDB). Він:
 
-    Завантажує дані: Використовує TMDB API для отримання інформації про фільми та серіали в категоріях "Популярні фільми", "У прокаті", "Скоро в кіно", "Популярні серіали", "Нові серіали та сезони", "Скоро на ТБ".
-    Фільтрує контент: Виключає небажані жанри та ключові слова, перевіряє дати релізу та рейтинги.
-    Відображає картки: Створює картки з трейлерами через об’єкт Trailer, показуючи назву, дату прем’єри, рейтинг, мову трейлера та, для серіалів, номер сезону/епізоду.
-    Інтерактивність: Дозволяє переглядати трейлери на YouTube, гортати списки, переходити до детальної інформації.
-    Адаптивність: Підлаштовується під мову користувача та розмір екрана, використовуючи шаблони Lampa.*/
-    
     var network = new Lampa.Reguest();
     var base_url = 'https://api.themoviedb.org/3';
 
@@ -266,7 +258,7 @@
         var lang = getInterfaceLanguage();
 
         get('/trending/movie/week', { language: lang, page: 1 }, minItems, function (json) {
-            append(Lampa.Lang.translate('trailers_popular_movies'), 'popular_movies', '/trending/movie/week', json);
+            append(Lampa.Lang.translate('new_trailers_popular_movies'), 'popular_movies', '/trending/movie/week', json);
         }, status.error.bind(status), 'popular_movies');
 
         get('/discover/movie', {
@@ -279,7 +271,7 @@
             'vote_count.gte': 30,
             region: 'UA'
         }, minItems, function (json) {
-            append(Lampa.Lang.translate('trailers_in_theaters'), 'in_theaters', '/discover/movie', json);
+            append(Lampa.Lang.translate('new_trailers_in_theaters'), 'in_theaters', '/discover/movie', json);
         }, status.error.bind(status), 'in_theaters');
 
         get('/movie/upcoming', {
@@ -290,11 +282,11 @@
             'primary_release_date.gte': todayStr,
             'primary_release_date.lte': twelveMonthsLaterStr
         }, minItems, function (json) {
-            append(Lampa.Lang.translate('trailers_upcoming_movies'), 'upcoming_movies', '/movie/upcoming', json);
+            append(Lampa.Lang.translate('new_trailers_upcoming_movies'), 'upcoming_movies', '/movie/upcoming', json);
         }, status.error.bind(status), 'upcoming_movies');
 
         get('/trending/tv/week', { language: lang, page: 1 }, minItems, function (json) {
-            append(Lampa.Lang.translate('trailers_popular_series'), 'popular_series', '/trending/tv/week', json);
+            append(Lampa.Lang.translate('new_trailers_popular_series'), 'popular_series', '/trending/tv/week', json);
         }, status.error.bind(status), 'popular_series');
 
         get('/discover/tv', {
@@ -305,7 +297,7 @@
             'air_date.gte': sixMonthsAgoStr,
             'air_date.lte': todayStr
         }, minItems, function (json) {
-            append(Lampa.Lang.translate('trailers_new_series_seasons'), 'new_series_seasons', '/discover/tv', json);
+            append(Lampa.Lang.translate('new_trailers_new_series_seasons'), 'new_series_seasons', '/discover/tv', json);
         }, status.error.bind(status), 'new_series_seasons');
 
         get('/discover/tv', {
@@ -346,10 +338,10 @@
                         return b.popularity - a.popularity;
                     });
                     json.results = validResults.slice(0, minItems);
-                    append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/discover/tv', json);
+                    append(Lampa.Lang.translate('new_trailers_upcoming_series'), 'upcoming_series', '/discover/tv', json);
                 });
             } else {
-                append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/discover/tv', json);
+                append(Lampa.Lang.translate('new_trailers_upcoming_series'), 'upcoming_series', '/discover/tv', json);
             }
         }, status.error.bind(status), 'upcoming_series');
     }
@@ -433,7 +425,7 @@
         network.clear();
     }
 
-    var Api = {
+    var NewApi = {
         get: get,
         main: main,
         full: full,
@@ -441,7 +433,7 @@
         clear: clear
     };
 
-    function Trailer(data, params) {
+    function NewTrailer(data, params) {
         this.build = function () {
             var lang = getShortLanguageCode();
             var title = data.title || data.name;
@@ -452,7 +444,7 @@
 
             if (!hasTranslation) return;
 
-            this.card = Lampa.Template.get('trailer', {});
+            this.card = Lampa.Template.get('new_trailer', {});
             this.img = this.card.find('img')[0];
             this.is_youtube = params.type === 'rating';
 
@@ -465,7 +457,7 @@
                 this.card.find('.card__details').remove();
             }
 
-            var premiereDate = data.release_date || data.first_air_date || 'N/A'; // Повертаємо логіку для початкової дати
+            var premiereDate = data.release_date || data.first_air_date || 'N/A';
             var formattedDate = premiereDate !== 'N/A' ? premiereDate.split('-').reverse().join('-') : 'N/A';
             this.card.find('.card__view').append(`
                 <div class="card__premiere-date" style="position: absolute; top: 0.5em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${formattedDate}</div>
@@ -480,13 +472,11 @@
                 <div class="card__rating" style="position: absolute; bottom: 0.5em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${rating}</div>
             `);
 
-            // Додаємо інформацію про сезон і серію лише для серіалів
             if (data.name && !this.is_youtube) {
                 this.card.find('.card__view').append(`
                     <div class="card__season-episode" style="position: absolute; bottom: 0.5em; left: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">—</div>
                 `);
 
-                // Якщо сезон і серія вже є в даних (для upcoming_series), використовуємо їх
                 if (params.type === 'upcoming_series' && data.season_number && data.episode_number) {
                     this.card.find('.card__season-episode').text(`S${data.season_number}E${data.episode_number}`);
                 }
@@ -512,9 +502,8 @@
                             this.card.find('.card__season-episode').text('—');
                         }
 
-                        // Оновлюємо дату прем'єри для серіалів
                         if (params.type === 'new_series_seasons' || params.type === 'upcoming_series') {
-                            premiereDate = airDate || 'N/A'; // Використовуємо тільки airDate, без fallback на first_air_date
+                            premiereDate = airDate || 'N/A';
                             formattedDate = premiereDate !== 'N/A' ? premiereDate.split('-').reverse().join('-') : 'N/A';
                             this.card.find('.card__premiere-date').text(formattedDate);
                             console.log('Updated premiere date for', data.name, 'to', formattedDate);
@@ -550,7 +539,7 @@
 
         this.updateTrailerLanguage = function () {
             var _this = this;
-            Api.videos(data, function (videos) {
+            NewApi.videos(data, function (videos) {
                 var lang = '—';
                 if (videos.results && videos.results.length) {
                     lang = videos.results[0].iso_639_1.toUpperCase();
@@ -589,27 +578,27 @@
                 if (_this2.is_youtube) {
                     _this2.play(data.id);
                 } else {
-                    Api.videos(data, function (videos) {
+                    NewApi.videos(data, function (videos) {
                         if (videos.results && videos.results.length) {
                             _this2.play(videos.results[0].key);
                         } else {
-                            Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
+                            Lampa.Noty.show(Lampa.Lang.translate('new_trailers_no_trailers'));
                         }
                     }, function () {
-                        Lampa.Noty.show(Lampa.Lang.translate('trailers_no_trailers'));
+                        Lampa.Noty.show(Lampa.Lang.translate('new_trailers_no_trailers'));
                     });
                 }
             }).on('hover:long', function () {
                 if (!_this2.is_youtube) {
-                    var items = [{ title: Lampa.Lang.translate('trailers_view'), view: true }];
+                    var items = [{ title: Lampa.Lang.translate('new_trailers_view'), view: true }];
                     Lampa.Loading.start(function () {
-                        Api.clear();
+                        NewApi.clear();
                         Lampa.Loading.stop();
                     });
-                    Api.videos(data, function (videos) {
+                    NewApi.videos(data, function (videos) {
                         Lampa.Loading.stop();
                         if (videos.results && videos.results.length) {
-                            items.push({ title: Lampa.Lang.translate('title_trailers'), separator: true });
+                            items.push({ title: Lampa.Lang.translate('new_title_trailers'), separator: true });
                             videos.results.forEach(function (video) {
                                 items.push({ title: video.name + ' (' + video.iso_639_1.toUpperCase() + ')', id: video.key });
                             });
@@ -681,7 +670,7 @@
         };
     }
 
-    function Line(data) {
+    function NewLine(data) {
         var content = Lampa.Template.get('items_line', { title: data.title });
         var body = content.find('.items-line__body');
         var scroll = new Lampa.Scroll({ horizontal: true, step: 600 });
@@ -717,7 +706,7 @@
 
         this.append = function (element) {
             var _this = this;
-            var card = new Trailer(element, { type: data.type });
+            var card = new NewTrailer(element, { type: data.type });
             card.create();
             if (!card.render()) return;
             card.visible();
@@ -732,11 +721,11 @@
         };
 
         this.more = function () {
-            more = Lampa.Template.get('more').addClass('more--trailers');
+            more = Lampa.Template.get('more').addClass('more--new-trailers');
             more.on('hover:enter', function () {
                 Lampa.Activity.push({
                     url: data.url,
-                    component: 'trailers_full',
+                    component: 'new_trailers_full',
                     type: data.type,
                     page: light ? 1 : 2
                 });
@@ -757,42 +746,42 @@
                     Lampa.Controller.collectionFocus(items.length ? last : false, scroll.render());
                 },
                 right: function () {
-                    console.log('Line: Right navigation, active: ' + active + ', items length: ' + items.length);
+                    console.log('NewLine: Right navigation, active: ' + active + ', items length: ' + items.length);
                     if (active < items.length - 1) {
                         active++;
                         Navigator.move('right');
                         scroll.update(items[active].render(), true);
-                        console.log('Line: Moved right to card, new active: ' + active);
+                        console.log('NewLine: Moved right to card, new active: ' + active);
                     } else if (active === items.length - 1) {
                         active = items.length;
                         scroll.update(more, true);
                         Lampa.Controller.collectionFocus(more[0], scroll.render());
-                        console.log('Line: Moved right to More, new active: ' + active);
+                        console.log('NewLine: Moved right to More, new active: ' + active);
                     } else {
                         active = 0;
                         scroll.update(items[active].render(), true);
                         Lampa.Controller.collectionFocus(items[active].render()[0], scroll.render());
-                        console.log('Line: Cycled right to first card, new active: ' + active);
+                        console.log('NewLine: Cycled right to first card, new active: ' + active);
                     }
                 },
                 left: function () {
-                    console.log('Line: Left navigation, active: ' + active);
+                    console.log('NewLine: Left navigation, active: ' + active);
                     if (active > 0) {
                         active--;
                         if (active === items.length) {
                             scroll.update(items[items.length - 1].render(), true);
                             Lampa.Controller.collectionFocus(items[items.length - 1].render()[0], scroll.render());
-                            console.log('Line: Moved left from More to last card, new active: ' + active);
+                            console.log('NewLine: Moved left from More to last card, new active: ' + active);
                         } else {
                             Navigator.move('left');
                             scroll.update(items[active].render(), true);
-                            console.log('Line: Moved left to card, new active: ' + active);
+                            console.log('NewLine: Moved left to card, new active: ' + active);
                         }
                     } else if (active === 0) {
                         active = items.length;
                         scroll.update(more, true);
                         Lampa.Controller.collectionFocus(more[0], scroll.render());
-                        console.log('Line: Cycled left to More, new active: ' + active);
+                        console.log('NewLine: Cycled left to More, new active: ' + active);
                     }
                 },
                 down: this.onDown,
@@ -816,7 +805,7 @@
         };
     }
 
-    function Component$1(object) {
+    function NewComponent$1(object) {
         var scroll = new Lampa.Scroll({ mask: true, over: true, scroll_by_item: true });
         var items = [];
         var html = $('<div></div>');
@@ -824,7 +813,7 @@
         var light = Lampa.Storage.field('light_version') && window.innerWidth >= 767;
 
         this.create = function () {
-            Api.main(this.build.bind(this), this.empty.bind(this));
+            NewApi.main(this.build.bind(this), this.empty.bind(this));
             return this.render();
         };
 
@@ -856,7 +845,7 @@
         };
 
         this.append = function (element) {
-            var item = new Line(element);
+            var item = new NewLine(element);
             item.create();
             item.onDown = this.down.bind(this);
             item.onUp = this.up.bind(this);
@@ -951,11 +940,11 @@
         };
     }
 
-    function Component(object) {
+    function NewComponent(object) {
         var scroll = new Lampa.Scroll({ mask: true, over: true, step: 250, end_ratio: 2 });
         var items = [];
         var html = $('<div></div>');
-        var body = $('<div class="category-full category-full--trailers"></div>');
+        var body = $('<div class="category-full category-full--new-trailers"></div>');
         var newlampa = Lampa.Manifest.app_digital >= 166;
         var light = newlampa ? false : Lampa.Storage.field('light_version') && window.innerWidth >= 767;
         var total_pages = 0;
@@ -965,7 +954,7 @@
         var seenIds = new Set();
 
         this.create = function () {
-            Api.full(object, this.build.bind(this), this.empty.bind(this));
+            NewApi.full(object, this.build.bind(this), this.empty.bind(this));
             return this.render();
         };
 
@@ -983,7 +972,7 @@
             if (object.page < 30 && object.page < total_pages) {
                 waitload = true;
                 object.page++;
-                Api.full(object, function (result) {
+                NewApi.full(object, function (result) {
                     _this.append(result, true);
                     waitload = false;
                 }, function () {});
@@ -1008,7 +997,7 @@
                     return;
                 }
 
-                var card = new Trailer(element, { type: object.type });
+                var card = new NewTrailer(element, { type: object.type });
                 card.create();
                 if (!card.render()) return;
                 card.visible();
@@ -1045,7 +1034,7 @@
                 this.activity.loader(false);
                 this.activity.toggle();
             } else if (object.page > 1) {
-                var emptyMessage = $('<div class="empty__message" style="text-align: center; padding: 20px; color: #fff;">' + Lampa.Lang.translate('trailers_no_more_items') + '</div>');
+                var emptyMessage = $('<div class="empty__message" style="text-align: center; padding: 20px; color: #fff;">' + Lampa.Lang.translate('new_trailers_no_more_items') + '</div>');
                 scroll.append(emptyMessage);
                 this.activity.loader(false);
                 this.activity.toggle();
@@ -1126,24 +1115,24 @@
     }
 
     Lampa.Lang.add({
-        trailers_popular_movies: { ru: 'Популярные фильмы', uk: 'Популярні фільми', en: 'Popular Movies' },
-        trailers_in_theaters: { ru: 'В кинотеатрах', uk: 'У кінотеатрах', en: 'In Theaters' },
-        trailers_upcoming_movies: { ru: 'Скоро в кино', uk: 'Скоро в кіно', en: 'Upcoming Movies' },
-        trailers_popular_series: { ru: 'Популярные сериалы', uk: 'Популярні серіали', en: 'Popular Series' },
-        trailers_new_series_seasons: { ru: 'Новые сериалы и сезоны', uk: 'Нові серіали і сезони', en: 'New Series and Seasons' },
-        trailers_upcoming_series: { ru: 'Скоро на ТВ', uk: 'Скоро на ТБ', en: 'Upcoming Series' },
-        trailers_no_trailers: { ru: 'Нет трейлеров', uk: 'Немає трейлерів', en: 'No trailers' },
-        trailers_view: { ru: 'Подробнее', uk: 'Докладніше', en: 'Details' },
-        title_trailers: { ru: 'Трейлеры', uk: 'Трейлери', en: 'Trailers' },
-        trailers_no_more_items: { ru: 'Больше фильмов нет', uk: 'Більше фільмів немає', en: 'No more movies' }
+        new_trailers_popular_movies: { ru: 'Популярные фильмы', uk: 'Популярні фільми', en: 'Popular Movies' },
+        new_trailers_in_theaters: { ru: 'В кинотеатрах', uk: 'У кінотеатрах', en: 'In Theaters' },
+        new_trailers_upcoming_movies: { ru: 'Скоро в кино', uk: 'Скоро в кіно', en: 'Upcoming Movies' },
+        new_trailers_popular_series: { ru: 'Популярные сериалы', uk: 'Популярні серіали', en: 'Popular Series' },
+        new_trailers_new_series_seasons: { ru: 'Новые сериалы и сезоны', uk: 'Нові серіали і сезони', en: 'New Series and Seasons' },
+        new_trailers_upcoming_series: { ru: 'Скоро на ТВ', uk: 'Скоро на ТБ', en: 'Upcoming Series' },
+        new_trailers_no_trailers: { ru: 'Нет трейлеров', uk: 'Немає трейлерів', en: 'No trailers' },
+        new_trailers_view: { ru: 'Подробнее', uk: 'Докладніше', en: 'Details' },
+        new_title_trailers: { ru: 'Трейлер', uk: 'Трейлер', en: 'Trailer' },
+        new_trailers_no_more_items: { ru: 'Больше фильмов нет', uk: 'Більше фільмів немає', en: 'No more movies' }
     });
 
     function startPlugin() {
-        window.plugin_trailers_ready = true;
-        Lampa.Component.add('trailers_main', Component$1);
-        Lampa.Component.add('trailers_full', Component);
-        Lampa.Template.add('trailer', `
-            <div class="card selector card--trailer layer--render layer--visible">
+        window.plugin_new_trailers_ready = true;
+        Lampa.Component.add('new_trailers_main', NewComponent$1);
+        Lampa.Component.add('new_trailers_full', NewComponent);
+        Lampa.Template.add('new_trailer', `
+            <div class="card selector card--new-trailer layer--render layer--visible">
                 <div class="card__view">
                     <img src="./img/img_load.svg" class="card__img">
                     <div class="card__promo">
@@ -1158,43 +1147,42 @@
                 </div>
             </div>
         `);
-        Lampa.Template.add('trailer_style', `
+        Lampa.Template.add('new_trailer_style', `
             <style>
-            .card.card--trailer,
-            .card-more.more--trailers {
+            .card.card--new-trailer,
+            .card-more.more--new-trailers {
                 width: 25.7em;
                 box-sizing: border-box;
             }
-            .card.card--trailer.selector:focus {
-                outline: 2px solid #fff; /* Відновлюємо стандартний фокус Lampa */
-                transform: scale(1.05); /* Легке масштабування при фокусі */
-                z-index: 5; /* Піднімаємо над іншими елементами */
-                transition: transform 0.2s ease; /* Додаємо плавну анімацію */
+            .card.card--new-trailer.selector:focus {
+                outline: 2px solid #fff;
+                transform: scale(1.05);
+                z-index: 5;
+                transition: transform 0.2s ease;
             }
-            .card.card--trailer .card__view {
+            .card.card--new-trailer .card__view {
                 padding-bottom: 56%;
                 margin-bottom: 0;
                 position: relative;
-                /* Прибираємо overflow: hidden, щоб не обрізати ефект фокусу */
             }
-            .card.card--trailer .card__promo {
-                padding-bottom: 2em; /* Відступ знизу для уникнення перекриття */
+            .card.card--new-trailer .card__promo {
+                padding-bottom: 2em;
             }
-            .card.card--trailer .card__promo-text {
+            .card.card--new-trailer .card__promo-text {
                 position: absolute;
-                bottom: 3em; /* Назва вище */
+                bottom: 3em;
                 left: 0.5em;
                 right: 0.5em;
             }
-            .card.card--trailer .card__details {
+            .card.card--new-trailer .card__details {
                 margin-top: 0.5em;
                 position: absolute;
-                bottom: 2em; /* Оригінальна назва вище */
+                bottom: 2em;
                 left: 0.5em;
                 right: 0.5em;
                 color: rgba(255, 255, 255, 0.7);
             }
-            .card.card--trailer .card__play {
+            .card.card--new-trailer .card__play {
                 position: absolute;
                 top: 1.4em;
                 left: 1.5em;
@@ -1205,25 +1193,25 @@
                 text-align: center;
                 padding-top: 0.6em;
             }
-            .card.card--trailer .card__play img {
+            .card.card--new-trailer .card__play img {
                 width: 0.9em;
                 height: 1em;
             }
-            .card-more.more--trailers .card-more__box {
+            .card-more.more--new-trailers .card-more__box {
                 padding-bottom: 56%;
             }
-            .category-full--trailers .card {
+            .category-full--new-trailers .card {
                 margin-bottom: 1.5em;
                 width: 33.3%;
                 box-sizing: border-box;
             }
             @media screen and (max-width: 767px) {
-                .category-full--trailers .card {
+                .category-full--new-trailers .card {
                     width: 50%;
                 }
             }
             @media screen and (max-width: 400px) {
-                .category-full--trailers .card {
+                .category-full--new-trailers .card {
                     width: 100%;
                 }
             }
@@ -1241,18 +1229,18 @@
                     <path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/>
                     </svg>
                 </div>
-                <div class="menu__text">${Lampa.Lang.translate('title_trailers')}</div>
+                <div class="menu__text">${Lampa.Lang.translate('new_title_trailers')}</div>
             </li>`);
             button.on('hover:enter', function () {
                 Lampa.Activity.push({
                     url: '',
-                    title: Lampa.Lang.translate('title_trailers'),
-                    component: 'trailers_main',
+                    title: Lampa.Lang.translate('new_title_trailers'),
+                    component: 'new_trailers_main',
                     page: 1
                 });
             });
             $('.menu .menu__list').eq(0).append(button);
-            $('body').append(Lampa.Template.get('trailer_style', {}, true));
+            $('body').append(Lampa.Template.get('new_trailer_style', {}, true));
         }
 
         if (window.appready) add();
@@ -1263,5 +1251,5 @@
         }
     }
 
-    if (!window.plugin_trailers_ready) startPlugin();
+    if (!window.plugin_new_trailers_ready) startPlugin();
 })();
