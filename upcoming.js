@@ -457,8 +457,8 @@
                 this.card.find('.card__details').remove();
             }
 
-            var premiereDate = 'N/A'; // Ініціалізуємо як 'N/A' для уникнення використання first_air_date
-            var formattedDate = 'N/A';
+            var premiereDate = data.release_date || data.first_air_date || 'N/A'; // Повертаємо логіку для початкової дати
+            var formattedDate = premiereDate !== 'N/A' ? premiereDate.split('-').reverse().join('-') : 'N/A';
             this.card.find('.card__view').append(`
                 <div class="card__premiere-date" style="position: absolute; top: 0.5em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${formattedDate}</div>
             `);
