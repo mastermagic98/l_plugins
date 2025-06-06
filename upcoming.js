@@ -26,16 +26,26 @@
 
     function filterTMDBContentByGenre(content, category) {
         const allowedGenreIds = [28, 12, 16, 35, 80, 99, 18, 10751, 14, 36, 27, 10402, 9648, 10749, 878, 53, 10752, 37];
-        const disallowedGenreIds = [10767, 10764, '10763', 10766];
+        const disallowedGenreIds = [10767, '10763', 10764, 10766];
         const genreIds = content.genre_ids || [];
         const hasAllowedGenre = genreIds.some(id => allowedGenreIds.includes(id));
         const hasDisallowedGenre = genreIds.some(id => disallowedGenreIds.includes(id));
         const requiresRating = category !== 'upcoming_series' && (!content.release_date || new Date(content.release_date) <= new Date());
         const hasRating = !requiresRating || (content.vote_average && content.vote_average > 0);
 
-        console.log('Filtering content:', content.title || content.name, 'genre_ids:', genreIds, 'hasAllowedGenre:', hasAllowedGenre, 'hasDisallowedGenre:', hasDisallowedGenre, 'vote_average:', content.vote_average, 'hasRating:', hasRating, 'requiresRating:', requiresRating, 'category:', category);
+        // Додаткова перевірка для upcoming_movies: дата релізу має бути після сьогодні
+        let isFutureRelease = true;
+        if (category === 'upcoming_movies') {
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+            const releaseDate = content.release_date || '9999-12-31'; // Якщо дати немає, вважаємо її в майбутньому
+            isFutureRelease = releaseDate >= todayStr;
+            console.log('Checking release date for', content.title || content.name, 'release_date:', releaseDate, 'today:', todayStr, 'isFutureRelease:', isFutureRelease);
+        }
 
-        return hasAllowedGenre && !hasDisallowedGenre && hasRating;
+        console.log('Filtering content:', content.title || content.name, 'genre_ids:', genreIds, 'hasAllowedGenre:', hasAllowedGenre, 'hasDisallowedGenre:', hasDisallowedGenre, 'vote_average:', content.vote_average, 'hasRating:', hasRating, 'requiresRating:', requiresRating, 'category:', category, 'isFutureRelease:', isFutureRelease);
+
+        return hasAllowedGenre && !hasDisallowedGenre && hasRating && isFutureRelease;
     }
 
     function fetchTMDB(endpoint, params, resolve, reject) {
