@@ -627,77 +627,78 @@
         this.create = function () {
             var that = this;
             this.build();
-            if (!this.card) return;
-            this.card.on('hover:focus', function (e, is_mouse) {
-                Lampa.Background.change(that.cardImgBackground(that.data));
-                that.onFocus(e.target || that.card[0], that.data, is_mouse); // Використовуйте that.card[0] як запасний варіант
-            }.bind(this)).on('hover:enter', function () {
-                if (that.is_youtube) {
-                    that.play(that.data.id);
-                } else {
-                    NewApi.videos(that.data, function (videos) {
-                        if (videos.results && videos.results.length) {
-                            that.play(videos.results[0].key);
-                        } else {
-                            Lampa.Noty.show(Lampa.Lang.translate('new_trailers_no_trailers'));
-                        }
-                    }, function () {
-                        Lampa.Noty.show(Lampa.Lang.translate('new_trailers_no_trailers'));
-                    });
-                }
-            }).on('hover:long', function () {
-                if (!that.is_youtube) {
-                    var items = [{ title: Lampa.Lang.translate('new_trailers_view'), view: true }];
-                    Lampa.Loading.start(function () {
-                        NewApi.clear();
-                        Lampa.Loading.stop();
-                    });
-                    NewApi.videos(that.data, function (videos) {
-                        Lampa.Loading.stop();
-                        if (videos.results && videos.results.length) {
-                            items.push({ title: Lampa.Lang.translate('new_title_trailers'), separator: true });
-                            for (var i = 0; i < videos.results.length; i++) {
-                                items.push({ title: videos.results[i].name + ' (' + videos.results[i].iso_639_1.toUpperCase() + ')', id: videos.results[i].key });
+            if (this.card && this.card.length) {
+                this.card.on('hover:focus', function (e, is_mouse) {
+                    Lampa.Background.change(that.cardImgBackground(that.data));
+                    that.onFocus(e.target || that.card[0], that.data, is_mouse);
+                }.bind(this)).on('hover:enter', function () {
+                    if (that.is_youtube) {
+                        that.play(that.data.id);
+                    } else {
+                        NewApi.videos(that.data, function (videos) {
+                            if (videos.results && videos.results.length) {
+                                that.play(videos.results[0].key);
+                            } else {
+                                Lampa.Noty.show(Lampa.Lang.translate('new_trailers_no_trailers'));
                             }
-                        }
+                        }, function () {
+                            Lampa.Noty.show(Lampa.Lang.translate('new_trailers_no_trailers'));
+                        });
+                    }
+                }.bind(this)).on('hover:long', function () {
+                    if (!that.is_youtube) {
+                        var items = [{ title: Lampa.Lang.translate('new_trailers_view'), view: true }];
+                        Lampa.Loading.start(function () {
+                            NewApi.clear();
+                            Lampa.Loading.stop();
+                        });
+                        NewApi.videos(that.data, function (videos) {
+                            Lampa.Loading.stop();
+                            if (videos.results && videos.results.length) {
+                                items.push({ title: Lampa.Lang.translate('new_title_trailers'), separator: true });
+                                for (var i = 0; i < videos.results.length; i++) {
+                                    items.push({ title: videos.results[i].name + ' (' + videos.results[i].iso_639_1.toUpperCase() + ')', id: videos.results[i].key });
+                                }
+                            }
+                            Lampa.Select.show({
+                                title: Lampa.Lang.translate('title_action'),
+                                items: items,
+                                onSelect: function (item) {
+                                    Lampa.Controller.toggle('content');
+                                    if (item.view) {
+                                        Lampa.Activity.push({
+                                            url: '',
+                                            component: 'full',
+                                            id: that.data.id,
+                                            method: that.data.name ? 'tv' : 'movie',
+                                            card: that.data,
+                                            source: 'tmdb'
+                                        });
+                                    } else {
+                                        that.play(item.id);
+                                    }
+                                },
+                                onBack: function () {
+                                    Lampa.Controller.toggle('content');
+                                }
+                            });
+                        });
+                    } else if (Lampa.Search) {
                         Lampa.Select.show({
                             title: Lampa.Lang.translate('title_action'),
-                            items: items,
+                            items: [{ title: Lampa.Lang.translate('search') }],
                             onSelect: function (item) {
                                 Lampa.Controller.toggle('content');
-                                if (item.view) {
-                                    Lampa.Activity.push({
-                                        url: '',
-                                        component: 'full',
-                                        id: that.data.id,
-                                        method: that.data.name ? 'tv' : 'movie',
-                                        card: that.data,
-                                        source: 'tmdb'
-                                    });
-                                } else {
-                                    that.play(item.id);
-                                }
+                                Lampa.Search.open({ input: that.data.title || that.data.name });
                             },
                             onBack: function () {
                                 Lampa.Controller.toggle('content');
                             }
                         });
-                    });
-                } else if (Lampa.Search) {
-                    Lampa.Select.show({
-                        title: Lampa.Lang.translate('title_action'),
-                        items: [{ title: Lampa.Lang.translate('search') }],
-                        onSelect: function (item) {
-                            Lampa.Controller.toggle('content');
-                            Lampa.Search.open({ input: that.data.title || that.data.name });
-                        },
-                        onBack: function () {
-                            Lampa.Controller.toggle('content');
-                        }
-                    });
-                }
-            });
-            this.image();
+                    }
+                }.bind(this));
+                this.image();
+            }
         };
 
         this.destroy = function () {
@@ -809,7 +810,7 @@
             Lampa.Controller.add('items_line', {
                 toggle: function () {
                     Lampa.Controller.collectionSet(that.scroll.render());
-                    Lampa.Controller.collectionFocus(that.items.length ? that.last : false, that.scroll.render());
+                    Lampa.Controller.collectionFocus(that.items.length ? (that.last || that.items[0]?.render()[0] || false) : false, that.scroll.render());
                 },
                 right: function () {
                     console.log('NewLine: Right navigation, active: ' + that.active + ', items length: ' + that.items.length);
@@ -907,8 +908,12 @@
                 };
             }
 
-            this.activity.loader(false);
-            this.activity.toggle();
+            if (this.items.length) {
+                this.activity.loader(false);
+                this.activity.toggle();
+            } else {
+                this.activity.loader(false);
+            }
         };
 
         this.append = function (element) {
