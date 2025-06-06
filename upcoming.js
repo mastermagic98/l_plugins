@@ -18,7 +18,8 @@
 
     function applyWithoutKeywords(params) {
         var baseExcludedKeywords = [
-            '346448', '158718', '4178', '196034', '272265', '13141', '345822', '315535', '290667', '323447', '290637', '290607', '290643', '290664'
+            '346448', '158718', '4178', '196034', '272265', '13141', '345822', '315535', '290667', '323447', '290637', '290607', '290643', '290664',
+            '210024', '222243', '287501', '290799', '315997', '317458', '327471', '335166', '338496', '338657', '338655', '338836', '342777', '344069', '344070'
         ];
         params.without_keywords = baseExcludedKeywords.join(',');
         return params;
@@ -319,7 +320,6 @@
                 append(Lampa.Lang.translate('trailers_upcoming_series'), 'upcoming_series', '/discover/tv', json);
             }
         }, status.error.bind(status), 'upcoming_series');
-
     }
 
     function full(params, oncomplite, onerror) {
