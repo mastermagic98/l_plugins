@@ -546,6 +546,7 @@
 
                 var that = this;
                 fetchSeriesDetails(this.data.id, dateField, startDate, endDate, function (isValid, airDate, seasonNumber, episodeNumber) {
+                    if (!that.card) return; // Перевірка на знищення
                     try {
                         if (seasonNumber > 0 && episodeNumber > 0) {
                             that.card.find('.card__season-episode').text('S' + seasonNumber + 'E' + episodeNumber);
@@ -561,7 +562,7 @@
                         }
                     } catch (e) {
                         console.log('Error updating season-episode for series ' + that.data.id + ': ', e);
-                        that.card.find('.card__season-episode').text('-');
+                        if (that.card) that.card.find('.card__season-episode').text('-');
                     }
                 });
             }
@@ -580,23 +581,28 @@
         this.image = function () {
             var that = this;
             this.img.onload = function () {
+                if (!that.card) return; // Перевірка на знищення
                 that.card.addClass('card--loaded');
                 that.updateTrailerLanguage();
             };
             this.img.onerror = function () {
+                if (!that.img) return; // Перевірка на знищення
                 that.img.src = './img/img_broken.svg';
             };
         };
 
         this.updateTrailerLanguage = function () {
             var that = this;
+            if (!this.card) return; // Перевірка на знищення
             NewApi.videos(this.data, function (videos) {
+                if (!that.card) return; // Перевірка на знищення
                 var lang = '-';
                 if (videos.results && videos.results.length) {
                     lang = videos.results[0].iso_639_1.toUpperCase();
                 }
                 that.card.find('.card__trailer-lang').text(lang);
             }, function () {
+                if (!that.card) return; // Перевірка на знищення
                 that.card.find('.card__trailer-lang').text('-');
             });
         };
@@ -695,10 +701,14 @@
         };
 
         this.destroy = function () {
-            this.img.onerror = null;
-            this.img.onload = null;
-            this.img.src = '';
-            this.card.remove();
+            if (this.img) {
+                this.img.onerror = null;
+                this.img.onload = null;
+                this.img.src = ''; // Очищаємо src, щоб зупинити завантаження
+            }
+            if (this.card) {
+                this.card.remove();
+            }
             this.card = null;
             this.img = null;
         };
@@ -856,7 +866,7 @@
             Lampa.Arrays.destroy(this.items);
             this.scroll.destroy();
             this.content.remove();
-            this.more.remove();
+            if (this.more) this.more.remove();
             this.items = [];
         };
     }
