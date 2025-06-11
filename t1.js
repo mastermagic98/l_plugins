@@ -1,9 +1,11 @@
 (function () {
     'use strict';
 
-    if (window.UACollections && window.UACollections.__initialized) return;
+    // Initialize window.UACollections if it doesn't exist
+    window.UACollections = window.UACollections || {};
+    if (window.UACollections.__initialized) return;
 
-    window.UACollections = window.UACollections.__initialized = true;
+    window.UACollections.__initialized = true;
 
     // Localization (English and Ukrainian)
     Lampa.Lang.add({
@@ -314,7 +316,7 @@
     function startPlugin() {
         var manifest = {
             type: 'video',
-            version: '1.0.0',
+            version: '1.0.1',
             name: Lampa.Lang.translate('uaCollections_title'),
             description: 'Ukrainian movies, series, and cartoons collections powered by TMDB',
             component: 'ua_collections'
