@@ -385,9 +385,9 @@
             });
         };
 
-        comp.nextPageReuest = function (object, resolve) {
+        comp.nextPageReuest = function (object, resolve, reject) {
             console.log('Requesting next page:', object.page);
-            Api.collection(object, resolve.bind(comp), function () {});
+            Api.collection(object, resolve.bind(comp), reject.bind(comp));
         };
 
         comp.cardRender = function (object, element, card) {
@@ -400,7 +400,7 @@
                     component: 'ua_collections_view',
                     page: 1
                 });
-            });
+            };
         };
 
         return comp;
@@ -410,18 +410,18 @@
         var comp = new Lampa.InteractionCategory(object);
 
         comp.create = function () {
-            console.log('Creating full component');
+            console.log('Creating view component');
             var _this = this;
             this.activity.loader(true);
             Api.full(object, function (data) {
-                console.log('Full component built with data:', data);
+                console.log('View component built with data:', data);
                 _this.build(data);
                 _this.activity.loader(false);
             }, function () {
-                console.error('Full component failed to load');
+                console.error('View component failed to load');
                 var fallback_data = {
                     total_pages: 1,
-                    results: fallbackCollections.filter(c => c.id.startsWith(object.url.split('_') ? [0] : ))
+                    results: fallbackCollections.filter(c => c.id.startsWith(object.url.split('_')[0]))
                 };
                 _this.build(fallback_data);
                 _this.activity.loader(false);
@@ -429,9 +429,9 @@
             return this.render();
         };
 
-        comp.nextPageReuest = function (object, resolve) {
-            console.log('Requesting next page for full component:', object.page);
-            Api.full(object, resolve, function () {});
+        comp.nextPageReuest = function (object, resolve, reject) {
+            console.log('Requesting next page for view:', object.page);
+            Api.full(object, resolve.bind(comp), reject.bind(comp));
         };
 
         return comp;
@@ -441,7 +441,7 @@
         console.log('Starting UACollections plugin');
         var manifest = {
             type: 'video',
-            version: '1.0.6',
+            version: '1.0.7',
             name: Lampa.Lang.translate('uaCollections_title'),
             description: 'Fast & Furious collection powered by TMDB',
             component: 'ua_collections'
