@@ -17,33 +17,9 @@
             en: "Themed Collections",
             uk: "Тематичні колекції"
         },
-        uaCollections_conjuring: {
-            en: "The Conjuring Universe Timeline",
-            uk: "Хронологія всесвіту «Закляття»"
-        },
         uaCollections_fast_furious: {
             en: "All Fast & Furious Movies",
             uk: "Усі фільми франшизи «Форсаж»"
-        },
-        uaCollections_paramount_series: {
-            en: "Paramount+ Original Series",
-            uk: "Оригінальні серіали Paramount+"
-        },
-        uaCollections_stephen_king: {
-            en: "Best Stephen King Adaptations",
-            uk: "Найкращі екранізації Стівена Кінга"
-        },
-        uaCollections_tarantino: {
-            en: "Quentin Tarantino: Best to Good",
-            uk: "Квентін Тарантіно: від найкращого до хорошого"
-        },
-        uaCollections_horror_parodies: {
-            en: "Comedy Horror Parodies",
-            uk: "Комедійні пародії на фільми жахів"
-        },
-        uaCollections_buddy_movies: {
-            en: "Best Buddy Movies",
-            uk: "Найкращі бадді-муви"
         },
         uaCollections_items: {
             en: "{0} items",
@@ -62,8 +38,8 @@
             uk: "Не вдалося завантажити колекцію: {0}"
         },
         uaCollections_no_data: {
-            en: "No data available for this collection",
-            uk: "Немає даних для цієї колекції"
+            en: "No data available",
+            uk: "Немає даних"
         }
     });
 
@@ -144,49 +120,13 @@
     // TMDB API request handler
     var network = new Lampa.Reguest();
 
-    // Collection categories
+    // Collection categories (only Fast & Furious for testing)
     var collections = [
-        {
-            hpu: 'conjuring',
-            title: Lampa.Lang.translate('uaCollections_conjuring'),
-            url: 'collection/531219', // The Conjuring Universe
-            type: 'collection'
-        },
         {
             hpu: 'fast_furious',
             title: Lampa.Lang.translate('uaCollections_fast_furious'),
-            url: 'collection/435259',
+            url: 'collection/9485', // Fast & Furious
             type: 'collection'
-        },
-        {
-            hpu: 'paramount_series',
-            title: Lampa.Lang.translate('uaCollections_paramount_series'),
-            url: 'discover/tv?with_networks=19&sort_by=popularity.desc', // Changed to Netflix for testing
-            type: 'discover'
-        },
-        {
-            hpu: 'stephen_king',
-            title: Lampa.Lang.translate('uaCollections_stephen_king'),
-            url: 'discover/movie?with_keywords=1396&sort_by=popularity.desc', // Simplified
-            type: 'discover'
-        },
-        {
-            hpu: 'tarantino',
-            title: Lampa.Lang.translate('uaCollections_tarantino'),
-            url: 'discover/movie?with_people=138&sort_by=popularity.desc', // Changed to with_people
-            type: 'discover'
-        },
-        {
-            hpu: 'horror_parodies',
-            title: Lampa.Lang.translate('uaCollections_horror_parodies'),
-            url: 'discover/movie?with_genres=35&with_keywords=10062&sort_by=popularity.desc',
-            type: 'discover'
-        },
-        {
-            hpu: 'buddy_movies',
-            title: Lampa.Lang.translate('uaCollections_buddy_movies'),
-            url: 'discover/movie?with_keywords=9726&sort_by=popularity.desc', // Simplified
-            type: 'discover'
         }
     ];
 
@@ -209,15 +149,9 @@
 
         status.onComplite = function () {
             var keys = Object.keys(status.data);
-            var sort = collections.map(function (a) { return a.hpu; });
-
             if (keys.length) {
                 console.log('Collections loaded:', keys);
-                var fulldata = [];
-                keys.sort(function (a, b) {
-                    return sort.indexOf(a) - sort.indexOf(b);
-                });
-                keys.forEach(function (key) {
+                var fulldata = keys.map(function (key) {
                     var data = status.data[key];
                     data.title = collections.find(function (item) {
                         return item.hpu === key;
@@ -225,7 +159,7 @@
                     data.cardClass = function (elem, param) {
                         return new Collection(elem, param);
                     };
-                    fulldata.push(data);
+                    return data;
                 });
                 oncomplite(fulldata);
             } else {
@@ -235,7 +169,7 @@
                     collection: true,
                     line_type: 'collection',
                     category: 'fallback',
-                    title: Lampa.Lang.translate('uaCollections_title'),
+                    title: Lampa.Lang.translate('uaCollections_fast_furious'),
                     results: fallbackCollections,
                     cardClass: function (elem, param) {
                         return new Collection(elem, param);
@@ -246,12 +180,11 @@
         };
 
         collections.forEach(function (item) {
-            var apiPath = item.type === 'collection' ? `collection/${item.url}` : item.url;
-            var url = Lampa.TMDB.api(apiPath);
+            var url = Lampa.TMDB.api(`collection/${item.url}`);
             console.log('TMDB request:', url);
             network.silent(url, function (data) {
                 console.log('TMDB response for', item.hpu, ':', data);
-                var results = item.type === 'collection' ? (data.parts || []) : (data.results || []).slice(0, 10);
+                var results = data.parts || [];
                 if (!results.length) {
                     console.warn('No results for', item.hpu);
                     Lampa.Noty.show(Lampa.Lang.translate('uaCollections_no_data') + ': ' + item.title);
@@ -263,7 +196,7 @@
                     results: results.length ? results.map(function (result, index) {
                         return {
                             id: item.hpu + '_' + index,
-                            title: result.title || result.name || 'Untitled',
+                            title: result.title || 'Untitled',
                             backdrop_path: result.backdrop_path || result.poster_path,
                             items_count: results.length,
                             time: new Date().toISOString(),
@@ -295,19 +228,18 @@
             return onerror();
         }
 
-        var apiPath = category.type === 'collection' ? `collection/${category.url}` : category.url + '&page=' + params.page;
-        var url = Lampa.TMDB.api(apiPath);
+        var url = Lampa.TMDB.api(`collection/${category.url}`);
         console.log('Requesting collection:', url);
         network.silent(url, function (data) {
             console.log('Collection response for', category.hpu, ':', data);
-            var results = category.type === 'collection' ? (data.parts || []) : (data.results || []);
+            var results = data.parts || [];
             var collection_data = {
                 collection: true,
-                total_pages: category.type === 'collection' ? 1 : (data.total_pages || 15),
+                total_pages: 1,
                 results: results.length ? results.map(function (result, index) {
                     return {
-                        id: category.hpu + '_' + index + '_' + params.page,
-                        title: result.title || result.name || 'Untitled',
+                        id: category.hpu + '_' + index + '_1',
+                        title: result.title || 'Untitled',
                         backdrop_path: result.backdrop_path || result.poster_path,
                         items_count: results.length,
                         time: new Date().toISOString(),
@@ -343,22 +275,21 @@
             return onerror();
         }
 
-        var apiPath = category.type === 'collection' ? `collection/${category.url}` : category.url + '&page=' + params.page;
-        var url = Lampa.TMDB.api(apiPath);
+        var url = Lampa.TMDB.api(`collection/${category.url}`);
         console.log('Requesting full:', url);
         network.silent(url, function (data) {
             console.log('Full response for', category.hpu, ':', data);
-            var results = category.type === 'collection' ? (data.parts || []) : (data.results || []);
+            var results = data.parts || [];
             var collection_data = {
-                total_pages: category.type === 'collection' ? 1 : (data.total_pages || 15),
+                total_pages: 1,
                 results: results.length ? results.map(function (result) {
                     return {
                         id: result.id,
-                        title: result.title || result.name || 'Untitled',
+                        title: result.title || 'Untitled',
                         poster_path: result.poster_path,
                         backdrop_path: result.backdrop_path,
                         overview: result.overview,
-                        release_date: result.release_date || result.first_air_date
+                        release_date: result.release_date
                     };
                 }) : [fallbackCollections.find(c => c.id.startsWith(category.hpu))]
             };
@@ -403,7 +334,7 @@
                     collection: true,
                     line_type: 'collection',
                     category: 'fallback',
-                    title: Lampa.Lang.translate('uaCollections_title'),
+                    title: Lampa.Lang.translate('uaCollections_fast_furious'),
                     results: fallbackCollections,
                     cardClass: function (elem, param) {
                         return new Collection(elem, param);
@@ -454,9 +385,9 @@
             });
         };
 
-        comp.nextPageReuest = function (object, resolve, reject) {
+        comp.nextPageReuest = function (object, resolve) {
             console.log('Requesting next page:', object.page);
-            Api.collection(object, resolve.bind(comp), reject.bind(comp));
+            Api.collection(object, resolve.bind(comp), function () {});
         };
 
         comp.cardRender = function (object, element, card) {
@@ -469,7 +400,7 @@
                     component: 'ua_collections_view',
                     page: 1
                 });
-            };
+            });
         };
 
         return comp;
@@ -479,27 +410,28 @@
         var comp = new Lampa.InteractionCategory(object);
 
         comp.create = function () {
-            console.log('Creating view component:', object.url);
+            console.log('Creating full component');
             var _this = this;
             this.activity.loader(true);
             Api.full(object, function (data) {
-                console.log('View component built:', data);
+                console.log('Full component built with data:', data);
                 _this.build(data);
                 _this.activity.loader(false);
             }, function () {
-                console.error('View component failed');
+                console.error('Full component failed to load');
                 var fallback_data = {
                     total_pages: 1,
-                    results: fallbackCollections.filter(c => c.id.startsWith(object.url.split('_')[0]))
+                    results: fallbackCollections.filter(c => c.id.startsWith(object.url.split('_') ? [0] : ))
                 };
                 _this.build(fallback_data);
                 _this.activity.loader(false);
             });
+            return this.render();
         };
 
-        comp.nextPageReuest = function (object, resolve, reject) {
-            console.log('Requesting next page for view:', object.page);
-            Api.full(object, resolve.bind(comp), reject.bind(comp));
+        comp.nextPageReuest = function (object, resolve) {
+            console.log('Requesting next page for full component:', object.page);
+            Api.full(object, resolve, function () {});
         };
 
         return comp;
@@ -509,9 +441,9 @@
         console.log('Starting UACollections plugin');
         var manifest = {
             type: 'video',
-            version: '1.0.5',
+            version: '1.0.6',
             name: Lampa.Lang.translate('uaCollections_title'),
-            description: 'Themed movie and series collections powered by TMDB',
+            description: 'Fast & Furious collection powered by TMDB',
             component: 'ua_collections'
         };
         Lampa.Manifest.plugins = manifest;
