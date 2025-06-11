@@ -1,188 +1,420 @@
 (function () {
     'use strict';
 
-    if (window.UASelect && window.UASelect.__initialized) return;
+    if (window.UACollections && window.UACollections.__initialized) return;
 
-    window.UASelect = window.UASelect || {};
-    window.UASelect.__initialized = true;
+    window.UACollections = window.UACollections.__initialized = true;
 
-    // Localization for UI strings (English and Ukrainian only)
+    // Localization (English and Ukrainian)
     Lampa.Lang.add({
-        uaSelect_menu_title: {
+        uaCollections_title: {
             en: "Ukrainian Collections",
             uk: "Українські колекції"
         },
-        uaSelect_ua_films: {
-            en: "Ukrainian Films",
-            uk: "Українські фільми"
+        uaCollections_popular_films: {
+            en: "Popular Ukrainian Films",
+            uk: "Популярні українські фільми"
         },
-        uaSelect_ua_series: {
-            en: "Ukrainian Series",
-            uk: "Українські серіали"
+        uaCollections_new_series: {
+            en: "New Ukrainian Series",
+            uk: "Нові українські серіали"
         },
-        uaSelect_ua_cartoons: {
+        uaCollections_cartoons: {
             en: "Ukrainian Cartoons",
             uk: "Українські мультфільми"
         },
-        uaSelect_ua_cartoon_series: {
+        uaCollections_cartoon_series: {
             en: "Ukrainian Cartoon Series",
             uk: "Українські мультсеріали"
         },
-        uaSelect_sorting: {
-            en: "Sorting",
-            uk: "Сортування"
+        uaCollections_items: {
+            en: "{0} items",
+            uk: "{0} елементів"
         },
-        uaSelect_vote_count_desc: {
-            en: "Most Votes",
-            uk: "Багато голосів"
+        uaCollections_views: {
+            en: "{0} views",
+            uk: "{0} переглядів"
         },
-        uaSelect_vote_average_desc: {
-            en: "High Rating",
-            uk: "Високий рейтинг"
-        },
-        uaSelect_first_air_date_desc: {
-            en: "New Releases",
-            uk: "Новинки"
-        },
-        uaSelect_popularity_desc: {
-            en: "Popular",
-            uk: "Популярні"
-        },
-        uaSelect_revenue_desc: {
-            en: "Audience Interest",
-            uk: "Інтерес глядачів"
+        uaCollections_date: {
+            en: "Created: {0}",
+            uk: "Створено: {0}"
         }
     });
 
-    var sortOptionsTV = [
-        { id: 'first_air_date.desc', title: 'uaSelect_first_air_date_desc', extraParams: '' },
-        { id: 'vote_average.desc', title: 'uaSelect_vote_average_desc', extraParams: '' },
-        { id: 'popularity.desc', title: 'uaSelect_popularity_desc', extraParams: '' }
-    ];
+    // Collection class
+    function Collection(data) {
+        this.data = data;
 
-    var sortOptionsMovie = [
-        { id: 'release_date.desc', title: 'uaSelect_first_air_date_desc', extraParams: '' },
-        { id: 'vote_average.desc', title: 'uaSelect_vote_average_desc', extraParams: '' },
-        { id: 'popularity.desc', title: 'uaSelect_popularity_desc', extraParams: '' }
-    ];
+        this.build = function () {
+            this.item = Lampa.Template.js('ua_collection');
+            this.img = this.item.find('.card__img');
+            this.item.find('.card__title').text(Lampa.Utils.capitalizeFirstLetter(data.title));
+            this.item.find('.ua-collection-card__items').text(Lampa.Lang.translate('uaCollections_items').format(data.items_count));
+            this.item.find('.ua-collection-card__date').text(Lampa.Lang.translate('uaCollections_date').format(Lampa.Utils.parseTime(data.time).full));
+            this.item.find('.ua-collection-card__views').text(Lampa.Lang.translate('uaCollections_views').format(Lampa.Utils.bigNumberToShort(data.views)));
+            this.item.addEventListener('visible', this.visible.bind(this));
+        };
 
-    var baseExcludedKeywords = ['346488', '158718', '41278', '196034', '272265', '13141', '345822', '315535', '290667', '323477', '290609'];
+        this.image = function () {
+            var _this = this;
+            this.img.onload = function () {
+                _this.item.classList.add('card--loaded');
+            };
+            this.img.onerror = function () {
+                _this.img.src = './img/img_broken.svg';
+            };
+        };
 
-    function applySortParams(sort, options) {
-        var params = '';
-        var now = new Date();
+        this.create = function () {
+            var _this = this;
+            this.build();
+            this.item.addEventListener('hover:focus', function () {
+                if (_this.onFocus) _this.onFocus(_this.item, data);
+            });
+            this.item.addEventListener('hover:touch', function () {
+                if (_this.onTouch) _this.onTouch(_this.item, data);
+            });
+            this.item.addEventListener('hover:hover', function () {
+                if (_this.onHover) _this.onHover(_this.item, data);
+            });
+            this.item.addEventListener('hover:enter', function () {
+                Lampa.Activity.push({
+                    url: data.id,
+                    collection: data,
+                    title: Lampa.Utils.capitalizeFirstLetter(data.title),
+                    component: 'ua_collections_view',
+                    page: 1
+                });
+            });
+            this.image();
+        };
 
-        var isNewRelease = sort.id === 'first_air_date.desc' || sort.id === 'release_date.desc';
+        this.visible = function () {
+            this.img.src = Lampa.TMDB.image('w500' + data.backdrop_path);
+            if (this.onVisible) this.onVisible(this.item, data);
+        };
 
-        if (sort.id === 'first_air_date.desc') {
-            var end = new Date(now);
-            end.setDate(now.getDate() - 10);
-            var start = new Date(now);
-            start.setFullYear(start.getFullYear() - 1);
+        this.destroy = function () {
+            this.img.onerror = function () {};
+            this.img.onload = function () {};
+            this.img.src = '';
+            if (this.item) this.item.remove();
+            this.item = null;
+            this.img = null;
+        };
 
-            params += '&first_air_date.gte=' + start.toISOString().split('T')[0];
-            params += '&first_air_date.lte=' + end.toISOString().split('T')[0];
-        }
-
-        if (sort.id === 'release_date.desc') {
-            var end = new Date(now);
-            end.setDate(now.getDate() - 40);
-            var start = new Date(now);
-            start.setFullYear(start.getFullYear() - 1);
-
-            params += '&release_date.gte=' + start.toISOString().split('T')[0];
-            params += '&release_date.lte=' + end.toISOString().split('T')[0];
-        }
-
-        if (!options.isUkrainian || !isNewRelease) {
-            params += '&vote_count.gte=30';
-        } else if (options.isUkrainian && sort.id === 'release_date.desc') {
-            params += '&vote_count.gte=5';
-        }
-
-        params += '&without_keywords=' + encodeURIComponent(baseExcludedKeywords.join(','));
-
-        sort.extraParams = params;
-        return sort;
+        this.render = function (js) {
+            return js ? this.item : $(this.item);
+        };
     }
 
-    function showUASelectMenu() {
-        var items = [
-            { title: Lampa.Lang.translate('uaSelect_ua_films'), url: 'discover/movie?with_origin_country=UA', type: 'movie' },
-            { title: Lampa.Lang.translate('uaSelect_ua_series'), url: 'discover/tv?with_origin_country=UA', type: 'tv' },
-            { title: Lampa.Lang.translate('uaSelect_ua_cartoons'), url: 'discover/movie?with_genres=16&with_original_language=uk', type: 'movie' },
-            { title: Lampa.Lang.translate('uaSelect_ua_cartoon_series'), url: 'discover/tv?with_genres=16&with_original_language=uk', type: 'tv' }
-        ];
+    // TMDB API request handler
+    var network = new Lampa.Reguest();
 
-        Lampa.Select.show({
-            title: Lampa.Lang.translate('uaSelect_menu_title'),
-            items: items,
-            onSelect: function (item) {
-                showSortList(item);
-            },
-            onBack: function () {
-                Lampa.Controller.toggle('content');
-            }
+    // Collection categories
+    var collections = [
+        {
+            hpu: 'popular_films',
+            title: Lampa.Lang.translate('uaCollections_popular_films'),
+            url: 'discover/movie?with_origin_country=UA&sort_by=popularity.desc'
+        },
+        {
+            hpu: 'new_series',
+            title: Lampa.Lang.translate('uaCollections_new_series'),
+            url: 'discover/tv?with_origin_country=UA&sort_by=first_air_date.desc'
+        },
+        {
+            hpu: 'cartoons',
+            title: Lampa.Lang.translate('uaCollections_cartoons'),
+            url: 'discover/movie?with_genres=16&with_original_language=uk'
+        },
+        {
+            hpu: 'cartoon_series',
+            title: Lampa.Lang.translate('uaCollections_cartoon_series'),
+            url: 'discover/tv?with_genres=16&with_original_language=uk'
+        }
+    ];
+
+    function main(params, oncomplite, onerror) {
+        var status = new Lampa.Status(collections.length);
+
+        status.onComplite = function () {
+            var keys = Object.keys(status.data);
+            var sort = collections.map(function (a) { return a.hpu; });
+
+            if (keys.length) {
+                var fulldata = [];
+                keys.sort(function (a, b) {
+                    return sort.indexOf(a) - sort.indexOf(b);
+                });
+                keys.forEach(function (key) {
+                    var data = status.data[key];
+                    data.title = collections.find(function (item) {
+                        return item.hpu == key;
+                    }).title;
+                    data.cardClass = function (elem, param) {
+                        return new Collection(elem, param);
+                    };
+                    fulldata.push(data);
+                });
+                oncomplite(fulldata);
+            } else onerror();
+        };
+
+        collections.forEach(function (item) {
+            var url = Lampa.TMDB.api(item.url + '&page=1');
+            network.silent(url, function (data) {
+                var collection_data = {
+                    collection: true,
+                    line_type: 'collection',
+                    category: item.hpu,
+                    results: data.results.slice(0, 10).map(function (result, index) {
+                        return {
+                            id: item.hpu + '_' + index,
+                            title: result.title || result.name,
+                            backdrop_path: result.backdrop_path || result.poster_path,
+                            items_count: data.results.length,
+                            time: new Date().toISOString(),
+                            views: Math.floor(Math.random() * 10000),
+                            liked: Math.floor(Math.random() * 1000)
+                        };
+                    })
+                };
+                status.append(item.hpu, collection_data);
+            }, status.error.bind(status));
         });
     }
 
-    function showSortList(service) {
-        var sortItems = [];
-        var isMovie = service.url.startsWith('discover/movie');
-        var currentSortOptions = isMovie ? sortOptionsMovie : sortOptionsTV;
+    function collection(params, oncomplite, onerror) {
+        var category = collections.find(function (c) { return c.hpu === params.url; });
+        if (!category) return onerror();
 
-        for (var i = 0; i < currentSortOptions.length; i++) {
-            sortItems.push({
-                title: Lampa.Lang.translate(currentSortOptions[i].title),
-                sort: applySortParams(currentSortOptions[i], {
-                    isUkrainian: true
+        var url = Lampa.TMDB.api(category.url + '&page=' + params.page);
+        network.silent(url, function (data) {
+            var collection_data = {
+                collection: true,
+                total_pages: data.total_pages || 15,
+                results: data.results.map(function (result, index) {
+                    return {
+                        id: category.hpu + '_' + index + '_' + params.page,
+                        title: result.title || result.name,
+                        backdrop_path: result.backdrop_path || result.poster_path,
+                        items_count: data.results.length,
+                        time: new Date().toISOString(),
+                        views: Math.floor(Math.random() * 10000),
+                        liked: Math.floor(Math.random() * 1000)
+                    };
+                }),
+                cardClass: function (elem, param) {
+                    return new Collection(elem, param);
+                }
+            };
+            oncomplite(collection_data);
+        }, onerror);
+    }
+
+    function full(params, oncomplite, onerror) {
+        var category = collections.find(function (c) { return c.hpu === params.url.split('_')[0]; });
+        if (!category) return onerror();
+
+        var url = Lampa.TMDB.api(category.url + '&page=' + params.page);
+        network.silent(url, function (data) {
+            var collection_data = {
+                total_pages: data.total_pages || 15,
+                results: data.results.map(function (result) {
+                    return {
+                        id: result.id,
+                        title: result.title || result.name,
+                        poster_path: result.poster_path,
+                        backdrop_path: result.backdrop_path,
+                        overview: result.overview,
+                        release_date: result.release_date || result.first_air_date
+                    };
                 })
+            };
+            oncomplite(collection_data);
+        }, onerror);
+    }
+
+    function clear() {
+        network.clear();
+    }
+
+    var Api = {
+        main: main,
+        collection: collection,
+        full: full,
+        clear: clear
+    };
+
+    function componentMain(object) {
+        var comp = new Lampa.InteractionMain(object);
+
+        comp.create = function () {
+            var _this = this;
+            this.activity.loader(true);
+            Api.main(object, function (data) {
+                _this.build(data);
+            }, this.empty.bind(this));
+            return this.render();
+        };
+
+        comp.onMore = function (data) {
+            Lampa.Activity.push({
+                url: data.category,
+                title: data.title,
+                component: 'ua_collections_collection',
+                page: 1
+            });
+        };
+
+        return comp;
+    }
+
+    function componentCollection(object) {
+        var comp = new Lampa.InteractionCategory(object);
+
+        comp.create = function () {
+            Api.collection(object, this.build.bind(this), this.empty.bind(this));
+        };
+
+        comp.nextPageReuest = function (object, resolve, reject) {
+            Api.collection(object, resolve.bind(comp), reject.bind(comp));
+        };
+
+        comp.cardRender = function (object, element, card) {
+            card.onMenu = false;
+            card.onEnter = function () {
+                Lampa.Activity.push({
+                    url: element.id,
+                    title: element.title,
+                    component: 'ua_collections_view',
+                    page: 1
+                });
+            };
+        };
+
+        return comp;
+    }
+
+    function componentView(object) {
+        var comp = new Lampa.InteractionCategory(object);
+
+        comp.create = function () {
+            Api.full(object, this.build.bind(this), this.empty.bind(this));
+        };
+
+        comp.nextPageReuest = function (object, resolve, reject) {
+            Api.full(object, resolve.bind(comp), reject.bind(comp));
+        };
+
+        return comp;
+    }
+
+    function startPlugin() {
+        var manifest = {
+            type: 'video',
+            version: '1.0.0',
+            name: Lampa.Lang.translate('uaCollections_title'),
+            description: 'Ukrainian movies, series, and cartoons collections powered by TMDB',
+            component: 'ua_collections'
+        };
+        Lampa.Manifest.plugins = manifest;
+
+        Lampa.Component.add('ua_collections_main', componentMain);
+        Lampa.Component.add('ua_collections_collection', componentCollection);
+        Lampa.Component.add('ua_collections_view', componentView);
+
+        Lampa.Template.add('ua_collection', `
+            <div class="card ua-collection-card selector layer--visible layer--render card--collection">
+                <div class="card__view">
+                    <img src="./img/img_load.svg" class="card__img">
+                    <div class="ua-collection-card__head">
+                        <div class="ua-collection-card__items"></div>
+                        <div class="ua-collection-card__date"></div>
+                    </div>
+                    <div class="ua-collection-card__bottom">
+                        <div class="ua-collection-card__views"></div>
+                    </div>
+                </div>
+                <div class="card__title"></div>
+            </div>
+        `);
+
+        var style = `
+            <style>
+            .ua-collection-card__head {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: .5em 1em;
+                color: #fff;
+                font-size: 1em;
+                font-weight: 500;
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+            }
+            .ua-collection-card__bottom {
+                display: flex;
+                align-items: center;
+                padding: .5em 1em;
+                background-color: rgba(0,0,0,0.5);
+                color: #fff;
+                font-size: 1em;
+                font-weight: 400;
+                border-radius: 1em;
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+            }
+            .ua-collection-card__items {
+                background: rgba(0,0,0,0.5);
+                padding: .3em;
+                border-radius: .2em;
+            }
+            .category-full .ua-collection-card {
+                padding-bottom: 2em;
+            }
+            </style>
+        `;
+        Lampa.Template.add('ua_collections_css', style);
+        $('body').append(Lampa.Template.get('ua_collections_css', {}, true));
+
+        function add() {
+            var button = $(`
+                <li class="menu__item selector">
+                    <div class="menu__ico">
+                        <svg width="191" height="239" viewBox="0 0 191 239" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M35.3438 35.3414V26.7477C35.3438 19.9156 38.0594 13.3543 42.8934 8.51604C47.7297 3.68251 54.2874 0.967027 61.125 0.966431H164.25C171.086 0.966431 177.643 3.68206 182.482 8.51604C187.315 13.3524 190.031 19.91 190.031 26.7477V186.471C190.031 189.87 189.022 193.192 187.133 196.018C185.245 198.844 182.561 201.046 179.421 202.347C176.28 203.647 172.825 203.988 169.492 203.325C166.158 202.662 163.096 201.026 160.692 198.623L155.656 193.587V220.846C155.656 224.245 154.647 227.567 152.758 230.393C150.87 233.219 148.186 235.421 145.046 236.722C141.905 238.022 138.45 238.363 135.117 237.7C131.783 237.037 128.721 235.401 126.317 232.998L78.3125 184.993L30.3078 232.998C27.9041 235.401 24.8419 237.037 21.5084 237.7C18.1748 238.363 14.7195 238.022 11.5794 236.722C8.43922 235.421 5.75517 233.219 3.86654 230.393C1.9779 227.567 0.969476 224.245 0.96875 220.846V61.1227C0.96875 54.2906 3.68437 47.7293 8.51836 42.891C13.3547 38.0575 19.9124 35.342 26.75 35.3414H35.3438ZM138.469 220.846V61.1227C138.469 58.8435 137.563 56.6576 135.952 55.046C134.34 53.4343 132.154 52.5289 129.875 52.5289H26.75C24.4708 52.5289 22.2849 53.4343 20.6733 55.046C19.0617 56.6576 18.1562 58.8435 18.1562 61.1227V220.846L66.1609 172.841C69.3841 169.619 73.755 167.809 78.3125 167.809C82.87 167.809 87.2409 169.619 90.4641 172.841L138.469 220.846ZM155.656 169.284L172.844 186.471V26.7477C172.844 24.4685 171.938 22.2826 170.327 20.671C168.715 19.0593 166.529 18.1539 164.25 18.1539H61.125C58.8458 18.1539 56.6599 19.0593 55.0483 20.671C53.4367 22.2826 52.5312 24.4685 52.5312 26.7477V35.3414H129.875C136.711 35.3414 143.268 38.0571 148.107 42.891C152.94 47.7274 155.656 54.285 155.656 61.1227V169.284Z" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    <div class="menu__text">${manifest.name}</div>
+                </li>
+            `);
+            button.on('hover:enter', function () {
+                Lampa.Activity.push({
+                    url: '',
+                    title: manifest.name,
+                    component: 'ua_collections_main',
+                    page: 1
+                });
+            });
+            $('.menu .menu__list').eq(0).append(button);
+        }
+
+        if (window.appready) add();
+        else {
+            Lampa.Listener.follow('app', function (e) {
+                if (e.type === 'ready') add();
             });
         }
-
-        Lampa.Select.show({
-            title: Lampa.Lang.translate('uaSelect_sorting'),
-            items: sortItems,
-            onSelect: function (sortItem) {
-                var sort = sortItem.sort;
-                var url = service.url + sort.extraParams;
-
-                Lampa.Activity.push({
-                    url: url,
-                    title: service.title,
-                    component: 'category_full',
-                    card_type: 'true',
-                    page: 1,
-                    sort_by: sort.id,
-                    source: 'tmdb'
-                });
-            },
-            onBack: showUASelectMenu
-        });
     }
 
-    function initPlugin() {
-        var sidebarButtonIcon = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 512 512">   <g stroke-width="0" transform="matrix(0.8, 0, 0, 0.8, -0.000002, 0)"></g>  <g stroke-linecap="round" stroke-linejoin="round" transform="matrix(0.8, 0, 0, 0.8, -0.000002, 0)"></g>   <g transform="matrix(0.8, 0, 0, 0.8, -0.000004, 102.4)">    <path fill="CurrentColor" d="M 592 -64 L 48 -64 C 21.49 -64 0 -42.51 0 -16 L 0 304 C 0 330.51 21.49 352 48 352 L 288 352 L 288 384 L 112 384 C 103.163 384 96 391.163 96 400 L 96 432 C 96 440.837 103.163 448 112 448 L 528 448 C 536.837 448 544 440.837 544 432 L 544 400 C 544 391.163 536.837 384 528 384 L 352 384 L 352 352 L 592 352 C 618.51 352 640 330.51 640 304 L 640 -16 C 640 -42.51 618.51 -64 592 -64 Z M 576 288 L 64 288 L 64 0 L 576 0 L 576 288 Z"></path>  </g>  <g transform="matrix(1, 0, 0, 1, -283.995663, -30.755001)">    <g stroke-width="0" transform="matrix(1, 0, 0, 1, 411.873653, 162.499998)"></g>    <g stroke-linecap="round" stroke-linejoin="round" transform="matrix(1, 0, 0, 1, 411.873653, 162.499998)"></g>    <g transform="matrix(1, 0, 0, 1, 411.873653, 162.499998)">      <polygon fill="CurrentColor" points="256.122 67.362 254.275 62.982 241.488 55.357 225.268 55.475 216.411 44.867 206.206 48.987 198.083 45.885 192.448 47.779 181.863 29.285 174.356 28.646 169.289 8.921 149.019 5.843 145.065 10.91 128.134 10.697 122.688 18.63 122.143 28.504 116.839 23.081 106.017 24.928 103.199 19.411 83.403 21.092 55.84 9.324 40.354 8.471 28.751 18.866 33.297 34.921 9.878 55.996 11.536 67.528 7.084 65.61 0.122 75.319 11.488 89.55 33.108 93.67 37.796 99.046 56.432 94.783 58.729 90.237 76.441 85.998 95.361 97.412 98.558 107.665 104.762 112.496 104.431 120.641 109.356 130.066 98.534 133.097 94.509 140.58 83.569 150.359 90.957 157.061 112.127 145.268 122.451 132.079 128.347 128.29 139.903 126.49 138.174 130.776 137.629 131.605 144.212 139.348 164.695 139.443 165.713 143.966 148.072 153.816 163.866 161.678 164.009 166.888 161.12 173.115 166.542 176.667 175.659 173.399 195.479 160.589 207.839 161.157 209.686 153.295 202.867 152.846 193.016 156.729 185.51 147.636 169.287 137.454 189.156 136.057 189.369 136.175 198.368 127.295 222.758 116.663 232.087 115.811 233.342 104.8 242.885 98.69 253.423 98.335 255.956 88.532 251.386 75.413"></polygon>    </g>  </g></svg>';
-
-        var menuItem = $('<li class="menu__item selector" data-action="ua_collections">' +
-            '<div class="menu__ico">' + sidebarButtonIcon + '</div>' +
-            '<div class="menu__text">' + Lampa.Lang.translate('uaSelect_menu_title') + '</div>' +
-            '</li>');
-
-        menuItem.on('hover:enter', function () {
-            showUASelectMenu();
-        });
-
-        $('.menu .menu__list').eq(0).append(menuItem);
+    if (!window.ua_collections_ready && Lampa.Manifest.app_digital >= 242) {
+        window.ua_collections_ready = true;
+        startPlugin();
     }
-
-    if (window.appready) {
-        initPlugin();
-    } else {
-        Lampa.Listener.follow('app', function (e) {
-            if (e.type === 'ready') initPlugin();
-        });
-    }
-
-    window.UASelect.showUASelectMenu = showUASelectMenu;
 })();
