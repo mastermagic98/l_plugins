@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    // Initialize window.UACollections if it doesn't exist
+    // Initialize window.UACollections
     window.UACollections = window.UACollections || {};
     if (window.UACollections.__initialized) return;
 
@@ -10,24 +10,36 @@
     // Localization (English and Ukrainian)
     Lampa.Lang.add({
         uaCollections_title: {
-            en: "Ukrainian Collections",
-            uk: "Українські колекції"
+            en: "Themed Collections",
+            uk: "Тематичні колекції"
         },
-        uaCollections_popular_films: {
-            en: "Popular Ukrainian Films",
-            uk: "Популярні українські фільми"
+        uaCollections_conjuring: {
+            en: "The Conjuring Universe Timeline",
+            uk: "Хронологія всесвіту «Закляття»"
         },
-        uaCollections_new_series: {
-            en: "New Ukrainian Series",
-            uk: "Нові українські серіали"
+        uaCollections_fast_furious: {
+            en: "All Fast & Furious Movies",
+            uk: "Усі фільми франшизи «Форсаж»"
         },
-        uaCollections_cartoons: {
-            en: "Ukrainian Cartoons",
-            uk: "Українські мультфільми"
+        uaCollections_paramount_series: {
+            en: "Paramount+ Original Series",
+            uk: "Оригінальні серіали Paramount+"
         },
-        uaCollections_cartoon_series: {
-            en: "Ukrainian Cartoon Series",
-            uk: "Українські мультсеріали"
+        uaCollections_stephen_king: {
+            en: "Best Stephen King Adaptations",
+            uk: "Найкращі екранізації Стівена Кінга"
+        },
+        uaCollections_tarantino: {
+            en: "Quentin Tarantino: Best to Good",
+            uk: "Квентін Тарантіно: від найкращого до хорошого"
+        },
+        uaCollections_horror_parodies: {
+            en: "Comedy Horror Parodies",
+            uk: "Комедійні пародії на фільми жахів"
+        },
+        uaCollections_buddy_movies: {
+            en: "Best Buddy Movies",
+            uk: "Найкращі бадді-муви"
         },
         uaCollections_items: {
             en: "{0} items",
@@ -40,6 +52,10 @@
         uaCollections_date: {
             en: "Created: {0}",
             uk: "Створено: {0}"
+        },
+        uaCollections_error: {
+            en: "Failed to load collection",
+            uk: "Не вдалося завантажити колекцію"
         }
     });
 
@@ -51,9 +67,9 @@
             this.item = Lampa.Template.js('ua_collection');
             this.img = this.item.find('.card__img');
             this.item.find('.card__title').text(Lampa.Utils.capitalizeFirstLetter(data.title));
-            this.item.find('.ua-collection-card__items').text(Lampa.Lang.translate('uaCollections_items').format(data.items_count));
+            this.item.find('.ua-collection-card__items').text(Lampa.Lang.translate('uaCollections_items').format(data.items_count || 0));
             this.item.find('.ua-collection-card__date').text(Lampa.Lang.translate('uaCollections_date').format(Lampa.Utils.parseTime(data.time).full));
-            this.item.find('.ua-collection-card__views').text(Lampa.Lang.translate('uaCollections_views').format(Lampa.Utils.bigNumberToShort(data.views)));
+            this.item.find('.ua-collection-card__views').text(Lampa.Lang.translate('uaCollections_views').format(Lampa.Utils.bigNumberToShort(data.views || 0)));
             this.item.addEventListener('visible', this.visible.bind(this));
         };
 
@@ -92,7 +108,7 @@
         };
 
         this.visible = function () {
-            this.img.src = Lampa.TMDB.image('w500' + data.backdrop_path);
+            this.img.src = Lampa.TMDB.image('w500' + (data.backdrop_path || data.poster_path || '/img_broken.svg'));
             if (this.onVisible) this.onVisible(this.item, data);
         };
 
@@ -116,24 +132,46 @@
     // Collection categories
     var collections = [
         {
-            hpu: 'popular_films',
-            title: Lampa.Lang.translate('uaCollections_popular_films'),
-            url: 'discover/movie?with_origin_country=UA&sort_by=popularity.desc'
+            hpu: 'conjuring',
+            title: Lampa.Lang.translate('uaCollections_conjuring'),
+            url: 'collection/531219', // The Conjuring Universe
+            type: 'collection'
         },
         {
-            hpu: 'new_series',
-            title: Lampa.Lang.translate('uaCollections_new_series'),
-            url: 'discover/tv?with_origin_country=UA&sort_by=first_air_date.desc'
+            hpu: 'fast_furious',
+            title: Lampa.Lang.translate('uaCollections_fast_furious'),
+            url: 'collection/435259', // Fast & Furious
+            type: 'collection'
         },
         {
-            hpu: 'cartoons',
-            title: Lampa.Lang.translate('uaCollections_cartoons'),
-            url: 'discover/movie?with_genres=16&with_original_language=uk'
+            hpu: 'paramount_series',
+            title: Lampa.Lang.translate('uaCollections_paramount_series'),
+            url: 'discover/tv?with_networks=4330&sort_by=popularity.desc',
+            type: 'discover'
         },
         {
-            hpu: 'cartoon_series',
-            title: Lampa.Lang.translate('uaCollections_cartoon_series'),
-            url: 'discover/tv?with_genres=16&with_original_language=uk'
+            hpu: 'stephen_king',
+            title: Lampa.Lang.translate('uaCollections_stephen_king'),
+            url: 'discover/movie?with_keywords=1396&sort_by=vote_average.desc&vote_count.gte=100',
+            type: 'discover'
+        },
+        {
+            hpu: 'tarantino',
+            title: Lampa.Lang.translate('uaCollections_tarantino'),
+            url: 'discover/movie?with_crew=138&sort_by=vote_average.desc&vote_count.gte=500',
+            type: 'discover'
+        },
+        {
+            hpu: 'horror_parodies',
+            title: Lampa.Lang.translate('uaCollections_horror_parodies'),
+            url: 'discover/movie?with_genres=35&with_keywords=10062&sort_by=popularity.desc',
+            type: 'discover'
+        },
+        {
+            hpu: 'buddy_movies',
+            title: Lampa.Lang.translate('uaCollections_buddy_movies'),
+            url: 'discover/movie?with_keywords=9726&sort_by=vote_average.desc&vote_count.gte=100',
+            type: 'discover'
         }
     ];
 
@@ -160,22 +198,27 @@
                     fulldata.push(data);
                 });
                 oncomplite(fulldata);
-            } else onerror();
+            } else {
+                Lampa.Noty.show(Lampa.Lang.translate('uaCollections_error'));
+                onerror();
+            }
         };
 
         collections.forEach(function (item) {
-            var url = Lampa.TMDB.api(item.url + '&page=1');
+            var apiPath = item.type === 'collection' ? `collection/${item.url}` : item.url;
+            var url = Lampa.TMDB.api(apiPath);
             network.silent(url, function (data) {
+                var results = item.type === 'collection' ? data.parts : data.results.slice(0, 10);
                 var collection_data = {
                     collection: true,
                     line_type: 'collection',
                     category: item.hpu,
-                    results: data.results.slice(0, 10).map(function (result, index) {
+                    results: results.map(function (result, index) {
                         return {
                             id: item.hpu + '_' + index,
                             title: result.title || result.name,
                             backdrop_path: result.backdrop_path || result.poster_path,
-                            items_count: data.results.length,
+                            items_count: results.length,
                             time: new Date().toISOString(),
                             views: Math.floor(Math.random() * 10000),
                             liked: Math.floor(Math.random() * 1000)
@@ -183,7 +226,10 @@
                     })
                 };
                 status.append(item.hpu, collection_data);
-            }, status.error.bind(status));
+            }, function () {
+                Lampa.Noty.show(Lampa.Lang.translate('uaCollections_error') + ': ' + item.title);
+                status.error();
+            });
         });
     }
 
@@ -191,17 +237,19 @@
         var category = collections.find(function (c) { return c.hpu === params.url; });
         if (!category) return onerror();
 
-        var url = Lampa.TMDB.api(category.url + '&page=' + params.page);
+        var apiPath = category.type === 'collection' ? `collection/${category.url}` : category.url + '&page=' + params.page;
+        var url = Lampa.TMDB.api(apiPath);
         network.silent(url, function (data) {
+            var results = category.type === 'collection' ? data.parts : data.results;
             var collection_data = {
                 collection: true,
-                total_pages: data.total_pages || 15,
-                results: data.results.map(function (result, index) {
+                total_pages: category.type === 'collection' ? 1 : (data.total_pages || 15),
+                results: results.map(function (result, index) {
                     return {
                         id: category.hpu + '_' + index + '_' + params.page,
                         title: result.title || result.name,
                         backdrop_path: result.backdrop_path || result.poster_path,
-                        items_count: data.results.length,
+                        items_count: results.length,
                         time: new Date().toISOString(),
                         views: Math.floor(Math.random() * 10000),
                         liked: Math.floor(Math.random() * 1000)
@@ -212,18 +260,23 @@
                 }
             };
             oncomplite(collection_data);
-        }, onerror);
+        }, function () {
+            Lampa.Noty.show(Lampa.Lang.translate('uaCollections_error'));
+            onerror();
+        });
     }
 
     function full(params, oncomplite, onerror) {
         var category = collections.find(function (c) { return c.hpu === params.url.split('_')[0]; });
         if (!category) return onerror();
 
-        var url = Lampa.TMDB.api(category.url + '&page=' + params.page);
+        var apiPath = category.type === 'collection' ? `collection/${category.url}` : category.url + '&page=' + params.page;
+        var url = Lampa.TMDB.api(apiPath);
         network.silent(url, function (data) {
+            var results = category.type === 'collection' ? data.parts : data.results;
             var collection_data = {
-                total_pages: data.total_pages || 15,
-                results: data.results.map(function (result) {
+                total_pages: category.type === 'collection' ? 1 : (data.total_pages || 15),
+                results: results.map(function (result) {
                     return {
                         id: result.id,
                         title: result.title || result.name,
@@ -235,7 +288,10 @@
                 })
             };
             oncomplite(collection_data);
-        }, onerror);
+        }, function () {
+            Lampa.Noty.show(Lampa.Lang.translate('uaCollections_error'));
+            onerror();
+        });
     }
 
     function clear() {
@@ -257,7 +313,11 @@
             this.activity.loader(true);
             Api.main(object, function (data) {
                 _this.build(data);
-            }, this.empty.bind(this));
+                _this.activity.loader(false);
+            }, function () {
+                _this.empty();
+                _this.activity.loader(false);
+            });
             return this.render();
         };
 
@@ -277,7 +337,15 @@
         var comp = new Lampa.InteractionCategory(object);
 
         comp.create = function () {
-            Api.collection(object, this.build.bind(this), this.empty.bind(this));
+            var _this = this;
+            this.activity.loader(true);
+            Api.collection(object, function (data) {
+                _this.build(data);
+                _this.activity.loader(false);
+            }, function () {
+                _this.empty();
+                _this.activity.loader(false);
+            });
         };
 
         comp.nextPageReuest = function (object, resolve, reject) {
@@ -303,7 +371,15 @@
         var comp = new Lampa.InteractionCategory(object);
 
         comp.create = function () {
-            Api.full(object, this.build.bind(this), this.empty.bind(this));
+            var _this = this;
+            this.activity.loader(true);
+            Api.full(object, function (data) {
+                _this.build(data);
+                _this.activity.loader(false);
+            }, function () {
+                _this.empty();
+                _this.activity.loader(false);
+            });
         };
 
         comp.nextPageReuest = function (object, resolve, reject) {
@@ -316,9 +392,9 @@
     function startPlugin() {
         var manifest = {
             type: 'video',
-            version: '1.0.1',
+            version: '1.0.2',
             name: Lampa.Lang.translate('uaCollections_title'),
-            description: 'Ukrainian movies, series, and cartoons collections powered by TMDB',
+            description: 'Themed movie and series collections powered by TMDB',
             component: 'ua_collections'
         };
         Lampa.Manifest.plugins = manifest;
