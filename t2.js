@@ -22,6 +22,9 @@
         }
     });
 
+    // Вбудована SVG-іконка для серіалу
+    var seriaIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 4V20C2 21.1 2.9 22 4 22H20C21.1 22 22 21.1 22 20V4C22 2.9 21.1 2 20 2H4C2.9 2 2 2.9 2 4ZM4 6H20V18H4V6ZM6 8V16H18V8H6Z" fill="currentColor"/></svg>';
+
     // Додавання параметра в налаштування Lampa
     Lampa.SettingsApi.addParam({
         component: 'interface',
@@ -84,28 +87,18 @@
                             .replace('{season}', seasonNumber);
                     }
 
-                    // Додаємо тег із інформацією на картку
-                    var activityRender = Lampa.Activity.active().activity.render();
-                    var newSeriaTag = '<div class="card--new_seria" style="right: -0.6em!important; position: absolute; background: #ff4242; color: #fff; bottom: .6em!important; padding: 0.4em 0.4em; font-size: 1.2em; -webkit-border-radius: 0.3em; -moz-border-radius: 0.3em; border-radius: 0.3em;">' +
-                        '<img src="./img/icons/menu/movie.svg" /> <div>' + Lampa.Lang.translate(labelText) + '</div></div>';
+                    // Формуємо тег із іконкою та текстом
+                    var newSeriaTag = '<div class="card--new_seria" style="position: absolute; bottom: 0.8em; right: 0.8em; background: #ff4242; color: #fff; padding: 0.4em 0.6em; font-size: 1.2em; border-radius: 0.3em; display: flex; align-items: center; gap: 0.4em; z-index: 10;">' +
+                        seriaIcon + '<span>' + Lampa.Lang.translate(labelText) + '</span></div>';
 
-                    // Якщо тег ще не доданий
-                    if (!$('.card--new_seria', activityRender).length) {
-                        // Для екрану шириною більше 585px додаємо тег після .full-start-new__details
-                        if (window.innerWidth > 585 && !$('.full-start-new.cardify').length) {
-                            $('.full-start-new__details', activityRender).append(newSeriaTag);
-                        } else {
-                            // Для інших випадків додаємо до .full-start__tags або після .full-start__poster
-                            if ($('.full-start__tags', activityRender).length) {
-                                $('.full-start__tags', activityRender).append(
-                                    '<span class="full-start-new__split">●</span><div class="card--new_seria"><div>' + Lampa.Lang.translate(labelText) + '</div></div>'
-                                );
-                            } else {
-                                $('.full-start__poster,.full-start-new__poster', activityRender).after(
-                                    '<div class="full-start__tag card--new_seria"><img src="./img/icons/menu/movie.svg" /> <div>' + Lampa.Lang.translate(labelText) + '</div></div>'
-                                );
-                            }
-                        }
+                    // Додаємо тег до картки
+                    var activityRender = Lampa.Activity.active().activity.render();
+                    var cardContainer = $('.full-start__poster,.full-start-new__poster', activityRender);
+
+                    // Якщо тег ще не доданий і є контейнер картки
+                    if (!$('.card--new_seria', activityRender).length && cardContainer.length) {
+                        // Додаємо тег після постера картки
+                        cardContainer.after(newSeriaTag);
                     }
                 }
             }
