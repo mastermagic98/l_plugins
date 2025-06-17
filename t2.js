@@ -53,6 +53,10 @@
     function initPlugin() {
         if (!isSeasonSeriaEnabled()) return;
 
+        // Додаємо CSS для батьківського контейнера, щоб забезпечити позиціонування
+        var style = $('<style>.full-start__poster, .full-start-new__poster { position: relative; }</style>');
+        $('head').append(style);
+
         // Підписка на події компонента full
         Lampa.Listener.follow('full', function (event) {
             if (event.type === 'complite' && Lampa.Activity.active().component === 'full') {
@@ -93,12 +97,12 @@
 
                     // Додаємо тег до картки
                     var activityRender = Lampa.Activity.active().activity.render();
-                    var cardContainer = $('.full-start__poster,.full-start-new__poster', activityRender);
+                    var cardContainer = $('.full-start__poster, .full-start-new__poster', activityRender);
 
                     // Якщо тег ще не доданий і є контейнер картки
                     if (!$('.card--new_seria', activityRender).length && cardContainer.length) {
-                        // Додаємо тег після постера картки
-                        cardContainer.after(newSeriaTag);
+                        // Додаємо тег всередину контейнера постера
+                        cardContainer.append(newSeriaTag);
                     }
                 }
             }
