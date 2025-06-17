@@ -13,12 +13,12 @@
             uk: "Відображення стану серіалу (сезон/серія)"
         },
         season_seria_label: {
-            en: "S{season} E{episode}",
-            uk: "S{season} E{episode}"
+            en: "S{season}\nE{episode}",
+            uk: "S{season}\nE{episode}"
         },
         season_seria_completed: {
-            en: "S{season} completed",
-            uk: "S{season} завершено"
+            en: "S{season}\ncompleted",
+            uk: "S{season}\nзавершено"
         }
     });
 
@@ -55,11 +55,11 @@
             '.full-start__poster, .full-start-new__poster { position: relative; }' +
             '.card--new_seria { ' +
             'position: absolute; ' +
-            'right: 0.3em; ' +
+            'left: 0.3em; ' +
             'bottom: 0.3em; ' +
             'background: rgba(0, 0, 0, 0.5); ' +
             'color: #fff; ' +
-            'font-size: 1.3em; ' +
+            'font-size: 1.1em; ' +
             'font-weight: 700; ' +
             'padding: 0.2em 0.5em; ' +
             'border-radius: 1em; ' +
@@ -70,6 +70,10 @@
             '-moz-user-select: none; ' +
             '-ms-user-select: none; ' +
             'user-select: none; ' +
+            '}' +
+            '.card--new_seria span { ' +
+            'display: block; ' +
+            'line-height: 1.2; ' +
             '}' +
             '</style>');
         $('head').append(style);
