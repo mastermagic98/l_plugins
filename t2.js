@@ -22,9 +22,6 @@
         }
     });
 
-    // Вбудована SVG-іконка для серіалу
-    var seriaIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 4V20C2 21.1 2.9 22 4 22H20C21.1 22 22 21.1 22 20V4C22 2.9 21.1 2 20 2H4C2.9 2 2 2.9 2 4ZM4 6H20V18H4V6ZM6 8V16H18V8H6Z" fill="currentColor"/></svg>';
-
     // Додавання параметра в налаштування Lampa
     Lampa.SettingsApi.addParam({
         component: 'interface',
@@ -91,9 +88,9 @@
                             .replace('{season}', seasonNumber);
                     }
 
-                    // Формуємо тег із іконкою та текстом
-                    var newSeriaTag = '<div class="card--new_seria" style="position: absolute; bottom: 0.8em; right: 0.8em; background: #ff4242; color: #fff; padding: 0.4em 0.6em; font-size: 1.2em; border-radius: 0.3em; display: flex; align-items: center; gap: 0.4em; z-index: 10;">' +
-                        seriaIcon + '<span>' + Lampa.Lang.translate(labelText) + '</span></div>';
+                    // Формуємо тег із текстом (без іконки)
+                    var newSeriaTag = '<div class="card--new_seria" style="position: absolute; bottom: 0.8em; right: 0.8em; background: #ff4242; color: #fff; padding: 0.4em 0.6em; font-size: 1.2em; border-radius: 0.3em; z-index: 10;">' +
+                        '<span>' + Lampa.Lang.translate(labelText) + '</span></div>';
 
                     // Додаємо тег до картки
                     var activityRender = Lampa.Activity.active().activity.render();
