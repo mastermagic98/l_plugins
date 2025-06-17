@@ -13,12 +13,12 @@
             uk: "Відображення стану серіалу (сезон/серія)"
         },
         season_seria_label: {
-            en: "Season: {season} / Episode: {episode}",
-            uk: "Сезон: {season} / Серія: {episode}"
+            en: "S{season} E{episode}",
+            uk: "S{season} E{episode}"
         },
         season_seria_completed: {
-            en: "Season: {season} completed",
-            uk: "Сезон: {season} завершено"
+            en: "S{season} completed",
+            uk: "S{season} завершено"
         }
     });
 
@@ -50,8 +50,28 @@
     function initPlugin() {
         if (!isSeasonSeriaEnabled()) return;
 
-        // Додаємо CSS для батьківського контейнера, щоб забезпечити позиціонування
-        var style = $('<style>.full-start__poster, .full-start-new__poster { position: relative; }</style>');
+        // Додаємо CSS для батьківського контейнера та стилів тегу
+        var style = $('<style>' +
+            '.full-start__poster, .full-start-new__poster { position: relative; }' +
+            '.card--new_seria { ' +
+            'position: absolute; ' +
+            'right: 0.3em; ' +
+            'bottom: 0.3em; ' +
+            'background: rgba(0, 0, 0, 0.5); ' +
+            'color: #fff; ' +
+            'font-size: 1.3em; ' +
+            'font-weight: 700; ' +
+            'padding: 0.2em 0.5em; ' +
+            'border-radius: 1em; ' +
+            'z-index: 10; ' +
+            'display: inline-block; ' +
+            'vertical-align: middle; ' +
+            '-webkit-user-select: none; ' +
+            '-moz-user-select: none; ' +
+            '-ms-user-select: none; ' +
+            'user-select: none; ' +
+            '}' +
+            '</style>');
         $('head').append(style);
 
         // Підписка на події компонента full
@@ -82,14 +102,14 @@
                     if (nextEpisode) {
                         labelText = Lampa.Lang.translate('season_seria_label')
                             .replace('{season}', seasonNumber)
-                            .replace('{episode}', displayEpisodeNumber + ' / ' + episodeCount);
+                            .replace('{episode}', displayEpisodeNumber + '/' + episodeCount);
                     } else {
                         labelText = Lampa.Lang.translate('season_seria_completed')
                             .replace('{season}', seasonNumber);
                     }
 
-                    // Формуємо тег із текстом (без іконки)
-                    var newSeriaTag = '<div class="card--new_seria" style="position: absolute; bottom: 0.8em; right: 0.8em; background: #ff4242; color: #fff; padding: 0.4em 0.6em; font-size: 1.2em; border-radius: 0.3em; z-index: 10;">' +
+                    // Формуємо тег із текстом
+                    var newSeriaTag = '<div class="card--new_seria">' +
                         '<span>' + Lampa.Lang.translate(labelText) + '</span></div>';
 
                     // Додаємо тег до картки
