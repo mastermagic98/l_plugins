@@ -50,7 +50,7 @@
     function initPlugin() {
         if (!isSeasonSeriaEnabled()) return;
 
-        // Додаємо CSS для батьківського контейнера та стилів тегу
+        // Додаємо CSS для батьківського контейнера та стилів тегів
         var style = $('<style>' +
             '.full-start__poster, .full-start-new__poster { position: relative; }' +
             '.card--new_seria { ' +
@@ -75,6 +75,24 @@
             'display: block; ' +
             'line-height: 1.2; ' +
             '}' +
+            '.card__vote { ' +
+            'position: absolute; ' +
+            'right: 0.3em; ' +
+            'bottom: 0.3em; ' +
+            'background: rgba(0, 0, 0, 0.5); ' +
+            'color: #fff; ' +
+            'font-size: 1.3em; ' +
+            'font-weight: 700; ' +
+            'padding: 0.2em 0.5em; ' +
+            'border-radius: 1em; ' +
+            'z-index: 10; ' +
+            'display: inline-block; ' +
+            'vertical-align: middle; ' +
+            '-webkit-user-select: none; ' +
+            '-moz-user-select: none; ' +
+            '-ms-user-select: none; ' +
+            'user-select: none; ' +
+            '}' +
             '</style>');
         $('head').append(style);
 
@@ -83,46 +101,52 @@
             if (event.type === 'complite' && Lampa.Activity.active().component === 'full') {
                 var data = Lampa.Activity.active().card;
 
-                // Перевірка, чи це серіал із джерела tmdb
-                if (data && data.source === 'tmdb' && data.seasons && data.last_episode_to_air) {
-                    var seasonNumber = data.last_episode_to_air.season_number;
-                    var episodeNumber = data.last_episode_to_air.episode_number;
-                    var nextEpisode = data.next_episode_to_air;
-                    var seasons = data.seasons;
-
-                    // Знаходимо кількість епізодів у сезоні
-                    var seasonData = seasons.find(function (season) {
-                        return season.season_number === seasonNumber;
-                    });
-                    var episodeCount = seasonData ? seasonData.episode_count : episodeNumber;
-
-                    // Визначаємо, чи є наступний епізод
-                    var displayEpisodeNumber = nextEpisode && new Date(nextEpisode.air_date) <= Date.now()
-                        ? nextEpisode.episode_number
-                        : episodeNumber;
-
-                    // Формуємо текст для відображення
-                    var labelText;
-                    if (nextEpisode) {
-                        labelText = Lampa.Lang.translate('season_seria_label')
-                            .replace('{season}', seasonNumber)
-                            .replace('{episode}', displayEpisodeNumber + '/' + episodeCount);
-                    } else {
-                        labelText = Lampa.Lang.translate('season_seria_completed')
-                            .replace('{season}', seasonNumber);
-                    }
-
-                    // Формуємо тег із текстом
-                    var newSeriaTag = '<div class="card--new_seria">' +
-                        '<span>' + Lampa.Lang.translate(labelText) + '</span></div>';
-
-                    // Додаємо тег до картки
+                // Перевірка, чи це серіал або фільм із джерела tmdb
+                if (data && data.source === 'tmdb') {
                     var activityRender = Lampa.Activity.active().activity.render();
                     var cardContainer = $('.full-start__poster, .full-start-new__poster', activityRender);
 
-                    // Якщо тег ще не доданий і є контейнер картки
-                    if (!$('.card--new_seria', activityRender).length && cardContainer.length) {
-                        // Додаємо тег всередину контейнера постера
+                    // Додавання тегу оцінки (.card__vote), якщо є vote_average
+                    if (data.vote_average && !$('.card__vote', activityRender).length && cardContainer.length) {
+                        var voteText = data.vote_average.toFixed(1); // Оцінка з одним знаком після коми
+                        var voteTag = '<div class="card__vote">' + voteText + '</div>';
+                        cardContainer.append(voteTag);
+                    }
+
+                    // Додавання тегу сезону та серії (.card--new_seria), якщо це серіал
+                    if (data.seasons && data.last_episode_to_air && isSeasonSeriaEnabled() && !$('.card--new_seria', activityRender).length && cardContainer.length) {
+                        var seasonNumber = data.last_episode_to_air.season_number;
+                        var episodeNumber = data.last_episode_to_air.episode_number;
+                        var nextEpisode = data.next_episode_to_air;
+                        var seasons = data.seasons;
+
+                        // Знаходимо кількість епізодів у сезоні
+                        var seasonData = seasons.find(function (season) {
+                            return season.season_number === seasonNumber;
+                        });
+                        var episodeCount = seasonData ? seasonData.episode_count : episodeNumber;
+
+                        // Визначаємо, чи є наступний епізод
+                        var displayEpisodeNumber = nextEpisode && new Date(nextEpisode.air_date) <= Date.now()
+                            ? nextEpisode.episode_number
+                            : episodeNumber;
+
+                        // Формуємо текст для відображення
+                        var labelText;
+                        if (nextEpisode) {
+                            labelText = Lampa.Lang.translate('season_seria_label')
+                                .replace('{season}', seasonNumber)
+                                .replace('{episode}', displayEpisodeNumber + '/' + episodeCount);
+                        } else {
+                            labelText = Lampa.Lang.translate('season_seria_completed')
+                                .replace('{season}', seasonNumber);
+                        }
+
+                        // Формуємо тег із текстом
+                        var newSeriaTag = '<div class="card--new_seria">' +
+                            '<span>' + Lampa.Lang.translate(labelText) + '</span></div>';
+
+                        // Додаємо тег до картки
                         cardContainer.append(newSeriaTag);
                     }
                 }
