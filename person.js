@@ -19,9 +19,8 @@
                 setTimeout(function() {
                     Lampa.Activity.reload();
                 }, 100);
-            }
         });
-    
+}
         // Запускаем проверку текущей активности
         setTimeout(checkCurrentActivity, 1500);
         
