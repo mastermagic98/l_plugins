@@ -188,11 +188,26 @@
             if (event.type === 'complite' && Lampa.Activity.active().component === 'full') {
                 console.log('Full event triggered'); // Дебаг
                 var activity = Lampa.Activity.active();
-                var data = activity.card || activity.activity.data('card') || {};
-                console.log('Full data:', JSON.stringify(data, null, 2)); // Дебаг
                 var activityRender = activity.activity.render();
-                var cardContainer = $('.full-start__poster, .full-start-new__poster', activityRender);
-                addSeriaTag(data, cardContainer, $(activityRender));
+                var cardContainer = $('.full-start__poster, .full-start-new__poster', activityRender).first(); // Беремо лише перший постер
+                var tmdbId = activity.card?.id || activity.activity.data('id');
+                console.log('TMDB ID:', tmdbId); // Дебаг
+
+                if (tmdbId && Lampa.TMDB) {
+                    // Асинхронне отримання даних із TMDB
+                    Lampa.TMDB.get('tv/' + tmdbId, function (data) {
+                        console.log('TMDB data:', JSON.stringify(data, null, 2)); // Дебаг
+                        addSeriaTag(data, cardContainer, $(activityRender));
+                    }, function () {
+                        console.log('TMDB request failed'); // Дебаг
+                        addSeriaTag({}, cardContainer, $(activityRender)); // Запасний варіант
+                    });
+                } else {
+                    console.log('No TMDB ID or TMDB not available'); // Дебаг
+                    var data = activity.card || activity.activity.data('card') || {};
+                    console.log('Fallback data:', JSON.stringify(data, null, 2)); // Дебаг
+                    addSeriaTag(data, cardContainer, $(activityRender));
+                }
             }
         });
 
