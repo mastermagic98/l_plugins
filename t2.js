@@ -183,27 +183,8 @@
             '</style>');
         $('head').append(style);
 
-        // Обробка детального перегляду
-        Lampa.Listener.follow('full', function (event) {
-            if (event.type === 'complite' && Lampa.Activity.active().component === 'full') {
-                console.log('Full event triggered'); // Дебаг
-                var activity = Lampa.Activity.active();
-                var activityRender = activity.activity.render();
-                var cardContainer = $('.full-start__poster, .full-start-new__poster', activityRender).first();
-                var data = activity.card || {};
-                console.log('Activity card data:', JSON.stringify(data, null, 2)); // Дебаг
-
-                // Додаємо затримку для забезпечення завантаження даних
-                setTimeout(function () {
-                    var updatedData = Lampa.Activity.active().card || {};
-                    console.log('Updated card data:', JSON.stringify(updatedData, null, 2)); // Дебаг
-                    addSeriaTag(updatedData, cardContainer, $(activityRender));
-                }, 500);
-            }
-        });
-
-        // Періодичне сканування карток
-        setInterval(function () {
+        // Обробка списків
+        function processCards() {
             console.log('Scanning cards'); // Дебаг
             $('.card--tv').each(function () {
                 var cardElement = $(this);
@@ -212,19 +193,72 @@
                 var container = cardElement.find('.card__view') || cardElement;
                 addSeriaTag(cardData, container, cardElement);
             });
-        }, 1000);
+        }
+
+        // Обробка детального перегляду
+        function processFull() {
+            var activity = Lampa.Activity.active();
+            if (activity.component !== 'full') return;
+            console.log('Full page detected'); // Дебаг
+            var activityRender = activity.activity.render();
+            var cardContainer = $('.full-start__poster, .full-start-new__poster', activityRender).first();
+            var data = activity.card || {};
+            console.log('Activity card data:', JSON.stringify(data, null, 2)); // Дебаг
+            addSeriaTag(data, cardContainer, $(activityRender));
+        }
+
+        // MutationObserver для відстеження змін
+        var observer = new MutationObserver(function (mutations) {
+            var fullPageProcessed = false;
+            mutations.forEach(function (mutation) {
+                if (mutation.addedNodes.length) {
+                    for (var i = 0; i < mutation.addedNodes.length; i++) {
+                        var node = mutation.addedNodes[i];
+                        if (node.nodeType === 1) {
+                            if (node.matches('.card--tv')) {
+                                var cardElement = $(node);
+                                var container = cardElement.find('.card__view') || cardElement;
+                                addSeriaTag(cardElement.data('card'), container, cardElement);
+                            }
+                            if (node.matches('.full-start__poster, .full-start-new__poster') && !fullPageProcessed) {
+                                fullPageProcessed = true;
+                                processFull();
+                            }
+                            var cards = node.querySelectorAll('.card--tv');
+                            if (cards.length) {
+                                processCards();
+                            }
+                        }
+                    }
+                }
+            });
+        });
+
+        // Запуск спостерігача
+        observer.observe(document.body, { childList: true, subtree: true });
+
+        // Початкова обробка
+        document.addEventListener('DOMContentLoaded', function () {
+            processCards();
+            processFull();
+        });
+
+        // Обробка після завантаження додатку
+        if (window.appready) {
+            console.log('App ready, starting plugin'); // Дебаг
+            processCards();
+            processFull();
+        } else {
+            Lampa.Listener.follow('app', function (event) {
+                if (event.type === 'ready') {
+                    console.log('App ready event, starting plugin'); // Дебаг
+                    processCards();
+                    processFull();
+                }
+            });
+        }
     }
 
     // Запуск плагіна
-    if (window.appready) {
-        console.log('App ready, starting plugin'); // Дебаг
-        initPlugin();
-    } else {
-        Lampa.Listener.follow('app', function (event) {
-            if (event.type === 'ready') {
-                console.log('App ready event, starting plugin'); // Дебаг
-                initPlugin();
-            }
-        });
-    }
+    initPlugin();
 })();
