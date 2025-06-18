@@ -66,23 +66,25 @@
 
     // Функція для додавання тегу
     function addSeriaTag(card, container, cardElement) {
-        if (!container || !isSeasonSeriaEnabled() || container.find('.card--new_seria').length || cardElement.attr('data-seria-processed')) return;
+        if (!container || !isSeasonSeriaEnabled() || container.find('.card--new_seria').length || cardElement.attr('data-seria-processed')) {
+            console.log('Skipping addSeriaTag: already processed or disabled'); // Дебаг
+            return;
+        }
 
         // Позначаємо картку як оброблену
         cardElement.attr('data-seria-processed', 'true');
 
         // Перевірка, чи це серіал
-        var isSeries = card?.type === 'series' || card?.media_type === 'tv';
+        var isSeries = card?.tmdb === 'tv' || card?.media_type === 'tv' || card?.type === 'series';
         console.log('Card data:', card ? JSON.stringify(card, null, 2) : 'undefined', 'Is series:', isSeries); // Дебаг
 
-        if (isSeries) {
+        if (isSeries && card?.last_episode_to_air?.season_number) {
             console.log('addSeriaTag called for series:', card); // Дебаг
-            // Використовуємо значення за замовчуванням
-            var seasonNumber = card?.last_episode_to_air?.season_number || 1;
-            var episodeNumber = card?.last_episode_to_air?.episode_number || 0;
-            var nextEpisode = card?.next_episode_to_air;
-            var seasons = card?.seasons || [];
-            var status = card?.status || '';
+            var seasonNumber = card.last_episode_to_air.season_number || 1;
+            var episodeNumber = card.last_episode_to_air.episode_number || 0;
+            var nextEpisode = card.next_episode_to_air;
+            var seasons = card.seasons || [];
+            var status = card.status || '';
 
             console.log('Series data:', { seasonNumber, episodeNumber, nextEpisode, seasons, status }); // Дебаг
 
@@ -98,7 +100,7 @@
             }, 0);
 
             // Визначаємо наступний епізод
-            var displayEpisodeNumber = nextEpisode && new Date(nextEpisode?.air_date) <= Date.now()
+            var displayEpisodeNumber = nextEpisode && new Date(nextEpisode.air_date) <= Date.now()
                 ? nextEpisode.episode_number
                 : episodeNumber;
 
@@ -108,7 +110,7 @@
                 labelText = Lampa.Lang.translate(status === 'Ended' ? 'season_seria_series_ended' : 'season_seria_series_canceled')
                     .replace('{seasons}', seasons.length || 1)
                     .replace('{episodes}', totalEpisodes);
-            } else if (status === 'Planned' && !card?.last_episode_to_air) {
+            } else if (status === 'Planned' && !card.last_episode_to_air) {
                 labelText = Lampa.Lang.translate('season_seria_series_canceled')
                     .replace('{seasons}', seasons.length || 1)
                     .replace('{episodes}', totalEpisodes);
@@ -123,14 +125,14 @@
             }
 
             // Формуємо тег
-            var newSeriaTag = '<div class="card--new_seria">' +
-                '<span>' + Lampa.Lang.translate(labelText) + '</span></div>';
-
+            var newSeriaTag = '<div class="card--new_seria"><span>' + Lampa.Lang.translate(labelText) + '</span></div>';
             container.append(newSeriaTag);
             console.log('Tag added to:', container.attr('class'), 'Container dimensions:', {
                 width: container.width(),
                 height: container.height()
             }, 'Seria width:', $('.card--new_seria').outerWidth()); // Дебаг
+        } else {
+            console.log('Not a series or no season data'); // Дебаг
         }
     }
 
@@ -170,6 +172,13 @@
             return;
         }
         console.log('initPlugin called'); // Дебаг
+
+        // Перевірка Manifest.origin
+        if (Lampa.Manifest.origin !== 'bylampa') {
+            console.error('Invalid origin:', Lampa.Manifest.origin); // Дебаг
+            Lampa.Noty.show('Ошибка доступа');
+            return;
+        }
 
         // Додаємо CSS
         var style = $('<style>' +
@@ -245,25 +254,25 @@
         console.log('Starting MutationObserver'); // Дебаг
         observer.observe(document.body, { childList: true, subtree: true });
 
-        // Резервний виклик через setTimeout
-        setTimeout(function () {
-            console.log('Running processFull via fallback timeout'); // Дебаг
-            processFull();
-        }, 2000);
-
-        // Обробка після завантаження додатку
+        // Слухач події full
         if (Lampa.Listener) {
             console.log('Lampa.Listener available'); // Дебаг
-            Lampa.Listener.follow('app', function (event) {
-                console.log('App event:', event.type); // Дебаг
-                if (event.type === 'ready') {
-                    console.log('App ready event, starting plugin'); // Дебаг
+            Lampa.Listener.follow('full', function (event) {
+                console.log('Full event:', event.type); // Дебаг
+                if (event.type === 'complite') {
+                    console.log('Full complite event, starting plugin'); // Дебаг
                     processFull();
                 }
             });
         } else {
             console.warn('Lampa.Listener not available'); // Дебаг
         }
+
+        // Резервний виклик
+        setTimeout(function () {
+            console.log('Running processFull via fallback timeout'); // Дебаг
+            processFull();
+        }, 2000);
     }
 
     // Запуск плагіна
