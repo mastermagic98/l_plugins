@@ -2,35 +2,41 @@
     'use strict';
 
     // Перевірка, чи плагін уже ініціалізовано
-    if (window.SeasonSeriaWindow && window.SeasonSeriaPlugin.__initialized) return;
+    if (window.SeasonSeriaPlugin && window.SeasonSeriaPlugin.__initialized) return;
     window.SeasonSeriaPlugin = window.SeasonSeriaPlugin || {};
-    window.SeasonSeriaPlugin.___initialized = true;
+    window.SeasonSeriaPlugin.__initialized = true;
 
-    // Додавання локалізації для англійської та української мов
+    // Додавання локалізації для англійської, української та російської мов
     Lampa.Lang.add({
         season_seria_setting: {
             en: "Show series status (season/episode)",
-            uk: "Відображення стану серіалу (сезон/серія)"
+            uk: "Відображення стану серіалу (сезон/серія)",
+            ru: "Отображение статуса сериала (сезон/эпизод)"
         },
         season_seria_active: {
             en: "Season {season}\nEpisodes {current}/{total}",
-            uk: "Сезон {season}\nЕпізодів {current}/{total}"
+            uk: "Сезон {season}\nЕпізодів {current}/{total}",
+            ru: "Сезон {season}\nЭпизодов {current}/{total}"
         },
         season_seria_season_completed: {
-            en: "Season {season}\nEpisodes {episodes}",
-            uk: "Сезон {season}\nЕпізодів {episodes}"
+            en: "Season {season} Episodes {episodes}\nIn Production",
+            uk: "Сезон {season} Епізодів {episodes}\nЗнімається",
+            ru: "Сезон {season} Эпизодов {episodes}\nСнимается"
         },
         season_seria_series_ended: {
             en: "Seasons {seasons} Episodes {episodes}\nEnded",
-            uk: "Сезонів {seasons} Епізодів {episodes}\nЗакінчено}"
+            uk: "Сезонів {seasons} Епізодів {episodes}\nЗакінчено",
+            ru: "Сезонов {seasons} Эпизодов {episodes}\nЗавершено"
         },
         season_seria_series_canceled: {
             en: "Seasons {seasons} Episodes {episodes}\nCanceled",
-            uk: "Сезонів {seasons} Епізодів {episodes}\nПрипинено}"
+            uk: "Сезонів {seasons} Епізодів {episodes}\nПрипинено",
+            ru: "Сезонов {seasons} Эпизодов {episodes}\nОтменено"
         },
         season_seria_series_planned: {
             en: "Season {season}\nPlanned",
-            uk: "Сезон {season}\nЗаплановано}"
+            uk: "Сезон {season}\nЗаплановано",
+            ru: "Сезон {season}\nЗапланировано"
         }
     });
 
