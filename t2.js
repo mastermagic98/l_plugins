@@ -6,6 +6,8 @@
     window.SeasonSeriaPlugin = window.SeasonSeriaPlugin || {};
     window.SeasonSeriaPlugin.__initialized = true;
 
+    console.log('SeasonSeriaPlugin initialized'); // Дебаг
+
     // Додавання локалізації
     Lampa.Lang.add({
         season_seria_setting: {
@@ -60,7 +62,7 @@
         console.log('addSeriaTag called:', card); // Дебаг
 
         // Перевірка, чи це серіал
-        if (card.source === 'tmdb' && (card.movie?.media_type === 'tv' || card.media_type === 'tv')) {
+        if (card.media_type === 'tv' || (card.movie && card.movie.media_type === 'tv')) {
             var seasonNumber = card.last_episode_to_air?.season_number || 1;
             var episodeNumber = card.last_episode_to_air?.episode_number || 0;
             var nextEpisode = card.next_episode_to_air;
@@ -117,6 +119,8 @@
     function initPlugin() {
         if (!isSeasonSeriaEnabled()) return;
 
+        console.log('initPlugin called'); // Дебаг
+
         // Додаємо CSS
         var style = $('<style>' +
             '.card, .card__poster, .card__image, .full-start__poster, .full-start-new__poster { position: relative; }' +
@@ -158,47 +162,29 @@
             }
         });
 
-        // Обробка списків карток
-        Lampa.Listener.follow('cards', function () {
-            console.log('Cards event triggered'); // Дебаг
-            setTimeout(function () {
-                $('.card').each(function () {
-                    var cardElement = $(this);
-                    var cardData = cardElement.data('card');
-                    if (cardData) {
-                        console.log('Processing card:', cardData); // Дебаг
-                        var container = cardElement.find('.card__poster, .card__image') || cardElement;
-                        addSeriaTag(cardData, container);
-                    }
-                });
-            }, 200); // Затримка для завантаження DOM
-        });
-
-        // Додаткова обробка компонентів
-        Lampa.Listener.follow('component', function (event) {
-            console.log('Component event:', event.name); // Дебаг
-            if (['main', 'category', 'search', 'menu'].includes(event.name)) {
-                setTimeout(function () {
-                    $('.card').each(function () {
-                        var cardElement = $(this);
-                        var cardData = cardElement.data('card');
-                        if (cardData) {
-                            console.log('Processing card:', cardData); // Дебаг
-                            var container = cardElement.find('.card__poster, .card__image') || cardElement;
-                            addSeriaTag(cardData, container);
-                        }
-                    });
-                }, 200);
-            }
-        });
+        // Періодичне сканування карток
+        setInterval(function () {
+            console.log('Scanning cards'); // Дебаг
+            $('.card').each(function () {
+                var cardElement = $(this);
+                var cardData = cardElement.data('card');
+                if (cardData) {
+                    console.log('Processing card:', cardData); // Дебаг
+                    var container = cardElement.find('.card__poster, .card__image') || cardElement;
+                    addSeriaTag(cardData, container);
+                }
+            });
+        }, 1000); // Сканування кожну секунду
     }
 
     // Запуск плагіна
     if (window.appready) {
+        console.log('App ready, starting plugin'); // Дебаг
         initPlugin();
     } else {
         Lampa.Listener.follow('app', function (event) {
             if (event.type === 'ready') {
+                console.log('App ready event, starting plugin'); // Дебаг
                 initPlugin();
             }
         });
