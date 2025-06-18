@@ -98,7 +98,6 @@
                     var activityRender = Lampa.Activity.active().activity.render();
                     var cardContainer = $('.full-start__poster, .full-start-new__poster', activityRender);
 
-                    // Додавання тегу сезону та серії (.card--new_seria)
                     if (!$('.card--new_seria', activityRender).length && cardContainer.length) {
                         var seasonNumber = data.last_episode_to_air.season_number;
                         var episodeNumber = data.last_episode_to_air.episode_number;
