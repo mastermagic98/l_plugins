@@ -57,10 +57,10 @@
 
     // Функція для додавання тегу
     function addSeriaTag(card, container, cardElement) {
-        if (!container || !isSeasonSeriaEnabled() || $('.card--new_seria', container).length || cardElement.data('seria-processed')) return;
+        if (!container || !isSeasonSeriaEnabled() || container.find('.card--new_seria').length || cardElement.attr('data-seria-processed')) return;
 
         // Позначаємо картку як оброблену
-        cardElement.data('seria-processed', true);
+        cardElement.attr('data-seria-processed', 'true');
 
         // Перевірка .card--tv і .card__type
         var isCardTv = cardElement.hasClass('card--tv');
@@ -73,7 +73,7 @@
 
         if (isSeries) {
             console.log('addSeriaTag called for series:', card); // Дебаг
-            // Використовуємо значення за замовчуванням, якщо card undefined
+            // Використовуємо значення за замовчуванням
             var seasonNumber = card?.last_episode_to_air?.season_number || 1;
             var episodeNumber = card?.last_episode_to_air?.episode_number || 0;
             var nextEpisode = card?.next_episode_to_air;
@@ -123,7 +123,7 @@
                 '<span>' + Lampa.Lang.translate(labelText) + '</span></div>';
 
             container.append(newSeriaTag);
-            console.log('Tag added to:', container); // Дебаг
+            console.log('Tag added to:', container.attr('class')); // Дебаг
         }
     }
 
@@ -135,7 +135,8 @@
 
         // Додаємо CSS
         var style = $('<style>' +
-            '.card, .card--tv, .card__poster, .card__image, .full-start__poster, .full-start-new__poster { position: relative; }' +
+            '.card, .card--tv, .card__view, .card__img, .full-start__poster, .full-start-new__poster { position: relative; }' +
+            '.card__vote { display: none !important; }' +
             '.card--new_seria { ' +
             'position: absolute; ' +
             'left: 0.3em; ' +
@@ -181,7 +182,7 @@
                 var cardElement = $(this);
                 var cardData = cardElement.data('card');
                 console.log('Processing card:', cardData ? JSON.stringify(cardData, null, 2) : 'undefined'); // Дебаг
-                var container = cardElement.find('.card__poster, .card__image') || cardElement;
+                var container = cardElement.find('.card__view') || cardElement;
                 addSeriaTag(cardData, container, cardElement);
             });
         }, 1000);
