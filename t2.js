@@ -56,20 +56,32 @@
     }
 
     // Функція для додавання тегу
-    function addSeriaTag(card, container) {
+    function addSeriaTag(card, container, cardElement) {
         if (!card || !container || !isSeasonSeriaEnabled() || $('.card--new_seria', container).length) return;
 
-        console.log('addSeriaTag called:', card); // Дебаг
+        // Перевірка тегу .card__type
+        var cardTypeElement = cardElement.find('.card__type');
+        var cardTypeText = cardTypeElement.length ? cardTypeElement.text().toLowerCase() : '';
+        console.log('Card type:', cardTypeText, 'Card data:', JSON.stringify(card, null, 2)); // Дебаг
 
         // Перевірка, чи це серіал
-        if (card.media_type === 'tv' || (card.movie && card.movie.media_type === 'tv')) {
+        var isSeries = cardTypeText.includes('serial') ||
+                       cardTypeText.includes('tv') ||
+                       cardTypeText.includes('серіал') ||
+                       card.media_type === 'tv' ||
+                       (card.movie && card.movie.media_type === 'tv') ||
+                       card.seasons ||
+                       card.last_episode_to_air;
+
+        if (isSeries) {
+            console.log('addSeriaTag called for series:', card); // Дебаг
             var seasonNumber = card.last_episode_to_air?.season_number || 1;
             var episodeNumber = card.last_episode_to_air?.episode_number || 0;
             var nextEpisode = card.next_episode_to_air;
             var seasons = card.seasons || [];
             var status = card.status || '';
 
-            console.log('Card data:', { seasonNumber, episodeNumber, nextEpisode, seasons, status }); // Дебаг
+            console.log('Series data:', { seasonNumber, episodeNumber, nextEpisode, seasons, status }); // Дебаг
 
             // Кількість епізодів у сезоні
             var seasonData = seasons.find(function (season) {
@@ -112,6 +124,7 @@
                 '<span>' + Lampa.Lang.translate(labelText) + '</span></div>';
 
             container.append(newSeriaTag);
+            console.log('Tag added to:', container); // Дебаг
         }
     }
 
@@ -158,7 +171,7 @@
                 var data = Lampa.Activity.active().card;
                 var activityRender = Lampa.Activity.active().activity.render();
                 var cardContainer = $('.full-start__poster, .full-start-new__poster', activityRender);
-                addSeriaTag(data, cardContainer);
+                addSeriaTag(data, cardContainer, $(activityRender));
             }
         });
 
@@ -169,12 +182,12 @@
                 var cardElement = $(this);
                 var cardData = cardElement.data('card');
                 if (cardData) {
-                    console.log('Processing card:', cardData); // Дебаг
+                    console.log('Processing card:', JSON.stringify(cardData, null, 2)); // Дебаг
                     var container = cardElement.find('.card__poster, .card__image') || cardElement;
-                    addSeriaTag(cardData, container);
+                    addSeriaTag(cardData, container, cardElement);
                 }
             });
-        }, 1000); // Сканування кожну секунду
+        }, 1000);
     }
 
     // Запуск плагіна
