@@ -2,11 +2,20 @@
     'use strict';
 
     // Перевірка, чи плагін уже ініціалізовано
-    if (window.SeasonSeriaPlugin && window.SeasonSeriaPlugin.__initialized) return;
+    if (window.SeasonSeriaPlugin && window.SeasonSeriaPlugin.__initialized) {
+        console.log('SeasonSeriaPlugin already initialized'); // Дебаг
+        return;
+    }
     window.SeasonSeriaPlugin = window.SeasonSeriaPlugin || {};
     window.SeasonSeriaPlugin.__initialized = true;
 
     console.log('SeasonSeriaPlugin initialized'); // Дебаг
+
+    // Перевірка існування Lampa
+    if (!window.Lampa) {
+        console.error('Lampa is not defined'); // Дебаг
+        return;
+    }
 
     // Додавання локалізації
     Lampa.Lang.add({
@@ -125,10 +134,41 @@
         }
     }
 
+    // Обробка сторінки full
+    function processFull() {
+        if (!Lampa.Activity || !Lampa.Activity.active()) {
+            console.log('Activity not ready'); // Дебаг
+            return;
+        }
+        var activity = Lampa.Activity.active();
+        if (activity.component !== 'full') {
+            console.log('Not full page, component:', activity.component); // Дебаг
+            return;
+        }
+        console.log('Full page detected'); // Дебаг
+        var activityRender = activity.activity.render();
+        var cardContainer = $('.full-start__poster', activityRender).parent(); // Контейнер під постером
+        var data = activity.card || {};
+        console.log('Activity card data:', JSON.stringify(data, null, 2)); // Дебаг
+
+        // Додаємо затримку для забезпечення завантаження даних
+        setTimeout(function () {
+            if (!Lampa.Activity.active()) {
+                console.log('Activity not active after timeout'); // Дебаг
+                return;
+            }
+            var updatedData = Lampa.Activity.active().card || {};
+            console.log('Updated card data:', JSON.stringify(updatedData, null, 2)); // Дебаг
+            addSeriaTag(updatedData, cardContainer, $(activityRender));
+        }, 1500);
+    }
+
     // Ініціалізація плагіна
     function initPlugin() {
-        if (!isSeasonSeriaEnabled()) return;
-
+        if (!isSeasonSeriaEnabled()) {
+            console.log('SeasonSeria disabled'); // Дебаг
+            return;
+        }
         console.log('initPlugin called'); // Дебаг
 
         // Додаємо CSS
@@ -176,29 +216,6 @@
             '</style>');
         $('head').append(style);
 
-        // Обробка сторінки full
-        function processFull() {
-            if (!Lampa.Activity || !Lampa.Activity.active()) {
-                console.log('Activity not ready'); // Дебаг
-                return;
-            }
-            var activity = Lampa.Activity.active();
-            if (activity.component !== 'full') return;
-            console.log('Full page detected'); // Дебаг
-            var activityRender = activity.activity.render();
-            var cardContainer = $('.full-start__poster', activityRender).parent(); // Контейнер під постером
-            var data = activity.card || {};
-            console.log('Activity card data:', JSON.stringify(data, null, 2)); // Дебаг
-
-            // Додаємо затримку для забезпечення завантаження даних
-            setTimeout(function () {
-                if (!Lampa.Activity.active()) return;
-                var updatedData = Lampa.Activity.active().card || {};
-                console.log('Updated card data:', JSON.stringify(updatedData, null, 2)); // Дебаг
-                addSeriaTag(updatedData, cardContainer, $(activityRender));
-            }, 1500);
-        }
-
         // MutationObserver для відстеження змін
         var observer = new MutationObserver(function (mutations) {
             var fullPageProcessed = false;
@@ -209,11 +226,13 @@
                         if (node.nodeType === 1) {
                             if (node.matches('.full-start__poster') && !fullPageProcessed) {
                                 fullPageProcessed = true;
+                                console.log('Poster detected via MutationObserver'); // Дебаг
                                 processFull();
                             }
                             var posters = node.querySelectorAll('.full-start__poster');
                             if (posters.length && !fullPageProcessed) {
                                 fullPageProcessed = true;
+                                console.log('Posters detected via MutationObserver'); // Дебаг
                                 processFull();
                             }
                         }
@@ -223,15 +242,28 @@
         });
 
         // Запуск спостерігача
+        console.log('Starting MutationObserver'); // Дебаг
         observer.observe(document.body, { childList: true, subtree: true });
 
+        // Резервний виклик через setTimeout
+        setTimeout(function () {
+            console.log('Running processFull via fallback timeout'); // Дебаг
+            processFull();
+        }, 2000);
+
         // Обробка після завантаження додатку
-        Lampa.Listener.follow('app', function (event) {
-            if (event.type === 'ready') {
-                console.log('App ready event, starting plugin'); // Дебаг
-                processFull();
-            }
-        });
+        if (Lampa.Listener) {
+            console.log('Lampa.Listener available'); // Дебаг
+            Lampa.Listener.follow('app', function (event) {
+                console.log('App event:', event.type); // Дебаг
+                if (event.type === 'ready') {
+                    console.log('App ready event, starting plugin'); // Дебаг
+                    processFull();
+                }
+            });
+        } else {
+            console.warn('Lampa.Listener not available'); // Дебаг
+        }
     }
 
     // Запуск плагіна
