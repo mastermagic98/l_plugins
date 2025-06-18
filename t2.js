@@ -54,13 +54,80 @@
         return Lampa.Storage.get('season_and_seria') !== false;
     }
 
+    // Функція для додавання тегу до картки
+    function addSeriaTag(card, container) {
+        if (!card || !container || !isSeasonSeriaEnabled() || $('.card--new_seria', container).length) return;
+
+        // Перевірка, чи це серіал із джерела tmdb
+        if (card.source === 'tmdb' && card.seasons && card.last_episode_to_air) {
+            var seasonNumber = card.last_episode_to_air.season_number;
+            var episodeNumber = card.last_episode_to_air.episode_number;
+            var nextEpisode = card.next_episode_to_air;
+            var seasons = card.seasons;
+            var status = card.status || '';
+
+            // Знаходимо кількість епізодів у сезоні
+            var seasonData = seasons.find(function (season) {
+                return season.season_number === seasonNumber;
+            });
+            var episodeCount = seasonData ? seasonData.episode_count : episodeNumber;
+
+            // Обчислюємо загальну кількість епізодів
+            var totalEpisodes = seasons.reduce(function (sum, season) {
+                return sum + (season.episode_count || 0);
+            }, 0);
+
+            // Визначаємо, чи є наступний епізод
+            var displayEpisodeNumber = nextEpisode && new Date(nextEpisode.air_date) <= Date.now()
+                ? nextEpisode.episode_number
+                : episodeNumber;
+
+            // Формуємо текст для відображення
+            var labelText;
+            if (status === 'Ended' || status === 'Canceled') {
+                // Випадок 3: Серіал закінчено або припинено
+                labelText = Lampa.Lang.translate(status === 'Ended' ? 'season_seria_series_ended' : 'season_seria_series_canceled')
+                    .replace('{seasons}', seasons.length)
+                    .replace('{episodes}', totalEpisodes);
+            } else if (status === 'Planned' && !card.last_episode_to_air) {
+                // Випадок 3: Запланований серіал без епізодів
+                labelText = Lampa.Lang.translate('season_seria_series_canceled')
+                    .replace('{seasons}', seasons.length)
+                    .replace('{episodes}', totalEpisodes);
+            } else if (!nextEpisode && ['Returning Series', 'In Production', 'Pilot'].includes(status)) {
+                // Випадок 2: Сезон завершено
+                labelText = Lampa.Lang.translate('season_seria_season_completed')
+                    .replace('{season}', seasonNumber);
+            } else if (['Returning Series', 'In Production', 'Pilot'].includes(status)) {
+                // Випадок 1: Активний сезон
+                labelText = Lampa.Lang.translate('season_seria_active')
+                    .replace('{season}', seasonNumber)
+                    .replace('{current}', displayEpisodeNumber)
+                    .replace('{total}', episodeCount);
+            } else {
+                // Запасний варіант для невідомого статусу
+                labelText = Lampa.Lang.translate('season_seria_active')
+                    .replace('{season}', seasonNumber)
+                    .replace('{current}', displayEpisodeNumber)
+                    .replace('{total}', episodeCount);
+            }
+
+            // Формуємо тег із текстом
+            var newSeriaTag = '<div class="card--new_seria">' +
+                '<span>' + Lampa.Lang.translate(labelText) + '</span></div>';
+
+            // Додаємо тег до картки
+            container.append(newSeriaTag);
+        }
+    }
+
     // Функція ініціалізації плагіну
     function initPlugin() {
         if (!isSeasonSeriaEnabled()) return;
 
         // Додаємо CSS для батьківського контейнера та стилів тегу
         var style = $('<style>' +
-            '.full-start__poster, .full-start-new__poster { position: relative; }' +
+            '.card, .full-start__poster, .full-start-new__poster { position: relative; }' +
             '.card--new_seria { ' +
             'position: absolute; ' +
             'left: 0.3em; ' +
@@ -88,77 +155,29 @@
             '</style>');
         $('head').append(style);
 
-        // Підписка на події компонента full
+        // Обробка сторінки детального перегляду (компонент full)
         Lampa.Listener.follow('full', function (event) {
             if (event.type === 'complite' && Lampa.Activity.active().component === 'full') {
                 var data = Lampa.Activity.active().card;
+                var activityRender = Lampa.Activity.active().activity.render();
+                var cardContainer = $('.full-start__poster, .full-start-new__poster', activityRender);
+                addSeriaTag(data, cardContainer);
+            }
+        });
 
-                // Перевірка, чи це серіал із джерела tmdb
-                if (data && data.source === 'tmdb' && data.seasons && data.last_episode_to_air && isSeasonSeriaEnabled()) {
-                    var activityRender = Lampa.Activity.active().activity.render();
-                    var cardContainer = $('.full-start__poster, .full-start-new__poster', activityRender);
-
-                    if (!$('.card--new_seria', activityRender).length && cardContainer.length) {
-                        var seasonNumber = data.last_episode_to_air.season_number;
-                        var episodeNumber = data.last_episode_to_air.episode_number;
-                        var nextEpisode = data.next_episode_to_air;
-                        var seasons = data.seasons;
-                        var status = data.status || '';
-
-                        // Знаходимо кількість епізодів у сезоні
-                        var seasonData = seasons.find(function (season) {
-                            return season.season_number === seasonNumber;
-                        });
-                        var episodeCount = seasonData ? seasonData.episode_count : episodeNumber;
-
-                        // Обчислюємо загальну кількість епізодів
-                        var totalEpisodes = seasons.reduce(function (sum, season) {
-                            return sum + (season.episode_count || 0);
-                        }, 0);
-
-                        // Визначаємо, чи є наступний епізод
-                        var displayEpisodeNumber = nextEpisode && new Date(nextEpisode.air_date) <= Date.now()
-                            ? nextEpisode.episode_number
-                            : episodeNumber;
-
-                        // Формуємо текст для відображення
-                        var labelText;
-                        if (status === 'Ended' || status === 'Canceled') {
-                            // Випадок 3: Серіал закінчено або припинено
-                            labelText = Lampa.Lang.translate(status === 'Ended' ? 'season_seria_series_ended' : 'season_seria_series_canceled')
-                                .replace('{seasons}', seasons.length)
-                                .replace('{episodes}', totalEpisodes);
-                        } else if (status === 'Planned' && !data.last_episode_to_air) {
-                            // Випадок 3: Запланований серіал без епізодів
-                            labelText = Lampa.Lang.translate('season_seria_series_canceled')
-                                .replace('{seasons}', seasons.length)
-                                .replace('{episodes}', totalEpisodes);
-                        } else if (!nextEpisode && ['Returning Series', 'In Production', 'Pilot'].includes(status)) {
-                            // Випадок 2: Сезон завершено
-                            labelText = Lampa.Lang.translate('season_seria_season_completed')
-                                .replace('{season}', seasonNumber);
-                        } else if (['Returning Series', 'In Production', 'Pilot'].includes(status)) {
-                            // Випадок 1: Активний сезон
-                            labelText = Lampa.Lang.translate('season_seria_active')
-                                .replace('{season}', seasonNumber)
-                                .replace('{current}', displayEpisodeNumber)
-                                .replace('{total}', episodeCount);
-                        } else {
-                            // Запасний варіант для невідомого статусу
-                            labelText = Lampa.Lang.translate('season_seria_active')
-                                .replace('{season}', seasonNumber)
-                                .replace('{current}', displayEpisodeNumber)
-                                .replace('{total}', episodeCount);
+        // Обробка списків карток (компоненти main, category, тощо)
+        Lampa.Listener.follow('component', function (event) {
+            if (['main', 'category'].includes(event.name)) {
+                setTimeout(function () {
+                    $('.card').each(function () {
+                        var cardElement = $(this);
+                        var cardData = cardElement.data('card'); // Отримуємо дані картки
+                        if (cardData) {
+                            var container = cardElement.find('.card__poster') || cardElement; // Контейнер для тегу
+                            addSeriaTag(cardData, container);
                         }
-
-                        // Формуємо тег із текстом
-                        var newSeriaTag = '<div class="card--new_seria">' +
-                            '<span>' + Lampa.Lang.translate(labelText) + '</span></div>';
-
-                        // Додаємо тег до картки
-                        cardContainer.append(newSeriaTag);
-                    }
-                }
+                    });
+                }, 0);
             }
         });
     }
