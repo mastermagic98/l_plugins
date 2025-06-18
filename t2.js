@@ -189,25 +189,16 @@
                 console.log('Full event triggered'); // Дебаг
                 var activity = Lampa.Activity.active();
                 var activityRender = activity.activity.render();
-                var cardContainer = $('.full-start__poster, .full-start-new__poster', activityRender).first(); // Беремо лише перший постер
-                var tmdbId = activity.card?.id || activity.activity.data('id');
-                console.log('TMDB ID:', tmdbId); // Дебаг
+                var cardContainer = $('.full-start__poster, .full-start-new__poster', activityRender).first();
+                var data = activity.card || {};
+                console.log('Activity card data:', JSON.stringify(data, null, 2)); // Дебаг
 
-                if (tmdbId && Lampa.TMDB) {
-                    // Асинхронне отримання даних із TMDB
-                    Lampa.TMDB.get('tv/' + tmdbId, function (data) {
-                        console.log('TMDB data:', JSON.stringify(data, null, 2)); // Дебаг
-                        addSeriaTag(data, cardContainer, $(activityRender));
-                    }, function () {
-                        console.log('TMDB request failed'); // Дебаг
-                        addSeriaTag({}, cardContainer, $(activityRender)); // Запасний варіант
-                    });
-                } else {
-                    console.log('No TMDB ID or TMDB not available'); // Дебаг
-                    var data = activity.card || activity.activity.data('card') || {};
-                    console.log('Fallback data:', JSON.stringify(data, null, 2)); // Дебаг
-                    addSeriaTag(data, cardContainer, $(activityRender));
-                }
+                // Додаємо затримку для забезпечення завантаження даних
+                setTimeout(function () {
+                    var updatedData = Lampa.Activity.active().card || {};
+                    console.log('Updated card data:', JSON.stringify(updatedData, null, 2)); // Дебаг
+                    addSeriaTag(updatedData, cardContainer, $(activityRender));
+                }, 500);
             }
         });
 
