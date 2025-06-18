@@ -143,6 +143,9 @@
             'width: 100%; ' +
             'height: 100%; ' +
             '}' +
+            '.card__vote, .card--new_seria { ' +
+            'min-height: 2.2em; ' +
+            '}' +
             '.card--new_seria { ' +
             'position: absolute; ' +
             'left: 0.3em; ' +
@@ -162,7 +165,6 @@
             'user-select: none; ' +
             'line-height: 1.2; ' +
             'min-width: 2.5em; ' +
-            'min-height: 2.5em; ' +
             'text-align: center; ' +
             '}' +
             '.card--new_seria span { ' +
