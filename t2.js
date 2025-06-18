@@ -178,6 +178,10 @@
 
         // Обробка сторінки full
         function processFull() {
+            if (!Lampa.Activity || !Lampa.Activity.active()) {
+                console.log('Activity not ready'); // Дебаг
+                return;
+            }
             var activity = Lampa.Activity.active();
             if (activity.component !== 'full') return;
             console.log('Full page detected'); // Дебаг
@@ -188,10 +192,11 @@
 
             // Додаємо затримку для забезпечення завантаження даних
             setTimeout(function () {
+                if (!Lampa.Activity.active()) return;
                 var updatedData = Lampa.Activity.active().card || {};
                 console.log('Updated card data:', JSON.stringify(updatedData, null, 2)); // Дебаг
                 addSeriaTag(updatedData, cardContainer, $(activityRender));
-            }, 1000);
+            }, 1500);
         }
 
         // MutationObserver для відстеження змін
@@ -220,23 +225,13 @@
         // Запуск спостерігача
         observer.observe(document.body, { childList: true, subtree: true });
 
-        // Початкова обробка
-        document.addEventListener('DOMContentLoaded', function () {
-            processFull();
-        });
-
         // Обробка після завантаження додатку
-        if (window.appready) {
-            console.log('App ready, starting plugin'); // Дебаг
-            processFull();
-        } else {
-            Lampa.Listener.follow('app', function (event) {
-                if (event.type === 'ready') {
-                    console.log('App ready event, starting plugin'); // Дебаг
-                    processFull();
-                }
-            });
-        }
+        Lampa.Listener.follow('app', function (event) {
+            if (event.type === 'ready') {
+                console.log('App ready event, starting plugin'); // Дебаг
+                processFull();
+            }
+        });
     }
 
     // Запуск плагіна
