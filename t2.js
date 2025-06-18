@@ -144,7 +144,18 @@
             'height: 100%; ' +
             '}' +
             '.card__vote, .card--new_seria { ' +
-            'min-height: 2.2em; ' +
+            'min-height: 2.5em; ' +
+            '}' +
+            '.card__vote { ' +
+            'position: absolute; ' +
+            'right: 0.3em; ' +
+            'bottom: 0.3em; ' +
+            'background: rgba(0, 0, 0, 0.5); ' +
+            'color: #fff; ' +
+            'font-size: 1.3em; ' +
+            'font-weight: 700; ' +
+            'padding: 0.2em 0.5em; ' +
+            'border-radius: 1em; ' +
             '}' +
             '.card--new_seria { ' +
             'position: absolute; ' +
