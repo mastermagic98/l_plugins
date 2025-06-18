@@ -6,7 +6,7 @@
     window.SeasonSeriaPlugin = window.SeasonSeriaPlugin || {};
     window.SeasonSeriaPlugin.__initialized = true;
 
-    // Додавання локалізації для англійської та української мов
+    // Додавання локалізації
     Lampa.Lang.add({
         season_seria_setting: {
             en: "Show series status (season/episode)",
@@ -30,7 +30,7 @@
         }
     });
 
-    // Додавання параметра в налаштування Lampa
+    // Додавання параметра в налаштування
     Lampa.SettingsApi.addParam({
         component: 'interface',
         param: {
@@ -48,89 +48,78 @@
         }
     });
 
-    // Перевірка, чи ввімкнено відображення сезону та серії
+    // Перевірка, чи ввімкнено відображення
     function isSeasonSeriaEnabled() {
         return Lampa.Storage.get('season_and_seria') !== false;
     }
 
-    // Функція для додавання тегу до картки
+    // Функція для додавання тегу
     function addSeriaTag(card, container) {
         if (!card || !container || !isSeasonSeriaEnabled() || $('.card--new_seria', container).length) return;
 
-        console.log('addSeriaTag called:', card); // Дебаг-логування
+        console.log('addSeriaTag called:', card); // Дебаг
 
-        // Перевірка, чи це серіал із джерела tmdb
-        if (card.source === 'tmdb' && card.movie && card.movie.media_type === 'tv') {
-            var seasonNumber = card.last_episode_to_air ? card.last_episode_to_air.season_number : 1;
-            var episodeNumber = card.last_episode_to_air ? card.last_episode_to_air.episode_number : 0;
+        // Перевірка, чи це серіал
+        if (card.source === 'tmdb' && (card.movie?.media_type === 'tv' || card.media_type === 'tv')) {
+            var seasonNumber = card.last_episode_to_air?.season_number || 1;
+            var episodeNumber = card.last_episode_to_air?.episode_number || 0;
             var nextEpisode = card.next_episode_to_air;
             var seasons = card.seasons || [];
             var status = card.status || '';
 
             console.log('Card data:', { seasonNumber, episodeNumber, nextEpisode, seasons, status }); // Дебаг
 
-            // Знаходимо кількість епізодів у сезоні
+            // Кількість епізодів у сезоні
             var seasonData = seasons.find(function (season) {
                 return season && season.season_number === seasonNumber;
             });
-            var episodeCount = seasonData ? seasonData.episode_count : episodeNumber;
+            var episodeCount = seasonData?.episode_count || episodeNumber;
 
-            // Обчислюємо загальну кількість епізодів
+            // Загальна кількість епізодів
             var totalEpisodes = seasons.reduce(function (sum, season) {
-                return sum + (season && season.episode_count || 0);
+                return sum + (season?.episode_count || 0);
             }, 0);
 
-            // Визначаємо, чи є наступний епізод
+            // Визначаємо наступний епізод
             var displayEpisodeNumber = nextEpisode && new Date(nextEpisode.air_date) <= Date.now()
                 ? nextEpisode.episode_number
                 : episodeNumber;
 
-            // Формуємо текст для відображення
+            // Формуємо текст
             var labelText;
             if (status === 'Ended' || status === 'Canceled') {
-                // Випадок 3: Серіал закінчено або припинено
                 labelText = Lampa.Lang.translate(status === 'Ended' ? 'season_seria_series_ended' : 'season_seria_series_canceled')
-                    .replace('{seasons}', seasons.length)
+                    .replace('{seasons}', seasons.length || 1)
                     .replace('{episodes}', totalEpisodes);
             } else if (status === 'Planned' && !card.last_episode_to_air) {
-                // Випадок 3: Запланований серіал без епізодів
                 labelText = Lampa.Lang.translate('season_seria_series_canceled')
-                    .replace('{seasons}', seasons.length)
+                    .replace('{seasons}', seasons.length || 1)
                     .replace('{episodes}', totalEpisodes);
             } else if (!nextEpisode && ['Returning Series', 'In Production', 'Pilot'].includes(status)) {
-                // Випадок 2: Сезон завершено
                 labelText = Lampa.Lang.translate('season_seria_season_completed')
                     .replace('{season}', seasonNumber);
-            } else if (['Returning Series', 'In Production', 'Pilot'].includes(status)) {
-                // Випадок 1: Активний сезон
-                labelText = Lampa.Lang.translate('season_seria_active')
-                    .replace('{season}', seasonNumber)
-                    .replace('{current}', displayEpisodeNumber)
-                    .replace('{total}', episodeCount);
             } else {
-                // Запасний варіант
                 labelText = Lampa.Lang.translate('season_seria_active')
                     .replace('{season}', seasonNumber)
                     .replace('{current}', displayEpisodeNumber)
                     .replace('{total}', episodeCount);
             }
 
-            // Формуємо тег із текстом
+            // Формуємо тег
             var newSeriaTag = '<div class="card--new_seria">' +
                 '<span>' + Lampa.Lang.translate(labelText) + '</span></div>';
 
-            // Додаємо тег до картки
             container.append(newSeriaTag);
         }
     }
 
-    // Функція ініціалізації плагіну
+    // Ініціалізація плагіна
     function initPlugin() {
         if (!isSeasonSeriaEnabled()) return;
 
-        // Додаємо CSS для батьківського контейнера та стилів тегу
+        // Додаємо CSS
         var style = $('<style>' +
-            '.card__view, .card, .full-start__poster, .full-start-new__poster { position: relative; }' +
+            '.card, .card__poster, .card__image, .full-start__poster, .full-start-new__poster { position: relative; }' +
             '.card--new_seria { ' +
             'position: absolute; ' +
             'left: 0.3em; ' +
@@ -158,9 +147,10 @@
             '</style>');
         $('head').append(style);
 
-        // Обробка сторінки детального перегляду (компонент full)
+        // Обробка детального перегляду
         Lampa.Listener.follow('full', function (event) {
             if (event.type === 'complite' && Lampa.Activity.active().component === 'full') {
+                console.log('Full event triggered'); // Дебаг
                 var data = Lampa.Activity.active().card;
                 var activityRender = Lampa.Activity.active().activity.render();
                 var cardContainer = $('.full-start__poster, .full-start-new__poster', activityRender);
@@ -168,26 +158,42 @@
             }
         });
 
-        // Обробка списків карток (компоненти main, category, тощо)
+        // Обробка списків карток
+        Lampa.Listener.follow('cards', function () {
+            console.log('Cards event triggered'); // Дебаг
+            setTimeout(function () {
+                $('.card').each(function () {
+                    var cardElement = $(this);
+                    var cardData = cardElement.data('card');
+                    if (cardData) {
+                        console.log('Processing card:', cardData); // Дебаг
+                        var container = cardElement.find('.card__poster, .card__image') || cardElement;
+                        addSeriaTag(cardData, container);
+                    }
+                });
+            }, 200); // Затримка для завантаження DOM
+        });
+
+        // Додаткова обробка компонентів
         Lampa.Listener.follow('component', function (event) {
             console.log('Component event:', event.name); // Дебаг
             if (['main', 'category', 'search', 'menu'].includes(event.name)) {
                 setTimeout(function () {
-                    $('.card__view').each(function () {
-                        var cardElement = $(this).closest('.card');
+                    $('.card').each(function () {
+                        var cardElement = $(this);
                         var cardData = cardElement.data('card');
                         if (cardData) {
                             console.log('Processing card:', cardData); // Дебаг
-                            var container = cardElement.find('.card__view') || cardElement;
+                            var container = cardElement.find('.card__poster, .card__image') || cardElement;
                             addSeriaTag(cardData, container);
                         }
                     });
-                }, 100); // Затримка для забезпечення завантаження DOM
+                }, 200);
             }
         });
     }
 
-    // Запуск плагіну після готовності додатку
+    // Запуск плагіна
     if (window.appready) {
         initPlugin();
     } else {
