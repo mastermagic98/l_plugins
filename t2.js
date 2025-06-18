@@ -187,8 +187,10 @@
         Lampa.Listener.follow('full', function (event) {
             if (event.type === 'complite' && Lampa.Activity.active().component === 'full') {
                 console.log('Full event triggered'); // Дебаг
-                var data = Lampa.Activity.active().card;
-                var activityRender = Lampa.Activity.active().activity.render();
+                var activity = Lampa.Activity.active();
+                var data = activity.card || activity.activity.data('card') || {};
+                console.log('Full data:', JSON.stringify(data, null, 2)); // Дебаг
+                var activityRender = activity.activity.render();
                 var cardContainer = $('.full-start__poster, .full-start-new__poster', activityRender);
                 addSeriaTag(data, cardContainer, $(activityRender));
             }
