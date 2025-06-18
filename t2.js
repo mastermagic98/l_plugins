@@ -126,7 +126,7 @@
             console.log('Tag added to:', container.attr('class'), 'Container dimensions:', {
                 width: container.width(),
                 height: container.height()
-            }); // Дебаг
+            }, 'Vote height:', $('.card__vote').outerHeight(), 'Seria height:', $('.card--new_seria').outerHeight()); // Дебаг
         }
     }
 
@@ -142,9 +142,6 @@
             'position: relative; ' +
             'width: 100%; ' +
             'height: 100%; ' +
-            '}' +
-            '.card__vote, .card--new_seria { ' +
-            'min-height: 2.5em; ' +
             '}' +
             '.card__vote { ' +
             'position: absolute; ' +
@@ -174,8 +171,9 @@
             '-moz-user-select: none; ' +
             '-ms-user-select: none; ' +
             'user-select: none; ' +
-            'line-height: 1.2; ' +
+            'line-height: 1.1; ' +
             'min-width: 2.5em; ' +
+            'min-height: 27px; ' +
             'text-align: center; ' +
             '}' +
             '.card--new_seria span { ' +
