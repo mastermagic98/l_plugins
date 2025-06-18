@@ -149,10 +149,10 @@
             'bottom: 0.3em; ' +
             'background: rgba(0, 0, 0, 0.5); ' +
             'color: #fff; ' +
-            'font-size: 0.5em; ' +
+            'font-size: 0.8em; ' +
             'font-weight: 700; ' +
-            'padding: 0.2em 0.5em; ' +
-            'border-radius: 1em; ' +
+            'padding: 0.4em 0.8em; ' +
+            'border-radius: 0.5em; ' +
             'z-index: 10; ' +
             'display: inline-block; ' +
             'vertical-align: middle; ' +
@@ -160,8 +160,10 @@
             '-moz-user-select: none; ' +
             '-ms-user-select: none; ' +
             'user-select: none; ' +
-            'min-height: 2.2em; ' +
             'line-height: 1.2; ' +
+            'min-width: 2.5em; ' +
+            'min-height: 2.5em; ' +
+            'text-align: center; ' +
             '}' +
             '.card--new_seria span { ' +
             'display: block; ' +
