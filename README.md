@@ -7,7 +7,7 @@
 🔹 [**Фільмотека**](https://mastermagic98.github.io/l_plugins/cat_ua.js) – каталог українського контенту
 <details>
 <summary>Скрін</summary>
-(cat_ua/cat_ua.png)
+![Детально](cat_ua/cat_ua.png)
 </details>
 🔹 [**Логотипи**](https://mastermagic98.github.io/l_plugins/logo_title.js) – логотипи замість назви 
 
@@ -16,7 +16,7 @@
 🔹 [**Трейлер**](https://mastermagic98.github.io/l_plugins/es.js) – статусу серіалу і кількість епізодів
 <details>
 <summary>Скрін</summary>
-(cat_ua/SmEn.png)
+![Детально](cat_ua/SmEn.png)
 </details>
 
 ## 📢 Останні оновлення
