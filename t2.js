@@ -123,7 +123,10 @@
                 '<span>' + Lampa.Lang.translate(labelText) + '</span></div>';
 
             container.append(newSeriaTag);
-            console.log('Tag added to:', container.attr('class')); // Дебаг
+            console.log('Tag added to:', container.attr('class'), 'Container dimensions:', {
+                width: container.width(),
+                height: container.height()
+            }); // Дебаг
         }
     }
 
@@ -135,8 +138,11 @@
 
         // Додаємо CSS
         var style = $('<style>' +
-            '.card, .card--tv, .card__view, .card__img, .full-start__poster, .full-start-new__poster { position: relative; }' +
-            '.card__vote { display: none !important; }' +
+            '.card--tv .card__view, .full-start__poster, .full-start-new__poster { ' +
+            'position: relative; ' +
+            'width: 100%; ' +
+            'height: 100%; ' +
+            '}' +
             '.card--new_seria { ' +
             'position: absolute; ' +
             'left: 0.3em; ' +
