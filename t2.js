@@ -58,15 +58,16 @@
     function initPlugin() {
         if (!isSeasonSeriaEnabled()) return;
 
-        // Додаємо CSS для батьківського контейнера та стилів тегів
+        // Додаємо CSS для батьківського контейнера та стилів тегу
         var style = $('<style>' +
             '.full-start__poster, .full-start-new__poster { position: relative; }' +
-            '.card--new_seria, .card__vote { ' +
+            '.card--new_seria { ' +
             'position: absolute; ' +
+            'left: 0.3em; ' +
             'bottom: 0.3em; ' +
             'background: rgba(0, 0, 0, 0.5); ' +
             'color: #fff; ' +
-            'font-size: 1em; ' +
+            'font-size: 0.5em; ' +
             'font-weight: 700; ' +
             'padding: 0.2em 0.5em; ' +
             'border-radius: 1em; ' +
@@ -80,12 +81,6 @@
             'min-height: 2.2em; ' +
             'line-height: 1.2; ' +
             '}' +
-            '.card--new_seria { ' +
-            'left: 0.3em; ' +
-            '}' +
-            '.card__vote { ' +
-            'right: 0.3em; ' +
-            '}' +
             '.card--new_seria span { ' +
             'display: block; ' +
             'white-space: pre; ' +
@@ -98,20 +93,13 @@
             if (event.type === 'complite' && Lampa.Activity.active().component === 'full') {
                 var data = Lampa.Activity.active().card;
 
-                // Перевірка, чи це серіал або фільм із джерела tmdb
-                if (data && data.source === 'tmdb') {
+                // Перевірка, чи це серіал із джерела tmdb
+                if (data && data.source === 'tmdb' && data.seasons && data.last_episode_to_air && isSeasonSeriaEnabled()) {
                     var activityRender = Lampa.Activity.active().activity.render();
                     var cardContainer = $('.full-start__poster, .full-start-new__poster', activityRender);
 
-                    // Додавання тегу оцінки (.card__vote), якщо є vote_average
-                    if (data.vote_average && !$('.card__vote', activityRender).length && cardContainer.length) {
-                        var voteText = data.vote_average.toFixed(1);
-                        var voteTag = '<div class="card__vote">' + voteText + '</div>';
-                        cardContainer.append(voteTag);
-                    }
-
-                    // Додавання тегу сезону та серії (.card--new_seria), якщо це серіал
-                    if (data.seasons && data.last_episode_to_air && isSeasonSeriaEnabled() && !$('.card--new_seria', activityRender).length && cardContainer.length) {
+                    // Додавання тегу сезону та серії (.card--new_seria)
+                    if (!$('.card--new_seria', activityRender).length && cardContainer.length) {
                         var seasonNumber = data.last_episode_to_air.season_number;
                         var episodeNumber = data.last_episode_to_air.episode_number;
                         var nextEpisode = data.next_episode_to_air;
