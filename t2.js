@@ -57,7 +57,10 @@
 
     // Функція для додавання тегу
     function addSeriaTag(card, container, cardElement) {
-        if (!container || !isSeasonSeriaEnabled() || $('.card--new_seria', container).length) return;
+        if (!container || !isSeasonSeriaEnabled() || $('.card--new_seria', container).length || cardElement.data('seria-processed')) return;
+
+        // Позначаємо картку як оброблену
+        cardElement.data('seria-processed', true);
 
         // Перевірка .card--tv і .card__type
         var isCardTv = cardElement.hasClass('card--tv');
@@ -66,13 +69,11 @@
         console.log('Card type:', cardTypeText, 'Is card--tv:', isCardTv, 'Card data:', card ? JSON.stringify(card, null, 2) : 'undefined'); // Дебаг
 
         // Перевірка, чи це серіал
-        var isSeries = isCardTv ||
-                       cardTypeText.includes('serial') ||
-                       cardTypeText.includes('tv') ||
-                       cardTypeText.includes('серіал');
+        var isSeries = isCardTv || cardTypeText.includes('serial') || cardTypeText.includes('tv') || cardTypeText.includes('серіал');
 
         if (isSeries) {
             console.log('addSeriaTag called for series:', card); // Дебаг
+            // Використовуємо значення за замовчуванням, якщо card undefined
             var seasonNumber = card?.last_episode_to_air?.season_number || 1;
             var episodeNumber = card?.last_episode_to_air?.episode_number || 0;
             var nextEpisode = card?.next_episode_to_air;
@@ -134,7 +135,7 @@
 
         // Додаємо CSS
         var style = $('<style>' +
-            '.card, .card__poster, .card__image, .full-start__poster, .full-start-new__poster { position: relative; }' +
+            '.card, .card--tv, .card__poster, .card__image, .full-start__poster, .full-start-new__poster { position: relative; }' +
             '.card--new_seria { ' +
             'position: absolute; ' +
             'left: 0.3em; ' +
@@ -176,7 +177,7 @@
         // Періодичне сканування карток
         setInterval(function () {
             console.log('Scanning cards'); // Дебаг
-            $('.card').each(function () {
+            $('.card--tv').each(function () {
                 var cardElement = $(this);
                 var cardData = cardElement.data('card');
                 console.log('Processing card:', cardData ? JSON.stringify(cardData, null, 2) : 'undefined'); // Дебаг
