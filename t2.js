@@ -57,29 +57,27 @@
 
     // Функція для додавання тегу
     function addSeriaTag(card, container, cardElement) {
-        if (!card || !container || !isSeasonSeriaEnabled() || $('.card--new_seria', container).length) return;
+        if (!container || !isSeasonSeriaEnabled() || $('.card--new_seria', container).length) return;
 
-        // Перевірка тегу .card__type
+        // Перевірка .card--tv і .card__type
+        var isCardTv = cardElement.hasClass('card--tv');
         var cardTypeElement = cardElement.find('.card__type');
         var cardTypeText = cardTypeElement.length ? cardTypeElement.text().toLowerCase() : '';
-        console.log('Card type:', cardTypeText, 'Card data:', JSON.stringify(card, null, 2)); // Дебаг
+        console.log('Card type:', cardTypeText, 'Is card--tv:', isCardTv, 'Card data:', card ? JSON.stringify(card, null, 2) : 'undefined'); // Дебаг
 
         // Перевірка, чи це серіал
-        var isSeries = cardTypeText.includes('serial') ||
+        var isSeries = isCardTv ||
+                       cardTypeText.includes('serial') ||
                        cardTypeText.includes('tv') ||
-                       cardTypeText.includes('серіал') ||
-                       card.media_type === 'tv' ||
-                       (card.movie && card.movie.media_type === 'tv') ||
-                       card.seasons ||
-                       card.last_episode_to_air;
+                       cardTypeText.includes('серіал');
 
         if (isSeries) {
             console.log('addSeriaTag called for series:', card); // Дебаг
-            var seasonNumber = card.last_episode_to_air?.season_number || 1;
-            var episodeNumber = card.last_episode_to_air?.episode_number || 0;
-            var nextEpisode = card.next_episode_to_air;
-            var seasons = card.seasons || [];
-            var status = card.status || '';
+            var seasonNumber = card?.last_episode_to_air?.season_number || 1;
+            var episodeNumber = card?.last_episode_to_air?.episode_number || 0;
+            var nextEpisode = card?.next_episode_to_air;
+            var seasons = card?.seasons || [];
+            var status = card?.status || '';
 
             console.log('Series data:', { seasonNumber, episodeNumber, nextEpisode, seasons, status }); // Дебаг
 
@@ -95,7 +93,7 @@
             }, 0);
 
             // Визначаємо наступний епізод
-            var displayEpisodeNumber = nextEpisode && new Date(nextEpisode.air_date) <= Date.now()
+            var displayEpisodeNumber = nextEpisode && new Date(nextEpisode?.air_date) <= Date.now()
                 ? nextEpisode.episode_number
                 : episodeNumber;
 
@@ -105,7 +103,7 @@
                 labelText = Lampa.Lang.translate(status === 'Ended' ? 'season_seria_series_ended' : 'season_seria_series_canceled')
                     .replace('{seasons}', seasons.length || 1)
                     .replace('{episodes}', totalEpisodes);
-            } else if (status === 'Planned' && !card.last_episode_to_air) {
+            } else if (status === 'Planned' && !card?.last_episode_to_air) {
                 labelText = Lampa.Lang.translate('season_seria_series_canceled')
                     .replace('{seasons}', seasons.length || 1)
                     .replace('{episodes}', totalEpisodes);
@@ -181,11 +179,9 @@
             $('.card').each(function () {
                 var cardElement = $(this);
                 var cardData = cardElement.data('card');
-                if (cardData) {
-                    console.log('Processing card:', JSON.stringify(cardData, null, 2)); // Дебаг
-                    var container = cardElement.find('.card__poster, .card__image') || cardElement;
-                    addSeriaTag(cardData, container, cardElement);
-                }
+                console.log('Processing card:', cardData ? JSON.stringify(cardData, null, 2) : 'undefined'); // Дебаг
+                var container = cardElement.find('.card__poster, .card__image') || cardElement;
+                addSeriaTag(cardData, container, cardElement);
             });
         }, 1000);
     }
