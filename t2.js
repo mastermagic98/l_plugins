@@ -126,7 +126,7 @@
             console.log('Tag added to:', container.attr('class'), 'Container dimensions:', {
                 width: container.width(),
                 height: container.height()
-            }, 'Vote height:', $('.card__vote').outerHeight(), 'Seria height:', $('.card--new_seria').outerHeight()); // Дебаг
+            }, 'Seria height:', $('.card--new_seria').outerHeight()); // Дебаг
         }
     }
 
@@ -138,7 +138,7 @@
 
         // Додаємо CSS
         var style = $('<style>' +
-            '.card--tv .card__view, .full-start__poster, .full-start-new__poster { ' +
+            '.card--tv .card__view { ' +
             'position: relative; ' +
             'width: 100%; ' +
             'height: 100%; ' +
@@ -155,9 +155,6 @@
             'border-radius: 1em; ' +
             '}' +
             '.card--new_seria { ' +
-            'position: absolute; ' +
-            'left: 0.3em; ' +
-            'bottom: 0.3em; ' +
             'background: rgba(0, 0, 0, 0.5); ' +
             'color: #fff; ' +
             'font-size: 0.8em; ' +
@@ -165,16 +162,16 @@
             'padding: 0.4em 0.8em; ' +
             'border-radius: 0.5em; ' +
             'z-index: 10; ' +
-            'display: inline-block; ' +
-            'vertical-align: middle; ' +
+            'display: block; ' +
+            'width: 100%; ' +
+            'min-height: 27px; ' +
+            'text-align: center; ' +
+            'box-sizing: border-box; ' +
             '-webkit-user-select: none; ' +
             '-moz-user-select: none; ' +
             '-ms-user-select: none; ' +
             'user-select: none; ' +
             'line-height: 1.1; ' +
-            'min-width: 2.5em; ' +
-            'min-height: 27px; ' +
-            'text-align: center; ' +
             '}' +
             '.card--new_seria span { ' +
             'display: block; ' +
@@ -190,26 +187,13 @@
                 var cardElement = $(this);
                 var cardData = cardElement.data('card');
                 console.log('Processing card:', cardData ? JSON.stringify(cardData, null, 2) : 'undefined'); // Дебаг
-                var container = cardElement.find('.card__view') || cardElement;
+                var container = cardElement; // Додаємо під .card--tv
                 addSeriaTag(cardData, container, cardElement);
             });
         }
 
-        // Обробка детального перегляду
-        function processFull() {
-            var activity = Lampa.Activity.active();
-            if (activity.component !== 'full') return;
-            console.log('Full page detected'); // Дебаг
-            var activityRender = activity.activity.render();
-            var cardContainer = $('.full-start__poster, .full-start-new__poster', activityRender).first();
-            var data = activity.card || {};
-            console.log('Activity card data:', JSON.stringify(data, null, 2)); // Дебаг
-            addSeriaTag(data, cardContainer, $(activityRender));
-        }
-
         // MutationObserver для відстеження змін
         var observer = new MutationObserver(function (mutations) {
-            var fullPageProcessed = false;
             mutations.forEach(function (mutation) {
                 if (mutation.addedNodes.length) {
                     for (var i = 0; i < mutation.addedNodes.length; i++) {
@@ -217,17 +201,11 @@
                         if (node.nodeType === 1) {
                             if (node.matches('.card--tv')) {
                                 var cardElement = $(node);
-                                var container = cardElement.find('.card__view') || cardElement;
+                                var container = cardElement;
                                 addSeriaTag(cardElement.data('card'), container, cardElement);
                             }
-                            if (node.matches('.full-start__poster, .full-start-new__poster') && !fullPageProcessed) {
-                                fullPageProcessed = true;
-                                processFull();
-                            }
                             var cards = node.querySelectorAll('.card--tv');
-                            if (cards.length) {
-                                processCards();
-                            }
+                            if (cards.length) processCards();
                         }
                     }
                 }
@@ -240,20 +218,17 @@
         // Початкова обробка
         document.addEventListener('DOMContentLoaded', function () {
             processCards();
-            processFull();
         });
 
         // Обробка після завантаження додатку
         if (window.appready) {
             console.log('App ready, starting plugin'); // Дебаг
             processCards();
-            processFull();
         } else {
             Lampa.Listener.follow('app', function (event) {
                 if (event.type === 'ready') {
                     console.log('App ready event, starting plugin'); // Дебаг
                     processCards();
-                    processFull();
                 }
             });
         }
