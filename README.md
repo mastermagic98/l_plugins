@@ -8,7 +8,6 @@
 
 <details>
 <summary>Скрін</summary>
-
     <picture> 
     https://github.com/mastermagic98/l_plugins/blob/d6f3401c4f2c033e1dcaf90f3816b859b3567056/cat_ua/SmEn.png
     </picture>
