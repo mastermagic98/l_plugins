@@ -42,7 +42,6 @@
             name: Lampa.Lang.translate('season_seria_setting')
         },
         onRender: function () {
-            // Приховуємо елемент із атрибутом data-name="card_interfice_cover"
             setTimeout(function () {
                 $('div[data-name="card_interfice_cover"]').hide();
             }, 0);
@@ -58,23 +57,27 @@
     function addSeriaTag(card, container) {
         if (!card || !container || !isSeasonSeriaEnabled() || $('.card--new_seria', container).length) return;
 
+        console.log('addSeriaTag called:', card); // Дебаг-логування
+
         // Перевірка, чи це серіал із джерела tmdb
-        if (card.source === 'tmdb' && card.seasons && card.last_episode_to_air) {
-            var seasonNumber = card.last_episode_to_air.season_number;
-            var episodeNumber = card.last_episode_to_air.episode_number;
+        if (card.source === 'tmdb' && card.movie && card.movie.media_type === 'tv') {
+            var seasonNumber = card.last_episode_to_air ? card.last_episode_to_air.season_number : 1;
+            var episodeNumber = card.last_episode_to_air ? card.last_episode_to_air.episode_number : 0;
             var nextEpisode = card.next_episode_to_air;
-            var seasons = card.seasons;
+            var seasons = card.seasons || [];
             var status = card.status || '';
+
+            console.log('Card data:', { seasonNumber, episodeNumber, nextEpisode, seasons, status }); // Дебаг
 
             // Знаходимо кількість епізодів у сезоні
             var seasonData = seasons.find(function (season) {
-                return season.season_number === seasonNumber;
+                return season && season.season_number === seasonNumber;
             });
             var episodeCount = seasonData ? seasonData.episode_count : episodeNumber;
 
             // Обчислюємо загальну кількість епізодів
             var totalEpisodes = seasons.reduce(function (sum, season) {
-                return sum + (season.episode_count || 0);
+                return sum + (season && season.episode_count || 0);
             }, 0);
 
             // Визначаємо, чи є наступний епізод
@@ -105,7 +108,7 @@
                     .replace('{current}', displayEpisodeNumber)
                     .replace('{total}', episodeCount);
             } else {
-                // Запасний варіант для невідомого статусу
+                // Запасний варіант
                 labelText = Lampa.Lang.translate('season_seria_active')
                     .replace('{season}', seasonNumber)
                     .replace('{current}', displayEpisodeNumber)
@@ -127,7 +130,7 @@
 
         // Додаємо CSS для батьківського контейнера та стилів тегу
         var style = $('<style>' +
-            '.card, .full-start__poster, .full-start-new__poster { position: relative; }' +
+            '.card__view, .card, .full-start__poster, .full-start-new__poster { position: relative; }' +
             '.card--new_seria { ' +
             'position: absolute; ' +
             'left: 0.3em; ' +
@@ -167,17 +170,19 @@
 
         // Обробка списків карток (компоненти main, category, тощо)
         Lampa.Listener.follow('component', function (event) {
-            if (['main', 'category'].includes(event.name)) {
+            console.log('Component event:', event.name); // Дебаг
+            if (['main', 'category', 'search', 'menu'].includes(event.name)) {
                 setTimeout(function () {
-                    $('.card').each(function () {
-                        var cardElement = $(this);
-                        var cardData = cardElement.data('card'); // Отримуємо дані картки
+                    $('.card__view').each(function () {
+                        var cardElement = $(this).closest('.card');
+                        var cardData = cardElement.data('card');
                         if (cardData) {
-                            var container = cardElement.find('.card__poster') || cardElement; // Контейнер для тегу
+                            console.log('Processing card:', cardData); // Дебаг
+                            var container = cardElement.find('.card__view') || cardElement;
                             addSeriaTag(cardData, container);
                         }
                     });
-                }, 0);
+                }, 100); // Затримка для забезпечення завантаження DOM
             }
         });
     }
