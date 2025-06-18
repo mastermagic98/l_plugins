@@ -12,13 +12,21 @@
             en: "Show series status (season/episode)",
             uk: "Відображення стану серіалу (сезон/серія)"
         },
-        season_seria_label: {
-            en: "S{season}\nE{episode}",
-            uk: "S{season}\nE{episode}"
+        season_seria_active: {
+            en: "Season {season}\nEpisodes {current}/{total}",
+            uk: "Сезон {season}\nЕпізодів {current}/{total}"
         },
-        season_seria_completed: {
-            en: "S{season}\ncompleted",
-            uk: "S{season}\nзавершено"
+        season_seria_season_completed: {
+            en: "Season {season}\nCompleted",
+            uk: "Сезон {season}\nЗавершено"
+        },
+        season_seria_series_ended: {
+            en: "Seasons {seasons} Episodes {episodes}\nEnded",
+            uk: "Сезонів {seasons} Епізодів {episodes}\nЗакінчено"
+        },
+        season_seria_series_canceled: {
+            en: "Seasons {seasons} Episodes {episodes}\nCanceled",
+            uk: "Сезонів {seasons} Епізодів {episodes}\nПрипинено"
         }
     });
 
@@ -53,9 +61,8 @@
         // Додаємо CSS для батьківського контейнера та стилів тегів
         var style = $('<style>' +
             '.full-start__poster, .full-start-new__poster { position: relative; }' +
-            '.card--new_seria { ' +
+            '.card--new_seria, .card__vote { ' +
             'position: absolute; ' +
-            'left: 0.3em; ' +
             'bottom: 0.3em; ' +
             'background: rgba(0, 0, 0, 0.5); ' +
             'color: #fff; ' +
@@ -70,28 +77,18 @@
             '-moz-user-select: none; ' +
             '-ms-user-select: none; ' +
             'user-select: none; ' +
+            'min-height: 2.4em; ' + // Однакова висота для обох тегів
+            'line-height: 1.2; ' +
+            '}' +
+            '.card--new_seria { ' +
+            'left: 0.3em; ' +
+            '}' +
+            '.card__vote { ' +
+            'right: 0.3em; ' +
             '}' +
             '.card--new_seria span { ' +
             'display: block; ' +
-            'line-height: 1.2; ' +
-            '}' +
-            '.card__vote { ' +
-            'position: absolute; ' +
-            'right: 0.3em; ' +
-            'bottom: 0.3em; ' +
-            'background: rgba(0, 0, 0, 0.5); ' +
-            'color: #fff; ' +
-            'font-size: 1.3em; ' +
-            'font-weight: 700; ' +
-            'padding: 0.2em 0.5em; ' +
-            'border-radius: 1em; ' +
-            'z-index: 10; ' +
-            'display: inline-block; ' +
-            'vertical-align: middle; ' +
-            '-webkit-user-select: none; ' +
-            '-moz-user-select: none; ' +
-            '-ms-user-select: none; ' +
-            'user-select: none; ' +
+            'white-space: pre; ' + // Зберігає \n для двох рядків
             '}' +
             '</style>');
         $('head').append(style);
@@ -108,7 +105,7 @@
 
                     // Додавання тегу оцінки (.card__vote), якщо є vote_average
                     if (data.vote_average && !$('.card__vote', activityRender).length && cardContainer.length) {
-                        var voteText = data.vote_average.toFixed(1); // Оцінка з одним знаком після коми
+                        var voteText = data.vote_average.toFixed(1);
                         var voteTag = '<div class="card__vote">' + voteText + '</div>';
                         cardContainer.append(voteTag);
                     }
@@ -119,12 +116,18 @@
                         var episodeNumber = data.last_episode_to_air.episode_number;
                         var nextEpisode = data.next_episode_to_air;
                         var seasons = data.seasons;
+                        var status = data.status; // Статус серіалу (Ended, Canceled, Returning Series)
 
                         // Знаходимо кількість епізодів у сезоні
                         var seasonData = seasons.find(function (season) {
                             return season.season_number === seasonNumber;
                         });
                         var episodeCount = seasonData ? seasonData.episode_count : episodeNumber;
+
+                        // Обчислюємо загальну кількість епізодів
+                        var totalEpisodes = seasons.reduce(function (sum, season) {
+                            return sum + (season.episode_count || 0);
+                        }, 0);
 
                         // Визначаємо, чи є наступний епізод
                         var displayEpisodeNumber = nextEpisode && new Date(nextEpisode.air_date) <= Date.now()
@@ -133,13 +136,21 @@
 
                         // Формуємо текст для відображення
                         var labelText;
-                        if (nextEpisode) {
-                            labelText = Lampa.Lang.translate('season_seria_label')
-                                .replace('{season}', seasonNumber)
-                                .replace('{episode}', displayEpisodeNumber + '/' + episodeCount);
-                        } else {
-                            labelText = Lampa.Lang.translate('season_seria_completed')
+                        if (status === 'Ended' || status === 'Canceled') {
+                            // Випадок 3: Серіал закінчено або припинено
+                            labelText = Lampa.Lang.translate(status === 'Ended' ? 'season_seria_series_ended' : 'season_seria_series_canceled')
+                                .replace('{seasons}', seasons.length)
+                                .replace('{episodes}', totalEpisodes);
+                        } else if (!nextEpisode) {
+                            // Випадок 2: Сезон завершено
+                            labelText = Lampa.Lang.translate('season_seria_season_completed')
                                 .replace('{season}', seasonNumber);
+                        } else {
+                            // Випадок 1: Активний сезон
+                            labelText = Lampa.Lang.translate('season_seria_active')
+                                .replace('{season}', seasonNumber)
+                                .replace('{current}', displayEpisodeNumber)
+                                .replace('{total}', episodeCount);
                         }
 
                         // Формуємо тег із текстом
