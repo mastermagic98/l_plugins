@@ -8,7 +8,7 @@
 
 <details>
 <summary>Скрін</summary>
-![Детально] (cat_ua/cat_ua.png)
+![Детально](cat_ua/cat_ua.png)
 </details>
 
 🔹 [**Логотипи**](https://mastermagic98.github.io/l_plugins/logo_title.js) – логотипи замість назви 
