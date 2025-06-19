@@ -42,21 +42,16 @@
         component: 'interface',
         param: {
             name: 'season_and_seria',
-            type: 'select',
+            type: 'trigger',
             default: true
         },
         field: {
             name: Lampa.Lang.translate('season_seria_setting')
-        },
-        onRender: function () {
-            setTimeout(function () {
-                $('div[data-name="card_interfice_cover"]').hide();
-            }, 0);
         }
     });
 
     function isSeasonSeriaEnabled() {
-        return Lampa.Storage.get('season_and_seria') !== false;
+        return Lampa.Storage.get('season_and_seria', true) === true;
     }
 
     function initPlugin() {
