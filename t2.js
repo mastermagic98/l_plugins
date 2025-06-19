@@ -144,13 +144,13 @@
         },
 
         hideCardType: function() {
-            var style = $('<style>.category-full[data-url="person/popular"] .card__type, .category-full[data-url="actors_plugin__main"] .card__type { display: none !important; }</style>');
+            var style = $('<style>.category-full[data-url="person/popular"] .card__type { display: none !important; }</style>');
             $('head').append(style);
         },
 
         addSearchField: function() {
             Lampa.Listener.follow('full', function(e) {
-                if (e.type === 'render' && Lampa.Activity.active().component === 'category_full' && (Lampa.Activity.active().url === 'person/popular' || Lampa.Activity.active().url === this.pluginName + '__main')) {
+                if (e.type === 'render' && Lampa.Activity.active().component === 'category_full' && Lampa.Activity.active().url === 'person/popular') {
                     var container = $('.category-full', Lampa.Activity.active().activity.render());
                     if (container.length && !container.find('.actors-search').length) {
                         var searchWrapper = $('<div class="actors-search" style="margin: 1em; display: flex; gap: 0.5em;"></div>');
@@ -182,18 +182,19 @@
                         });
                     }
                 }
-            }.bind(this));
+            });
         },
 
         initStorage: function() {
             var current = Lampa.Storage.get(this.storageKey);
-            if (!current || current.length === 0) {
+            if (!current || !Array.isArray(current)) {
                 Lampa.Storage.set(this.storageKey, []);
             }
         },
 
         getActorIds: function() {
-            return Lampa.Storage.get(this.storageKey, []);
+            var ids = Lampa.Storage.get(this.storageKey, []);
+            return Array.isArray(ids) ? ids : [];
         },
 
         addActorsService: function() {
@@ -221,7 +222,7 @@
 
                     var loaded = 0;
                     var results = [];
-                    var currentLang = Lampa.Storage.get('language', 'en');
+                    var currentLang = Lampa.Storage.get('language', 'ru-RU');
 
                     for (var i = 0; i < pageIds.length; i++) {
                         (function(i) {
@@ -261,7 +262,7 @@
                                     }
                                 } catch (e) {}
                                 checkComplete();
-                            }, function() {
+                            }, function(errorMsg) {
                                 checkComplete();
                             });
                         })(i);
@@ -290,22 +291,6 @@
             };
 
             Lampa.Api.sources[this.pluginName] = actorsService;
-
-            var menuItem = $('<li class="menu__item selector" data-action="' + this.pluginName + '"><div class="menu__ico">' + 
-                '<svg height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16 11C17.66 11 18.99 9.66 18.99 8C18.99 6.34 17.66 5 16 5C14.34 5 13 6.34 13 8C13 9.66 14.34 11 16 11ZM8 11C9.66 11 10.99 9.66 10.99 8C10.99 6.34 9.66 5 8 5C6.34 5 5 6.34 5 8C5 9.66 6.34 11 8 11ZM8 13C5.67 13 1 14.17 1 16.5V19H15V16.5C15 14.17 10.33 13 8 13ZM16 13C15.71 13 15.38 13.02 15.03 13.05C16.19 13.89 17 15.02 17 16.5V19H23V16.5C23 14.17 18.33 13 16 13Z" fill="currentColor"/></svg>' +
-                '</div><div class="menu__text">' + Lampa.Lang.translate('actors_title') + '</div></li>');
-
-            menuItem.on('hover:enter', function() {
-                Lampa.Activity.push({
-                    component: "category_full",
-                    source: self.pluginName,
-                    title: Lampa.Lang.translate('actors_title'),
-                    page: 1,
-                    url: self.pluginName + '__main'
-                });
-            });
-
-            $('.menu .menu__list').eq(0).append(menuItem);
         }
     };
 
