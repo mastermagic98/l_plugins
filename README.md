@@ -8,9 +8,9 @@
 
 <details>
 <summary>Скрін</summary>
-    <picture> 
-    https://github.com/mastermagic98/l_plugins/blob/d6f3401c4f2c033e1dcaf90f3816b859b3567056/cat_ua/SmEn.png
-    </picture>
+
+![Скрін](cat_ua/SmEn.png)
+
 </details>
 
 🔹 [**Логотипи**](https://mastermagic98.github.io/l_plugins/logo_title.js) – логотипи замість назви 
@@ -20,7 +20,9 @@
 🔹 [**Трейлер**](https://mastermagic98.github.io/l_plugins/es.js) – статусу серіалу і кількість епізодів
 <details>
 <summary>Скрін</summary>
-![Детально](cat_ua/SmEn.png)
+
+![Скрін](cat_ua/cat_ua.png)
+
 </details>
 
 ## 📢 Останні оновлення
