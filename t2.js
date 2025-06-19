@@ -134,15 +134,15 @@
         },
 
         hideCardType: function() {
-            var style = $('<style>.card__type { display: none !important; }</style>');
+            var style = $('<style>.category-full[data-url="person/popular"] .card__type { display: none !important; }</style>');
             $('head').append(style);
         },
 
         addSearchField: function() {
             Lampa.Listener.follow('full', function(e) {
-                if (e.type === 'complite' && Lampa.Activity.active().component === 'category_full' && Lampa.Activity.active().url === 'person/popular') {
+                if (e.type === 'render' && Lampa.Activity.active().component === 'category_full' && Lampa.Activity.active().url === 'person/popular') {
                     var container = $('.category-full', Lampa.Activity.active().activity.render());
-                    if (!container.find('.actors-search').length) {
+                    if (container.length && !container.find('.actors-search').length) {
                         var searchWrapper = $('<div class="actors-search" style="margin: 1em; display: flex; gap: 0.5em;"></div>');
                         var searchInput = $('<input type="text" class="actors-search-input" placeholder="' + Lampa.Lang.translate('actors_search_placeholder') + '" style="padding: 0.5em; border-radius: 0.5em; border: 1px solid #ccc; flex: 1;">');
                         var searchButton = $('<button class="actors-search-button" style="padding: 0.5em 1em; border-radius: 0.5em; background: #444; color: #fff; border: none; cursor: pointer;">' + Lampa.Lang.translate('actors_search_button') + '</button>');
