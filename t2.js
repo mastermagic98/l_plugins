@@ -42,9 +42,6 @@
         settings: {
             showActors: true
         },
-        pluginName: 'actors_plugin',
-        storageKey: 'actors_saved',
-        pageSize: 20,
 
         init: function() {
             this.registerTemplates();
@@ -54,8 +51,7 @@
             this.initStorageListener();
             this.hideCardType();
             this.addSearchField();
-            this.initStorage();
-            this.addActorsService();
+            this.modifyActorModal();
         },
 
         registerTemplates: function() {
@@ -144,13 +140,13 @@
         },
 
         hideCardType: function() {
-            var style = $('<style>.category-full .card__type { display: none !important; }</style>');
+            var style = $('<style>.card[data-type="person"] .card__type { display: none !important; }</style>');
             $('head').append(style);
         },
 
         addSearchField: function() {
             Lampa.Listener.follow('full', function(e) {
-                console.log('[ActorsPlugin] full event:', e.type, 'component:', Lampa.Activity.active().component, 'url:', Lampa.Activity.active().url);
+                console.log('[ActorsPlugin] Full event:', e.type, 'Component:', Lampa.Activity.active().component, 'URL:', Lampa.Activity.active().url);
                 if (e.type === 'complite' && Lampa.Activity.active().component === 'category_full' && Lampa.Activity.active().url === 'person/popular') {
                     console.log('[ActorsPlugin] Adding search field');
                     var container = $('.category-full', Lampa.Activity.active().activity.render());
@@ -182,126 +178,66 @@
                                 searchButton.click();
                             }
                         });
+                    } else {
+                        console.log('[ActorsPlugin] Container not found or search already added');
                     }
                 }
             });
         },
 
-        initStorage: function() {
-            var current = Lampa.Storage.get(this.storageKey);
-            if (!current || !Array.isArray(current)) {
-                Lampa.Storage.set(this.storageKey, []);
-            }
-        },
-
-        getActorIds: function() {
-            var ids = Lampa.Storage.get(this.storageKey, []);
-            return Array.isArray(ids) ? ids : [];
-        },
-
-        addActorsService: function() {
-            var self = this;
-            var cache = {};
-
-            var actorsService = {
-                list: function(params, onComplete, onError) {
-                    console.log('[ActorsPlugin] Fetching actors for page:', params.page);
-                    var page = parseInt(params.page, 10) || 1;
-                    var startIndex = (page - 1) * self.pageSize;
-                    var endIndex = startIndex + self.pageSize;
-
-                    var actorIds = self.getActorIds();
-                    console.log('[ActorsPlugin] Actor IDs:', actorIds);
-                    var pageIds = actorIds.slice(startIndex, endIndex);
-
-                    if (pageIds.length === 0) {
-                        console.log('[ActorsPlugin] No actor IDs for this page');
-                        onComplete({
-                            results: [],
-                            page: page,
-                            total_pages: Math.ceil(actorIds.length / self.pageSize),
-                            total_results: actorIds.length
-                        });
+        modifyActorModal: function() {
+            Lampa.Listener.follow('person', function(e) {
+                if (e.type === 'complite' && e.data && e.data.person) {
+                    console.log('[ActorsPlugin] Modifying actor modal');
+                    var modal = $('.modal__content', e.activity.element);
+                    if (!modal.length) {
+                        console.log('[ActorsPlugin] Modal not found');
                         return;
                     }
 
-                    var loaded = 0;
-                    var results = [];
-                    var currentLang = Lampa.Storage.get('language', 'ru-RU');
-
-                    for (var i = 0; i < pageIds.length; i++) {
-                        (function(i) {
-                            var actorId = pageIds[i];
-
-                            if (cache[actorId]) {
-                                results.push(cache[actorId]);
-                                checkComplete();
-                                return;
-                            }
-
-                            var path = 'person/' + actorId + '?api_key=' + Lampa.TMDB.key() + '&language=' + currentLang;
-                            var url = Lampa.TMDB.api(path);
-                            console.log('[ActorsPlugin] Fetching actor:', url);
-
-                            new Lampa.Reguest().silent(url, function(response) {
-                                try {
-                                    var json = typeof response === 'string' ? JSON.parse(response) : response;
-                                    console.log('[ActorsPlugin] Response for actor', actorId, ':', json);
-
-                                    if (json && json.id) {
-                                        var actorCard = {
-                                            id: json.id,
-                                            title: json.name,
-                                            name: json.name,
-                                            poster_path: json.profile_path,
-                                            profile_path: json.profile_path,
-                                            type: "actor",
-                                            source: "tmdb",
-                                            original_type: "person",
-                                            media_type: "person",
-                                            known_for_department: json.known_for_department,
-                                            gender: json.gender || 0,
-                                            popularity: json.popularity || 0
-                                        };
-
-                                        cache[actorId] = actorCard;
-                                        results.push(actorCard);
-                                    }
-                                } catch (e) {
-                                    console.log('[ActorsPlugin] Error parsing response for actor', actorId, ':', e);
-                                }
-                                checkComplete();
-                            }, function(errorMsg) {
-                                console.log('[ActorsPlugin] Error fetching actor', actorId, ':', errorMsg);
-                                checkComplete();
-                            });
-                        })(i);
+                    var title = modal.find('.modal__title');
+                    if (!title.length) {
+                        console.log('[ActorsPlugin] Title not found');
+                        return;
                     }
 
-                    function checkComplete() {
-                        loaded++;
-                        if (loaded >= pageIds.length) {
-                            var validResults = results.filter(function(item) {
-                                return !!item;
-                            });
+                    var birthday = e.data.person.birthday || 'N/A';
+                    var birthdayText = $('<div class="modal__subtitle" style="font-size: 0.9em; color: #888; margin-top: 0.2em;">' + birthday + '</div>');
+                    title.after(birthdayText);
 
-                            validResults.sort(function(a, b) {
-                                return pageIds.indexOf(a.id) - pageIds.indexOf(b.id);
-                            });
-
-                            console.log('[ActorsPlugin] Results:', validResults);
-                            onComplete({
-                                results: validResults,
-                                page: page,
-                                total_pages: Math.ceil(actorIds.length / self.pageSize),
-                                total_results: actorIds.length
-                            });
-                        }
+                    var about = modal.find('.about');
+                    if (about.length) {
+                        var originalText = about.text().trim();
+                        var formattedText = formatBiography(originalText);
+                        about.html(formattedText);
+                    } else {
+                        console.log('[ActorsPlugin] About section not found');
                     }
                 }
-            };
+            });
 
-            Lampa.Api.sources[this.pluginName] = actorsService;
+            function formatBiography(text) {
+                var paragraphs = text.split('\n\n');
+                var formatted = '<h3>Біографія</h3>';
+
+                paragraphs.forEach(function(para, index) {
+                    if (index === 0) {
+                        formatted += '<p><strong>Огляд:</strong> ' + para + '</p>';
+                    } else if (para.match(/Народилася|Родина|Сім'я/)) {
+                        formatted += '<h4>Родина та походження</h4><p>' + para + '</p>';
+                    } else if (para.match(/дитинства|першим фільмом|дебют/)) {
+                        formatted += '<h4>Ранні роки та дебют</h4><p>' + para + '</p>';
+                    } else if (para.match(/визнання|нагорода|номінація/)) {
+                        formatted += '<h4>Визнання та нагороди</h4><p>' + para + '</p>';
+                    } else if (para.match(/знялася|фільм|роль/)) {
+                        formatted += '<h4>Кінокар’єра</h4><p>' + para + '</p>';
+                    } else {
+                        formatted += '<p>' + para + '</p>';
+                    }
+                });
+
+                return formatted;
+            }
         }
     };
 
