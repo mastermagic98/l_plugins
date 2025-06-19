@@ -144,13 +144,15 @@
         },
 
         hideCardType: function() {
-            var style = $('<style>.category-full[data-url="person/popular"] .card__type { display: none !important; }</style>');
+            var style = $('<style>.category-full .card__type { display: none !important; }</style>');
             $('head').append(style);
         },
 
         addSearchField: function() {
             Lampa.Listener.follow('full', function(e) {
-                if (e.type === 'render' && Lampa.Activity.active().component === 'category_full' && Lampa.Activity.active().url === 'person/popular') {
+                console.log('[ActorsPlugin] full event:', e.type, 'component:', Lampa.Activity.active().component, 'url:', Lampa.Activity.active().url);
+                if (e.type === 'complite' && Lampa.Activity.active().component === 'category_full' && Lampa.Activity.active().url === 'person/popular') {
+                    console.log('[ActorsPlugin] Adding search field');
                     var container = $('.category-full', Lampa.Activity.active().activity.render());
                     if (container.length && !container.find('.actors-search').length) {
                         var searchWrapper = $('<div class="actors-search" style="margin: 1em; display: flex; gap: 0.5em;"></div>');
@@ -203,14 +205,17 @@
 
             var actorsService = {
                 list: function(params, onComplete, onError) {
+                    console.log('[ActorsPlugin] Fetching actors for page:', params.page);
                     var page = parseInt(params.page, 10) || 1;
                     var startIndex = (page - 1) * self.pageSize;
                     var endIndex = startIndex + self.pageSize;
 
                     var actorIds = self.getActorIds();
+                    console.log('[ActorsPlugin] Actor IDs:', actorIds);
                     var pageIds = actorIds.slice(startIndex, endIndex);
 
                     if (pageIds.length === 0) {
+                        console.log('[ActorsPlugin] No actor IDs for this page');
                         onComplete({
                             results: [],
                             page: page,
@@ -236,10 +241,12 @@
 
                             var path = 'person/' + actorId + '?api_key=' + Lampa.TMDB.key() + '&language=' + currentLang;
                             var url = Lampa.TMDB.api(path);
+                            console.log('[ActorsPlugin] Fetching actor:', url);
 
                             new Lampa.Reguest().silent(url, function(response) {
                                 try {
                                     var json = typeof response === 'string' ? JSON.parse(response) : response;
+                                    console.log('[ActorsPlugin] Response for actor', actorId, ':', json);
 
                                     if (json && json.id) {
                                         var actorCard = {
@@ -260,9 +267,12 @@
                                         cache[actorId] = actorCard;
                                         results.push(actorCard);
                                     }
-                                } catch (e) {}
+                                } catch (e) {
+                                    console.log('[ActorsPlugin] Error parsing response for actor', actorId, ':', e);
+                                }
                                 checkComplete();
                             }, function(errorMsg) {
+                                console.log('[ActorsPlugin] Error fetching actor', actorId, ':', errorMsg);
                                 checkComplete();
                             });
                         })(i);
@@ -279,6 +289,7 @@
                                 return pageIds.indexOf(a.id) - pageIds.indexOf(b.id);
                             });
 
+                            console.log('[ActorsPlugin] Results:', validResults);
                             onComplete({
                                 results: validResults,
                                 page: page,
