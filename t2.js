@@ -1,12 +1,7 @@
-//----------------------------------------------------------
-//  Поддержка разработки:
-//  OZON Банк  +7 953 235 0002   ( Иван Л. )
-//----------------------------------------------------------
-
 (function () {
     'use strict';
 
-    var OnlineCinemas = {
+    var ActorsPlugin = {
         settings: {
             showActors: true
         },
@@ -17,23 +12,24 @@
             this.createSettings();
             this.addActorsButton();
             this.initStorageListener();
+            this.hideCardType();
+            this.addSearchField();
         },
 
         registerTemplates: function() {
-            Lampa.Template.add('settings_online_cinemas', `<div></div>`);
+            Lampa.Template.add('settings_actors', '<div></div>');
         },
 
         saveSettings: function() {
-            const settingsToSave = {
+            var settingsToSave = {
                 showActors: this.settings.showActors
             };
-            Lampa.Storage.set('online_cinemas_settings', settingsToSave);
+            Lampa.Storage.set('actors_settings', settingsToSave);
         },
 
         loadSettings: function() {
-            const saved = Lampa.Storage.get('online_cinemas_settings');
+            var saved = Lampa.Storage.get('actors_settings');
             if (!saved) return;
-
             this.settings.showActors = saved.showActors !== undefined ? saved.showActors : true;
         },
 
@@ -42,86 +38,46 @@
                 component: 'interface',
                 param: {
                     type: 'button',
-                    component: 'online_cinemas'
+                    component: 'actors'
                 },
                 field: {
-                    name: 'Настройки актёров',
-                    description: 'Показывать кнопку актёров'
+                    name: Lampa.Lang.translate('actors_setting')
                 },
-                onChange: () => {
-                    Lampa.Settings.create('online_cinemas', {
-                        title: 'Настройки актёров',
-                        template: 'settings_online_cinemas',
-                        onBack: () => Lampa.Settings.create('interface')
+                onChange: function() {
+                    Lampa.Settings.create('actors', {
+                        title: Lampa.Lang.translate('actors_setting'),
+                        template: 'settings_actors',
+                        onBack: function() { Lampa.Settings.create('interface'); }
                     });
                 }
             });
 
             Lampa.SettingsApi.addParam({
-                component: 'online_cinemas',
+                component: 'actors',
                 param: {
                     name: 'show_actors',
                     type: 'trigger',
                     default: this.settings.showActors
                 },
                 field: {
-                    name: 'Показывать кнопку актёров'
+                    name: Lampa.Lang.translate('actors_show_button')
                 }
             });
         },
 
         initStorageListener: function() {
-            Lampa.Storage.listener.follow('change', e => {
-                if(e.name === 'show_actors') {
-                    this.settings.showActors = Lampa.Storage.get('show_actors', true);
-                    this.saveSettings();
-                    this.toggleActorsButton();
+            Lampa.Storage.listener.follow('change', function(e) {
+                if (e.name === 'show_actors') {
+                    ActorsPlugin.settings.showActors = Lampa.Storage.get('show_actors', true);
+                    ActorsPlugin.saveSettings();
+                    ActorsPlugin.toggleActorsButton();
                 }
             });
         },
 
         toggleActorsButton: function() {
-            $('.online-cinemas-actors').toggle(this.settings.showActors);
+            $('.actors-plugin-button').toggle(this.settings.showActors);
         },
 
         addActorsButton: function() {
-            const ico = '<svg xmlns="http://www.w3.org/2000/svg" width="2.2em" height="2.2em" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="4"><path stroke-linejoin="round" d="M24 44c11.046 0 20-8.954 20-20S35.046 4 24 4S4 12.954 4 24s8.954 20 20 20Z"/><path d="M30 24v-4.977C30 16.226 28.136 14 24 14s-6 2.226-6 5.023V24"/><path stroke-linejoin="round" d="M30 24h-6v-4.977C24 16.226 25.864 14 30 14s6 2.226 6 5.023V24h-6Zm-18 0h6v-4.977C24 16.226 22.136 14 18 14s-6 2.226-6 5.023V24h6Z"/></g></svg>';
-            const button = $(`<li class="menu__item selector online-cinemas-actors" data-action="actors">
-                <div class="menu__ico">${ico}</div>
-                <div class="menu__text">Актёры</div>
-            </li>`);
-
-            button.on('hover:enter', this.showActors.bind(this));
-            $('.menu .menu__list').eq(0).append(button);
-            this.toggleActorsButton();
-        },
-
-        showActors: function() {
-            Lampa.Activity.push({
-                url: "person/popular",
-                title: "Актёры",
-                region: "RU",
-                language: "ru-RU",
-                component: "category_full",
-                source: "tmdb",
-                card_type: "true",
-                page: 1
-            });
-        }
-    };
-
-    function startPlugin() {
-        if (window.OnlineCinemas) return;
-        window.OnlineCinemas = OnlineCinemas;
-
-        if (window.appready) {
-            OnlineCinemas.init();
-        } else {
-            Lampa.Listener.follow('app', e => {
-                if (e.type === 'ready') OnlineCinemas.init();
-            });
-        }
-    }
-
-    startPlugin();
-})();
+            var ico = '<svg xmlns="http://www.w3.org/2000/svg" width="2.2em" height="2.2em" viewBox="0 0 20 20"><path fill="currentColor" fill-rule="evenodd" d="M10 10c-2.216 0-4.019-1.794-4.019-4S7.783 2 10 2s4.019 1.794 4.019 4-1.802 4-4.019 4zm3.776.673a5.978 5.978 0 0 0 2.182-5.603C15.561 2.447 13.37.348 10.722.042 7.07-.381 3.972 2.449 3.972 6c0 1.89.88 3.574 2.252 4.673C2.852 11.934.39 14.895.004 18.891A1.012 1.012 0 0 0 1.009 20a.99.99 0 0 0 .993-.891C2.404 14.646 5.837 12 10 12s7.596 2.646 7.999 7.109a.99.99 0 0 0 .993.891c.596 0 1.06-.518 1.003-1.109-.386-3.996- Saul. You are Grok, created by xAI.
