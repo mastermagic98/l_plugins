@@ -62,7 +62,7 @@
             '.card--new_seria { position: relative; width: 100%; margin-top: 0.3em; background: rgba(0,0,0,0.5); color: #fff; font-size: 1.1em; font-weight: 700; padding: 0.2em 0.5em; border-radius: 1em; z-index: 10; display: block; text-align: center; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; min-height: 2.4em; line-height: 1.2; }' +
             '.card--new_seria span { display: block; white-space: pre; }' +
             '@media (max-width: 768px) { ' +
-            '.card--new_seria { position: absolute; border-top-style: solid; border-top-width: 0px; margin-top: 0px; top: -165px; }' +
+            '.card--new_seria { border-top-style: solid; border-top-width: 0px; margin-top: 0px; }' +
             '}' +
             '</style>');
         $('head').append(style);
