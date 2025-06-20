@@ -25,12 +25,18 @@
 
         addSeasonsBlock: function() {
             Lampa.Listener.follow('full', function(e) {
-                console.log('[SeasonsPlugin] Full event:', e.type, 'Component:', Lampa.Activity.active().component);
+                console.log('[SeasonsPlugin] Full event:', e.type, 'Component:', Lampa.Activity.active().component, 'Media type:', e.data && e.data.movie ? e.data.movie.media_type : 'N/A');
                 if (e.type === 'complite' && Lampa.Activity.active().component === 'full' && e.data && e.data.movie && e.data.movie.media_type === 'tv') {
                     console.log('[SeasonsPlugin] Adding seasons block for TV show');
-                    var container = $('.full-start-new__right', e.activity.element);
+                    var container = $('.full-start', e.activity.element);
                     if (!container.length) {
-                        console.log('[SeasonsPlugin] Container .full-start-new__right not found');
+                        console.log('[SeasonsPlugin] Container .full-start not found');
+                        return;
+                    }
+
+                    var buttonsContainer = container.find('.full-start__buttons');
+                    if (!buttonsContainer.length) {
+                        console.log('[SeasonsPlugin] Buttons container .full-start__buttons not found');
                         return;
                     }
 
@@ -75,13 +81,13 @@
                                 seasonsBlock.append('<div>' + Lampa.Lang.translate('seasons_no_data') + '</div>');
                             }
 
-                            container.before(seasonsBlock);
+                            buttonsContainer.before(seasonsBlock);
 
                             // Адаптивні стилі для мобільних
                             var style = $('<style>' +
                                 '@media screen and (max-width: 580px) {' +
                                 '.seasons-block {' +
-                                '    margin: 0 -1.5em 1em;' +
+                                '    margin: 0 -1em 1em;' +
                                 '    padding: 1em;' +
                                 '    border-radius: 0.5em 0.5em 0 0;' +
                                 '    background: rgba(0, 0, 0, 0.9);' +
@@ -102,12 +108,12 @@
                         } catch (err) {
                             console.log('[SeasonsPlugin] Error parsing TMDB response:', err);
                             seasonsBlock.append('<div>' + Lampa.Lang.translate('seasons_no_data') + '</div>');
-                            container.before(seasonsBlock);
+                            buttonsContainer.before(seasonsBlock);
                         }
                     }, function(error) {
                         console.log('[SeasonsPlugin] TMDB request error:', error);
                         seasonsBlock.append('<div>' + Lampa.Lang.translate('seasons_no_data') + '</div>');
-                        container.before(seasonsBlock);
+                        buttonsContainer.before(seasonsBlock);
                     });
 
                     function loadEpisodes(seasonNumber) {
