@@ -28,15 +28,15 @@
                 console.log('[SeasonsPlugin] Full event:', e.type, 'Component:', Lampa.Activity.active().component, 'Media type:', e.data && e.data.movie ? e.data.movie.media_type : 'N/A');
                 if (e.type === 'complite' && Lampa.Activity.active().component === 'full' && e.data && e.data.movie && e.data.movie.media_type === 'tv') {
                     console.log('[SeasonsPlugin] Adding seasons block for TV show');
-                    var container = $('.full-start', e.activity.element);
+                    var container = $('.full-start-new__right', e.activity.element);
                     if (!container.length) {
-                        console.log('[SeasonsPlugin] Container .full-start not found');
+                        console.log('[SeasonsPlugin] Container .full-start-new__right not found');
                         return;
                     }
 
-                    var buttonsContainer = container.find('.full-start__buttons');
+                    var buttonsContainer = container.find('.full-start-new__buttons');
                     if (!buttonsContainer.length) {
-                        console.log('[SeasonsPlugin] Buttons container .full-start__buttons not found');
+                        console.log('[SeasonsPlugin] Buttons container .full-start-new__buttons not found');
                         return;
                     }
 
@@ -128,7 +128,7 @@
                                 episodesList.empty();
                                 if (episodesJson && episodesJson.episodes && episodesJson.episodes.length) {
                                     episodesJson.episodes.forEach(function(episode) {
-                                        var episodeItem = $('<div class="episode-item" style="padding: 0.3em 0; cursor: pointer;">' +
+                                        var episodeItem = $('<div class="episode-item selector" style="padding: 0.3em 0; cursor: pointer;">' +
                                             '<span>Episode ' + episode.episode_number + ': ' + (episode.name || 'N/A') + '</span>' +
                                             '</div>');
                                         episodeItem.on('hover:enter', function() {
