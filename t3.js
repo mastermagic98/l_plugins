@@ -1,173 +1,160 @@
 (function () {
     'use strict';
 
-    if (window.SeasonsEpisodesPlugin && window.SeasonsEpisodesPlugin.__initialized) return;
-    window.SeasonsEpisodesPlugin = window.SeasonsEpisodesPlugin || {};
-    window.SeasonsEpisodesPlugin.__initialized = true;
+    if (window.SeasonsPlugin && window.SeasonsPlugin.__initialized) return;
+    window.SeasonsPlugin = window.SeasonsPlugin || {};
+    window.SeasonsPlugin.__initialized = true;
 
     Lampa.Lang.add({
-        seasons_episodes_title: {
-            en: "Seasons & Episodes",
-            uk: "Сезони та епізоди",
-            ru: "Сезоны и эпизоды"
+        seasons_title: {
+            en: "Seasons",
+            uk: "Сезони",
+            ru: "Сезоны"
         },
-        seasons_label: {
-            en: "Season",
-            uk: "Сезон",
-            ru: "Сезон"
-        },
-        episodes_label: {
-            en: "Episodes",
-            uk: "Епізоди",
-            ru: "Эпизоды"
-        },
-        no_episodes: {
-            en: "No episodes available",
-            uk: "Епізоди відсутні",
-            ru: "Эпизоды отсутствуют"
+        seasons_no_data: {
+            en: "No seasons available",
+            uk: "Немає доступних сезонів",
+            ru: "Нет доступных сезонов"
         }
     });
 
-    var SeasonsEpisodesPlugin = {
+    var SeasonsPlugin = {
         init: function() {
-            this.addSeasonsEpisodesBlock();
+            this.addSeasonsBlock();
         },
 
-        addSeasonsEpisodesBlock: function() {
+        addSeasonsBlock: function() {
             Lampa.Listener.follow('full', function(e) {
-                console.log('[SeasonsEpisodesPlugin] Full event:', e.type, 'Data:', e.data, 'Activity:', Lampa.Activity.active());
-                if (e.type === 'render' && e.data && e.data.movie && e.data.movie.media_type === 'tv') {
-                    console.log('[SeasonsEpisodesPlugin] Processing TV show:', e.data.movie.title);
-
-                    function tryAddBlock(attempts) {
-                        var container = $('.full-start-new, .full-start');
-                        var rightBlock = container.find('.full-start-new__right');
-                        console.log('[SeasonsEpisodesPlugin] Container found:', container.length, 'Right block found:', rightBlock.length);
-
-                        if (!container.length || !rightBlock.length) {
-                            if (attempts < 5) {
-                                console.log('[SeasonsEpisodesPlugin] Retrying in 300ms, attempt:', attempts + 1);
-                                setTimeout(function() { tryAddBlock(attempts + 1); }, 300);
-                            } else {
-                                console.log('[SeasonsEpisodesPlugin] Failed to find container or right block after 5 attempts');
-                            }
-                            return;
-                        }
-
-                        if (container.find('.seasons-episodes-block').length) {
-                            console.log('[SeasonsEpisodesPlugin] Block already exists');
-                            return;
-                        }
-
-                        var block = $('<div class="seasons-episodes-block" style="margin-bottom: 1em; width: 100%; max-width: 600px; background: transparent;"></div>');
-                        var select = $('<select class="seasons-select" style="padding: 0.5em; border-radius: 0.5em; border: 1px solid #ccc; width: 100%; max-width: 200px; margin-bottom: 0.5em;"></select>');
-                        var episodesContainer = $('<div class="episodes-container" style="display: flex; flex-wrap: wrap; gap: 0.5em;"></div>');
-
-                        block.append('<div style="font-weight: bold; margin-bottom: 0.5em;">' + Lampa.Lang.translate('seasons_episodes_title') + '</div>');
-                        block.append(select);
-                        block.append(episodesContainer);
-
-                        container[0].insertBefore(block[0], rightBlock[0]);
-                        console.log('[SeasonsEpisodesPlugin] Block inserted before .full-start-new__right');
-
-                        var movieId = e.data.movie.id;
-                        var path = 'tv/' + movieId + '?api_key=' + Lampa.TMDB.key() + '&language=' + Lampa.Storage.get('language', 'ru-RU');
-                        var url = Lampa.TMDB.api(path);
-
-                        new Lampa.Reguest().silent(url, function(response) {
-                            try {
-                                var json = typeof response === 'string' ? JSON.parse(response) : response;
-                                console.log('[SeasonsEpisodesPlugin] TMDB seasons response:', json);
-
-                                if (json && json.seasons && json.seasons.length) {
-                                    json.seasons.forEach(function(season) {
-                                        if (season.season_number >= 0) {
-                                            var option = $('<option value="' + season.season_number + '">' + Lampa.Lang.translate('seasons_label') + ' ' + season.season_number + '</option>');
-                                            select.append(option);
-                                        }
-                                    });
-
-                                    select.on('change', function() {
-                                        var seasonNumber = parseInt(select.val(), 10);
-                                        loadEpisodes(seasonNumber);
-                                    });
-
-                                    loadEpisodes(json.seasons[0].season_number);
-                                } else {
-                                    episodesContainer.text(Lampa.Lang.translate('no_episodes'));
-                                    console.log('[SeasonsEpisodesPlugin] No seasons found');
-                                }
-                            } catch (err) {
-                                console.log('[SeasonsEpisodesPlugin] Error parsing TMDB response:', err);
-                                episodesContainer.text(Lampa.Lang.translate('no_episodes'));
-                            }
-                        }, function(err) {
-                            console.log('[SeasonsEpisodesPlugin] Error fetching TMDB data:', err);
-                            episodesContainer.text(Lampa.Lang.translate('no_episodes'));
-                        });
-
-                        function loadEpisodes(seasonNumber) {
-                            console.log('[SeasonsEpisodesPlugin] Loading episodes for season:', seasonNumber);
-                            episodesContainer.empty();
-
-                            var path = 'tv/' + movieId + '/season/' + seasonNumber + '?api_key=' + Lampa.TMDB.key() + '&language=' + Lampa.Storage.get('language', 'ru-RU');
-                            var url = Lampa.TMDB.api(path);
-
-                            new Lampa.Reguest().silent(url, function(response) {
-                                try {
-                                    var json = typeof response === 'string' ? JSON.parse(response) : response;
-                                    console.log('[SeasonsEpisodesPlugin] Episodes response:', json);
-
-                                    if (json && json.episodes && json.episodes.length) {
-                                        json.episodes.forEach(function(episode) {
-                                            var button = $('<button class="episode-button selector" style="padding: 0.5em 1em; border-radius: 0.5em; background: #444; color: #fff; border: none; cursor: pointer; flex: 0 0 auto;">' + 
-                                                Lampa.Lang.translate('episodes_label') + ' ' + episode.episode_number + '</button>');
-
-                                            button.on('hover:enter', function() {
-                                                Lampa.Activity.push({
-                                                    url: 'tv/' + movieId + '/season/' + seasonNumber + '/episode/' + episode.episode_number,
-                                                    title: episode.name || Lampa.Lang.translate('episodes_label') + ' ' + episode.episode_number,
-                                                    component: 'player',
-                                                    source: 'tmdb',
-                                                    id: movieId,
-                                                    season: seasonNumber,
-                                                    episode: episode.episode_number
-                                                });
-                                            });
-
-                                            episodesContainer.append(button);
-                                        });
-                                    } else {
-                                        episodesContainer.text(Lampa.Lang.translate('no_episodes'));
-                                        console.log('[SeasonsEpisodesPlugin] No episodes found');
-                                    }
-                                } catch (err) {
-                                    console.log('[SeasonsEpisodesPlugin] Error parsing episodes:', err);
-                                    episodesContainer.text(Lampa.Lang.translate('no_episodes'));
-                                }
-                            }, function(err) {
-                                console.log('[SeasonsEpisodesPlugin] Error fetching episodes:', err);
-                                episodesContainer.text(Lampa.Lang.translate('no_episodes'));
-                            });
-                        }
+                console.log('[SeasonsPlugin] Full event:', e.type, 'Component:', Lampa.Activity.active().component);
+                if (e.type === 'complite' && Lampa.Activity.active().component === 'full' && e.data && e.data.movie && e.data.movie.media_type === 'tv') {
+                    console.log('[SeasonsPlugin] Adding seasons block for TV show');
+                    var container = $('.full-start-new__right', e.activity.element);
+                    if (!container.length) {
+                        console.log('[SeasonsPlugin] Container .full-start-new__right not found');
+                        return;
                     }
 
-                    tryAddBlock(0);
+                    var seasonsBlock = $('.seasons-block', e.activity.element);
+                    if (seasonsBlock.length) {
+                        console.log('[SeasonsPlugin] Seasons block already exists');
+                        return;
+                    }
 
-                    // Оновлені адаптивні стилі
-                    var style = $('<style>' +
-                        '.seasons-episodes-block { display: block !important; visibility: visible !important; }' +
-                        '@media (max-width: 768px) {' +
-                        '  .seasons-episodes-block { max-width: 100% !important; padding: 0 0.5em; box-sizing: border-box; }' +
-                        '  .seasons-select { max-width: 100% !important; box-sizing: border-box; }' +
-                        '  .episodes-container { justify-content: flex-start; }' +
-                        '  .episode-button { flex: 0 0 48%; text-align: center; margin-bottom: 0.5em; }' +
-                        '}' +
-                        '@media (max-width: 480px) {' +
-                        '  .episode-button { flex: 0 0 100%; }' +
-                        '}' +
-                        '</style>');
-                    $('head').append(style);
+                    var movie = e.data.movie;
+                    var tmdbId = movie.id;
+                    var seasonsBlock = $('<div class="seasons-block" style="margin-bottom: 1em; padding: 0.5em; border-radius: 0.5em; background: rgba(0, 0, 0, 0.8); z-index: 2; position: relative;"></div>');
+                    seasonsBlock.append('<div class="seasons-title" style="font-size: 1.2em; font-weight: bold; margin-bottom: 0.5em;">' + Lampa.Lang.translate('seasons_title') + '</div>');
+
+                    var path = 'tv/' + tmdbId + '?api_key=' + Lampa.TMDB.key() + '&language=' + Lampa.Storage.get('language', 'ru-RU');
+                    var url = Lampa.TMDB.api(path);
+
+                    new Lampa.Reguest().silent(url, function(response) {
+                        try {
+                            var json = typeof response === 'string' ? JSON.parse(response) : response;
+                            console.log('[SeasonsPlugin] TMDB response:', json);
+
+                            if (json && json.seasons && json.seasons.length) {
+                                var seasonsSelect = $('<select class="seasons-select" style="width: 100%; padding: 0.5em; border-radius: 0.3em; background: #333; color: #fff; border: none;"></select>');
+                                json.seasons.forEach(function(season) {
+                                    if (season.season_number >= 0) {
+                                        seasonsSelect.append('<option value="' + season.season_number + '">Season ' + season.season_number + ' (' + (season.air_date ? season.air_date.split('-')[0] : 'N/A') + ')</option>');
+                                    }
+                                });
+
+                                var episodesList = $('<div class="episodes-list" style="margin-top: 0.5em; max-height: 150px; overflow-y: auto;"></div>');
+                                seasonsBlock.append(seasonsSelect).append(episodesList);
+
+                                seasonsSelect.on('change', function() {
+                                    var seasonNumber = $(this).val();
+                                    console.log('[SeasonsPlugin] Selected season:', seasonNumber);
+                                    loadEpisodes(seasonNumber);
+                                });
+
+                                loadEpisodes(json.seasons[0].season_number);
+                            } else {
+                                seasonsBlock.append('<div>' + Lampa.Lang.translate('seasons_no_data') + '</div>');
+                            }
+
+                            container.before(seasonsBlock);
+
+                            // Адаптивні стилі для мобільних
+                            var style = $('<style>' +
+                                '@media screen and (max-width: 580px) {' +
+                                '.seasons-block {' +
+                                '    margin: 0 -1.5em 1em;' +
+                                '    padding: 1em;' +
+                                '    border-radius: 0.5em 0.5em 0 0;' +
+                                '    background: rgba(0, 0, 0, 0.9);' +
+                                '    z-index: 3;' +
+                                '}' +
+                                '.seasons-title {' +
+                                '    font-size: 1.1em;' +
+                                '}' +
+                                '.seasons-select {' +
+                                '    font-size: 0.9em;' +
+                                '}' +
+                                '.episodes-list {' +
+                                '    max-height: 120px;' +
+                                '}' +
+                                '}' +
+                                '</style>');
+                            $('head').append(style);
+                        } catch (err) {
+                            console.log('[SeasonsPlugin] Error parsing TMDB response:', err);
+                            seasonsBlock.append('<div>' + Lampa.Lang.translate('seasons_no_data') + '</div>');
+                            container.before(seasonsBlock);
+                        }
+                    }, function(error) {
+                        console.log('[SeasonsPlugin] TMDB request error:', error);
+                        seasonsBlock.append('<div>' + Lampa.Lang.translate('seasons_no_data') + '</div>');
+                        container.before(seasonsBlock);
+                    });
+
+                    function loadEpisodes(seasonNumber) {
+                        var episodesPath = 'tv/' + tmdbId + '/season/' + seasonNumber + '?api_key=' + Lampa.TMDB.key() + '&language=' + Lampa.Storage.get('language', 'ru-RU');
+                        var episodesUrl = Lampa.TMDB.api(episodesPath);
+
+                        new Lampa.Reguest().silent(episodesUrl, function(episodesResponse) {
+                            try {
+                                var episodesJson = typeof episodesResponse === 'string' ? JSON.parse(episodesResponse) : episodesResponse;
+                                console.log('[SeasonsPlugin] Episodes response:', episodesJson);
+
+                                episodesList.empty();
+                                if (episodesJson && episodesJson.episodes && episodesJson.episodes.length) {
+                                    episodesJson.episodes.forEach(function(episode) {
+                                        var episodeItem = $('<div class="episode-item" style="padding: 0.3em 0; cursor: pointer;">' +
+                                            '<span>Episode ' + episode.episode_number + ': ' + (episode.name || 'N/A') + '</span>' +
+                                            '</div>');
+                                        episodeItem.on('hover:enter', function() {
+                                            console.log('[SeasonsPlugin] Selected episode:', episode.episode_number);
+                                            Lampa.Player.play({
+                                                url: '',
+                                                title: movie.title || movie.name,
+                                                season: seasonNumber,
+                                                episode: episode.episode_number,
+                                                source: 'tmdb',
+                                                id: tmdbId
+                                            });
+                                            Lampa.Player.playlist([{
+                                                title: episode.name || 'Episode ' + episode.episode_number,
+                                                season: seasonNumber,
+                                                episode: episode.episode_number
+                                            }]);
+                                        });
+                                        episodesList.append(episodeItem);
+                                    });
+                                } else {
+                                    episodesList.append('<div>No episodes available</div>');
+                                }
+                            } catch (err) {
+                                console.log('[SeasonsPlugin] Error parsing episodes response:', err);
+                                episodesList.empty().append('<div>No episodes available</div>');
+                            }
+                        }, function(error) {
+                            console.log('[SeasonsPlugin] Episodes request error:', error);
+                            episodesList.empty().append('<div>No episodes available</div>');
+                        });
+                    }
                 }
             });
         }
@@ -175,10 +162,10 @@
 
     function startPlugin() {
         if (window.appready) {
-            SeasonsEpisodesPlugin.init();
+            SeasonsPlugin.init();
         } else {
             Lampa.Listener.follow('app', function(e) {
-                if (e.type === 'ready') SeasonsEpisodesPlugin.init();
+                if (e.type === 'ready') SeasonsPlugin.init();
             });
         }
     }
