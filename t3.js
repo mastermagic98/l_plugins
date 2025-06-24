@@ -58,8 +58,8 @@
         if (!isSeasonSeriaEnabled()) return;
 
         var css = [
-            '.full-start__poster, .full-start-new__poster { position: relative; width: 100%; }',
-            '.card--new_seria { position: relative; width: 100%; margin-top: 0.3em; background: rgba(0,0,0,0.5); color: #fff; font-size: 1.1em; font-weight: 700; padding: 0.2em 0.5em; border-radius: 1em; z-index: 20; display: block; text-align: center; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; min-height: 2.4em; line-height: 1.2; }',
+            '.full-start__poster, .full-start-new__poster { position: relative; width: 100%; min-height: 200px; overflow: visible; }',
+            '.card--new_seria { position: relative; width: 100% !important; margin-top: 0.3em; background: red; color: #fff; font-size: 1.1em; font-weight: 700; padding: 0.2em 0.5em; border-radius: 1em; z-index: 20; display: block !important; visibility: visible !important; text-align: center; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; min-height: 2.4em; line-height: 1.2; }',
             '.card--new_seria span { display: block; white-space: pre; }'
         ].join('');
 
@@ -70,7 +70,7 @@
             if (event.type !== 'complite' || Lampa.Activity.active().component !== 'full') return;
 
             var data = Lampa.Activity.active().card;
-            if (!data || data.source !== 'tmdb' || !data.seasons || !isSeasonSeriaEnabled()) return;
+            if (!data || !data.seasons || !isSeasonSeriaEnabled()) return;
 
             var activityRender = Lampa.Activity.active().activity.render();
             var cardContainer = $('.full-start__poster, .full-start-new__poster', activityRender);
