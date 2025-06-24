@@ -1,14 +1,17 @@
 (function () {
     'use strict';
 
-    if (window.SeasonSeriaPlugin && window.SeasonSeriaPlugin.__initialized) return;
-    window.SeasonSeriaPlugin = window.SeasonSeriaPlugin || {};
+    if (window.SeasonSeriaPlugin && window.SeasonSeriaPlugin.__initialized) {
+        return;
+    }
+
+    window.SeasonSeriaPlugin = {};
     window.SeasonSeriaPlugin.__initialized = true;
 
     Lampa.Lang.add({
         season_seria_setting: {
             en: "Show series status (season/episode)",
-            uk: "Відображення стану серіалу (сезон/серія)",
+            uk: "Відображення стану серії (сезон/серія)",
             ru: "Отображение статуса сериала (сезон/эпизод)"
         },
         season_seria_active: {
@@ -17,19 +20,19 @@
             ru: "Сезон {season}\nЭпизодов {current}/{total}"
         },
         season_seria_season_completed: {
-            en: "Season {season} Episodes {episodes}\nIn Production",
-            uk: "Сезон {season} Епізодів {episodes}\nЗнімається",
-            ru: "Сезон {season} Эпизодов {episodes}\nСнимается"
+            en: "Season {season} Episodes {count}\nIn Production",
+            uk: "Сезон {season} Епізодів {count}\nЗнімається",
+            ru: "Сезон {season} Эпизодов {count}\nСнимается"
         },
         season_seria_series_ended: {
-            en: "Seasons {seasons} Episodes {episodes}\nEnded",
-            uk: "Сезонів {seasons} Епізодів {episodes}\nЗакінчено",
-            ru: "Сезонов {seasons} Эпизодов {episodes}\nЗавершено"
+            en: "Seasons {seasons} Episodes {total}\nEnded",
+            uk: "Сезонів {seasons} Епізодів {total}\nЗакінчено",
+            ru: "Сезонов {seasons} Эпизодов {total}\nЗавершено"
         },
         season_seria_series_canceled: {
-            en: "Seasons {seasons} Episodes {episodes}\nCanceled",
-            uk: "Сезонів {seasons} Епізодів {episodes}\nПрипинено",
-            ru: "Сезонов {seasons} Эпизодов {episodes}\nОтменено"
+            en: "Seasons {seasons} Episodes {total}\nCanceled",
+            uk: "Сезонів {seasons} Епізодів {total}\nПрипинено",
+            ru: "Сезонов {seasons} Эпизодов {total}\nОтменено"
         },
         season_seria_series_planned: {
             en: "Season {season}\nPlanned",
@@ -41,7 +44,7 @@
     Lampa.SettingsApi.addParam({
         component: 'interface',
         param: {
-            name: 'season_and_seria',
+            name: 'season_seria',
             type: 'trigger',
             default: true
         },
@@ -51,37 +54,48 @@
     });
 
     function isSeasonSeriaEnabled() {
-        return Lampa.Storage.get('season_and_seria', true) === true;
+        return Lampa.Storage.get('season_seria', true) === true;
     }
 
     function initPlugin() {
-        if (!isSeasonSeriaEnabled()) return;
+        if (!isSeasonSeriaEnabled()) {
+            return;
+        }
 
         var css = [
-            '.full-start { position: relative; width: 100%; min-height: 200px; overflow: visible; }',
-            '.card--new_seria { position: relative; width: 100% !important; margin-top: 0.3em; background: red; color: #fff; font-size: 1.1em; font-weight: 700; padding: 0.2em 0.5em; border-radius: 1em; z-index: 20; display: block !important; visibility: visible !important; text-align: center; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; min-height: 2.4em; line-height: 1.2; }',
-            '.card--new_seria span { display: block; white-space: pre; }'
+            '.full-start__poster, .full-start-new__poster { position: relative; width: 100%; }',
+            '.card--new_seria { position: relative; width: 100%; margin-top: 0.3em; background: rgba(0,0,0,0.4); color: 0.8em; font-weight: 600; padding: 0.2em 0.5em; border-radius: 0; z-index: 10; display: block; text-align: center; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; min-height: 2.4em; line-height: 1.2; }',
+            '.card--new_seria span { display: block; white-space: nowrap; }',
+            '@media (max-width: 640px) {',
+            '    .full-start__poster, .full-start-new__poster { min-height: 100px; }',
+            '    .card--new_seria { position: relative; top: -100px; left: 0; right: 0; border-bottom-style: none; border-bottom-width: 0; z-index: 10; }',
+            '}'
         ].join('');
 
         var style = $('<style></style>').text(css);
-        $('head').append(style);
+        document.head.appendChild(style[0]);
 
-        Lampa.Listener.follow('full', function (event) {
-            if (event.type !== 'complite' || Lampa.Activity.active().component !== 'full') return;
+        Lampa.subscribe('full', function (data) {
+            if (data.type !== 'card_open' || Lampa.active.get().type !== 'fullStart') {
+                return;
+            }
 
-            var data = Lampa.Activity.active().card;
-            if (!data || !data.seasons || !isSeasonSeriaEnabled()) return;
+            var card = data.card;
+            if (!card || card.source !== 'unknown' || !card.series || !isSeasonSeriaEnabled()) {
+                return;
+            }
 
-            var activityRender = Lampa.Activity.active().activity.render();
-            var cardContainer = $('.full-start', activityRender);
-            console.log('cardContainer:', cardContainer.length, cardContainer);
-            if ($('.card--new_seria', activityRender).length || !cardContainer.length) return;
+            var activityRender = Lampa.active.get().render();
+            var cardContainer = $('.full-start__poster, .full-start-new__poster', activityRender);
+            if ($('.card--new_seria', activityRender).length > 0 || cardContainer.length === 0) {
+                return;
+            }
 
-            var seasonNumber = data.last_episode_to_air ? data.last_episode_to_air.season_number : 1;
-            var episodeNumber = data.last_episode_to_air ? data.last_episode_to_air.episode_number : 0;
-            var nextEpisode = data.next_episode_to_air;
-            var seasons = data.seasons;
-            var status = data.status || '';
+            var seasonNumber = card.last_episode ? card.last_episode.season_number : 1;
+            var episodeNumber = card.last_episode ? card.last_episode.episode_number : 0;
+            var nextEpisode = card.next_episode;
+            var seasons = card.series.seasons || [];
+            var status = card.status || '';
 
             var seasonData = null;
             for (var i = 0; i < seasons.length; i++) {
@@ -105,14 +119,14 @@
             if (status === 'Ended' || status === 'Canceled') {
                 labelText = Lampa.Lang.translate(status === 'Ended' ? 'season_seria_series_ended' : 'season_seria_series_canceled')
                     .replace('{seasons}', seasons.length)
-                    .replace('{episodes}', totalEpisodes);
+                    .replace('{total}', totalEpisodes);
             } else if (status === 'Planned') {
                 labelText = Lampa.Lang.translate('season_seria_series_planned')
                     .replace('{season}', seasonNumber);
-            } else if (!nextEpisode && data.last_episode_to_air) {
+            } else if (!nextEpisode && card.last_episode) {
                 labelText = Lampa.Lang.translate('season_seria_season_completed')
                     .replace('{season}', seasonNumber)
-                    .replace('{episodes}', episodeCount);
+                    .replace('{count}', episodeCount);
             } else {
                 labelText = Lampa.Lang.translate('season_seria_active')
                     .replace('{season}', seasonNumber)
@@ -124,17 +138,15 @@
             var newSeriaTag = '<div class="card--new_seria"><span>' + escapedLabelText + '</span></div>';
             cardContainer.after(newSeriaTag);
         });
-
-        Lampa.Listener.follow('app', function (event) {
-            if (event.type === 'ready') initPlugin();
-        });
     }
 
     if (window.appready) {
         initPlugin();
     } else {
-        Lampa.Listener.follow('app', function (event) {
-            if (event.type === 'ready') initPlugin();
+        Lampa.subscribe('app', function (event) {
+            if (event.type === 'ready') {
+                initPlugin();
+            }
         });
     }
 })();
