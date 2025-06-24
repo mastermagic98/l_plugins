@@ -72,7 +72,8 @@
 
             var activityRender = Lampa.Activity.active().activity.render();
             var cardContainer = $('.full-start__poster, .full-start-new__poster', activityRender);
-            if ($('.card--new_seria', activityRender).length || !cardContainer.length) return;
+            var rightContainer = $('.full-start-new__right', activityRender);
+            if ($('.card--new_seria', activityRender).length || !cardContainer.length || !rightContainer.length) return;
 
             var seasonNumber = data.last_episode_to_air ? data.last_episode_to_air.season_number : 1;
             var episodeNumber = data.last_episode_to_air ? data.last_episode_to_air.episode_number : 0;
@@ -118,7 +119,12 @@
             }
 
             var newSeriaTag = '<div class="card--new_seria"><span>' + Lampa.Lang.translate(labelText) + '</span></div>';
-            cardContainer.after(newSeriaTag);
+
+            if (document.body.classList.contains('orientation--portrait')) {
+                rightContainer.prepend(newSeriaTag);
+            } else {
+                cardContainer.after(newSeriaTag);
+            }
         });
     }
 
