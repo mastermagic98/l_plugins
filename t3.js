@@ -59,9 +59,9 @@
 
         var style = $('<style>' +
             '.full-start__poster, .full-start-new__poster { position: relative; width: 100%; }' +
-            '.card--new_seria { position: absolute; top: 0.5em; right: 0.5em; width: auto; max-width: 50%; background: rgba(0,0,0,0.5); color: #fff; font-size: 0.9em; font-weight: 700; padding: 0.2em 0.5em; border-radius: 0.5em; z-index: 11; text-align: center; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; line-height: 1.2; }' +
+            '.card--new_seria { position: relative; width: 100%; margin-top: 0.3em; background: rgba(0,0,0,0.5); color: #fff; font-size: 1.1em; font-weight: 700; padding: 0.2em 0.5em; border-radius: 1em; z-index: 10; display: block; text-align: center; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; min-height: 2.4em; line-height: 1.2; }' +
             '.card--new_seria span { display: block; white-space: pre; }' +
-            '.orientation--portrait .card--new_seria { font-size: 0.8em; padding: 0.15em 0.4em; }' +
+            '.orientation--portrait .card--new_seria { position: absolute; top: 0.5em; right: 0.5em; width: auto; max-width: 50%; font-size: 0.8em; padding: 0.15em 0.4em; border-radius: 0.5em; z-index: 11; }' +
             '</style>');
         $('head').append(style);
 
@@ -119,7 +119,12 @@
             }
 
             var newSeriaTag = '<div class="card--new_seria"><span>' + Lampa.Lang.translate(labelText) + '</span></div>';
-            cardContainer.append(newSeriaTag);
+
+            if (document.body.classList.contains('orientation--portrait')) {
+                cardContainer.append(newSeriaTag);
+            } else {
+                cardContainer.after(newSeriaTag);
+            }
         });
     }
 
