@@ -59,7 +59,7 @@
 
         var style = $('<style>' +
             '.full-start__poster, .full-start-new__poster { position: relative; width: 100%; }' +
-            '.card--new_seria { position: absolute; top: 0; right: 0; width: auto; max-width: 50%; font-size: 1em; padding: 0.15em 1em; border-radius: 1em; z-index: 11; background: rgba(0,0,0,0.3); color: #fff; text-align: center; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }' +
+            '.card--new_seria { position: absolute; top: 0; right: 0; width: auto; max-width: 50%; font-size: 1em; padding: 0.15em 1em; border-radius: 1em; z-index: 11; background: rgba(0,0,0,0.3); color: #fff; text-align: center; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; font-weight: bold; }' +
             '.card--new_seria span { display: block; white-space: pre; }' +
             '</style>');
         $('head').append(style);
