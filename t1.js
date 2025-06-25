@@ -61,6 +61,7 @@
             '.full-start__poster, .full-start-new__poster { position: relative; width: 100%; }' +
             '.card--new_seria { font-weight: bold; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; color: #fff; }' +
             '.card--new_seria span { display: block; white-space: pre; }' +
+            ':not(.size--big) .full-start-new__poster { overflow: hidden; }' + // Додано для уникнення розмазування на мобільних
             ':not(.size--big) .card--new_seria { position: absolute; top: 0; right: 0; width: auto; max-width: 50%; font-size: 1em; padding: 0.15em 1em; border-radius: 1em; z-index: 11; background: rgba(0,0,0,0.3); }' +
             '.size--big .card--new_seria { position: relative; width: 100%; margin-top: 0.3em; background: rgba(0,0,0,0.5); font-size: 1.1em; font-weight: 700; padding: 0.2em 0.5em; border-radius: 1em; z-index: 10; display: block; text-align: center; min-height: 2.4em; line-height: 1.2; }' +
             '</style>');
@@ -122,8 +123,10 @@
             var newSeriaTag = '<div class="card--new_seria"><span>' + Lampa.Lang.translate(labelText) + '</span></div>';
             if (document.body.classList.contains('size--big')) {
                 cardContainer.after(newSeriaTag);
+                console.log('Inserted after poster for big screen');
             } else {
                 cardContainer.append(newSeriaTag);
+                console.log('Appended to poster for mobile');
             }
         });
     }
