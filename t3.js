@@ -28,7 +28,7 @@
         },
         season_seria_series_canceled: {
             en: "Seasons {seasons} Episodes {episodes}\nCanceled",
-            uk: "Сезонів {seasons} Е Епізодів {episodes}\nПрипинено",
+            uk: "Сезонів {seasons} Епізодів {episodes}\nПрипинено",
             ru: "Сезонов {seasons} Эпизодов {episodes}\nОтменено"
         },
         season_seria_series_planned: {
