@@ -446,9 +446,19 @@
     }
 
     function startPlugin() {
-        // Перевірка, чи Lampa.Plugin доступний
+        // Перевірка всіх необхідних залежностей Lampa
         function tryRegister(attempts) {
-            if (typeof Lampa.Plugin !== 'undefined') {
+            if (
+                typeof Lampa !== 'undefined' &&
+                typeof Lampa.Plugin !== 'undefined' &&
+                typeof Lampa.Lang !== 'undefined' &&
+                typeof Lampa.Template !== 'undefined' &&
+                typeof Lampa.Component !== 'undefined' &&
+                typeof Lampa.Manifest !== 'undefined' &&
+                typeof Lampa.Controller !== 'undefined' &&
+                typeof Lampa.Activity !== 'undefined'
+            ) {
+                console.log('Eneyida Plugin: All Lampa dependencies are ready');
                 window.eneyida_plugin = true;
                 var manifest = {
                     type: 'video',
@@ -463,6 +473,7 @@
                         };
                     },
                     onContextLauch: function(object) {
+                        console.log('Eneyida Plugin: Launching component with object', object);
                         Lampa.Component.add('eneyida', component);
                         Lampa.Activity.push({
                             url: '',
@@ -475,7 +486,7 @@
                     }
                 };
 
-                Lampa.Manifest.plugins = manifest;
+                console.log('Eneyida Plugin: Adding translations');
                 Lampa.Lang.add({
                     lampac_watch: {
                         ru: 'Смотреть онлайн',
@@ -509,6 +520,7 @@
                     }
                 });
 
+                console.log('Eneyida Plugin: Adding CSS template');
                 Lampa.Template.add('lampac_css', `
                     <style>
                         .online-prestige{position:relative;-webkit-border-radius:.3em;border-radius:.3em;background-color:rgba(0,0,0,0.3);display:-webkit-box;display:-webkit-flex;display:-moz-box;display:-ms-flexbox;display:flex}
@@ -537,6 +549,7 @@
                 `);
                 $('body').append(Lampa.Template.get('lampac_css', {}, true));
 
+                console.log('Eneyida Plugin: Adding does_not_answer template');
                 Lampa.Template.add('lampac_does_not_answer', `
                     <div class="online-empty">
                         <div class="online-empty__title">#{lampac_balanser_dont_work}</div>
@@ -548,6 +561,7 @@
                     </div>
                 `);
 
+                console.log('Eneyida Plugin: Adding button');
                 var button = `
                     <div class="full-start__button selector view--online_eneyida eneyida--button" data-subtitle="${manifest.name} ${manifest.version}">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -557,10 +571,13 @@
                     </div>
                 `;
 
+                console.log('Eneyida Plugin: Adding listener for full event');
                 Lampa.Listener.follow('full', function(e) {
                     if (e.type == 'complite') {
+                        console.log('Eneyida Plugin: Full event triggered, adding button');
                         var btn = $(Lampa.Lang.translate(button));
                         btn.on('hover:enter', function() {
+                            console.log('Eneyida Plugin: Button clicked, launching component');
                             Lampa.Component.add('eneyida', component);
                             Lampa.Activity.push({
                                 url: '',
@@ -575,18 +592,31 @@
                     }
                 });
 
+                console.log('Eneyida Plugin: Registering plugin');
                 Lampa.Component.add('eneyida', component);
                 Lampa.Plugin.register('eneyida', plugin);
+                console.log('Eneyida Plugin: Plugin registered successfully');
             } else if (attempts > 0) {
+                console.log('Eneyida Plugin: Lampa dependencies not ready, retrying... Attempts left:', attempts);
                 setTimeout(function() {
                     tryRegister(attempts - 1);
-                }, 100);
+                }, 200); // Збільшено затримку до 200 мс
             } else {
-                console.error('Lampa.Plugin is undefined after maximum attempts');
+                console.error('Eneyida Plugin: Failed to initialize after maximum attempts. Lampa dependencies:', {
+                    Lampa: typeof Lampa !== 'undefined',
+                    Plugin: typeof Lampa.Plugin !== 'undefined',
+                    Lang: typeof Lampa.Lang !== 'undefined',
+                    Template: typeof Lampa.Template !== 'undefined',
+                    Component: typeof Lampa.Component !== 'undefined',
+                    Manifest: typeof Lampa.Manifest !== 'undefined',
+                    Controller: typeof Lampa.Controller !== 'undefined',
+                    Activity: typeof Lampa.Activity !== 'undefined'
+                });
             }
         }
 
         // Спробувати зареєструвати плагін із максимум 50 спробами
+        console.log('Eneyida Plugin: Starting plugin initialization');
         tryRegister(50);
     }
 
