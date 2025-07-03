@@ -174,10 +174,11 @@
         var files = new Lampa.Explorer(object);
         var filter = new Lampa.Filter(object);
         var sources = {
-            eneyida: { name: 'Eneyida', url: plugin.url, show: true }
+            eneyida: { name: 'Eneyida', url: 'https://eneyida.tv', show: true },
+            mirror: { name: 'Mirror (Test)', url: 'https://eneyida.tv', show: true } // Додаткове джерело для тестування
         };
-        var filter_sources = ['eneyida'];
-        var balanser = 'eneyida';
+        var filter_sources = ['eneyida', 'mirror'];
+        var balanser = Lampa.Storage.get('eneyida_balanser', 'eneyida');
         var last;
         var initialized;
         var balanser_timer;
@@ -194,20 +195,25 @@
 
         this.initialize = function() {
             var _this = this;
+            console.log('Eneyida Plugin: Initializing component');
             this.loading(true);
             filter.onSearch = function(value) {
+                console.log('Eneyida Plugin: Search triggered with value:', value);
                 Lampa.Activity.replace({
                     search: value,
                     clarification: true
                 });
             };
             filter.onBack = function() {
+                console.log('Eneyida Plugin: Back button triggered');
                 _this.start();
             };
             filter.render().find('.selector').on('hover:enter', function() {
+                console.log('Eneyida Plugin: Filter selector hovered');
                 clearInterval(balanser_timer);
             });
             filter.onSelect = function(type, a, b) {
+                console.log('Eneyida Plugin: Filter selected, type:', type, 'value:', a);
                 if (type == 'sort') {
                     _this.changeBalanser(a.source);
                 }
@@ -220,6 +226,7 @@
             scroll.body().append(Lampa.Template.get('lampac_content_loading'));
             Lampa.Controller.enable('content');
             this.loading(false);
+            console.log('Eneyida Plugin: Setting filter sources:', filter_sources);
             filter.set('sort', filter_sources.map(function(e) {
                 return {
                     title: sources[e].name,
@@ -229,10 +236,12 @@
                 };
             }));
             filter.chosen('sort', [sources[balanser].name]);
+            console.log('Eneyida Plugin: Filter set, chosen:', sources[balanser].name);
             this.search();
         };
 
         this.changeBalanser = function(balanser_name) {
+            console.log('Eneyida Plugin: Changing balancer to:', balanser_name);
             balanser = balanser_name;
             Lampa.Storage.set('eneyida_balanser', balanser_name);
             this.reset();
@@ -240,16 +249,19 @@
         };
 
         this.search = function() {
+            console.log('Eneyida Plugin: Starting search with query:', object.search);
             this.request(plugin.search.url(object.search));
         };
 
         this.find = function() {
+            console.log('Eneyida Plugin: Finding content with balancer:', balanser);
             this.request(sources[balanser].url);
         };
 
         this.request = function(url) {
             var _this = this;
             number_of_requests++;
+            console.log('Eneyida Plugin: Sending request #', number_of_requests, 'to URL:', url);
             if (number_of_requests < 10) {
                 network["native"](account(url), this.parse.bind(this), this.doesNotAnswer.bind(this), false, {
                     dataType: 'text'
@@ -265,6 +277,7 @@
 
         this.parse = function(html) {
             var _this = this;
+            console.log('Eneyida Plugin: Parsing search results');
             var items = plugin.search.parse(html);
             if (items.length) {
                 scroll.clear();
@@ -275,6 +288,7 @@
                         time: ''
                     });
                     item.on('hover:enter', function() {
+                        console.log('Eneyida Plugin: Item selected:', elem.title);
                         _this.reset();
                         network["native"](elem.url, function(html) {
                             var media = plugin.media.parse(html);
@@ -288,12 +302,14 @@
                 });
                 Lampa.Controller.enable('content');
             } else {
+                console.log('Eneyida Plugin: No items found, triggering doesNotAnswer');
                 this.doesNotAnswer();
             }
         };
 
         this.display = function(media) {
             var _this = this;
+            console.log('Eneyida Plugin: Displaying media:', media.title);
             scroll.clear();
             if (media.type === 'series') {
                 media.episodes.forEach(function(episode) {
@@ -303,6 +319,7 @@
                         time: ''
                     });
                     item.on('hover:enter', function() {
+                        console.log('Eneyida Plugin: Playing episode:', episode.title);
                         plugin.stream.parse(episode.url, function(stream) {
                             var play = {
                                 title: episode.title,
@@ -326,6 +343,7 @@
                     time: media.year || ''
                 });
                 item.on('hover:enter', function() {
+                    console.log('Eneyida Plugin: Playing movie:', media.title);
                     plugin.stream.parse(media.stream, function(stream) {
                         var play = {
                             title: media.title,
@@ -346,6 +364,7 @@
         };
 
         this.empty = function() {
+            console.log('Eneyida Plugin: Displaying empty state');
             scroll.clear();
             var html = Lampa.Template.get('lampac_does_not_answer', {});
             html.find('.online-empty__title').text(Lampa.Lang.translate('empty_title_two'));
@@ -356,14 +375,17 @@
 
         this.doesNotAnswer = function() {
             var _this = this;
+            console.log('Eneyida Plugin: Source does not answer, balancer:', balanser);
             scroll.clear();
             var html = Lampa.Template.get('lampac_does_not_answer', {
                 balanser: balanser
             });
             html.find('.cancel').on('hover:enter', function() {
+                console.log('Eneyida Plugin: Cancel button clicked');
                 clearInterval(balanser_timer);
             });
             html.find('.change').on('hover:enter', function() {
+                console.log('Eneyida Plugin: Change balancer button clicked');
                 clearInterval(balanser_timer);
                 filter.render().find('.filter--sort').trigger('hover:enter');
             });
@@ -378,12 +400,14 @@
                     var keys = Lampa.Arrays.getKeys(sources);
                     var indx = keys.indexOf(balanser);
                     var next = keys[indx + 1] || keys[0];
+                    console.log('Eneyida Plugin: Auto-switching to balancer:', next);
                     _this.changeBalanser(next);
                 }
             }, 1000);
         };
 
         this.reset = function() {
+            console.log('Eneyida Plugin: Resetting component');
             clearInterval(balanser_timer);
             network.clear();
             scroll.clear();
@@ -391,6 +415,7 @@
         };
 
         this.loading = function(status) {
+            console.log('Eneyida Plugin: Loading state:', status);
             if (status) this.activity.loader(true);
             else {
                 this.activity.loader(false);
@@ -402,6 +427,7 @@
             if (Lampa.Activity.active().activity !== this.activity) return;
             if (!initialized) {
                 initialized = true;
+                console.log('Eneyida Plugin: Starting component initialization');
                 this.initialize();
             }
             Lampa.Controller.add('content', {
@@ -430,6 +456,7 @@
         };
 
         this.back = function() {
+            console.log('Eneyida Plugin: Back navigation triggered');
             Lampa.Activity.backward();
         };
 
@@ -438,6 +465,7 @@
         };
 
         this.destroy = function() {
+            console.log('Eneyida Plugin: Destroying component');
             network.clear();
             files.destroy();
             scroll.destroy();
@@ -446,7 +474,6 @@
     }
 
     function startPlugin() {
-        // Перевірка всіх необхідних залежностей Lampa
         function tryRegister(attempts) {
             if (
                 typeof Lampa !== 'undefined' &&
@@ -463,7 +490,7 @@
                 var manifest = {
                     type: 'video',
                     version: '1.0.0',
-                    name: 'Eneyida',
+                    name: 'Eソーシャルメディア: Eneyida',
                     description: 'Плагін для перегляду фільмів і серіалів на eneyida.tv',
                     component: 'eneyida',
                     onContextMenu: function() {
@@ -473,7 +500,7 @@
                         };
                     },
                     onContextLauch: function(object) {
-                        console.log('Eneyida Plugin: Launching component with object', object);
+                        console.log('Eneyida Plugin: Context launch with object', object);
                         Lampa.Component.add('eneyida', component);
                         Lampa.Activity.push({
                             url: '',
@@ -567,14 +594,15 @@
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                             <path fill="currentColor" d="M16.088 6.412a2.84 2.84 0 0 0-1.347-.955l-1.378-.448a.544.544 0 0 1 0-1.025l1.378-.448A2.84 2.84 0 0 0 16.5 1.774l.011-.034l.448-1.377a.544.544 0 0 1 1.027 0l.447 1.377a2.84 2.84 0 0 0 1.799 1.796l1.377.448l.028.007a.544.544 0 0 1 0 1.025l-1.378.448a2.84 2.84 0 0 0-1.798 1.796l-.448 1.377l-.013.034a.544.544 0 0 1-1.013-.034l-.448-1.377a2.8 2.8 0 0 0-.45-.848m7.695 3.801l-.766-.248a1.58 1.58 0 0 1-.998-.999l-.25-.764a.302.302 0 0 0-.57 0l-.248.764a1.58 1.58 0 0 1-.984.999l-.765.248a.302.302 0 0 0 0 .57l.765.249a1.58 1.58 0 0 1 1 1.002l.248.764a.302.302 0 0 0 .57 0l.249-.764a1.58 1.58 0 0 1 .999-.999l.765-.248a.302.302 0 0 0 0-.57zM12 2c.957 0 1.883.135 2.76.386q-.175.107-.37.173l-1.34.44c-.287.103-.532.28-.713.508a8.5 8.5 0 1 0 8.045 9.909c.22.366.542.633 1.078.633q.185 0 .338-.04C20.868 18.57 16.835 22 12 22C6.477 22 2 17.523 2 12S6.477 2 12 2m-1.144 6.155A1.25 1.25 0 0 0 9 9.248v5.504a1.25 1.25 0 0 0 1.856 1.093l5.757-3.189a.75.75 0 0 0 0-1.312z"/>
                         </svg>
-                        <span>#{title_online}</span>
+                        <span>#{lampac_watch}</span>
                     </div>
                 `;
 
                 console.log('Eneyida Plugin: Adding listener for full event');
                 Lampa.Listener.follow('full', function(e) {
-                    if (e.type == 'complite') {
-                        console.log('Eneyida Plugin: Full event triggered, adding button');
+                    console.log('Eneyida Plugin: Full event triggered with type:', e.type);
+                    if (e.type === 'complite') {
+                        console.log('Eneyida Plugin: Adding button to full view');
                         var btn = $(Lampa.Lang.translate(button));
                         btn.on('hover:enter', function() {
                             console.log('Eneyida Plugin: Button clicked, launching component');
@@ -592,6 +620,30 @@
                     }
                 });
 
+                // Альтернативний спосіб додавання кнопки
+                console.log('Eneyida Plugin: Adding button via activity listener');
+                Lampa.Listener.follow('activity', function(e) {
+                    if (e.activity && e.activity.component === 'full') {
+                        console.log('Eneyida Plugin: Activity full detected, adding button');
+                        setTimeout(function() {
+                            var btn = $(Lampa.Lang.translate(button));
+                            btn.on('hover:enter', function() {
+                                console.log('Eneyida Plugin: Button clicked, launching component');
+                                Lampa.Component.add('eneyida', component);
+                                Lampa.Activity.push({
+                                    url: '',
+                                    title: Lampa.Lang.translate('title_online'),
+                                    component: 'eneyida',
+                                    search: e.activity.movie.title,
+                                    movie: e.activity.movie,
+                                    page: 1
+                                });
+                            });
+                            $('.full-start__buttons').append(btn);
+                        }, 1000);
+                    }
+                });
+
                 console.log('Eneyida Plugin: Registering plugin');
                 Lampa.Component.add('eneyida', component);
                 Lampa.Plugin.register('eneyida', plugin);
@@ -600,7 +652,7 @@
                 console.log('Eneyida Plugin: Lampa dependencies not ready, retrying... Attempts left:', attempts);
                 setTimeout(function() {
                     tryRegister(attempts - 1);
-                }, 200); // Збільшено затримку до 200 мс
+                }, 200);
             } else {
                 console.error('Eneyida Plugin: Failed to initialize after maximum attempts. Lampa dependencies:', {
                     Lampa: typeof Lampa !== 'undefined',
@@ -615,7 +667,6 @@
             }
         }
 
-        // Спробувати зареєструвати плагін із максимум 50 спробами
         console.log('Eneyida Plugin: Starting plugin initialization');
         tryRegister(50);
     }
