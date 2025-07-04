@@ -72,7 +72,7 @@
             filter.onSelect = function(type, a, b) {
                 if (type == 'filter') {
                     if (a.reset) {
-                        clarificationSearchDelete();
+                        clarificationSearchAdd('');
                         _this.replaceChoice({
                             season: 0,
                             voice: 0,
@@ -771,7 +771,7 @@
         window.lampac_plugin = true;
         var manifst = {
             type: 'video',
-            version: '1.4.10', // Оновлено версію для відстеження змін
+            version: '1.4.11', // Оновлено версію для відстеження змін
             name: 'Eneyida',
             description: 'Плагін для пошуку та перегляду фільмів і серіалів через Eneyida.tv та UAFlix.net',
             component: 'lampac',
@@ -986,19 +986,27 @@
 
         function addButton(e) {
             if (!e || !e.render || !e.movie || e.render.find('.lampac--button').length) {
-                console.log('Eneyida Plugin: Skipping addButton due to invalid input or existing button', e);
+                console.log('Eneyida Plugin: Skipping addButton', {
+                    renderExists: !!e.render,
+                    movieExists: !!e.movie,
+                    buttonExists: e.render ? !!e.render.find('.lampac--button').length : false
+                });
+                return;
+            }
+            var movie = e.movie || {};
+            movie.id = movie.id || Lampa.Utils.hash(movie.number_of_seasons ? movie.original_name : movie.original_title || movie.title || '');
+            movie.title = movie.title || movie.name || '';
+            movie.original_title = movie.original_title || movie.original_name || movie.title || '';
+            movie.poster_path = movie.poster_path || '';
+            movie.number_of_seasons = movie.number_of_seasons || 0;
+            if (!movie.id || !movie.title) {
+                console.log('Eneyida Plugin: Invalid movie data, skipping addButton', movie);
                 return;
             }
             var btn = $(Lampa.Lang.translate(button));
             btn.on('hover:enter', function() {
                 resetTemplates();
                 Lampa.Component.add('lampac', component);
-                var movie = e.movie || {};
-                movie.id = movie.id || Lampa.Utils.hash(movie.number_of_seasons ? movie.original_name : movie.original_title || movie.title || '');
-                movie.title = movie.title || movie.name || '';
-                movie.original_title = movie.original_title || movie.original_name || movie.title || '';
-                movie.poster_path = movie.poster_path || '';
-                movie.number_of_seasons = movie.number_of_seasons || 0;
                 var id = Lampa.Utils.hash(movie.number_of_seasons ? movie.original_name : movie.original_title);
                 var all = Lampa.Storage.get('clarification_search', '{}');
                 console.log('Eneyida Plugin: Adding button for movie', movie);
@@ -1015,73 +1023,96 @@
                 });
             });
             e.render.append(btn);
-            console.log('Eneyida Plugin: Button added to render', e.render);
+            console.log('Eneyida Plugin: Button added to render', { selector: e.render[0].className });
         }
 
         // Оновлена логіка для слухача подій
-        Lampa.Listener.follow('full', function(e) {
-            if (e.type === 'complite' || e.type === 'ready') {
-                try {
-                    var render = e.object && e.object.activity ? e.object.activity.render().find('.full-start__buttons, .view--online') : null;
-                    var movie = e.data && e.data.movie ? e.data.movie : null;
-                    if (render && movie) {
-                        console.log('Eneyida Plugin: Listener triggered for event', e.type, movie);
-                        addButton({
-                            render: render,
-                            movie: movie
-                        });
-                    } else {
-                        console.log('Eneyida Plugin: Listener skipped, render or movie not available', { render: !!render, movie: !!movie });
-                    }
-                } catch (err) {
-                    console.error('Eneyida Plugin: Error in full listener', err);
-                }
+        function setupListener() {
+            if (!Lampa.Listener) {
+                console.log('Eneyida Plugin: Lampa.Listener not available, retrying...');
+                setTimeout(setupListener, 1000);
+                return;
             }
-        });
+            Lampa.Listener.follow('full', function(e) {
+                if (e.type === 'start' || e.type === 'complite' || e.type === 'ready') {
+                    try {
+                        var render = e.object && e.object.activity ? e.object.activity.render().find('.full-start__buttons, .view--online, .full-start__bottom') : null;
+                        var movie = e.data && e.data.movie ? e.data.movie : (e.object && e.object.card ? e.object.card : null);
+                        if (render && render.length && movie && Object.keys(movie).length) {
+                            console.log('Eneyida Plugin: Listener triggered for event', e.type, { movie: movie, render: render[0].className });
+                            addButton({
+                                render: render,
+                                movie: movie
+                            });
+                        } else {
+                            console.log('Eneyida Plugin: Listener skipped', {
+                                event: e.type,
+                                renderExists: !!render,
+                                renderLength: render ? render.length : 0,
+                                movieExists: !!movie,
+                                movieKeys: movie ? Object.keys(movie) : []
+                            });
+                        }
+                    } catch (err) {
+                        console.error('Eneyida Plugin: Error in full listener', err);
+                    }
+                }
+            });
+        }
 
         // Відкладена ініціалізація кнопки з обмеженням спроб
         function initButton(attempts) {
             attempts = attempts || 0;
-            if (attempts >= 10) {
-                console.error('Eneyida Plugin: Max attempts (10) reached for button initialization');
+            if (attempts >= 20) {
+                console.error('Eneyida Plugin: Max attempts (20) reached for button initialization');
                 return;
             }
             try {
                 if (!Lampa || !Lampa.Activity || typeof Lampa.Activity.active !== 'function') {
-                    console.log('Eneyida Plugin: Lampa or Lampa.Activity.active not ready, retrying... Attempt', attempts + 1);
-                    setTimeout(function() { initButton(attempts + 1); }, 500);
+                    console.log('Eneyida Plugin: Lampa or Lampa.Activity.active not ready, retrying... Attempt', attempts + 1, {
+                        lampaExists: !!Lampa,
+                        activityExists: !!Lampa && !!Lampa.Activity,
+                        activeIsFunction: Lampa && Lampa.Activity && typeof Lampa.Activity.active === 'function'
+                    });
+                    setTimeout(function() { initButton(attempts + 1); }, 1000);
                     return;
                 }
                 var active = Lampa.Activity.active();
-                if (!active) {
-                    console.log('Eneyida Plugin: No active activity, retrying... Attempt', attempts + 1);
-                    setTimeout(function() { initButton(attempts + 1); }, 500);
+                if (!active || !active.activity) {
+                    console.log('Eneyida Plugin: No active activity, retrying... Attempt', attempts + 1, { activeExists: !!active });
+                    setTimeout(function() { initButton(attempts + 1); }, 1000);
                     return;
                 }
                 if (active.component === 'full' && active.activity) {
-                    var render = active.activity.render().find('.full-start__buttons, .view--online');
-                    var movie = active.card || {};
+                    var render = active.activity.render().find('.full-start__buttons, .view--online, .full-start__bottom');
+                    var movie = active.card || (active.data && active.data.movie) || {};
                     if (render && render.length && movie && Object.keys(movie).length) {
-                        console.log('Eneyida Plugin: Initializing button for movie', movie);
+                        console.log('Eneyida Plugin: Initializing button for movie', movie, { render: render[0].className });
                         addButton({
                             render: render,
                             movie: movie
                         });
                     } else {
-                        console.log('Eneyida Plugin: Render or movie not available, retrying... Attempt', attempts + 1, { render: !!render, movie: !!movie });
-                        setTimeout(function() { initButton(attempts + 1); }, 500);
+                        console.log('Eneyida Plugin: Render or movie not available, retrying... Attempt', attempts + 1, {
+                            renderExists: !!render,
+                            renderLength: render ? render.length : 0,
+                            movieExists: !!movie,
+                            movieKeys: movie ? Object.keys(movie) : []
+                        });
+                        setTimeout(function() { initButton(attempts + 1); }, 1000);
                     }
                 } else {
                     console.log('Eneyida Plugin: Not in full component, retrying... Attempt', attempts + 1, { component: active.component });
-                    setTimeout(function() { initButton(attempts + 1); }, 500);
+                    setTimeout(function() { initButton(attempts + 1); }, 1000);
                 }
             } catch (e) {
                 console.error('Eneyida Plugin: Failed to initialize button', e);
-                setTimeout(function() { initButton(attempts + 1); }, 500);
+                setTimeout(function() { initButton(attempts + 1); }, 1000);
             }
         }
 
-        // Запуск ініціалізації кнопки
+        // Запуск ініціалізації
+        setTimeout(setupListener, 100);
         setTimeout(initButton, 100);
 
         // Додавання джерел пошуку
