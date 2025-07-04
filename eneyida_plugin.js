@@ -139,7 +139,6 @@
         // Створення джерел
         this.createSource = function() {
             return new Promise(function(resolve, reject) {
-                // Список джерел для пошуку
                 var default_sources = [
                     { name: 'Eneyida', url: 'https://eneyida.tv/search/', show: true },
                     { name: 'UAFlix', url: 'https://uaflix.net/search/', show: true }
@@ -192,15 +191,18 @@
                 var items = [];
                 var voices = [];
 
-                // Парсинг результатів для Eneyida або UAFlix
-                html.find('.video-item, .movie-card').each(function() {
+                html.find('.movie-item, .video-item, .movie-card, .content-item').each(function() {
                     var item = $(this);
-                    var title = item.find('.title, .movie-title').text().trim();
-                    var url = item.find('a').attr('href');
-                    var quality = item.find('.quality, .resolution').text().trim() || 'HD';
-                    var season = item.attr('data-season') || '';
-                    var episode = item.attr('data-episode') || '';
-                    var voice = item.find('.voice, .audio').text().trim() || '';
+                    var title = item.find('.title, .movie-title, .content-title, h2, h3').first().text().trim();
+                    var url = item.find('a').attr('href') || '';
+                    var quality = item.find('.quality, .resolution, .badge').text().trim() || 'HD';
+                    var season = item.attr('data-season') || item.find('.season').text().trim() || '';
+                    var episode = item.attr('data-episode') || item.find('.episode').text().trim() || '';
+                    var voice = item.find('.voice, .audio, .lang').text().trim() || '';
+
+                    if (!url.startsWith('http')) {
+                        url = sources[balanser].url.split('/search/')[0] + url;
+                    }
 
                     if (url && title) {
                         var data = {
@@ -290,6 +292,38 @@
             }
         };
 
+        // Відображення контенту
+        this.draw = function(items, params) {
+            var _this = this;
+            scroll.clear();
+            items.forEach(function(item) {
+                var html = $(Lampa.Template.get('lampac_prestige_full', {
+                    title: item.title,
+                    time: item.season ? 'Сезон ' + item.season + (item.episode ? ', Епізод ' + item.episode : '') : item.quality,
+                    info: item.season ? item.title : '',
+                    quality: item.quality
+                }));
+                var img = html.find('img')[0];
+                if (img) {
+                    images.push(img);
+                    img.onerror = function() {
+                        img.src = './img/img_broken.svg';
+                    };
+                    img.src = object.movie.poster_path || './img/img_broken.svg';
+                }
+                html.on('hover:enter', function() {
+                    params.onEnter(item, html);
+                });
+                html.on('hover:long', function() {
+                    params.onContextMenu(item, html, {}, function(data) {
+                        Lampa.Player.contextmenu(data);
+                    });
+                });
+                scroll.append(html);
+            });
+            this.loading(false);
+        };
+
         // Отримання URL файлу
         this.getFileUrl = function(file, call) {
             if (file.method == 'play') {
@@ -306,11 +340,14 @@
                     var video_url = html.find('video source, iframe').attr('src') || '';
                     var subtitles = html.find('track[kind="subtitles"]').map(function() {
                         return {
-                            label: $(this).attr('label'),
+                            label: $(this).attr('label') || 'Subtitles',
                             url: $(this).attr('src')
                         };
                     }).get();
-                    var quality = html.find('.quality, .resolution').text().trim() || file.quality;
+                    var quality = html.find('.quality, .resolution, .badge').text().trim() || file.quality;
+                    if (!video_url.startsWith('http')) {
+                        video_url = sources[balanser].url.split('/search/')[0] + video_url;
+                    }
                     call({
                         url: video_url,
                         quality: quality,
@@ -388,7 +425,7 @@
                                                         cell.subtitles = stream_json.subtitles || elem.subtitles;
                                                         _this.orUrlReserve(cell);
                                                         _this.setDefaultQuality(cell);
-                                                        elem.mark();
+                                                        elem.mark && elem.mark();
                                                     } else {
                                                         cell.url = '';
                                                         Lampa.Noty.show(Lampa.Lang.translate('lampac_nolink'));
@@ -414,7 +451,7 @@
                             if (first.url) {
                                 Lampa.Player.play(first);
                                 Lampa.Player.playlist(playlist);
-                                item.mark();
+                                item.mark && item.mark();
                                 _this.updateBalanser(balanser);
                             } else {
                                 Lampa.Noty.show(Lampa.Lang.translate('lampac_nolink'));
@@ -586,7 +623,7 @@
         // Помилка відповіді
         this.doesNotAnswer = function(er) {
             var html = Lampa.Template.get('lampac_does_not_answer', {
-                balanser: balanser
+                balanser: sources[balanser].name
             });
             scroll.clear();
             scroll.append(html);
@@ -666,11 +703,14 @@
                 network.silent(account(spiderUri + encodeURIComponent(params.query)), function(str) {
                     var html = $('<div>' + str + '</div>');
                     var results = [];
-                    html.find('.video-item, .movie-card').each(function() {
+                    html.find('.movie-item, .video-item, .movie-card, .content-item').each(function() {
                         var item = $(this);
-                        var title = item.find('.title, .movie-title').text().trim();
-                        var url = item.find('a').attr('href');
-                        var year = item.find('.year').text().trim() || '0000';
+                        var title = item.find('.title, .movie-title, .content-title, h2, h3').first().text().trim();
+                        var url = item.find('a').attr('href') || '';
+                        var year = item.find('.year, .release-year').text().trim() || '0000';
+                        if (!url.startsWith('http')) {
+                            url = spiderUri.split('/search/')[0] + url;
+                        }
                         if (url && title) {
                             results.push({
                                 title: Lampa.Utils.capitalizeFirstLetter(title),
@@ -703,15 +743,20 @@
             },
             onSelect: function(params, close) {
                 close();
+                var movie = params.element || {};
+                movie.title = movie.title || params.query;
+                movie.original_title = movie.original_title || params.query;
+                movie.id = movie.id || Lampa.Utils.hash(movie.title);
+                movie.poster_path = movie.poster_path || '';
                 Lampa.Activity.push({
-                    url: params.element.url,
-                    title: 'Eneyida - ' + params.element.title,
+                    url: movie.url || '',
+                    title: 'Eneyida - ' + movie.title,
                     component: 'lampac',
-                    movie: params.element,
+                    movie: movie,
                     page: 1,
-                    search: params.element.title,
+                    search: movie.title,
                     clarification: true,
-                    balanser: params.element.balanser,
+                    balanser: movie.balanser,
                     noinfo: true
                 });
             }
@@ -740,14 +785,23 @@
                 Lampa.Component.add('lampac', component);
                 var id = Lampa.Utils.hash(object.number_of_seasons ? object.original_name : object.original_title);
                 var all = Lampa.Storage.get('clarification_search', '{}');
+                var movie = {
+                    id: object.id || id,
+                    title: object.title || object.name,
+                    original_title: object.original_title || object.original_name,
+                    original_name: object.original_name,
+                    release_date: object.release_date || object.first_air_date,
+                    poster_path: object.poster_path || '',
+                    number_of_seasons: object.number_of_seasons || 0
+                };
                 Lampa.Activity.push({
                     url: '',
                     title: Lampa.Lang.translate('title_online'),
                     component: 'lampac',
-                    search: all[id] ? all[id] : object.title,
-                    search_one: object.title,
-                    search_two: object.original_title,
-                    movie: object,
+                    search: all[id] ? all[id] : movie.title,
+                    search_one: movie.title,
+                    search_two: movie.original_title,
+                    movie: movie,
                     page: 1,
                     clarification: all[id] ? true : false
                 });
@@ -776,6 +830,14 @@
                 uk: 'Джерело',
                 en: 'Source'
             },
+            lampac_balanser_dont_work: {
+                uk: 'Джерело не працює',
+                en: 'Source is not working'
+            },
+            lampac_change_balanser: {
+                uk: 'Змінити джерело',
+                en: 'Change source'
+            },
             helper_online_file: {
                 uk: 'Утримуйте клавішу "ОК" для виклику контекстного меню',
                 en: 'Hold the "OK" key to bring up the context menu'
@@ -783,6 +845,10 @@
             title_online: {
                 uk: 'Онлайн',
                 en: 'Online'
+            },
+            title_error: {
+                uk: 'Помилка',
+                en: 'Error'
             },
             lampac_does_not_answer_text: {
                 uk: 'Пошук на ({balanser}) не дав результатів',
@@ -799,6 +865,10 @@
             video_parser_reset: {
                 uk: 'Скинути',
                 en: 'Reset'
+            },
+            cancel: {
+                uk: 'Скасувати',
+                en: 'Cancel'
             }
         });
 
@@ -913,21 +983,27 @@
         resetTemplates();
 
         function addButton(e) {
-            if (e.render.find('.lampac--button').length) return;
+            if (!e.render || e.render.find('.lampac--button').length) return;
             var btn = $(Lampa.Lang.translate(button));
             btn.on('hover:enter', function() {
                 resetTemplates();
                 Lampa.Component.add('lampac', component);
-                var id = Lampa.Utils.hash(e.movie.number_of_seasons ? e.movie.original_name : e.movie.original_title);
+                var movie = e.movie || {};
+                movie.id = movie.id || Lampa.Utils.hash(movie.number_of_seasons ? movie.original_name : movie.original_title);
+                movie.title = movie.title || movie.name || '';
+                movie.original_title = movie.original_title || movie.original_name || '';
+                movie.poster_path = movie.poster_path || '';
+                movie.number_of_seasons = movie.number_of_seasons || 0;
+                var id = Lampa.Utils.hash(movie.number_of_seasons ? movie.original_name : movie.original_title);
                 var all = Lampa.Storage.get('clarification_search', '{}');
                 Lampa.Activity.push({
                     url: '',
                     title: Lampa.Lang.translate('title_online'),
                     component: 'lampac',
-                    search: all[id] ? all[id] : e.movie.title,
-                    search_one: e.movie.title,
-                    search_two: e.movie.original_title,
-                    movie: e.movie,
+                    search: all[id] ? all[id] : movie.title,
+                    search_one: movie.title,
+                    search_two: movie.original_title,
+                    movie: movie,
                     page: 1,
                     clarification: all[id] ? true : false
                 });
@@ -951,7 +1027,9 @@
                     movie: Lampa.Activity.active().card
                 });
             }
-        } catch (e) {}
+        } catch (e) {
+            console.error('Eneyida Plugin: Failed to add button', e);
+        }
 
         // Додавання джерел пошуку
         addSourceSearch('Eneyida', 'https://eneyida.tv/search/');
