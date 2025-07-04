@@ -795,6 +795,7 @@
                     poster_path: object.poster_path || '',
                     number_of_seasons: object.number_of_seasons || 0
                 };
+                console.log('Eneyida Plugin: Pushing activity', movie);
                 Lampa.Activity.push({
                     url: '',
                     title: Lampa.Lang.translate('title_online'),
@@ -990,7 +991,7 @@
                 resetTemplates();
                 Lampa.Component.add('lampac', component);
                 var movie = e.movie || {};
-                movie.id = movie.id || Lampa.Utils.hash(movie.number_of_seasons ? movie.original_name : movie.original_title || movie.title);
+                movie.id = movie.id || Lampa.Utils.hash(movie.number_of_seasons ? movie.original_name : movie.original_title || movie.title || '');
                 movie.title = movie.title || movie.name || '';
                 movie.original_title = movie.original_title || movie.original_name || movie.title || '';
                 movie.poster_path = movie.poster_path || '';
@@ -1017,9 +1018,10 @@
         Lampa.Listener.follow('full', function(e) {
             if (e.type === 'complite' || e.type === 'ready') {
                 try {
-                    var render = e.object && e.object.activity ? e.object.activity.render().find('.view--online') : null;
+                    var render = e.object && e.object.activity ? e.object.activity.render().find('.full-start__buttons') : null;
                     var movie = e.data && e.data.movie ? e.data.movie : null;
                     if (render && movie) {
+                        console.log('Eneyida Plugin: Listener triggered for event', e.type, movie);
                         addButton({
                             render: render,
                             movie: movie
@@ -1031,23 +1033,40 @@
             }
         });
 
-        // Відкладена ініціалізація кнопки
-        function initButton() {
+        // Відкладена ініціалізація кнопки з обмеженням спроб
+        function initButton(attempts) {
+            attempts = attempts || 0;
+            if (attempts >= 5) {
+                console.error('Eneyida Plugin: Max attempts reached for button initialization');
+                return;
+            }
             try {
-                if (Lampa.Activity.active().component === 'full' && Lampa.Activity.active().activity) {
-                    var render = Lampa.Activity.active().activity.render().find('.view--online');
-                    var movie = Lampa.Activity.active().card || {};
+                if (!Lampa.Activity || !Lampa.Activity.active) {
+                    console.log('Eneyida Plugin: Lampa.Activity or active not available, retrying... Attempt', attempts + 1);
+                    setTimeout(function() { initButton(attempts + 1); }, 500);
+                    return;
+                }
+                var active = Lampa.Activity.active();
+                if (active.component === 'full' && active.activity) {
+                    var render = active.activity.render().find('.full-start__buttons');
+                    var movie = active.card || {};
                     if (render && movie) {
+                        console.log('Eneyida Plugin: Initializing button for movie', movie);
                         addButton({
                             render: render,
                             movie: movie
                         });
+                    } else {
+                        console.log('Eneyida Plugin: Render or movie not available, retrying... Attempt', attempts + 1);
+                        setTimeout(function() { initButton(attempts + 1); }, 500);
                     }
+                } else {
+                    console.log('Eneyida Plugin: Not in full component, retrying... Attempt', attempts + 1);
+                    setTimeout(function() { initButton(attempts + 1); }, 500);
                 }
             } catch (e) {
                 console.error('Eneyida Plugin: Failed to initialize button', e);
-                // Спробувати ще раз через 1 секунду
-                setTimeout(initButton, 1000);
+                setTimeout(function() { initButton(attempts + 1); }, 500);
             }
         }
 
