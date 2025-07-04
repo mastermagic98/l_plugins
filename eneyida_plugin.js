@@ -16,6 +16,9 @@
     // Налаштування мережі
     var Network = Lampa.Reguest;
 
+    // Змінна для відстеження реєстрації компонента
+    var componentRegistered = false;
+
     // Основний компонент плагіну
     function component(object) {
         var network = new Network();
@@ -329,7 +332,7 @@
             if (filter_items.season && filter_items.season.length) add('season', Lampa.Lang.translate('video_serial_season'));
             filter.set('filter', select);
             filter.set('sort', filter_sources.map(function(e) {
-                return { title: sources[e].name, source: e, selected: e == balanser };
+                return { title: sources[e].name, source: e, selected: e == balanser });
             }));
         };
 
@@ -375,7 +378,7 @@
         window.lampac_plugin = true;
         var manifst = {
             type: 'video',
-            version: '1.4.14', // Оновлено версію
+            version: '1.4.15', // Оновлено версію
             name: 'Eneyida',
             description: 'Плагін для пошуку та перегляду фільмів і серіалів',
             component: 'lampac'
@@ -472,8 +475,10 @@
             </div>`;
 
         // Реєстрація компонента один раз
-        if (!Lampa.Component.exists('lampac')) {
+        if (!componentRegistered) {
             Lampa.Component.add('lampac', component);
+            componentRegistered = true;
+            console.log('Eneyida Plugin: Component lampac registered');
         }
         resetTemplates();
 
@@ -485,7 +490,7 @@
                     movieExists: !!movie,
                     buttonExists: render ? !!render.find('.lampac--button').length : false
                 });
-                return;
+                return false;
             }
             movie.id = movie.id || Lampa.Utils.hash(movie.number_of_seasons ? movie.original_name : movie.original_title || movie.title || '');
             movie.title = movie.title || movie.name || '';
@@ -494,14 +499,11 @@
             movie.number_of_seasons = movie.number_of_seasons || 0;
             if (!movie.id || !movie.title) {
                 console.log('Eneyida Plugin: Invalid movie data', movie);
-                return;
+                return false;
             }
             var btn = $(Lampa.Lang.translate(button));
             btn.on('hover:enter', function() {
                 resetTemplates();
-                if (!Lampa.Component.exists('lampac')) {
-                    Lampa.Component.add('lampac', component);
-                }
                 console.log('Eneyida Plugin: Button clicked, pushing activity', movie);
                 try {
                     Lampa.Activity.push({
@@ -516,8 +518,11 @@
                     Lampa.Noty.show(Lampa.Lang.translate('title_error'));
                 }
             });
-            render.append(btn);
-            console.log('Eneyida Plugin: Button added', { selector: render[0] ? render[0].className : 'none', buttonCount: render.find('.lampac--button').length });
+            render.eq(0).append(btn); // Додаємо лише в перший елемент
+            console.log('Eneyida Plugin: Button added', {
+                selector: render[0] ? render[0].className : 'none',
+                buttonCount: render.find('.lampac--button').length
+            });
             return true;
         }
 
@@ -546,7 +551,10 @@
         var startTime = Date.now();
         var initInterval = setInterval(function() {
             if (buttonAdded || Date.now() - startTime > 30000) {
-                console.log('Eneyida Plugin: Stopping initInterval', { buttonAdded: buttonAdded, timeElapsed: Date.now() - startTime });
+                console.log('Eneyida Plugin: Stopping initInterval', {
+                    buttonAdded: buttonAdded,
+                    timeElapsed: Date.now() - startTime
+                });
                 clearInterval(initInterval);
                 if (!buttonAdded) logParentSelectors();
                 return;
@@ -562,10 +570,13 @@
                 }
                 var active = Lampa.Activity.active();
                 if (!active || !active.activity || active.component !== 'full') {
-                    console.log('Eneyida Plugin: No active full activity', { active: !!active, component: active ? active.component : 'none' });
+                    console.log('Eneyida Plugin: No active full activity', {
+                        active: !!active,
+                        component: active ? active.component : 'none'
+                    });
                     return;
                 }
-                var render = active.activity.render().find('.selector, .full-start__buttons');
+                var render = active.activity.render().find('.full-start__buttons');
                 var movie = active.card || (active.data && active.data.movie) || {};
                 if (render && render.length && movie && Object.keys(movie).length) {
                     console.log('Eneyida Plugin: Attempting to add button', {
@@ -605,7 +616,7 @@
                     }
                     try {
                         var render = e.object && e.object.activity ?
-                            e.object.activity.render().find('.selector, .full-start__buttons') :
+                            e.object.activity.render().find('.full-start__buttons') :
                             null;
                         var movie = e.data && e.data.movie ? e.data.movie : (e.object && e.object.card ? e.object.card : null);
                         if (render && render.length && movie && Object.keys(movie).length) {
