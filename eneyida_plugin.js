@@ -1,826 +1,954 @@
 (function() {
-  'use strict';
+    'use strict';
 
-  var proxy_url = 'http://cors.cfhttp.top/';
-  var main_url = proxy_url + 'https://eneyida.tv';
-  var modalopen = false;
-
-  function EneyidaAPI(component, _object) {
-    var network = new Lampa.Reguest();
-    var object = _object;
-    var extract = {};
-
-    function normalizeString(str) {
-      return str ? str.toLowerCase().replace(/[^a-zа-я0-9]/g, '') : '';
-    }
-
-    this.searchByTitle = function(_object, query) {
-      var _this = this;
-      object = _object;
-      var year = parseInt((object.movie.release_date || object.movie.first_air_date || '0000').slice(0, 4));
-      var orig = object.movie.original_name || object.movie.original_title || object.movie.title || object.movie.name;
-      var url = main_url;
-      url = Lampa.Utils.addUrlComponent(url, 'do=search&subaction=search&story=' + encodeURIComponent(query.replace(' ', '+')));
-
-      console.log('Skaz', 'Search query:', query, 'Year:', year, 'Original title:', orig, 'URL:', url);
-      Lampa.Noty.show('Пошук: ' + query + ' (рік: ' + year + ', оригінальна назва: ' + orig + ', URL: ' + url + ')');
-      network.clear();
-      network.timeout(10000);
-      network.silent(url, function(html) {
-        if (!html || typeof html !== 'string') {
-          Lampa.Noty.show('Порожня або невалідна відповідь від сервера для пошуку: ' + url);
-          console.log('Skaz', 'Raw response:', html);
-          component.doesNotAnswer();
-          return;
-        }
-
-        try {
-          // Спрощуємо очищення HTML
-          html = html.replace(/<!DOCTYPE[^>]*>/gi, '')
-                     .replace(/<!--[\s\S]*?-->/g, '')
-                     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
-          console.log('Skaz', 'Cleaned HTML:', html.substring(0, 500) + '...');
-          var doc = new DOMParser().parseFromString(html, 'text/html');
-          if (!doc || !doc.documentElement || !doc.querySelectorAll) {
-            throw new Error('DOMParser повернув невалідний документ');
-          }
-          var cards = Array.from(doc.querySelectorAll('div.short_in')).map(function(item) {
-            var title = item.querySelector('a.short_title')?.textContent?.trim() || 'Без назви';
-            var href = item.querySelector('a.short_title')?.getAttribute('href') || '';
-            var poster = 'https://eneyida.tv' + (item.querySelector('a.short_img img')?.getAttribute('data-src') || '');
-            var subtitle = item.querySelector('div.short_subtitle')?.textContent?.trim() || '';
-            var yearText = subtitle.match(/\d{4}/)?.[0] || '';
-            var originalTitle = subtitle.split('•')[1]?.trim() || title;
-            var itemYear = yearText ? parseInt(yearText) : 0;
-            return { title: title, href: href, year: itemYear, original_title: originalTitle, poster: poster, text: title };
-          });
-
-          console.log('Skaz', 'Parsed cards:', JSON.stringify(cards));
-          Lampa.Noty.show('Знайдено ' + cards.length + ' результатів: ' + (cards[0]?.title || 'немає'));
-          if (cards.length === 0) {
-            Lampa.Noty.show('Результати пошуку відсутні');
-            component.doesNotAnswer();
-            return;
-          }
-
-          var card = cards.find(function(c) {
-            return c.year >= year - 2 && c.year <= year + 2 && 
-                   (normalizeString(c.original_title) == normalizeString(orig) || normalizeString(c.title) == normalizeString(orig));
-          }) || (cards.length == 1 ? cards[0] : null);
-
-          if (card) {
-            Lampa.Noty.show('Точний збіг: ' + card.title + ' (' + card.original_title + ', ' + card.year + '), URL: ' + card.href);
-            _this.find(card.href, card.title);
-          } else {
-            Lampa.Noty.show('Відображаємо схожі результати');
-            component.similars(cards);
-            component.loading(false);
-          }
-        } catch (e) {
-          Lampa.Noty.show('Помилка парсингу HTML пошуку: ' + e.message + ' (HTML: ' + html.substring(0, 500) + '...)');
-          console.log('Skaz', 'Parsing error:', e.message, 'HTML:', html.substring(0, 500));
-          component.doesNotAnswer();
-        }
-      }, function(a, c) {
-        Lampa.Noty.show('Помилка запиту пошуку: ' + a.status + ' (' + url + ')');
-        console.log('Skaz', 'Request error:', a.status, a.statusText);
-        component.doesNotAnswer();
-      });
+    // Налаштування API та проксі
+    var Defined = {
+        apn: 'http://apn.cfhttp.top/' // Проксі для запитів
     };
 
-    this.find = function(url, title) {
-      if (!url) {
-        Lampa.Noty.show('Помилка: URL сторінки контенту відсутній');
-        component.doesNotAnswer();
-        return;
-      }
-
-      var full_url = url.startsWith('http') ? proxy_url + url : proxy_url + 'https://eneyida.tv' + (url.startsWith('/') ? url : '/' + url);
-      Lampa.Noty.show('Завантаження сторінки контенту: ' + full_url);
-      console.log('Skaz', 'Content page URL:', full_url);
-      network.clear();
-      network.timeout(10000);
-      network.silent(full_url, function(html) {
-        if (!html || typeof html !== 'string') {
-          Lampa.Noty.show('Порожня відповідь від сторінки контенту: ' + full_url);
-          console.log('Skaz', 'Content page response:', html);
-          component.doesNotAnswer();
-          return;
-        }
-
-        try {
-          html = html.replace(/<!DOCTYPE[^>]*>/gi, '')
-                     .replace(/<!--[\s\S]*?-->/g, '')
-                     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
-          console.log('Skaz', 'Content page HTML:', html.substring(0, 500) + '...');
-          var doc = new DOMParser().parseFromString(html, 'text/html');
-          if (!doc || !doc.documentElement || !doc.querySelectorAll) {
-            throw new Error('DOMParser повернув невалідний документ');
-          }
-          var full_info = doc.querySelectorAll('.full_info li');
-          var player_url = doc.querySelector('.tabs_b.visible iframe')?.getAttribute('src') || '';
-          var tags = Array.from(full_info[1]?.querySelectorAll('a') || []).map(a => a.textContent);
-          var is_series = tags.includes('серіал') || tags.includes('мультсеріал') || !player_url.includes('/vod/');
-
-          if (!player_url) {
-            Lampa.Noty.show('Фрейм плеєра не знайдено на сторінці: ' + full_url);
-            console.log('Skaz', 'Player iframe not found');
-            component.doesNotAnswer();
-            return;
-          }
-
-          Lampa.Noty.show('Знайдено плеєр: ' + player_url);
-          console.log('Skaz', 'Player URL:', player_url);
-          if (is_series) {
-            extractSeries(player_url, title);
-          } else {
-            extractMovie(player_url, title);
-          }
-          append(filtred());
-          component.loading(false);
-        } catch (e) {
-          Lampa.Noty.show('Помилка парсингу сторінки контенту: ' + e.message + ' (HTML: ' + html.substring(0, 500) + '...)');
-          console.log('Skaz', 'Content parsing error:', e.message, 'HTML:', html.substring(0, 500));
-          component.doesNotAnswer();
-        }
-      }, function(a, c) {
-        Lampa.Noty.show('Помилка завантаження сторінки контенту: ' + a.status + ' (' + full_url + ')');
-        console.log('Skaz', 'Content request error:', a.status, a.statusText);
-        component.doesNotAnswer();
-      });
-    };
-
-    function extractSeries(player_url, title) {
-      var full_player_url = player_url.startsWith('http') ? proxy_url + player_url : proxy_url + player_url;
-      Lampa.Noty.show('Завантаження плеєра: ' + full_player_url);
-      console.log('Skaz', 'Player request URL:', full_player_url);
-      network.silent(full_player_url, function(html) {
-        if (!html || typeof html !== 'string') {
-          Lampa.Noty.show('Порожня відповідь від плеєра');
-          console.log('Skaz', 'Player response:', html);
-          component.doesNotAnswer();
-          return;
-        }
-
-        try {
-          html = html.replace(/<!DOCTYPE[^>]*>/gi, '')
-                     .replace(/<!--[\s\S]*?-->/g, '')
-                     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
-          console.log('Skaz', 'Player HTML:', html.substring(0, 500) + '...');
-          var doc = new DOMParser().parseFromString(html, 'text/html');
-          if (!doc || !doc.documentElement || !doc.querySelectorAll) {
-            throw new Error('DOMParser повернув невалідний документ');
-          }
-          var player_script = Array.from(doc.querySelectorAll('script')).find(s => s.textContent.includes('file:'))?.textContent || '';
-          var player_json = player_script.match(/file: *['"](.+?)['"]/);
-          if (!player_json) {
-            Lampa.Noty.show('JSON плеєра не знайдено');
-            console.log('Skaz', 'Player script:', player_script.substring(0, 500));
-            component.doesNotAnswer();
-            return;
-          }
-
-          var json = JSON.parse(player_json[1]);
-          var transl_id = 1;
-          extract = {};
-
-          json.forEach(function(season, season_index) {
-            var seas_num = parseInt(season.title.replace(' сезон', '')) || season_index + 1;
-            season.folder.forEach(function(episode) {
-              episode.folder.forEach(function(dub) {
-                var ep_num = parseInt(episode.title.replace(' серія', '')) || 1;
-                extract[seas_num + '_' + ep_num] = {
-                  file: dub.file,
-                  episode: ep_num,
-                  season: seas_num,
-                  quality: dub.file.includes('1080') ? 1080 : 720,
-                  translation: title,
-                  subtitle: dub.subtitle || ''
-                };
-              });
-            });
-          });
-          Lampa.Noty.show('Оброблено серіал: ' + Object.keys(extract).length + ' епізодів');
-          console.log('Skaz', 'Extracted series:', JSON.stringify(extract));
-        } catch (e) {
-          Lampa.Noty.show('Помилка парсингу JSON: ' + e.message + ' (скрипт: ' + player_script.substring(0, 500) + '...)');
-          console.log('Skaz', 'Series parsing error:', e.message, 'Script:', player_script.substring(0, 500));
-          component.doesNotAnswer();
-        }
-      }, function(a, c) {
-        Lampa.Noty.show('Помилка завантаження плеєра: ' + a.status + ' (' + full_player_url + ')');
-        console.log('Skaz', 'Player request error:', a.status, a.statusText);
-        component.doesNotAnswer();
-      });
+    // Унікальний ідентифікатор користувача
+    var unic_id = Lampa.Storage.get('lampac_unic_id', '');
+    if (!unic_id) {
+        unic_id = Lampa.Utils.uid(8).toLowerCase();
+        Lampa.Storage.set('lampac_unic_id', unic_id);
     }
 
-    function extractMovie(player_url, title) {
-      var full_player_url = player_url.startsWith('http') ? proxy_url + player_url : proxy_url + player_url;
-      Lampa.Noty.show('Завантаження плеєра: ' + full_player_url);
-      console.log('Skaz', 'Player request URL:', full_player_url);
-      network.silent(full_player_url, function(html) {
-        if (!html || typeof html !== 'string') {
-          Lampa.Noty.show('Порожня відповідь від плеєра');
-          console.log('Skaz', 'Player response:', html);
-          component.doesNotAnswer();
-          return;
-        }
+    // Налаштування мережі
+    var Network = Lampa.Reguest;
 
-        try {
-          html = html.replace(/<!DOCTYPE[^>]*>/gi, '')
-                     .replace(/<!--[\s\S]*?-->/g, '')
-                     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
-          console.log('Skaz', 'Player HTML:', html.substring(0, 500) + '...');
-          var doc = new DOMParser().parseFromString(html, 'text/html');
-          if (!doc || !doc.documentElement || !doc.querySelectorAll) {
-            throw new Error('DOMParser повернув невалідний документ');
-          }
-          var player_script = Array.from(doc.querySelectorAll('script')).find(s => s.textContent.includes('file:'))?.textContent || '';
-          var file_url = player_script.match(/file: *["'](.+?\.m3u8)["']/i)?.[1] || '';
-          var subtitle = player_script.match(/subtitle: *["'](.+?)["']/i)?.[1] || '';
-          var quality = file_url.includes('1080') ? 1080 : 720;
-          var qualities = file_url ? [quality] : [];
-          var transl_id = 1;
-
-          if (!file_url) {
-            Lampa.Noty.show('Посилання на .m3u8 не знайдено в скрипті плеєра');
-            console.log('Skaz', 'Player script:', player_script.substring(0, 500));
-            component.doesNotAnswer();
-            return;
-          }
-
-          extract[transl_id] = {
-            file: file_url,
-            translation: title,
-            quality: quality,
-            qualities: qualities,
-            subtitle: subtitle
-          };
-          Lampa.Noty.show('Фільм оброблено: ' + (file_url ? 'посилання .m3u8 знайдено: ' + file_url : 'посилання відсутнє'));
-          console.log('Skaz', 'Extracted movie:', JSON.stringify(extract));
-        } catch (e) {
-          Lampa.Noty.show('Помилка парсингу даних фільму: ' + e.message + ' (скрипт: ' + player_script.substring(0, 500) + '...)');
-          console.log('Skaz', 'Movie parsing error:', e.message, 'Script:', player_script.substring(0, 500));
-          component.doesNotAnswer();
-        }
-      }, function(a, c) {
-        Lampa.Noty.show('Помилка завантаження даних фільму: ' + a.status + ' (' + full_player_url + ')');
-        console.log('Skaz', 'Player request error:', a.status, a.statusText);
-        component.doesNotAnswer();
-      });
-    }
-
-    function getFile(element, max_quality) {
-      var translat = extract[element.translation] || extract[element.season + '_' + element.episode];
-      var file = translat.file || '';
-      var subtitle = translat.subtitle || '';
-      var quality = {};
-
-      if (file) {
-        var link = file;
-        quality[translat.quality + 'p'] = file;
-      }
-
-      return { file: file, quality: quality, subtitle: subtitle };
-    }
-
-    function filtred() {
-      var filtred = [];
-
-      for (var transl_id in extract) {
-        var element = extract[transl_id];
-        if (element.season && element.episode) {
-          filtred.push({
-            episode: element.episode,
-            season: element.season,
-            title: 'Епізод ' + element.episode,
-            quality: element.quality + 'p',
-            translation: transl_id,
-            voice_name: element.translation,
-            subtitle: element.subtitle
-          });
-        } else {
-          filtred.push({
-            title: element.translation,
-            quality: element.quality + 'p',
-            translation: transl_id,
-            voice_name: element.translation,
-            subtitle: element.subtitle
-          });
-        }
-      }
-
-      return filtred;
-    }
-
-    function append(items) {
-      component.reset();
-      if (!items.length) {
-        Lampa.Noty.show('Немає елементів для відображення');
-        component.doesNotAnswer();
-        return;
-      }
-
-      component.draw(items, {
-        onEnter: function(item, html) {
-          var extra = getFile(item, item.quality);
-          if (extra.file) {
-            var playlist = [toPlayElement(item)];
-            Lampa.Player.play(playlist[0]);
-            Lampa.Player.playlist(playlist);
-            Lampa.Noty.show('Відтворення: ' + item.title);
-          } else {
-            Lampa.Noty.show(Lampa.Lang.translate('lampac_nolink'));
-          }
-        },
-        onContextMenu: function(item, html, data, call) {
-          call(getFile(item, item.quality));
-        }
-      });
-    }
-
-    function toPlayElement(element) {
-      var extra = getFile(element, element.quality);
-      var subtitle = extra.subtitle ? {
-        name: extra.subtitle.substringAfterLast('[').substringBefore(']') || 'Default',
-        url: extra.subtitle.substringAfter(']') || ''
-      } : null;
-      return {
-        title: element.title,
-        url: extra.file.replace('https://', 'http://'),
-        quality: extra.quality,
-        subtitle: subtitle,
-        headers: { Referer: 'https://eneyida.tv/' }
-      };
-    }
-
-    this.reset = function() {
-      component.reset();
-      extract = {};
-      append(filtred());
-    };
-
-    this.destroy = function() {
-      network.clear();
-      extract = null;
-    };
-  }
-
-  function component(object) {
-    var network = new Lampa.Reguest();
-    var scroll = new Lampa.Scroll({ mask: true, over: true });
-    var files = new Lampa.Explorer(object);
-    var filter = new Lampa.Filter(object);
-    var source = new EneyidaAPI(this, object);
-    var balanser = 'eneyida';
-    var initialized = false;
-
-    this.initialize = function() {
-      initialized = true;
-      files.appendFiles(scroll.render());
-      files.appendHead(filter.render());
-      scroll.body().addClass('torrent-list');
-      scroll.minus(files.render().find('.explorer__files-head'));
-      scroll.body().append(Lampa.Template.get('lampac_content_loading'));
-      this.search();
-    };
-
-    this.search = function() {
-      this.activity.loader(true);
-      var query = object.search || object.movie.title || object.movie.name || object.movie.original_title || object.movie.original_name || '';
-      if (!query) {
-        Lampa.Noty.show('Помилка: Назва для пошуку відсутня');
-        this.doesNotAnswer();
-        return;
-      }
-      source.searchByTitle(object, query);
-    };
-
-    this.similars = function(json) {
-      if (!json || !json.length) {
-        Lampa.Noty.show('Немає результатів для відображення');
-        console.log('Skaz', 'Similars: No results');
-        this.doesNotAnswer();
-        return;
-      }
-
-      scroll.clear();
-      json.forEach(function(elem) {
-        if (!elem.href || !elem.title) {
-          Lampa.Noty.show('Помилка: відсутній href або title для ' + JSON.stringify(elem));
-          console.log('Skaz', 'Invalid similar item:', JSON.stringify(elem));
-          return;
-        }
-        var item = Lampa.Template.get('lampac_prestige_folder', {
-          title: elem.title || 'Без назви',
-          info: elem.year ? elem.year : '',
-          time: ''
+    // Основний компонент плагіну
+    function component(object) {
+        var network = new Network();
+        var scroll = new Lampa.Scroll({
+            mask: true,
+            over: true
         });
-        if (elem.poster) {
-          item.find('.online-prestige__folder').replaceWith('<div class="online-prestige__img"><img src="' + elem.poster + '" alt="' + elem.title + '"></div>');
-          var img = item.find('img')[0];
-          img.onerror = function() { img.src = './img/img_broken.svg'; };
-          img.onload = function() { item.find('.online-prestige__img').addClass('online-prestige__img--loaded'); };
-        }
-        item.on('hover:enter', function() {
-          this.reset();
-          Lampa.Noty.show('Обрано: ' + elem.title + ', перехід до ' + elem.href);
-          console.log('Skaz', 'Selected similar:', elem.title, 'URL:', elem.href);
-          source.find(elem.href, elem.title);
-        }.bind(this)).on('hover:focus', function(e) {
-          scroll.update($(e.target), true);
-        });
-        scroll.append(item);
-      }.bind(this));
-      Lampa.Noty.show('Відображено ' + json.length + ' результатів');
-      console.log('Skaz', 'Similars displayed:', json.length);
-      Lampa.Controller.enable('content');
-    };
-
-    this.reset = function() {
-      scroll.clear();
-      scroll.body().append(Lampa.Template.get('lampac_content_loading'));
-    };
-
-    this.loading = function(status) {
-      this.activity.loader(status);
-      if (!status) this.activity.toggle();
-    };
-
-    this.append = source.append;
-
-    this.doesNotAnswer = function() {
-      this.reset();
-      var html = Lampa.Template.get('lampac_does_not_answer', { balanser: balanser });
-      html.find('.online-empty__title').text(Lampa.Lang.translate('lampac_balanser_dont_work').replace('{balanser}', 'Eneyida'));
-      scroll.append(html);
-      this.loading(false);
-    };
-
-    this.draw = function(items, params) {
-      var _this = this;
-      scroll.clear();
-      scroll.append(Lampa.Template.get('lampac_prestige_watched', {}));
-
-      items.forEach(function(element, index) {
-        var serial = object.movie.name ? true : false;
-        var episode_num = element.episode || index + 1;
-        var voice_name = element.voice_name || element.title || 'Невідомо';
-        if (element.quality) {
-          element.qualitys = element.quality;
-          element.quality = Lampa.Arrays.getKeys(element.quality)[0];
-        }
-        Lampa.Arrays.extend(element, {
-          voice_name: voice_name,
-          info: voice_name.length > 60 ? voice_name.substr(0, 60) + '...' : voice_name,
-          quality: '',
-          time: Lampa.Utils.secondsToTime((object.movie.runtime || 0) * 60, true)
-        });
-
-        var hash_timeline = Lampa.Utils.hash(element.season ? [element.season, element.episode, object.movie.original_title].join('') : object.movie.original_title);
-        var hash_behold = Lampa.Utils.hash(element.season ? [element.season, element.episode, object.movie.original_title, element.voice_name].join('') : object.movie.original_title + element.voice_name);
-        element.timeline = Lampa.Timeline.view(hash_timeline);
-
-        var html = Lampa.Template.get('lampac_prestige_full', element);
-        var loader = html.find('.online-prestige__loader');
-        var image = html.find('.online-prestige__img');
-
-        if (serial) {
-          image.append('<div class="online-prestige__number">' + ('0' + episode_num).slice(-2) + '</div>');
-          loader.remove();
-        } else {
-          var img = html.find('img')[0];
-          img.onerror = function() { img.src = './img/img_broken.svg'; };
-          img.onload = function() { image.addClass('online-prestige__img--loaded'); loader.remove(); };
-          img.src = Lampa.TMDB.image('t/p/w300' + (object.movie.backdrop_path || ''));
-        }
-
-        html.find('.online-prestige__timeline').append(Lampa.Timeline.render(element.timeline));
-        html.on('hover:enter', function() {
-          if (object.movie.id) Lampa.Favorite.add('history', object.movie, 100);
-          if (params.onEnter) params.onEnter(element, html);
-        }).on('hover:focus', function(e) {
-          scroll.update($(e.target), true);
-        });
-
-        _this.contextMenu({
-          html: html,
-          element: element,
-          onFile: params.onContextMenu,
-          onClearAllMark: function() {},
-          onClearAllTime: function() {}
-        });
-
-        scroll.append(html);
-      });
-
-      Lampa.Controller.enable('content');
-    };
-
-    this.contextMenu = function(params) {
-      params.html.on('hover:long', function() {
-        var enabled = Lampa.Controller.enabled().name;
-        var menu = [
-          { title: Lampa.Lang.translate('lampac_video'), separator: true },
-          { title: Lampa.Lang.translate('copy_link'), copylink: true }
-        ];
-        Lampa.Select.show({
-          title: Lampa.Lang.translate('title_action'),
-          items: menu,
-          onBack: function() { Lampa.Controller.toggle(enabled); },
-          onSelect: function(a) {
-            Lampa.Controller.toggle(enabled);
-            if (a.copylink && params.onFile) {
-              params.onFile(function(data) {
-                Lampa.Utils.copyTextToClipboard(data.file, function() {
-                  Lampa.Noty.show(Lampa.Lang.translate('copy_secuses'));
-                }, function() {
-                  Lampa.Noty.show(Lampa.Lang.translate('copy_error'));
-                });
-              });
-            }
-          }
-        });
-      });
-    };
-
-    this.start = function() {
-      if (Lampa.Activity.active().activity !== this.activity) return;
-      if (!initialized) this.initialize();
-      Lampa.Background.immediately(Lampa.Utils.cardImgBackgroundBlur(object.movie));
-      Lampa.Controller.add('content', {
-        toggle: function() {
-          Lampa.Controller.collectionSet(scroll.render(), files.render());
-        },
-        up: function() {
-          Navigator.move('up');
-        },
-        down: function() {
-          Navigator.move('down');
-        },
-        right: function() {
-          filter.show(Lampa.Lang.translate('title_filter'), 'filter');
-        },
-        left: function() {
-          Lampa.Controller.toggle('menu');
-        }
-      });
-      Lampa.Controller.toggle('content');
-    };
-
-    this.render = function() {
-      return files.render();
-    };
-
-    this.destroy = function() {
-      network.clear();
-      files.destroy();
-      scroll.destroy();
-      if (modalopen) {
-        modalopen = false;
-        Lampa.Modal.close();
-      }
-    };
-  }
-
-  function startPlugin() {
-    window.online_eneyida = true;
-    var manifest = {
-      type: 'video',
-      version: '1.0.17',
-      name: 'Онлайн - Eneyida',
-      description: 'Плагін для пошуку фільмів і серіалів на Eneyida.tv',
-      component: 'online_eneyida',
-      onContextMenu: function(object) {
-        return {
-          name: Lampa.Lang.translate('lampac_watch'),
-          description: ''
+        var files = new Lampa.Explorer(object);
+        var filter = new Lampa.Filter(object);
+        var sources = {};
+        var last;
+        var source;
+        var balanser;
+        var initialized;
+        var images = [];
+        var filter_sources = {};
+        var filter_translate = {
+            season: Lampa.Lang.translate('torrent_serial_season'),
+            voice: Lampa.Lang.translate('torrent_parser_voice'),
+            source: Lampa.Lang.translate('settings_rest_source')
         };
-      },
-      onContextLauch: function(object) {
-        resetTemplates();
-        Lampa.Component.add('online_eneyida', component);
-        try {
-          var movie = object.movie || {};
-          if (!movie.title && !movie.name && !movie.original_title && !movie.original_name) {
-            console.log('Skaz', 'Invalid movie object:', JSON.stringify(movie));
-            Lampa.Noty.show('Помилка: Недостатньо даних у об’єкті movie');
-            return;
-          }
-          var search = movie.title || movie.name || movie.original_title || movie.original_name || '';
-          var id = Lampa.Utils.hash(movie.number_of_seasons ? movie.original_name : movie.original_title);
-          var all = Lampa.Storage.get('clarification_search', '{}');
-          console.log('Skaz', 'object.movie:', JSON.stringify(object.movie));
-          console.log('Skaz', 'Activity params:', JSON.stringify({
-            url: '',
-            title: Lampa.Lang.translate('title_online'),
-            component: 'online_eneyida',
-            search: all[id] ? all[id] : search,
-            search_one: search,
-            search_two: movie.original_title || movie.original_name,
-            movie: movie,
-            page: 1,
-            clarification: all[id] ? true : false,
-            source: 'eneyida'
-          }));
-          Lampa.Activity.push({
-            url: '',
-            title: Lampa.Lang.translate('title_online'),
-            component: 'online_eneyida',
-            search: all[id] ? all[id] : search,
-            search_one: search,
-            search_two: movie.original_title || movie.original_name,
-            movie: movie,
-            page: 1,
-            clarification: all[id] ? true : false,
-            source: 'eneyida'
-          });
-          Lampa.Noty.show('Активність запущено: ' + search);
-        } catch (err) {
-          Lampa.Noty.show('Помилка запуску активності: ' + err.message);
-          console.log('Skaz', 'Activity error:', err.message);
+        var filter_find = {
+            season: [],
+            voice: []
+        };
+
+        // Додавання параметрів до URL
+        function account(url) {
+            url = url + '';
+            if (url.indexOf('uid=') == -1) {
+                var uid = Lampa.Storage.get('lampac_unic_id', '');
+                if (uid) url = Lampa.Utils.addUrlComponent(url, 'uid=' + encodeURIComponent(uid));
+            }
+            return url;
         }
-      }
-    };
 
-    Lampa.Manifest.plugins = manifest;
-    Lampa.Lang.add({
-      lampac_watch: {
-        uk: 'Дивитися онлайн',
-        en: 'Watch online'
-      },
-      lampac_nolink: {
-        uk: 'Неможливо отримати посилання',
-        en: 'Failed to fetch link'
-      },
-      title_online: {
-        uk: 'Онлайн',
-        en: 'Online'
-      },
-      lampac_balanser_dont_work: {
-        uk: 'Пошук на ({balanser}) не дав результатів',
-        en: 'Search on ({balanser}) did not return any results'
-      },
-      copy_secuses: {
-        uk: 'Посилання скопійовано',
-        en: 'Link copied'
-      },
-      copy_error: {
-        uk: 'Помилка копіювання посилання',
-        en: 'Error copying link'
-      }
-    });
+        // Ініціалізація компонента
+        this.initialize = function() {
+            var _this = this;
+            this.loading(true);
+            filter.onSearch = function(value) {
+                clarificationSearchAdd(value);
+                Lampa.Activity.replace({
+                    search: value,
+                    clarification: true,
+                    similar: true
+                });
+            };
+            filter.onBack = function() {
+                _this.start();
+            };
+            filter.render().find('.selector').on('hover:enter', function() {});
+            filter.render().find('.filter--search').appendTo(filter.render().find('.torrent-filter'));
+            filter.onSelect = function(type, a, b) {
+                if (type == 'filter') {
+                    if (a.reset) {
+                        clarificationSearchDelete();
+                        _this.replaceChoice({
+                            season: 0,
+                            voice: 0,
+                            voice_url: '',
+                            voice_name: ''
+                        });
+                        setTimeout(function() {
+                            Lampa.Select.close();
+                            Lampa.Activity.replace({
+                                clarification: 0,
+                                similar: 0
+                            });
+                        }, 10);
+                    } else {
+                        var url = filter_find[a.stype][b.index].url;
+                        var choice = _this.getChoice();
+                        if (a.stype == 'voice') {
+                            choice.voice_name = filter_find.voice[b.index].title;
+                            choice.voice_url = url;
+                        }
+                        choice[a.stype] = b.index;
+                        _this.saveChoice(choice);
+                        _this.reset();
+                        _this.request(url);
+                        setTimeout(Lampa.Select.close, 10);
+                    }
+                } else if (type == 'sort') {
+                    Lampa.Select.close();
+                    object.lampac_custom_select = a.source;
+                    _this.changeBalanser(a.source);
+                }
+            };
+            if (filter.addButtonBack) filter.addButtonBack();
+            filter.render().find('.filter--sort span').text(Lampa.Lang.translate('lampac_balanser'));
+            scroll.body().addClass('torrent-list');
+            files.appendFiles(scroll.render());
+            files.appendHead(filter.render());
+            scroll.minus(files.render().find('.explorer__files-head'));
+            scroll.body().append(Lampa.Template.get('lampac_content_loading'));
+            Lampa.Controller.enable('content');
+            this.loading(false);
+            this.createSource().then(function(json) {
+                _this.search();
+            })["catch"](function(e) {
+                _this.noConnectToServer(e);
+            });
+        };
 
-    function resetTemplates() {
-      Lampa.Template.add('lampac_css', `
-        <style>
-          .online-prestige{position:relative;border-radius:.3em;background-color:rgba(0,0,0,0.3);display:flex;}
-          .online-prestige__body{padding:1.2em;line-height:1.3;flex-grow:1;}
-          .online-prestige__img{position:relative;width:13em;flex-shrink:0;min-height:8.2em;}
-          .online-prestige__img>img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;border-radius:.3em;opacity:0;transition:opacity .3s;}
-          .online-prestige__img--loaded>img{opacity:1;}
-          .online-prestige__loader{position:absolute;top:50%;left:50%;width:2em;height:2em;margin-left:-1em;margin-top:-1em;background:url(./img/loader.svg) no-repeat center center;background-size:contain;}
-          .online-prestige__head,.online-prestige__footer{display:flex;justify-content:space-between;align-items:center;}
-          .online-prestige__title{font-size:1.7em;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;}
-          .online-prestige__info{display:flex;align-items:center;}
-          .online-prestige__quality{padding-left:1em;white-space:nowrap;}
-          .online-prestige+.online-prestige{margin-top:1.5em;}
-          .online-empty__title{font-size:2em;margin-bottom:.9em;}
-          .online-prestige__number{position:absolute;top:0;left:0;background:rgba(0,0,0,0.7);color:white;padding:0.5em;}
-        </style>
-      `);
-      Lampa.Template.add('lampac_prestige_full', `
-        <div class="online-prestige online-prestige--full selector">
-          <div class="online-prestige__img">
-            <img alt="">
-            <div class="online-prestige__loader"></div>
-          </div>
-          <div class="online-prestige__body">
-            <div class="online-prestige__head">
-              <div class="online-prestige__title">{title}</div>
-              <div class="online-prestige__time">{time}</div>
-            </div>
-            <div class="online-prestige__footer">
-              <div class="online-prestige__info">{info}</div>
-              <div class="online-prestige__quality">{quality}</div>
-            </div>
-            <div class="online-prestige__timeline"></div>
-          </div>
-        </div>
-      `);
-      Lampa.Template.add('lampac_content_loading', `
-        <div class="online-empty">
-          <div class="online-empty__loader"></div>
-        </div>
-      `);
-      Lampa.Template.add('lampac_does_not_answer', `
-        <div class="online-empty">
-          <div class="online-empty__title">#{lampac_balanser_dont_work}</div>
-        </div>
-      `);
-      Lampa.Template.add('lampac_prestige_folder', `
-        <div class="online-prestige online-prestige--folder selector">
-          <div class="online-prestige__folder">
-            <svg viewBox="0 0 128 112" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect y="20" width="128" height="92" rx="13" fill="white"></rect>
-              <path d="M29.9963 8H98.0037C96.0446 3.3021 91.4079 0 86 0H42C36.5921 0 31.9555 3.3021 29.9963 8Z" fill="white" fill-opacity="0.23"></path>
-              <rect x="11" y="8" width="106" height="76" rx="13" fill="white" fill-opacity="0.51"></rect>
-            </svg>
-          </div>
-          <div class="online-prestige__body">
-            <div class="online-prestige__head">
-              <div class="online-prestige__title">{title}</div>
-              <div class="online-prestige__time">{time}</div>
-            </div>
-            <div class="online-prestige__footer">
-              <div class="online-prestige__info">{info}</div>
-            </div>
-          </div>
-        </div>
-      `);
-      Lampa.Template.add('lampac_prestige_watched', `
-        <div class="online-prestige-watched">
-          <div class="online-prestige-watched__body"></div>
-        </div>
-      `);
+        // Збереження пошукового запиту
+        function clarificationSearchAdd(value) {
+            var id = Lampa.Utils.hash(object.movie.number_of_seasons ? object.movie.original_name : object.movie.original_title);
+            var all = Lampa.Storage.get('clarification_search', '{}');
+            all[id] = value;
+            Lampa.Storage.set('clarification_search', all);
+        }
+
+        function clarificationSearchDelete() {
+            var id = Lampa.Utils.hash(object.movie.number_of_seasons ? object.movie.original_name : object.movie.original_title);
+            var all = Lampa.Storage.get('clarification_search', '{}');
+            delete all[id];
+            Lampa.Storage.set('clarification_search', all);
+        }
+
+        // Створення джерел
+        this.createSource = function() {
+            return new Promise(function(resolve, reject) {
+                // Список джерел для пошуку
+                var default_sources = [
+                    { name: 'Rezka', url: 'https://api.rezka.cc', show: true },
+                    { name: 'Kodik', url: 'https://api.kodik.info', show: true }
+                ];
+                default_sources.forEach(function(j) {
+                    var name = j.name.toLowerCase();
+                    sources[name] = {
+                        url: j.url,
+                        name: j.name,
+                        show: j.show
+                    };
+                });
+                filter_sources = Lampa.Arrays.getKeys(sources);
+                balanser = filter_sources[0];
+                source = sources[balanser].url;
+                resolve(default_sources);
+            });
+        };
+
+        // Пошук контенту
+        this.search = function() {
+            this.filter({
+                source: filter_sources
+            }, this.getChoice());
+            this.find();
+        };
+
+        // Запит до джерела
+        this.find = function() {
+            this.request(this.requestParams(source));
+        };
+
+        // Параметри запиту
+        this.requestParams = function(url) {
+            var query = [];
+            var card_source = object.movie.source || 'tmdb';
+            query.push('id=' + object.movie.id);
+            query.push('title=' + encodeURIComponent(object.clarification ? object.search : object.movie.title || object.movie.name));
+            query.push('original_title=' + encodeURIComponent(object.movie.original_title || object.movie.original_name));
+            query.push('serial=' + (object.movie.name ? 1 : 0));
+            query.push('original_language=' + (object.movie.original_language || ''));
+            query.push('year=' + ((object.movie.release_date || object.movie.first_air_date || '0000') + '').slice(0, 4));
+            query.push('source=' + card_source);
+            query.push('clarification=' + (object.clarification ? 1 : 0));
+            return url + (url.indexOf('?') >= 0 ? '&' : '?') + query.join('&');
+        };
+
+        // Обробка відповіді
+        this.request = function(url) {
+            network["native"](account(url), this.parse.bind(this), this.doesNotAnswer.bind(this), false, {
+                dataType: 'text'
+            });
+        };
+
+        // Парсинг даних
+        this.parse = function(str) {
+            try {
+                var items = this.parseJsonDate(str, '.videos__item');
+                var buttons = this.parseJsonDate(str, '.videos__button');
+                if (items.length == 1 && items[0].method == 'link') {
+                    filter_find.season = items.map(function(s) {
+                        return {
+                            title: s.text,
+                            url: s.url
+                        };
+                    });
+                    this.replaceChoice({
+                        season: 0
+                    });
+                    this.request(items[0].url);
+                } else {
+                    this.activity.loader(false);
+                    var videos = items.filter(function(v) {
+                        return v.method == 'play' || v.method == 'call';
+                    });
+                    if (videos.length) {
+                        if (buttons.length) {
+                            filter_find.voice = buttons.map(function(b) {
+                                return {
+                                    title: b.text,
+                                    url: b.url
+                                };
+                            });
+                            var select_voice_url = this.getChoice(balanser).voice_url;
+                            var select_voice_name = this.getChoice(balanser).voice_name;
+                            var find_voice_url = buttons.find(function(v) {
+                                return v.url == select_voice_url;
+                            });
+                            var find_voice_name = buttons.find(function(v) {
+                                return v.text == select_voice_name;
+                            });
+                            var find_voice_active = buttons.find(function(v) {
+                                return v.active;
+                            });
+                            if (find_voice_url && !find_voice_url.active) {
+                                this.replaceChoice({
+                                    voice: buttons.indexOf(find_voice_url),
+                                    voice_name: find_voice_url.text
+                                });
+                                this.request(find_voice_url.url);
+                            } else if (find_voice_name && !find_voice_name.active) {
+                                this.replaceChoice({
+                                    voice: buttons.indexOf(find_voice_name),
+                                    voice_name: find_voice_name.text
+                                });
+                                this.request(find_voice_name.url);
+                            } else {
+                                if (find_voice_active) {
+                                    this.replaceChoice({
+                                        voice: buttons.indexOf(find_voice_active),
+                                        voice_name: find_voice_active.text
+                                    });
+                                }
+                                this.display(videos);
+                            }
+                        } else {
+                            this.replaceChoice({
+                                voice: 0,
+                                voice_url: '',
+                                voice_name: ''
+                            });
+                            this.display(videos);
+                        }
+                    } else {
+                        this.doesNotAnswer();
+                    }
+                }
+            } catch (e) {
+                this.doesNotAnswer(e);
+            }
+        };
+
+        // Парсинг JSON-дати
+        this.parseJsonDate = function(str, name) {
+            try {
+                var html = $('<div>' + str + '</div>');
+                var elems = [];
+                html.find(name).each(function() {
+                    var item = $(this);
+                    var data = JSON.parse(item.attr('data-json'));
+                    var season = item.attr('s');
+                    var episode = item.attr('e');
+                    var text = item.text();
+                    if (episode) data.episode = parseInt(episode);
+                    if (season) data.season = parseInt(season);
+                    if (text) data.text = text;
+                    data.active = item.hasClass('active');
+                    elems.push(data);
+                });
+                return elems;
+            } catch (e) {
+                return [];
+            }
+        };
+
+        // Отримання URL файлу
+        this.getFileUrl = function(file, call) {
+            if (file.method == 'play') {
+                call(file, {});
+            } else {
+                Lampa.Loading.start(function() {
+                    Lampa.Loading.stop();
+                    Lampa.Controller.toggle('content');
+                    network.clear();
+                });
+                network["native"](account(file.url), function(json) {
+                    Lampa.Loading.stop();
+                    call(json, json);
+                }, function() {
+                    Lampa.Loading.stop();
+                    call(false, {});
+                });
+            }
+        };
+
+        // Форматування для відтворення
+        this.toPlayElement = function(file) {
+            var play = {
+                title: file.title,
+                url: file.url,
+                quality: file.qualitys,
+                timeline: file.timeline,
+                subtitles: file.subtitles,
+                callback: file.mark
+            };
+            return play;
+        };
+
+        // Обробка резервного URL
+        this.orUrlReserve = function(data) {
+            if (data.url && typeof data.url == 'string' && data.url.indexOf(" or ") !== -1) {
+                var urls = data.url.split(" or ");
+                data.url = urls[0];
+                data.url_reserve = urls[1];
+            }
+        };
+
+        // Встановлення якості за замовчуванням
+        this.setDefaultQuality = function(data) {
+            if (Lampa.Arrays.getKeys(data.quality).length) {
+                for (var q in data.quality) {
+                    if (parseInt(q) == Lampa.Storage.field('video_quality_default')) {
+                        data.url = data.quality[q];
+                        this.orUrlReserve(data);
+                    }
+                    if (data.quality[q].indexOf(" or ") !== -1)
+                        data.quality[q] = data.quality[q].split(" or ")[0];
+                }
+            }
+        };
+
+        // Відображення результатів
+        this.display = function(videos) {
+            var _this = this;
+            this.draw(videos, {
+                onEnter: function(item, html) {
+                    _this.getFileUrl(item, function(json, json_call) {
+                        if (json && json.url) {
+                            var playlist = [];
+                            var first = _this.toPlayElement(item);
+                            first.url = json.url;
+                            first.headers = json_call.headers || json.headers;
+                            first.quality = json_call.quality || item.qualitys;
+                            first.subtitles = json.subtitles;
+                            _this.orUrlReserve(first);
+                            _this.setDefaultQuality(first);
+                            if (item.season) {
+                                videos.forEach(function(elem) {
+                                    var cell = _this.toPlayElement(elem);
+                                    if (elem == item) cell.url = json.url;
+                                    else {
+                                        if (elem.method == 'call') {
+                                            cell.url = function(call) {
+                                                _this.getFileUrl(elem, function(stream, stream_json) {
+                                                    if (stream.url) {
+                                                        cell.url = stream.url;
+                                                        cell.quality = stream_json.quality || elem.qualitys;
+                                                        cell.subtitles = stream.subtitles;
+                                                        _this.orUrlReserve(cell);
+                                                        _this.setDefaultQuality(cell);
+                                                        elem.mark();
+                                                    } else {
+                                                        cell.url = '';
+                                                        Lampa.Noty.show(Lampa.Lang.translate('lampac_nolink'));
+                                                    }
+                                                    call();
+                                                }, function() {
+                                                    cell.url = '';
+                                                    call();
+                                                });
+                                            };
+                                        } else {
+                                            cell.url = elem.url;
+                                        }
+                                    }
+                                    _this.orUrlReserve(cell);
+                                    _this.setDefaultQuality(cell);
+                                    playlist.push(cell);
+                                });
+                            } else {
+                                playlist.push(first);
+                            }
+                            if (playlist.length > 1) first.playlist = playlist;
+                            if (first.url) {
+                                Lampa.Player.play(first);
+                                Lampa.Player.playlist(playlist);
+                                item.mark();
+                                _this.updateBalanser(balanser);
+                            } else {
+                                Lampa.Noty.show(Lampa.Lang.translate('lampac_nolink'));
+                            }
+                        } else {
+                            Lampa.Noty.show(Lampa.Lang.translate('lampac_nolink'));
+                        }
+                    }, true);
+                },
+                onContextMenu: function(item, html, data, call) {
+                    _this.getFileUrl(item, function(stream) {
+                        call({
+                            file: stream.url,
+                            quality: item.qualitys
+                        });
+                    }, true);
+                }
+            });
+            this.filter({
+                season: filter_find.season.map(function(s) {
+                    return s.title;
+                }),
+                voice: filter_find.voice.map(function(b) {
+                    return b.title;
+                })
+            }, this.getChoice());
+        };
+
+        // Зміна балансера
+        this.changeBalanser = function(balanser_name) {
+            this.updateBalanser(balanser_name);
+            Lampa.Storage.set('online_balanser', balanser_name);
+            var to = this.getChoice(balanser_name);
+            var from = this.getChoice();
+            if (from.voice_name) to.voice_name = from.voice_name;
+            this.saveChoice(to, balanser_name);
+            Lampa.Activity.replace();
+        };
+
+        // Оновлення балансера
+        this.updateBalanser = function(balanser_name) {
+            var last_select_balanser = Lampa.Storage.cache('online_last_balanser', 3000, {});
+            last_select_balanser[object.movie.id] = balanser_name;
+            Lampa.Storage.set('online_last_balanser', last_select_balanser);
+        };
+
+        // Отримання вибору
+        this.getChoice = function(for_balanser) {
+            var data = Lampa.Storage.cache('online_choice_' + (for_balanser || balanser), 3000, {});
+            var save = data[object.movie.id] || {};
+            Lampa.Arrays.extend(save, {
+                season: 0,
+                voice: 0,
+                voice_name: '',
+                voice_id: 0,
+                episodes_view: {},
+                movie_view: ''
+            });
+            return save;
+        };
+
+        // Збереження вибору
+        this.saveChoice = function(choice, for_balanser) {
+            var data = Lampa.Storage.cache('online_choice_' + (for_balanser || balanser), 3000, {});
+            data[object.movie.id] = choice;
+            Lampa.Storage.set('online_choice_' + (for_balanser || balanser), data);
+            this.updateBalanser(for_balanser || balanser);
+        };
+
+        // Заміна вибору
+        this.replaceChoice = function(choice, for_balanser) {
+            var to = this.getChoice(for_balanser);
+            Lampa.Arrays.extend(to, choice, true);
+            this.saveChoice(to, for_balanser);
+        };
+
+        // Очищення зображень
+        this.clearImages = function() {
+            images.forEach(function(img) {
+                img.onerror = function() {};
+                img.onload = function() {};
+                img.src = '';
+            });
+            images = [];
+        };
+
+        // Скидання
+        this.reset = function() {
+            last = false;
+            network.clear();
+            this.clearImages();
+            scroll.render().find('.empty').remove();
+            scroll.clear();
+            scroll.reset();
+            scroll.body().append(Lampa.Template.get('lampac_content_loading'));
+        };
+
+        // Завантаження
+        this.loading = function(status) {
+            if (status) this.activity.loader(true);
+            else {
+                this.activity.loader(false);
+                this.activity.toggle();
+            }
+        };
+
+        // Побудова фільтру
+        this.filter = function(filter_items, choice) {
+            var _this = this;
+            var select = [];
+            var add = function(type, title) {
+                var need = _this.getChoice();
+                var items = filter_items[type];
+                var subitems = [];
+                var value = need[type];
+                items.forEach(function(name, i) {
+                    subitems.push({
+                        title: name,
+                        selected: value == i,
+                        index: i
+                    });
+                });
+                select.push({
+                    title: title,
+                    subtitle: items[value],
+                    items: subitems,
+                    stype: type
+                });
+            };
+            filter_items.source = filter_sources;
+            select.push({
+                title: Lampa.Lang.translate('torrent_parser_reset'),
+                reset: true
+            });
+            this.saveChoice(choice);
+            if (filter_items.voice && filter_items.voice.length) add('voice', Lampa.Lang.translate('torrent_parser_voice'));
+            if (filter_items.season && filter_items.season.length) add('season', Lampa.Lang.translate('torrent_serial_season'));
+            filter.set('filter', select);
+            filter.set('sort', filter_sources.map(function(e) {
+                return {
+                    title: sources[e].name,
+                    source: e,
+                    selected: e == balanser,
+                    ghost: !sources[e].show
+                };
+            }));
+            this.selected(filter_items);
+        };
+
+        // Відображення вибраного у фільтрі
+        this.selected = function(filter_items) {
+            var need = this.getChoice(),
+                select = [];
+            for (var i in need) {
+                if (filter_items[i] && filter_items[i].length) {
+                    if (i == 'voice') {
+                        select.push(filter_translate[i] + ': ' + filter_items[i][need[i]]);
+                    } else if (i !== 'source') {
+                        if (filter_items.season.length >= 1) {
+                            select.push(filter_translate.season + ': ' + filter_items[i][need[i]]);
+                        }
+                    }
+                }
+            }
+            filter.chosen('filter', select);
+            filter.chosen('sort', [sources[balanser].name]);
+        };
+
+        // Помилка відповіді
+        this.doesNotAnswer = function(er) {
+            var html = Lampa.Template.get('lampac_does_not_answer', {
+                balanser: balanser
+            });
+            scroll.clear();
+            scroll.append(html);
+            this.loading(false);
+        };
+
+        // Помилка підключення
+        this.noConnectToServer = function(er) {
+            var html = Lampa.Template.get('lampac_does_not_answer', {});
+            html.find('.online-empty__buttons').remove();
+            html.find('.online-empty__title').text(Lampa.Lang.translate('title_error'));
+            html.find('.online-empty__time').text(Lampa.Lang.translate('lampac_does_not_answer_text').replace('{balanser}', sources[balanser].name));
+            scroll.clear();
+            scroll.append(html);
+            this.loading(false);
+        };
+
+        // Початок навігації
+        this.start = function() {
+            if (Lampa.Activity.active().activity !== this.activity) return;
+            if (!initialized) {
+                initialized = true;
+                this.initialize();
+            }
+            Lampa.Background.immediately(Lampa.Utils.cardImgBackgroundBlur(object.movie));
+            Lampa.Controller.add('content', {
+                toggle: function() {
+                    Lampa.Controller.collectionSet(scroll.render(), files.render());
+                    Lampa.Controller.collectionFocus(last || false, scroll.render());
+                },
+                up: function() {
+                    if (Navigator.canmove('up')) {
+                        Navigator.move('up');
+                    } else Lampa.Controller.toggle('head');
+                },
+                down: function() {
+                    Navigator.move('down');
+                },
+                right: function() {
+                    if (Navigator.canmove('right')) Navigator.move('right');
+                    else filter.show(Lampa.Lang.translate('title_filter'), 'filter');
+                },
+                left: function() {
+                    if (Navigator.canmove('left')) Navigator.move('left');
+                    else Lampa.Controller.toggle('menu');
+                },
+                back: this.back.bind(this)
+            });
+            Lampa.Controller.toggle('content');
+        };
+
+        this.render = function() {
+            return files.render();
+        };
+
+        this.back = function() {
+            Lampa.Activity.backward();
+        };
+
+        this.pause = function() {};
+        this.stop = function() {};
+        this.destroy = function() {
+            network.clear();
+            this.clearImages();
+            files.destroy();
+            scroll.destroy();
+        };
     }
 
-    var button = `
-      <div class="full-start__button selector view--online lampac--button" data-subtitle="Eneyida v${manifest.version}">
-        <svg width="135" height="147" viewBox="0 0 135 147" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M121.5 96.8823C139.5 86.49 139.5 60.5092 121.5 50.1169L41.25 3.78454C23.25 -6.60776 0.750004 6.38265 0.750001 27.1673L0.75 51.9742C4.70314 35.7475 23.6209 26.8138 39.0547 35.7701L94.8534 68.1505C110.252 77.0864 111.909 97.8693 99.8725 109.369L121.5 96.8823Z" fill="currentColor"/>
-          <path d="M63 84.9836C80.3333 94.991 80.3333 120.01 63 130.017L39.75 143.44C22.4167 153.448 0.749999 140.938 0.75 120.924L0.750001 94.0769C0.750002 74.0621 22.4167 61.5528 39.75 71.5602L63 84.9836Z" fill="currentColor"/>
-        </svg>
-        <span>#{title_online}</span>
-      </div>
-    `;
+    // Додавання джерела пошуку
+    function addSourceSearch(spiderName, spiderUri) {
+        var network = new Network();
 
-    resetTemplates();
-    Lampa.Component.add('online_eneyida', component);
+        var source = {
+            title: spiderName,
+            search: function(params, oncomplite) {
+                network.silent(account(spiderUri + '?title=' + params.query), function(json) {
+                    var keys = Lampa.Arrays.getKeys(json);
+                    if (keys.length) {
+                        var status = new Lampa.Status(keys.length);
+                        status.onComplite = function(result) {
+                            var rows = [];
+                            keys.forEach(function(name) {
+                                var line = result[name];
+                                if (line && line.data) {
+                                    var cards = line.data.map(function(item) {
+                                        item.title = Lampa.Utils.capitalizeFirstLetter(item.title);
+                                        item.release_date = item.year || '0000';
+                                        item.balanser = spiderUri;
+                                        return item;
+                                    });
+                                    rows.push({
+                                        title: name,
+                                        results: cards
+                                    });
+                                }
+                            });
+                            oncomplite(rows);
+                        };
+                        keys.forEach(function(name) {
+                            network.silent(account(json[name]), function(data) {
+                                status.append(name, data);
+                            }, function() {
+                                status.error();
+                            });
+                        });
+                    } else {
+                        oncomplite([]);
+                    }
+                }, function() {
+                    oncomplite([]);
+                });
+            },
+            onCancel: function() {
+                network.clear();
+            },
+            params: {
+                lazy: true,
+                align_left: true,
+                card_events: {
+                    onMenu: function() {}
+                }
+            },
+            onMore: function(params, close) {
+                close();
+            },
+            onSelect: function(params, close) {
+                close();
+                Lampa.Activity.push({
+                    url: params.element.url,
+                    title: 'Lampac - ' + params.element.title,
+                    component: 'lampac',
+                    movie: params.element,
+                    page: 1,
+                    search: params.element.title,
+                    clarification: true,
+                    balanser: params.element.balanser,
+                    noinfo: true
+                });
+            }
+        };
 
-    function addButton(e) {
-      if (e.render.find('.lampac--button').length) return;
-      var btn = $(Lampa.Lang.translate(button));
-      btn.on('hover:enter', function() {
-        resetTemplates();
-        Lampa.Component.add('online_eneyida', component);
-        var id = Lampa.Utils.hash(e.movie.number_of_seasons ? e.movie.original_name : e.movie.original_title);
-        var all = Lampa.Storage.get('clarification_search', '{}');
-        var search = e.movie.title || e.movie.name || e.movie.original_title || e.movie.original_name || '';
-        console.log('Skaz', 'e.movie:', JSON.stringify(e.movie));
-        console.log('Skaz', 'Activity params:', JSON.stringify({
-          url: '',
-          title: Lampa.Lang.translate('title_online'),
-          component: 'online_eneyida',
-          search: all[id] ? all[id] : search,
-          search_one: search,
-          search_two: e.movie.original_title || e.movie.original_name,
-          movie: e.movie,
-          page: 1,
-          clarification: all[id] ? true : false,
-          source: 'eneyida'
-        }));
-        if (!e.movie.title && !e.movie.name && !e.movie.original_title && !e.movie.original_name) {
-          Lampa.Noty.show('Помилка: Недостатньо даних у об’єкті movie');
-          console.log('Skaz', 'Invalid movie object:', JSON.stringify(e.movie));
-          return;
-        }
-        Lampa.Activity.push({
-          url: '',
-          title: Lampa.Lang.translate('title_online'),
-          component: 'online_eneyida',
-          search: all[id] ? all[id] : search,
-          search_one: search,
-          search_two: e.movie.original_title || e.movie.original_name,
-          movie: e.movie,
-          page: 1,
-          clarification: all[id] ? true : false,
-          source: 'eneyida'
+        Lampa.Search.addSource(source);
+    }
+
+    // Запуск плагіну
+    function startPlugin() {
+        window.lampac_plugin = true;
+        var manifst = {
+            type: 'video',
+            version: '1.4.9',
+            name: 'Lampac',
+            description: 'Плагін для пошуку та перегляду фільмів і серіалів',
+            component: 'lampac',
+            onContextMenu: function(object) {
+                return {
+                    name: Lampa.Lang.translate('lampac_watch'),
+                    description: ''
+                };
+            },
+            onContextLauch: function(object) {
+                resetTemplates();
+                Lampa.Component.add('lampac', component);
+                var id = Lampa.Utils.hash(object.number_of_seasons ? object.original_name : object.original_title);
+                var all = Lampa.Storage.get('clarification_search', '{}');
+                Lampa.Activity.push({
+                    url: '',
+                    title: Lampa.Lang.translate('title_online'),
+                    component: 'lampac',
+                    search: all[id] ? all[id] : object.title,
+                    search_one: object.title,
+                    search_two: object.original_title,
+                    movie: object,
+                    page: 1,
+                    clarification: all[id] ? true : false
+                });
+            }
+        };
+
+        Lampa.Manifest.plugins = manifst;
+        Lampa.Lang.add({
+            lampac_watch: {
+                uk: 'Дивитися онлайн',
+                en: 'Watch online'
+            },
+            lampac_video: {
+                uk: 'Відео',
+                en: 'Video'
+            },
+            lampac_no_watch_history: {
+                uk: 'Немає історії перегляду',
+                en: 'No browsing history'
+            },
+            lampac_nolink: {
+                uk: 'Неможливо отримати посилання',
+                en: 'Failed to fetch link'
+            },
+            lampac_balanser: {
+                uk: 'Джерело',
+                en: 'Source'
+            },
+            helper_online_file: {
+                uk: 'Утримуйте клавішу "ОК" для виклику контекстного меню',
+                en: 'Hold the "OK" key to bring up the context menu'
+            },
+            title_online: {
+                uk: 'Онлайн',
+                en: 'Online'
+            },
+            lampac_does_not_answer_text: {
+                uk: 'Пошук на ({balanser}) не дав результатів',
+                en: 'Search on ({balanser}) did not return any results'
+            }
         });
-        Lampa.Noty.show('Активність запущено: ' + search);
-      });
-      e.render.after(btn);
+
+        // CSS шаблон
+        Lampa.Template.add('lampac_css', `
+            <style>
+            @charset 'UTF-8';
+            .online-prestige{position:relative;-webkit-border-radius:.3em;border-radius:.3em;background-color:rgba(0,0,0,0.3);display:-webkit-box;display:-webkit-flex;display:-moz-box;display:-ms-flexbox;display:flex}
+            .online-prestige__body{padding:1.2em;line-height:1.3;-webkit-box-flex:1;-webkit-flex-grow:1;-moz-box-flex:1;-ms-flex-positive:1;flex-grow:1;position:relative}
+            @media screen and (max-width:480px){.online-prestige__body{padding:.8em 1.2em}}
+            .online-prestige__img{position:relative;width:13em;-webkit-flex-shrink:0;-ms-flex-negative:0;flex-shrink:0;min-height:8.2em}
+            .online-prestige__img>img{position:absolute;top:0;left:0;width:100%;height:100%;-o-object-fit:cover;object-fit:cover;-webkit-border-radius:.3em;border-radius:.3em;opacity:0;-webkit-transition:opacity .3s;-o-transition:opacity .3s;-moz-transition:opacity .3s;transition:opacity .3s}
+            .online-prestige__img--loaded>img{opacity:1}
+            @media screen and (max-width:480px){.online-prestige__img{width:7em;min-height:6em}}
+            .online-prestige__loader{position:absolute;top:50%;left:50%;width:2em;height:2em;margin-left:-1em;margin-top:-1em;background:url(./img/loader.svg) no-repeat center center;-webkit-background-size:contain;-o-background-size:contain;background-size:contain}
+            .online-prestige__head,.online-prestige__footer{display:-webkit-box;display:-webkit-flex;display:-moz-box;display:-ms-flexbox;display:flex;-webkit-box-pack:justify;-webkit-justify-content:space-between;-moz-box-pack:justify;-ms-flex-pack:justify;justify-content:space-between;-webkit-box-align:center;-webkit-align-items:center;-moz-box-align:center;-ms-flex-align:center;align-items:center}
+            .online-prestige__timeline{margin:.8em 0}
+            .online-prestige__title{font-size:1.7em;overflow:hidden;-o-text-overflow:ellipsis;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:1;line-clamp:1;-webkit-box-orient:vertical}
+            @media screen and (max-width:480px){.online-prestige__title{font-size:1.4em}}
+            .online-prestige__time{padding-left:2em}
+            .online-prestige__info{display:-webkit-box;display:-webkit-flex;display:-moz-box;display:-ms-flexbox;display:flex;-webkit-box-align:center;-webkit-align-items:center;-moz-box-align:center;-ms-flex-align:center;align-items:center}
+            .online-prestige__info>*{overflow:hidden;-o-text-overflow:ellipsis;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:1;line-clamp:1;-webkit-box-orient:vertical}
+            .online-prestige__quality{padding-left:1em;white-space:nowrap}
+            .online-prestige.focus::after{content:'';position:absolute;top:-0.6em;left:-0.6em;right:-0.6em;bottom:-0.6em;-webkit-border-radius:.7em;border-radius:.7em;border:solid .3em #fff;z-index:-1;pointer-events:none}
+            .online-prestige+.online-prestige{margin-top:1.5em}
+            .online-empty{line-height:1.4}
+            .online-empty__title{font-size:1.8em;margin-bottom:.3em}
+            .online-empty__time{font-size:1.2em;font-weight:300;margin-bottom:1.6em}
+            .online-empty__buttons{display:-webkit-box;display:-webkit-flex;display:-moz-box;display:-ms-flexbox;display:flex}
+            .online-empty__buttons>*+*{margin-left:1em}
+            .online-empty__button{background:rgba(0,0,0,0.3);font-size:1.2em;padding:.5em 1.2em;-webkit-border-radius:.2em;border-radius:.2em;margin-bottom:2.4em}
+            .online-empty__button.focus{background:#fff;color:black}
+            </style>
+        `);
+        $('body').append(Lampa.Template.get('lampac_css', {}, true));
+
+        // Шаблони
+        function resetTemplates() {
+            Lampa.Template.add('lampac_prestige_full', `
+                <div class="online-prestige online-prestige--full selector">
+                    <div class="online-prestige__img">
+                        <img alt="">
+                        <div class="online-prestige__loader"></div>
+                    </div>
+                    <div class="online-prestige__body">
+                        <div class="online-prestige__head">
+                            <div class="online-prestige__title">{title}</div>
+                            <div class="online-prestige__time">{time}</div>
+                        </div>
+                        <div class="online-prestige__timeline"></div>
+                        <div class="online-prestige__footer">
+                            <div class="online-prestige__info">{info}</div>
+                            <div class="online-prestige__quality">{quality}</div>
+                        </div>
+                    </div>
+                </div>`);
+            Lampa.Template.add('lampac_content_loading', `
+                <div class="online-empty">
+                    <div class="broadcast__scan"><div></div></div>
+                    <div class="online-empty__templates">
+                        <div class="online-empty-template selector">
+                            <div class="online-empty-template__ico"></div>
+                            <div class="online-empty-template__body"></div>
+                        </div>
+                        <div class="online-empty-template">
+                            <div class="online-empty-template__ico"></div>
+                            <div class="online-empty-template__body"></div>
+                        </div>
+                        <div class="online-empty-template">
+                            <div class="online-empty-template__ico"></div>
+                            <div class="online-empty-template__body"></div>
+                        </div>
+                    </div>
+                </div>`);
+            Lampa.Template.add('lampac_does_not_answer', `
+                <div class="online-empty">
+                    <div class="online-empty__title">#{lampac_balanser_dont_work}</div>
+                    <div class="online-empty__time">#{lampac_balanser_timeout}</div>
+                    <div class="online-empty__buttons">
+                        <div class="online-empty__button selector cancel">#{cancel}</div>
+                        <div class="online-empty__button selector change">#{lampac_change_balanser}</div>
+                    </div>
+                    <div class="online-empty__templates">
+                        <div class="online-empty-template">
+                            <div class="online-empty-template__ico"></div>
+                            <div class="online-empty-template__body"></div>
+                        </div>
+                        <div class="online-empty-template">
+                            <div class="online-empty-template__ico"></div>
+                            <div class="online-empty-template__body"></div>
+                        </div>
+                        <div class="online-empty-template">
+                            <div class="online-empty-template__ico"></div>
+                            <div class="online-empty-template__body"></div>
+                        </div>
+                    </div>
+                </div>`);
+        }
+
+        var button = `
+            <div class="full-start__button selector view--online lampac--button" data-subtitle="${manifst.name} v${manifst.version}">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 392.697 392.697">
+                    <path d="M21.837,83.419l36.496,16.678L227.72,19.886c1.229-0.592,2.002-1.846,1.98-3.209c-0.021-1.365-0.834-2.592-2.082-3.145L197.766,0.3c-0.903-0.4-1.933-0.4-2.837,0L21.873,77.036c-1.259,0.559-2.073,1.803-2.081,3.18C19.784,81.593,20.584,82.847,21.837,83.419z" fill="currentColor"></path>
+                    <path d="M185.689,177.261l-64.988-30.01v91.617c0,0.856-0.44,1.655-1.167,2.114c-0.406,0.257-0.869,0.386-1.333,0.386c-0.368,0-0.736-0.082-1.079-0.244l-68.874-32.625c-0.869-0.416-1.421-1.293-1.421-2.256v-92.229L6.804,95.5c-1.083-0.496-2.344-0.406-3.347,0.238c-1.002,0.645-1.608,1.754-1.608,2.944v208.744c0,1.371,0.799,2.615,2.045,3.185l178.886,81.768c0.464,0.211,0.96,0.315,1.455,0.315c0.661,0,1.318-0.188,1.892-0.555c1.002-0.645,1.608-1.754,1.608-2.945V180.445C187.735,179.076,186.936,177.831,185.689,177.261z" fill="currentColor"></path>
+                    <path d="M389.24,95.74c-1.002-0.644-2.264-0.732-3.347-0.238l-178.876,81.76c-1.246,0.57-2.045,1.814-2.045,3.185v208.751c0,1.191,0.606,2.302,1.608,2.945c0.572,0.367,1.23,0.555,1.892,0.555c0.495,0,0.991-0.104,1.455-0.315l178.876-81.768c1.246-0.568,2.045-1.813,2.045-3.185V98.685C390.849,97.494,390.242,96.384,389.24,95.74z" fill="currentColor"></path>
+                    <path d="M372.915,80.216c-0.009-1.377-0.823-2.621-2.082-3.18l-60.182-26.681c-0.938-0.418-2.013-0.399-2.938,0.045l-173.755,82.992l60.933,29.117c0.462,0.211,0.958,0.316,1.455,0.316s0.993-0.105,1.455-0.316l173.066-79.092C372.122,82.847,372.923,81.593,372.915,80.216z" fill="currentColor"></path>
+                </svg>
+                <span>#{title_online}</span>
+            </div>`;
+
+        Lampa.Component.add('lampac', component);
+        resetTemplates();
+
+        function addButton(e) {
+            if (e.render.find('.lampac--button').length) return;
+            var btn = $(Lampa.Lang.translate(button));
+            btn.on('hover:enter', function() {
+                resetTemplates();
+                Lampa.Component.add('lampac', component);
+                var id = Lampa.Utils.hash(e.movie.number_of_seasons ? e.movie.original_name : e.movie.original_title);
+                var all = Lampa.Storage.get('clarification_search', '{}');
+                Lampa.Activity.push({
+                    url: '',
+                    title: Lampa.Lang.translate('title_online'),
+                    component: 'lampac',
+                    search: all[id] ? all[id] : e.movie.title,
+                    search_one: e.movie.title,
+                    search_two: e.movie.original_title,
+                    movie: e.movie,
+                    page: 1,
+                    clarification: all[id] ? true : false
+                });
+            });
+            e.render.after(btn);
+        }
+
+        Lampa.Listener.follow('full', function(e) {
+            if (e.type == 'complite') {
+                addButton({
+                    render: e.object.activity.render().find('.view--torrent'),
+                    movie: e.data.movie
+                });
+            }
+        });
+
+        try {
+            if (Lampa.Activity.active().component == 'full') {
+                addButton({
+                    render: Lampa.Activity.active().activity.render().find('.view--torrent'),
+                    movie: Lampa.Activity.active().card
+                });
+            }
+        } catch (e) {}
+
+        // Додавання джерел пошуку
+        addSourceSearch('Rezka', 'https://api.rezka.cc');
+        addSourceSearch('Kodik', 'https://api.kodik.info');
     }
 
-    Lampa.Listener.follow('full', function(e) {
-      if (e.type == 'complite') {
-        addButton({ render: e.object.activity.render().find('.view--torrent'), movie: e.data.movie });
-      }
-    });
-
-    try {
-      if (Lampa.Activity.active().component == 'full') {
-        addButton({ render: Lampa.Activity.active().activity.render().find('.view--torrent'), movie: Lampa.Activity.active().card });
-      }
-    } catch (e) {
-      console.log('Skaz', 'Error adding button:', e.message);
-    }
-
-    if (Lampa.Manifest.app_digital >= 177) {
-      Lampa.Storage.sync('online_choice_eneyida', 'object_object');
-      Lampa.Storage.sync('online_watched_last', 'object_object');
-    }
-  }
-
-  if (!window.online_eneyida) startPlugin();
+    if (!window.lampac_plugin) startPlugin();
 })();
