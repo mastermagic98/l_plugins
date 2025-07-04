@@ -40,22 +40,25 @@
 
         try {
           var doc = new DOMParser().parseFromString(html, 'text/html');
-          var cards = Array.from(doc.querySelectorAll('article.short')).map(function(item) {
+          var cards = Array.from(doc.querySelectorAll('div.short_in')).map(function(item) {
             var title = item.querySelector('a.short_title')?.textContent?.trim() || 'Без назви';
             var href = item.querySelector('a.short_title')?.getAttribute('href') || '';
             var poster = main_url + (item.querySelector('a.short_img img')?.getAttribute('data-src') || '');
-            var yearText = item.querySelector('.short_year')?.textContent?.trim() || '';
+            var subtitle = item.querySelector('div.short_subtitle')?.textContent?.trim() || '';
+            var yearText = subtitle.match(/\d{4}/)?.[0] || '';
+            var originalTitle = subtitle.split('•')[1]?.trim() || title;
             var itemYear = yearText ? parseInt(yearText) : 0;
-            return { title: title, href: href, year: itemYear, original_title: title, poster: poster };
+            return { title: title, href: href, year: itemYear, original_title: originalTitle, poster: poster };
           });
 
           Lampa.Noty.show('Знайдено ' + cards.length + ' результатів');
           var card = cards.find(function(c) {
-            return c.year >= year - 2 && c.year <= year + 2 && normalizeString(c.original_title) == normalizeString(orig);
+            return c.year >= year - 2 && c.year <= year + 2 && 
+                   (normalizeString(c.original_title) == normalizeString(orig) || normalizeString(c.title) == normalizeString(orig));
           }) || (cards.length == 1 ? cards[0] : null);
 
           if (card) {
-            Lampa.Noty.show('Точний збіг: ' + card.title);
+            Lampa.Noty.show('Точний збіг: ' + card.title + ' (' + card.original_title + ')');
             _this.find(card.href, card.title);
           } else if (cards.length) {
             Lampa.Noty.show('Відображаємо схожі результати');
@@ -77,7 +80,7 @@
 
     this.find = function(url, title) {
       var full_url = url.startsWith('http') ? proxy_url + url : proxy_url + main_url + url;
-      Lampa.Noty.show('Завантаження: ' + full_url);
+      Lampa.Noty.show('Завантаження сторінки: ' + full_url);
       network.clear();
       network.timeout(10000);
       network.silent(full_url, function(html) {
@@ -95,12 +98,12 @@
           var is_series = tags.includes('серіал') || tags.includes('мультсеріал') || !player_url.includes('/vod/');
 
           if (!player_url) {
-            Lampa.Noty.show('Фрейм плеєра не знайдено');
+            Lampa.Noty.show('Фрейм плеєра не знайдено на сторінці: ' + full_url);
             component.doesNotAnswer();
             return;
           }
 
-          Lampa.Noty.show('Плеєр: ' + player_url);
+          Lampa.Noty.show('Знайдено плеєр: ' + player_url);
           if (is_series) {
             extractSeries(player_url, title);
           } else {
@@ -110,17 +113,19 @@
           append(filtred());
           component.loading(false);
         } catch (e) {
-          Lampa.Noty.show('Помилка парсингу сторінки: ' + e.message);
+          Lampa.Noty.show('Помилка парсингу сторінки контенту: ' + e.message);
           component.doesNotAnswer();
         }
       }, function(a, c) {
-        Lampa.Noty.show('Помилка завантаження сторінки: ' + a.status);
+        Lampa.Noty.show('Помилка завантаження сторінки контенту: ' + a.status);
         component.doesNotAnswer();
       });
     };
 
     function extractSeries(player_url, title) {
-      network.silent(proxy_url + player_url, function(html) {
+      var full_player_url = player_url.startsWith('http') ? proxy_url + player_url : proxy_url + player_url;
+      Lampa.Noty.show('Завантаження плеєра: ' + full_player_url);
+      network.silent(full_player_url, function(html) {
         if (!html) {
           Lampa.Noty.show('Порожня відповідь від плеєра');
           component.doesNotAnswer();
@@ -179,7 +184,9 @@
     }
 
     function extractMovie(player_url, title) {
-      network.silent(proxy_url + player_url, function(html) {
+      var full_player_url = player_url.startsWith('http') ? proxy_url + player_url : proxy_url + player_url;
+      Lampa.Noty.show('Завантаження плеєра: ' + full_player_url);
+      network.silent(full_player_url, function(html) {
         if (!html) {
           Lampa.Noty.show('Порожня відповідь від плеєра');
           component.doesNotAnswer();
@@ -461,7 +468,7 @@
     window.online_eneyida = true;
     var manifest = {
       type: 'video',
-      version: '1.0.4',
+      version: '1.0.5',
       name: 'Онлайн - Eneyida',
       description: 'Плагін для пошуку фільмів і серіалів на Eneyida.tv',
       component: 'online_eneyida',
@@ -474,16 +481,21 @@
       onContextLauch: function(object) {
         resetTemplates();
         Lampa.Component.add('online_eneyida', component);
-        Lampa.Activity.push({
-          url: '',
-          title: Lampa.Lang.translate('title_online'),
-          component: 'online_eneyida',
-          search: object.title,
-          search_one: object.title,
-          search_two: object.original_title,
-          movie: object,
-          page: 1
-        });
+        try {
+          Lampa.Activity.push({
+            url: '',
+            title: Lampa.Lang.translate('title_online'),
+            component: 'online_eneyida',
+            search: object.title,
+            search_one: object.title,
+            search_two: object.original_title,
+            movie: object,
+            page: 1
+          });
+          Lampa.Noty.show('Активність запущено: ' + object.title);
+        } catch (err) {
+          Lampa.Noty.show('Помилка запуску активності: ' + err.message);
+        }
       }
     };
 
@@ -575,7 +587,7 @@
             </div>
           </div>
         </div>
-      `);
+      `);646
     }
 
     var button = `<div class="full-start__button selector view--online" data-subtitle="Eneyida v${manifest.version}">
