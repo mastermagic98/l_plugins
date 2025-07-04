@@ -39,13 +39,15 @@
         }
 
         try {
-          // Очищення HTML від скриптів, коментарів і DOCTYPE
+          // Очищення HTML від потенційно проблемних елементів
           html = html.replace(/<!DOCTYPE[^>]*>/gi, '')
                      .replace(/<!--[\s\S]*?-->/g, '')
                      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-                     .replace(/[^\x00-\x7F]+/g, ''); // Видалення не-ASCII символів
+                     .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+                     .replace(/[^\x00-\x7F]+/g, '') // Видалення не-ASCII символів
+                     .replace(/(\r\n|\n|\r)/gm, ''); // Видалення переносів рядків
           var doc = new DOMParser().parseFromString(html, 'text/html');
-          if (!doc || !doc.querySelectorAll) {
+          if (!doc || !doc.documentElement || !doc.querySelectorAll) {
             throw new Error('DOMParser повернув невалідний документ');
           }
           var cards = Array.from(doc.querySelectorAll('div.short_in')).map(function(item) {
@@ -80,7 +82,7 @@
             component.loading(false);
           }
         } catch (e) {
-          Lampa.Noty.show('Помилка парсингу HTML пошуку: ' + e.message + ' (HTML: ' + html.substring(0, 200) + '...)');
+          Lampa.Noty.show('Помилка парсингу HTML пошуку: ' + e.message + ' (HTML: ' + html.substring(0, 500) + '...)');
           component.doesNotAnswer();
         }
       }, function(a, c) {
@@ -111,9 +113,11 @@
           html = html.replace(/<!DOCTYPE[^>]*>/gi, '')
                      .replace(/<!--[\s\S]*?-->/g, '')
                      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-                     .replace(/[^\x00-\x7F]+/g, '');
+                     .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+                     .replace(/[^\x00-\x7F]+/g, '')
+                     .replace(/(\r\n|\n|\r)/gm, '');
           var doc = new DOMParser().parseFromString(html, 'text/html');
-          if (!doc || !doc.querySelectorAll) {
+          if (!doc || !doc.documentElement || !doc.querySelectorAll) {
             throw new Error('DOMParser повернув невалідний документ');
           }
           var full_info = doc.querySelectorAll('.full_info li');
@@ -137,7 +141,7 @@
           append(filtred());
           component.loading(false);
         } catch (e) {
-          Lampa.Noty.show('Помилка парсингу сторінки контенту: ' + e.message + ' (HTML: ' + html.substring(0, 200) + '...)');
+          Lampa.Noty.show('Помилка парсингу сторінки контенту: ' + e.message + ' (HTML: ' + html.substring(0, 500) + '...)');
           component.doesNotAnswer();
         }
       }, function(a, c) {
@@ -160,9 +164,11 @@
           html = html.replace(/<!DOCTYPE[^>]*>/gi, '')
                      .replace(/<!--[\s\S]*?-->/g, '')
                      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-                     .replace(/[^\x00-\x7F]+/g, '');
+                     .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+                     .replace(/[^\x00-\x7F]+/g, '')
+                     .replace(/(\r\n|\n|\r)/gm, '');
           var doc = new DOMParser().parseFromString(html, 'text/html');
-          if (!doc || !doc.querySelectorAll) {
+          if (!doc || !doc.documentElement || !doc.querySelectorAll) {
             throw new Error('DOMParser повернув невалідний документ');
           }
           var player_script = Array.from(doc.querySelectorAll('script')).find(s => s.textContent.includes('file:'))?.textContent || '';
@@ -205,7 +211,7 @@
           });
           Lampa.Noty.show('Оброблено серіал: ' + Object.keys(extract).length + ' перекладів');
         } catch (e) {
-          Lampa.Noty.show('Помилка парсингу JSON: ' + e.message + ' (скрипт: ' + player_script.substring(0, 200) + '...)');
+          Lampa.Noty.show('Помилка парсингу JSON: ' + e.message + ' (скрипт: ' + player_script.substring(0, 500) + '...)');
           component.doesNotAnswer();
         }
       }, function(a, c) {
@@ -228,9 +234,11 @@
           html = html.replace(/<!DOCTYPE[^>]*>/gi, '')
                      .replace(/<!--[\s\S]*?-->/g, '')
                      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-                     .replace(/[^\x00-\x7F]+/g, '');
+                     .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+                     .replace(/[^\x00-\x7F]+/g, '')
+                     .replace(/(\r\n|\n|\r)/gm, '');
           var doc = new DOMParser().parseFromString(html, 'text/html');
-          if (!doc || !doc.querySelectorAll) {
+          if (!doc || !doc.documentElement || !doc.querySelectorAll) {
             throw new Error('DOMParser повернув невалідний документ');
           }
           var player_script = Array.from(doc.querySelectorAll('script')).find(s => s.textContent.includes('file:'))?.textContent || '';
@@ -254,7 +262,7 @@
           };
           Lampa.Noty.show('Фільм оброблено: ' + (file_url ? 'посилання знайдено' : 'посилання відсутнє'));
         } catch (e) {
-          Lampa.Noty.show('Помилка парсингу даних фільму: ' + e.message + ' (скрипт: ' + player_script.substring(0, 200) + '...)');
+          Lampa.Noty.show('Помилка парсингу даних фільму: ' + e.message + ' (скрипт: ' + player_script.substring(0, 500) + '...)');
           component.doesNotAnswer();
         }
       }, function(a, c) {
@@ -516,7 +524,7 @@
     window.online_eneyida = true;
     var manifest = {
       type: 'video',
-      version: '1.0.10',
+      version: '1.0.11',
       name: 'Онлайн - Eneyida',
       description: 'Плагін для пошуку фільмів і серіалів на Eneyida.tv',
       component: 'online_eneyida',
@@ -654,6 +662,7 @@
     Lampa.Component.add('online_eneyida', component);
     Lampa.Listener.follow('full', function(e) {
       if (e.type == 'complite') {
+        console.log('e.data.movie:', JSON.stringify(e.data.movie));
         var btn = $(Lampa.Lang.translate(button));
         btn.on('hover:enter', function() {
           resetTemplates();
