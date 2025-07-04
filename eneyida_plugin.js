@@ -28,12 +28,12 @@
       var url = proxy_url + main_url;
       url = Lampa.Utils.addUrlComponent(url, 'do=search&subaction=search&story=' + encodeURIComponent(query.replace(' ', '+')));
 
-      Lampa.Noty.show('Пошук: ' + query);
+      Lampa.Noty.show('Пошук: ' + query + ' (рік: ' + year + ', оригінальна назва: ' + orig + ')');
       network.clear();
       network.timeout(8000);
       network.silent(url, function(html) {
         if (!html) {
-          Lampa.Noty.show('Порожня відповідь від сервера');
+          Lampa.Noty.show('Порожня відповідь від сервера для пошуку');
           component.doesNotAnswer();
           return;
         }
@@ -52,40 +52,49 @@
           });
 
           Lampa.Noty.show('Знайдено ' + cards.length + ' результатів');
+          if (cards.length === 0) {
+            Lampa.Noty.show('Результати відсутні');
+            component.doesNotAnswer();
+            return;
+          }
+
           var card = cards.find(function(c) {
             return c.year >= year - 2 && c.year <= year + 2 && 
                    (normalizeString(c.original_title) == normalizeString(orig) || normalizeString(c.title) == normalizeString(orig));
           }) || (cards.length == 1 ? cards[0] : null);
 
           if (card) {
-            Lampa.Noty.show('Точний збіг: ' + card.title + ' (' + card.original_title + ')');
+            Lampa.Noty.show('Точний збіг: ' + card.title + ' (' + card.original_title + ', ' + card.year + '), URL: ' + card.href);
             _this.find(card.href, card.title);
-          } else if (cards.length) {
+          } else {
             Lampa.Noty.show('Відображаємо схожі результати');
             component.similars(cards);
             component.loading(false);
-          } else {
-            Lampa.Noty.show('Результати відсутні');
-            component.doesNotAnswer();
           }
         } catch (e) {
-          Lampa.Noty.show('Помилка парсингу HTML: ' + e.message);
+          Lampa.Noty.show('Помилка парсингу HTML пошуку: ' + e.message);
           component.doesNotAnswer();
         }
       }, function(a, c) {
-        Lampa.Noty.show('Помилка запиту: ' + a.status);
+        Lampa.Noty.show('Помилка запиту пошуку: ' + a.status);
         component.doesNotAnswer();
       });
     };
 
     this.find = function(url, title) {
-      var full_url = url.startsWith('http') ? proxy_url + url : proxy_url + main_url + url;
-      Lampa.Noty.show('Завантаження сторінки: ' + full_url);
+      if (!url) {
+        Lampa.Noty.show('Помилка: URL сторінки контенту відсутній');
+        component.doesNotAnswer();
+        return;
+      }
+
+      var full_url = url.startsWith('http') ? proxy_url + url : proxy_url + main_url + (url.startsWith('/') ? url : '/' + url);
+      Lampa.Noty.show('Завантаження сторінки контенту: ' + full_url);
       network.clear();
       network.timeout(10000);
       network.silent(full_url, function(html) {
         if (!html) {
-          Lampa.Noty.show('Порожня відповідь від сторінки контенту');
+          Lampa.Noty.show('Порожня відповідь від сторінки контенту: ' + full_url);
           component.doesNotAnswer();
           return;
         }
@@ -117,7 +126,7 @@
           component.doesNotAnswer();
         }
       }, function(a, c) {
-        Lampa.Noty.show('Помилка завантаження сторінки контенту: ' + a.status);
+        Lampa.Noty.show('Помилка завантаження сторінки контенту: ' + a.status + ' (' + full_url + ')');
         component.doesNotAnswer();
       });
     };
@@ -388,6 +397,10 @@
       }
 
       json.forEach(function(elem) {
+        if (!elem.href) {
+          Lampa.Noty.show('Помилка: відсутній href для ' + elem.title);
+          return;
+        }
         var item = Lampa.Template.get('online_prestige_folder', {
           title: elem.title || 'Без назви',
           info: elem.year ? elem.year : '',
@@ -398,7 +411,7 @@
         }
         item.on('hover:enter', function() {
           component.reset();
-          Lampa.Noty.show('Обрано: ' + elem.title);
+          Lampa.Noty.show('Обрано: ' + elem.title + ', перехід до ' + elem.href);
           source.find(elem.href, elem.title);
         }).on('hover:focus', function(e) {
           scroll.update($(e.target), true);
@@ -468,7 +481,7 @@
     window.online_eneyida = true;
     var manifest = {
       type: 'video',
-      version: '1.0.5',
+      version: '1.0.6',
       name: 'Онлайн - Eneyida',
       description: 'Плагін для пошуку фільмів і серіалів на Eneyida.tv',
       component: 'online_eneyida',
@@ -587,7 +600,7 @@
             </div>
           </div>
         </div>
-      `);646
+      `);
     }
 
     var button = `<div class="full-start__button selector view--online" data-subtitle="Eneyida v${manifest.version}">
