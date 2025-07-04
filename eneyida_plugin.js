@@ -9,12 +9,6 @@
     var network = new Lampa.Reguest();
     var object = _object;
     var extract = {};
-    var filter_items = {};
-    var choice = {
-      season: 0,
-      voice: 0,
-      voice_name: ''
-    };
 
     function normalizeString(str) {
       return str ? str.toLowerCase().replace(/[^a-zа-я0-9]/g, '') : '';
@@ -33,19 +27,19 @@
       network.clear();
       network.timeout(10000);
       network.silent(url, function(html) {
-        if (!html) {
-          Lampa.Noty.show('Порожня відповідь від сервера для пошуку');
+        if (!html || typeof html !== 'string') {
+          Lampa.Noty.show('Порожня або невалідна відповідь від сервера для пошуку: ' + url);
+          console.log('Skaz', 'Raw response:', html);
           component.doesNotAnswer();
           return;
         }
 
         try {
+          // Спрощуємо очищення HTML
           html = html.replace(/<!DOCTYPE[^>]*>/gi, '')
                      .replace(/<!--[\s\S]*?-->/g, '')
-                     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-                     .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
-                     .replace(/[^\x00-\x7F]+/g, '')
-                     .replace(/(\r\n|\n|\r)/gm, '');
+                     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+          console.log('Skaz', 'Cleaned HTML:', html.substring(0, 500) + '...');
           var doc = new DOMParser().parseFromString(html, 'text/html');
           if (!doc || !doc.documentElement || !doc.querySelectorAll) {
             throw new Error('DOMParser повернув невалідний документ');
@@ -61,9 +55,10 @@
             return { title: title, href: href, year: itemYear, original_title: originalTitle, poster: poster, text: title };
           });
 
+          console.log('Skaz', 'Parsed cards:', JSON.stringify(cards));
           Lampa.Noty.show('Знайдено ' + cards.length + ' результатів: ' + (cards[0]?.title || 'немає'));
           if (cards.length === 0) {
-            Lampa.Noty.show('Результати відсутні');
+            Lampa.Noty.show('Результати пошуку відсутні');
             component.doesNotAnswer();
             return;
           }
@@ -83,10 +78,12 @@
           }
         } catch (e) {
           Lampa.Noty.show('Помилка парсингу HTML пошуку: ' + e.message + ' (HTML: ' + html.substring(0, 500) + '...)');
+          console.log('Skaz', 'Parsing error:', e.message, 'HTML:', html.substring(0, 500));
           component.doesNotAnswer();
         }
       }, function(a, c) {
         Lampa.Noty.show('Помилка запиту пошуку: ' + a.status + ' (' + url + ')');
+        console.log('Skaz', 'Request error:', a.status, a.statusText);
         component.doesNotAnswer();
       });
     };
@@ -100,11 +97,13 @@
 
       var full_url = url.startsWith('http') ? proxy_url + url : proxy_url + 'https://eneyida.tv' + (url.startsWith('/') ? url : '/' + url);
       Lampa.Noty.show('Завантаження сторінки контенту: ' + full_url);
+      console.log('Skaz', 'Content page URL:', full_url);
       network.clear();
       network.timeout(10000);
       network.silent(full_url, function(html) {
-        if (!html) {
+        if (!html || typeof html !== 'string') {
           Lampa.Noty.show('Порожня відповідь від сторінки контенту: ' + full_url);
+          console.log('Skaz', 'Content page response:', html);
           component.doesNotAnswer();
           return;
         }
@@ -112,10 +111,8 @@
         try {
           html = html.replace(/<!DOCTYPE[^>]*>/gi, '')
                      .replace(/<!--[\s\S]*?-->/g, '')
-                     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-                     .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
-                     .replace(/[^\x00-\x7F]+/g, '')
-                     .replace(/(\r\n|\n|\r)/gm, '');
+                     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+          console.log('Skaz', 'Content page HTML:', html.substring(0, 500) + '...');
           var doc = new DOMParser().parseFromString(html, 'text/html');
           if (!doc || !doc.documentElement || !doc.querySelectorAll) {
             throw new Error('DOMParser повернув невалідний документ');
@@ -127,25 +124,28 @@
 
           if (!player_url) {
             Lampa.Noty.show('Фрейм плеєра не знайдено на сторінці: ' + full_url);
+            console.log('Skaz', 'Player iframe not found');
             component.doesNotAnswer();
             return;
           }
 
           Lampa.Noty.show('Знайдено плеєр: ' + player_url);
+          console.log('Skaz', 'Player URL:', player_url);
           if (is_series) {
             extractSeries(player_url, title);
           } else {
             extractMovie(player_url, title);
           }
-          filter();
           append(filtred());
           component.loading(false);
         } catch (e) {
           Lampa.Noty.show('Помилка парсингу сторінки контенту: ' + e.message + ' (HTML: ' + html.substring(0, 500) + '...)');
+          console.log('Skaz', 'Content parsing error:', e.message, 'HTML:', html.substring(0, 500));
           component.doesNotAnswer();
         }
       }, function(a, c) {
         Lampa.Noty.show('Помилка завантаження сторінки контенту: ' + a.status + ' (' + full_url + ')');
+        console.log('Skaz', 'Content request error:', a.status, a.statusText);
         component.doesNotAnswer();
       });
     };
@@ -153,9 +153,11 @@
     function extractSeries(player_url, title) {
       var full_player_url = player_url.startsWith('http') ? proxy_url + player_url : proxy_url + player_url;
       Lampa.Noty.show('Завантаження плеєра: ' + full_player_url);
+      console.log('Skaz', 'Player request URL:', full_player_url);
       network.silent(full_player_url, function(html) {
-        if (!html) {
+        if (!html || typeof html !== 'string') {
           Lampa.Noty.show('Порожня відповідь від плеєра');
+          console.log('Skaz', 'Player response:', html);
           component.doesNotAnswer();
           return;
         }
@@ -163,10 +165,8 @@
         try {
           html = html.replace(/<!DOCTYPE[^>]*>/gi, '')
                      .replace(/<!--[\s\S]*?-->/g, '')
-                     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-                     .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
-                     .replace(/[^\x00-\x7F]+/g, '')
-                     .replace(/(\r\n|\n|\r)/gm, '');
+                     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+          console.log('Skaz', 'Player HTML:', html.substring(0, 500) + '...');
           var doc = new DOMParser().parseFromString(html, 'text/html');
           if (!doc || !doc.documentElement || !doc.querySelectorAll) {
             throw new Error('DOMParser повернув невалідний документ');
@@ -175,47 +175,41 @@
           var player_json = player_script.match(/file: *['"](.+?)['"]/);
           if (!player_json) {
             Lampa.Noty.show('JSON плеєра не знайдено');
+            console.log('Skaz', 'Player script:', player_script.substring(0, 500));
             component.doesNotAnswer();
             return;
           }
 
           var json = JSON.parse(player_json[1]);
-          var transl_id = 0;
+          var transl_id = 1;
           extract = {};
 
-          json.forEach(function(season) {
-            var seas_num = parseInt(season.title.replace(' сезон', '')) || ++transl_id;
+          json.forEach(function(season, season_index) {
+            var seas_num = parseInt(season.title.replace(' сезон', '')) || season_index + 1;
             season.folder.forEach(function(episode) {
               episode.folder.forEach(function(dub) {
                 var ep_num = parseInt(episode.title.replace(' серія', '')) || 1;
-                var items = [{
-                  id: seas_num + '_' + ep_num,
-                  comment: ep_num + ' ' + Lampa.Lang.translate('torrent_serial_episode'),
+                extract[seas_num + '_' + ep_num] = {
                   file: dub.file,
                   episode: ep_num,
                   season: seas_num,
                   quality: dub.file.includes('1080') ? 1080 : 720,
-                  translation: transl_id,
+                  translation: title,
                   subtitle: dub.subtitle || ''
-                }];
-
-                if (!extract[transl_id]) extract[transl_id] = { json: [], file: '' };
-                extract[transl_id].json.push({
-                  id: seas_num,
-                  comment: seas_num + ' ' + Lampa.Lang.translate('torrent_serial_season'),
-                  folder: items,
-                  translation: transl_id
-                });
+                };
               });
             });
           });
-          Lampa.Noty.show('Оброблено серіал: ' + Object.keys(extract).length + ' перекладів');
+          Lampa.Noty.show('Оброблено серіал: ' + Object.keys(extract).length + ' епізодів');
+          console.log('Skaz', 'Extracted series:', JSON.stringify(extract));
         } catch (e) {
           Lampa.Noty.show('Помилка парсингу JSON: ' + e.message + ' (скрипт: ' + player_script.substring(0, 500) + '...)');
+          console.log('Skaz', 'Series parsing error:', e.message, 'Script:', player_script.substring(0, 500));
           component.doesNotAnswer();
         }
       }, function(a, c) {
         Lampa.Noty.show('Помилка завантаження плеєра: ' + a.status + ' (' + full_player_url + ')');
+        console.log('Skaz', 'Player request error:', a.status, a.statusText);
         component.doesNotAnswer();
       });
     }
@@ -223,9 +217,11 @@
     function extractMovie(player_url, title) {
       var full_player_url = player_url.startsWith('http') ? proxy_url + player_url : proxy_url + player_url;
       Lampa.Noty.show('Завантаження плеєра: ' + full_player_url);
+      console.log('Skaz', 'Player request URL:', full_player_url);
       network.silent(full_player_url, function(html) {
-        if (!html) {
+        if (!html || typeof html !== 'string') {
           Lampa.Noty.show('Порожня відповідь від плеєра');
+          console.log('Skaz', 'Player response:', html);
           component.doesNotAnswer();
           return;
         }
@@ -233,10 +229,8 @@
         try {
           html = html.replace(/<!DOCTYPE[^>]*>/gi, '')
                      .replace(/<!--[\s\S]*?-->/g, '')
-                     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-                     .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
-                     .replace(/[^\x00-\x7F]+/g, '')
-                     .replace(/(\r\n|\n|\r)/gm, '');
+                     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+          console.log('Skaz', 'Player HTML:', html.substring(0, 500) + '...');
           var doc = new DOMParser().parseFromString(html, 'text/html');
           if (!doc || !doc.documentElement || !doc.querySelectorAll) {
             throw new Error('DOMParser повернув невалідний документ');
@@ -250,6 +244,7 @@
 
           if (!file_url) {
             Lampa.Noty.show('Посилання на .m3u8 не знайдено в скрипті плеєра');
+            console.log('Skaz', 'Player script:', player_script.substring(0, 500));
             component.doesNotAnswer();
             return;
           }
@@ -262,18 +257,21 @@
             subtitle: subtitle
           };
           Lampa.Noty.show('Фільм оброблено: ' + (file_url ? 'посилання .m3u8 знайдено: ' + file_url : 'посилання відсутнє'));
+          console.log('Skaz', 'Extracted movie:', JSON.stringify(extract));
         } catch (e) {
           Lampa.Noty.show('Помилка парсингу даних фільму: ' + e.message + ' (скрипт: ' + player_script.substring(0, 500) + '...)');
+          console.log('Skaz', 'Movie parsing error:', e.message, 'Script:', player_script.substring(0, 500));
           component.doesNotAnswer();
         }
       }, function(a, c) {
         Lampa.Noty.show('Помилка завантаження даних фільму: ' + a.status + ' (' + full_player_url + ')');
+        console.log('Skaz', 'Player request error:', a.status, a.statusText);
         component.doesNotAnswer();
       });
     }
 
     function getFile(element, max_quality) {
-      var translat = extract[element.translation];
+      var translat = extract[element.translation] || extract[element.season + '_' + element.episode];
       var file = translat.file || '';
       var subtitle = translat.subtitle || '';
       var quality = {};
@@ -286,47 +284,20 @@
       return { file: file, quality: quality, subtitle: subtitle };
     }
 
-    function filter() {
-      filter_items = { season: [], voice: [], voice_info: [] };
-
-      for (var transl_id in extract) {
-        var trans = extract[transl_id];
-        if (trans.json) {
-          var s = trans.json.length;
-          while (s--) filter_items.season.push(Lampa.Lang.translate('torrent_serial_season') + ' ' + (trans.json.length - s));
-          filter_items.voice.push(trans.json[0]?.comment || 'Default');
-          filter_items.voice_info.push({ id: transl_id });
-        } else {
-          filter_items.voice.push(trans.translation);
-          filter_items.voice_info.push({ id: transl_id });
-        }
-      }
-
-      component.filter(filter_items, choice);
-    }
-
     function filtred() {
       var filtred = [];
 
       for (var transl_id in extract) {
         var element = extract[transl_id];
-        if (element.json) {
-          element.json.forEach(function(season) {
-            if (season.id == choice.season + 1) {
-              season.folder.forEach(function(media) {
-                if (media.translation == filter_items.voice_info[choice.voice].id) {
-                  filtred.push({
-                    episode: media.episode,
-                    season: media.season,
-                    title: Lampa.Lang.translate('torrent_serial_episode') + ' ' + media.episode,
-                    quality: media.quality + 'p',
-                    translation: media.translation,
-                    voice_name: filter_items.voice[choice.voice],
-                    subtitle: media.subtitle
-                  });
-                }
-              });
-            }
+        if (element.season && element.episode) {
+          filtred.push({
+            episode: element.episode,
+            season: element.season,
+            title: 'Епізод ' + element.episode,
+            quality: element.quality + 'p',
+            translation: transl_id,
+            voice_name: element.translation,
+            subtitle: element.subtitle
           });
         } else {
           filtred.push({
@@ -383,23 +354,9 @@
       };
     }
 
-    this.extendChoice = function(saved) {
-      Lampa.Arrays.extend(choice, saved, true);
-    };
-
     this.reset = function() {
       component.reset();
-      choice = { season: 0, voice: 0, voice_name: '' };
       extract = {};
-      filter();
-      append(filtred());
-    };
-
-    this.filter = function(type, a, b) {
-      choice[a.stype] = b.index;
-      if (a.stype == 'voice') choice.voice_name = filter_items.voice[b.index];
-      component.reset();
-      filter();
       append(filtred());
     };
 
@@ -442,13 +399,16 @@
     this.similars = function(json) {
       if (!json || !json.length) {
         Lampa.Noty.show('Немає результатів для відображення');
+        console.log('Skaz', 'Similars: No results');
         this.doesNotAnswer();
         return;
       }
 
+      scroll.clear();
       json.forEach(function(elem) {
-        if (!elem.href) {
-          Lampa.Noty.show('Помилка: відсутній href для ' + elem.title);
+        if (!elem.href || !elem.title) {
+          Lampa.Noty.show('Помилка: відсутній href або title для ' + JSON.stringify(elem));
+          console.log('Skaz', 'Invalid similar item:', JSON.stringify(elem));
           return;
         }
         var item = Lampa.Template.get('lampac_prestige_folder', {
@@ -458,10 +418,14 @@
         });
         if (elem.poster) {
           item.find('.online-prestige__folder').replaceWith('<div class="online-prestige__img"><img src="' + elem.poster + '" alt="' + elem.title + '"></div>');
+          var img = item.find('img')[0];
+          img.onerror = function() { img.src = './img/img_broken.svg'; };
+          img.onload = function() { item.find('.online-prestige__img').addClass('online-prestige__img--loaded'); };
         }
         item.on('hover:enter', function() {
           this.reset();
           Lampa.Noty.show('Обрано: ' + elem.title + ', перехід до ' + elem.href);
+          console.log('Skaz', 'Selected similar:', elem.title, 'URL:', elem.href);
           source.find(elem.href, elem.title);
         }.bind(this)).on('hover:focus', function(e) {
           scroll.update($(e.target), true);
@@ -469,6 +433,8 @@
         scroll.append(item);
       }.bind(this));
       Lampa.Noty.show('Відображено ' + json.length + ' результатів');
+      console.log('Skaz', 'Similars displayed:', json.length);
+      Lampa.Controller.enable('content');
     };
 
     this.reset = function() {
@@ -481,7 +447,6 @@
       if (!status) this.activity.toggle();
     };
 
-    this.filter = source.filter;
     this.append = source.append;
 
     this.doesNotAnswer = function() {
@@ -500,7 +465,7 @@
       items.forEach(function(element, index) {
         var serial = object.movie.name ? true : false;
         var episode_num = element.episode || index + 1;
-        var voice_name = element.voice_name || element.title || 'Неизвестно';
+        var voice_name = element.voice_name || element.title || 'Невідомо';
         if (element.quality) {
           element.qualitys = element.quality;
           element.quality = Lampa.Arrays.getKeys(element.quality)[0];
@@ -622,7 +587,7 @@
     window.online_eneyida = true;
     var manifest = {
       type: 'video',
-      version: '1.0.16',
+      version: '1.0.17',
       name: 'Онлайн - Eneyida',
       description: 'Плагін для пошуку фільмів і серіалів на Eneyida.tv',
       component: 'online_eneyida',
@@ -637,6 +602,11 @@
         Lampa.Component.add('online_eneyida', component);
         try {
           var movie = object.movie || {};
+          if (!movie.title && !movie.name && !movie.original_title && !movie.original_name) {
+            console.log('Skaz', 'Invalid movie object:', JSON.stringify(movie));
+            Lampa.Noty.show('Помилка: Недостатньо даних у об’єкті movie');
+            return;
+          }
           var search = movie.title || movie.name || movie.original_title || movie.original_name || '';
           var id = Lampa.Utils.hash(movie.number_of_seasons ? movie.original_name : movie.original_title);
           var all = Lampa.Storage.get('clarification_search', '{}');
@@ -668,6 +638,7 @@
           Lampa.Noty.show('Активність запущено: ' + search);
         } catch (err) {
           Lampa.Noty.show('Помилка запуску активності: ' + err.message);
+          console.log('Skaz', 'Activity error:', err.message);
         }
       }
     };
@@ -689,14 +660,6 @@
       lampac_balanser_dont_work: {
         uk: 'Пошук на ({balanser}) не дав результатів',
         en: 'Search on ({balanser}) did not return any results'
-      },
-      torrent_serial_episode: {
-        uk: 'серія',
-        en: 'episode'
-      },
-      torrent_serial_season: {
-        uk: 'сезон',
-        en: 'season'
       },
       copy_secuses: {
         uk: 'Посилання скопійовано',
@@ -817,6 +780,11 @@
           clarification: all[id] ? true : false,
           source: 'eneyida'
         }));
+        if (!e.movie.title && !e.movie.name && !e.movie.original_title && !e.movie.original_name) {
+          Lampa.Noty.show('Помилка: Недостатньо даних у об’єкті movie');
+          console.log('Skaz', 'Invalid movie object:', JSON.stringify(e.movie));
+          return;
+        }
         Lampa.Activity.push({
           url: '',
           title: Lampa.Lang.translate('title_online'),
