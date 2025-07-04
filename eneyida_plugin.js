@@ -2,7 +2,7 @@
   'use strict';
 
   var main_url = 'https://eneyida.tv';
-  var proxy_url = 'http://cors.cfhttp.top/'; // Проксі для CORS, за потреби змініть
+  var proxy_url = 'http://cors.cfhttp.top/'; // Проксі для CORS, працює
   var modalopen = false;
 
   function EneyidaAPI(component, _object) {
@@ -28,6 +28,7 @@
       var url = proxy_url + main_url;
       url = Lampa.Utils.addUrlComponent(url, 'do=search&subaction=search&story=' + encodeURIComponent(query.replace(' ', '+')));
 
+      Lampa.Noty.show('Виконується пошук: ' + query);
       network.clear();
       network.timeout(8000);
       network.silent(url, function(html) {
@@ -41,24 +42,31 @@
           return { title: title, href: href, year: itemYear, original_title: title, poster: poster };
         });
 
+        Lampa.Noty.show('Знайдено результатів: ' + cards.length);
         var card = cards.find(function(c) {
           return c.year >= year - 2 && c.year <= year + 2 && normalizeString(c.original_title) == normalizeString(orig);
         }) || (cards.length == 1 ? cards[0] : null);
 
-        if (card) _this.find(card.href, card.title);
-        else if (cards.length) {
+        if (card) {
+          Lampa.Noty.show('Знайдено точний збіг: ' + card.title);
+          _this.find(card.href, card.title);
+        } else if (cards.length) {
+          Lampa.Noty.show('Відображаємо схожі результати');
           component.similars(cards);
           component.loading(false);
         } else {
+          Lampa.Noty.show('Результати пошуку відсутні');
           component.doesNotAnswer();
         }
       }, function(a, c) {
+        Lampa.Noty.show('Помилка пошуку: ' + a.status);
         component.doesNotAnswer();
       });
     };
 
     this.find = function(url, title) {
       var full_url = url.startsWith('http') ? proxy_url + url : proxy_url + main_url + url;
+      Lampa.Noty.show('Завантаження сторінки контенту: ' + full_url);
       network.clear();
       network.timeout(10000);
       network.silent(full_url, function(html) {
@@ -68,6 +76,13 @@
         var tags = Array.from(full_info[1]?.querySelectorAll('a') || []).map(a => a.textContent);
         var is_series = tags.includes('серіал') || tags.includes('мультсеріал') || !player_url.includes('/vod/');
 
+        if (!player_url) {
+          Lampa.Noty.show('Фрейм плеєра не знайдено');
+          component.doesNotAnswer();
+          return;
+        }
+
+        Lampa.Noty.show('Знайдено плеєр: ' + player_url);
         if (is_series) {
           extractSeries(player_url, title);
         } else {
@@ -77,6 +92,7 @@
         append(filtred());
         component.loading(false);
       }, function(a, c) {
+        Lampa.Noty.show('Помилка завантаження сторінки контенту: ' + a.status);
         component.doesNotAnswer();
       });
     };
@@ -88,6 +104,7 @@
         var player_json = player_script.match(/file: '(.+?)'/);
         if (!player_json) {
           Lampa.Noty.show('Не вдалося отримати JSON плеєра');
+          component.doesNotAnswer();
           return;
         }
 
@@ -122,11 +139,14 @@
               });
             });
           });
+          Lampa.Noty.show('Серіал оброблено: ' + Object.keys(extract).length + ' перекладів');
         } catch (e) {
           Lampa.Noty.show('Помилка парсингу JSON: ' + e.message);
+          component.doesNotAnswer();
         }
       }, function(a, c) {
-        Lampa.Noty.show('Помилка завантаження даних плеєра');
+        Lampa.Noty.show('Помилка завантаження даних плеєра: ' + a.status);
+        component.doesNotAnswer();
       });
     }
 
@@ -146,8 +166,10 @@
           qualities: qualities,
           subtitle: subtitle
         };
+        Lampa.Noty.show('Фільм оброблено: ' + (file_url ? 'посилання знайдено' : 'посилання відсутнє'));
       }, function(a, c) {
-        Lampa.Noty.show('Помилка завантаження даних фільму');
+        Lampa.Noty.show('Помилка завантаження даних фільму: ' + a.status);
+        component.doesNotAnswer();
       });
     }
 
@@ -232,6 +254,7 @@
             var playlist = [toPlayElement(item)];
             Lampa.Player.play(playlist[0]);
             Lampa.Player.playlist(playlist);
+            Lampa.Noty.show('Відтворення: ' + item.title);
           } else {
             Lampa.Noty.show(Lampa.Lang.translate('online_nolink'));
           }
@@ -308,7 +331,7 @@
     this.similars = function(json) {
       json.forEach(function(elem) {
         var item = Lampa.Template.get('online_prestige_folder', {
-          title: elem.title,
+          title: elem.title || 'Без назви',
           info: elem.year ? elem.year : '',
           time: ''
         });
@@ -317,12 +340,14 @@
         }
         item.on('hover:enter', function() {
           component.reset();
+          Lampa.Noty.show('Обрано: ' + elem.title);
           source.find(elem.href, elem.title);
         }).on('hover:focus', function(e) {
           scroll.update($(e.target), true);
         });
         scroll.append(item);
       });
+      Lampa.Noty.show('Відображено ' + json.length + ' результатів');
     };
 
     this.reset = function() {
@@ -385,7 +410,7 @@
     window.online_eneyida = true;
     var manifest = {
       type: 'video',
-      version: '1.0.2',
+      version: '1.0.3',
       name: 'Онлайн - Eneyida',
       description: 'Плагін для пошуку фільмів і серіалів на Eneyida.tv',
       component: 'online_eneyida',
