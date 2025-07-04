@@ -385,7 +385,7 @@
         window.lampac_plugin = true;
         var manifst = {
             type: 'video',
-            version: '1.4.16', // Оновлено версію
+            version: '1.4.17', // Оновлено версію
             name: 'Eneyida',
             description: 'Плагін для пошуку та перегляду фільмів і серіалів',
             component: 'lampac'
@@ -503,6 +503,7 @@
                 });
                 return false;
             }
+            console.log('Eneyida Plugin: Movie data', movie);
             movie.id = movie.id || Lampa.Utils.hash(movie.number_of_seasons ? movie.original_name : movie.original_title || movie.title || '');
             movie.title = movie.title || movie.name || '';
             movie.original_title = movie.original_title || movie.original_name || movie.title || '';
@@ -537,7 +538,7 @@
             return true;
         }
 
-        // Логування батьківських елементів
+        // Логування батьківських елементів і всіх можливих контейнерів
         function logParentSelectors() {
             var card = document.querySelector('.card, .full-start, .selector');
             if (card) {
@@ -555,15 +556,36 @@
             } else {
                 console.log('Eneyida Plugin: No card element found');
             }
+            // Логування всіх можливих контейнерів кнопок
+            var selectors = [
+                '.full-start__buttons',
+                '.selector',
+                '.card__buttons',
+                '.full-start__bottom',
+                '.full__buttons',
+                '.card__view',
+                '.full-start'
+            ];
+            selectors.forEach(function(sel) {
+                var elements = document.querySelectorAll(sel);
+                console.log('Eneyida Plugin: Container check', {
+                    selector: sel,
+                    found: elements.length,
+                    classes: elements.length ? Array.from(elements).map(function(el) { return el.className; }) : []
+                });
+            });
         }
 
         // Ініціалізація кнопки
         var buttonAdded = false;
-        var startTime = Date.now();
+        var attemptCount = 0;
+        var maxAttempts = 10;
         var initInterval = setInterval(function() {
-            if (buttonAdded || Date.now() - startTime > 30000) {
+            attemptCount++;
+            if (buttonAdded || attemptCount >= maxAttempts || Date.now() - startTime > 30000) {
                 console.log('Eneyida Plugin: Stopping initInterval', {
                     buttonAdded: buttonAdded,
+                    attemptCount: attemptCount,
                     timeElapsed: Date.now() - startTime
                 });
                 clearInterval(initInterval);
@@ -589,11 +611,12 @@
                     });
                     return;
                 }
-                var render = active.activity.render().find('.full-start__buttons');
+                var render = active.activity.render().find('.full-start__buttons, .selector, .card__buttons, .full-start__bottom');
                 var movie = active.card || (active.data && active.data.movie) || {};
                 if (render && render.length && movie && Object.keys(movie).length) {
                     console.log('Eneyida Plugin: Attempting to add button', {
                         render: render[0] ? render[0].className : 'none',
+                        renderLength: render.length,
                         movieKeys: Object.keys(movie)
                     });
                     if (addButton(render, movie)) {
@@ -613,6 +636,7 @@
                 console.error('Eneyida Plugin: Error in initButton', e);
             }
         }, 1000);
+        var startTime = Date.now();
 
         // Слухач подій
         function setupListener() {
@@ -621,6 +645,11 @@
                 setTimeout(setupListener, 1000);
                 return;
             }
+            if (window.lampac_listener_added) {
+                console.log('Eneyida Plugin: Listener already added, skipping');
+                return;
+            }
+            window.lampac_listener_added = true;
             Lampa.Listener.follow('full', function(e) {
                 if (e.type === 'start' || e.type === 'complite' || e.type === 'ready') {
                     if (buttonAdded) {
@@ -629,13 +658,14 @@
                     }
                     try {
                         var render = e.object && e.object.activity ?
-                            e.object.activity.render().find('.full-start__buttons') :
+                            e.object.activity.render().find('.full-start__buttons, .selector, .card__buttons, .full-start__bottom') :
                             null;
                         var movie = e.data && e.data.movie ? e.data.movie : (e.object && e.object.card ? e.object.card : null);
                         if (render && render.length && movie && Object.keys(movie).length) {
                             console.log('Eneyida Plugin: Listener triggered', {
                                 event: e.type,
                                 render: render[0] ? render[0].className : 'none',
+                                renderLength: render.length,
                                 movieKeys: Object.keys(movie)
                             });
                             if (addButton(render, movie)) {
