@@ -413,7 +413,7 @@
     var files = new Lampa.Explorer(object);
     var filter = new Lampa.Filter(object);
     var source = new EneyidaAPI(this, object);
-    var balanser = 'eneyida';
+    var balanser = Lampa.Storage.field('online_balanser') || 'eneyida';
     var initialized = false;
 
     this.initialize = function() {
@@ -427,7 +427,8 @@
 
     this.search = function() {
       this.activity.loader(true);
-      source.searchByTitle(object, object.search || object.movie.original_title || object.movie.original_name || object.movie.title || object.movie.name);
+      var query = object.search || object.movie.title || object.movie.name || object.movie.original_title || object.movie.original_name;
+      source.searchByTitle(object, query);
     };
 
     this.similars = function(json) {
@@ -442,7 +443,7 @@
           Lampa.Noty.show('Помилка: відсутній href для ' + elem.title);
           return;
         }
-        var item = Lampa.Template.get('online_prestige_folder', {
+        var item = Lampa.Template.get('online_mod_folder', {
           title: elem.title || 'Без назви',
           info: elem.year ? elem.year : '',
           time: ''
@@ -475,7 +476,7 @@
     this.append = source.append;
     this.doesNotAnswer = function() {
       this.reset();
-      var html = Lampa.Template.get('online_does_not_answer', { balanser: balanser });
+      var html = Lampa.Template.get('online_mod_does_not_answer', { balanser: balanser });
       scroll.append(html);
       this.loading(false);
     };
@@ -522,7 +523,7 @@
     window.online_eneyida = true;
     var manifest = {
       type: 'video',
-      version: '1.0.13',
+      version: '1.0.14',
       name: 'Онлайн - Eneyida',
       description: 'Плагін для пошуку фільмів і серіалів на Eneyida.tv',
       component: 'online_eneyida',
@@ -536,30 +537,34 @@
         resetTemplates();
         Lampa.Component.add('online_eneyida', component);
         try {
-          if (!object.movie) {
-            Lampa.Noty.show('Помилка: object.movie відсутній');
+          var movie = object.movie || {};
+          var search = movie.title || movie.name || movie.original_title || movie.original_name || '';
+          if (!search) {
+            Lampa.Noty.show('Помилка: Назва для пошуку відсутня');
             return;
           }
-          var movie = Object.assign({
-            id: object.movie.id || Date.now(),
-            title: object.movie.title || object.movie.name || 'Unknown Title',
-            original_title: object.movie.original_title || object.movie.original_name || object.movie.title || 'Unknown Original Title',
-            release_date: object.movie.release_date || object.movie.first_air_date || '0000-01-01',
-            imdb_id: object.movie.imdb_id || ''
-          }, object.movie);
           console.log('object.movie:', JSON.stringify(object.movie));
-          console.log('corrected movie:', JSON.stringify(movie));
+          Lampa.Params.select({
+            source: 'eneyida',
+            title: Lampa.Lang.translate('title_online'),
+            search: search
+          });
           Lampa.Activity.push({
             url: '',
             title: Lampa.Lang.translate('title_online'),
             component: 'online_eneyida',
-            search: movie.title,
-            search_one: movie.title,
-            search_two: movie.original_title,
-            movie: movie,
+            source: 'eneyida',
+            search: search,
+            movie: {
+              id: movie.id || Date.now(),
+              title: movie.title || movie.name || 'Unknown Title',
+              original_title: movie.original_title || movie.original_name || movie.title || 'Unknown Original Title',
+              release_date: movie.release_date || movie.first_air_date || '0000-01-01',
+              imdb_id: movie.imdb_id || ''
+            },
             page: 1
           });
-          Lampa.Noty.show('Активність запущено: ' + movie.title);
+          Lampa.Noty.show('Активність запущено: ' + search);
         } catch (err) {
           Lampa.Noty.show('Помилка запуску активності: ' + err.message);
         }
@@ -594,7 +599,7 @@
       }
     });
 
-    Lampa.Template.add('online_prestige_css', `
+    Lampa.Template.add('online_mod_css', `
       <style>
         .online-prestige{position:relative;border-radius:.3em;background-color:rgba(0,0,0,0.3);display:flex;}
         .online-prestige__body{padding:1.2em;line-height:1.3;flex-grow:1;}
@@ -612,7 +617,7 @@
     `);
 
     function resetTemplates() {
-      Lampa.Template.add('online_prestige_full', `
+      Lampa.Template.add('online_mod_full', `
         <div class="online-prestige online-prestige--full selector">
           <div class="online-prestige__img">
             <img alt="">
@@ -630,12 +635,12 @@
           </div>
         </div>
       `);
-      Lampa.Template.add('online_does_not_answer', `
+      Lampa.Template.add('online_mod_does_not_answer', `
         <div class="online-empty">
           <div class="online-empty__title">#{online_balanser_dont_work}</div>
         </div>
       `);
-      Lampa.Template.add('online_prestige_folder', `
+      Lampa.Template.add('online_mod_folder', `
         <div class="online-prestige online-prestige--folder selector">
           <div class="online-prestige__folder">
             <svg viewBox="0 0 128 112" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -675,30 +680,34 @@
           resetTemplates();
           Lampa.Component.add('online_eneyida', component);
           try {
-            if (!e.data.movie) {
-              Lampa.Noty.show('Помилка: e.data.movie відсутній');
+            var movie = e.data.movie || {};
+            var search = movie.title || movie.name || movie.original_title || movie.original_name || '';
+            if (!search) {
+              Lampa.Noty.show('Помилка: Назва для пошуку відсутня');
               return;
             }
-            var movie = Object.assign({
-              id: e.data.movie.id || Date.now(),
-              title: e.data.movie.title || e.data.movie.name || 'Unknown Title',
-              original_title: e.data.movie.original_title || e.data.movie.original_name || e.data.movie.title || 'Unknown Original Title',
-              release_date: e.data.movie.release_date || e.data.movie.first_air_date || '0000-01-01',
-              imdb_id: e.data.movie.imdb_id || ''
-            }, e.data.movie);
             console.log('e.data.movie:', JSON.stringify(e.data.movie));
-            console.log('corrected movie:', JSON.stringify(movie));
+            Lampa.Params.select({
+              source: 'eneyida',
+              title: Lampa.Lang.translate('title_online'),
+              search: search
+            });
             Lampa.Activity.push({
               url: '',
               title: Lampa.Lang.translate('title_online'),
               component: 'online_eneyida',
-              search: movie.title,
-              search_one: movie.title,
-              search_two: movie.original_title,
-              movie: movie,
+              source: 'eneyida',
+              search: search,
+              movie: {
+                id: movie.id || Date.now(),
+                title: movie.title || movie.name || 'Unknown Title',
+                original_title: movie.original_title || movie.original_name || movie.title || 'Unknown Original Title',
+                release_date: movie.release_date || movie.first_air_date || '0000-01-01',
+                imdb_id: movie.imdb_id || ''
+              },
               page: 1
             });
-            Lampa.Noty.show('Активність запущено: ' + movie.title);
+            Lampa.Noty.show('Активність запущено: ' + search);
           } catch (err) {
             Lampa.Noty.show('Помилка запуску активності: ' + err.message);
           }
