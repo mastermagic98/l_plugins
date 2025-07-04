@@ -2,7 +2,6 @@
   'use strict';
 
   var main_url = 'https://eneyida.tv';
-  var proxy_url = 'http://cors.cfhttp.top/';
   var modalopen = false;
 
   function EneyidaAPI(component, _object) {
@@ -25,7 +24,7 @@
       object = _object;
       var year = parseInt((object.movie.release_date || object.movie.first_air_date || '0000').slice(0, 4));
       var orig = object.movie.original_name || object.movie.original_title || object.movie.title || object.movie.name;
-      var url = proxy_url + main_url;
+      var url = main_url;
       url = Lampa.Utils.addUrlComponent(url, 'do=search&subaction=search&story=' + encodeURIComponent(query.replace(' ', '+')));
 
       Lampa.Noty.show('Пошук: ' + query + ' (рік: ' + year + ', оригінальна назва: ' + orig + ')');
@@ -98,7 +97,7 @@
         return;
       }
 
-      var full_url = url.startsWith('http') ? proxy_url + url : proxy_url + main_url + (url.startsWith('/') ? url : '/' + url);
+      var full_url = url.startsWith('http') ? url : main_url + (url.startsWith('/') ? url : '/' + url);
       Lampa.Noty.show('Завантаження сторінки контенту: ' + full_url);
       network.clear();
       network.timeout(10000);
@@ -151,7 +150,7 @@
     };
 
     function extractSeries(player_url, title) {
-      var full_player_url = player_url.startsWith('http') ? proxy_url + player_url : proxy_url + player_url;
+      var full_player_url = player_url.startsWith('http') ? player_url : main_url + (player_url.startsWith('/') ? player_url : '/' + player_url);
       Lampa.Noty.show('Завантаження плеєра: ' + full_player_url);
       network.silent(full_player_url, function(html) {
         if (!html) {
@@ -194,7 +193,7 @@
                   file: dub.file,
                   episode: ep_num,
                   season: seas_num,
-                  quality: 720,
+                  quality: dub.file.includes('1080') ? 1080 : 720,
                   translation: transl_id,
                   subtitle: dub.subtitle || ''
                 }];
@@ -221,7 +220,7 @@
     }
 
     function extractMovie(player_url, title) {
-      var full_player_url = player_url.startsWith('http') ? proxy_url + player_url : proxy_url + player_url;
+      var full_player_url = player_url.startsWith('http') ? player_url : main_url + (player_url.startsWith('/') ? player_url : '/' + player_url);
       Lampa.Noty.show('Завантаження плеєра: ' + full_player_url);
       network.silent(full_player_url, function(html) {
         if (!html) {
@@ -242,13 +241,14 @@
             throw new Error('DOMParser повернув невалідний документ');
           }
           var player_script = Array.from(doc.querySelectorAll('script')).find(s => s.textContent.includes('file:'))?.textContent || '';
-          var file_url = player_script.match(/file: *["'](.+?)["']/i)?.[1] || '';
+          var file_url = player_script.match(/file: *["'](.+?\.m3u8)["']/i)?.[1] || '';
           var subtitle = player_script.match(/subtitle: *["'](.+?)["']/i)?.[1] || '';
-          var qualities = file_url ? [720] : [];
+          var quality = file_url.includes('1080') ? 1080 : 720;
+          var qualities = file_url ? [quality] : [];
           var transl_id = 1;
 
           if (!file_url) {
-            Lampa.Noty.show('Посилання на файл не знайдено в скрипті плеєра');
+            Lampa.Noty.show('Посилання на .m3u8 не знайдено в скрипті плеєра');
             component.doesNotAnswer();
             return;
           }
@@ -256,11 +256,11 @@
           extract[transl_id] = {
             file: file_url,
             translation: title,
-            quality: 720,
+            quality: quality,
             qualities: qualities,
             subtitle: subtitle
           };
-          Lampa.Noty.show('Фільм оброблено: ' + (file_url ? 'посилання знайдено' : 'посилання відсутнє'));
+          Lampa.Noty.show('Фільм оброблено: ' + (file_url ? 'посилання .m3u8 знайдено: ' + file_url : 'посилання відсутнє'));
         } catch (e) {
           Lampa.Noty.show('Помилка парсингу даних фільму: ' + e.message + ' (скрипт: ' + player_script.substring(0, 500) + '...)');
           component.doesNotAnswer();
@@ -278,10 +278,8 @@
       var quality = {};
 
       if (file) {
-        var link = file.slice(0, file.lastIndexOf('_')) + '_';
-        var orin = file.split('?');
-        orin = orin.length > 1 ? '?' + orin.slice(1).join('?') : '';
-        quality['720p'] = file;
+        var link = file;
+        quality[translat.quality + 'p'] = file;
       }
 
       return { file: file, quality: quality, subtitle: subtitle };
@@ -380,7 +378,7 @@
         url: extra.file.replace('https://', 'http://'),
         quality: extra.quality,
         subtitle: subtitle,
-        headers: { Referer: 'https://tortuga.wtf/' }
+        headers: { Referer: 'https://eneyida.tv/' }
       };
     }
 
@@ -524,7 +522,7 @@
     window.online_eneyida = true;
     var manifest = {
       type: 'video',
-      version: '1.0.11',
+      version: '1.0.12',
       name: 'Онлайн - Eneyida',
       description: 'Плагін для пошуку фільмів і серіалів на Eneyida.tv',
       component: 'online_eneyida',
