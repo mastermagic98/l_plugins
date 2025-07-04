@@ -19,10 +19,7 @@
     // Основний компонент плагіну
     function component(object) {
         var network = new Network();
-        var scroll = new Lampa.Scroll({
-            mask: true,
-            over: true
-        });
+        var scroll = new Lampa.Scroll({ mask: true, over: true });
         var files = new Lampa.Explorer(object);
         var filter = new Lampa.Filter(object);
         var sources = {
@@ -63,9 +60,7 @@
                     similar: true
                 });
             };
-            filter.onBack = function() {
-                _this.start();
-            };
+            filter.onBack = function() { _this.start(); };
             filter.onSelect = function(type, a, b) {
                 if (type == 'filter') {
                     if (a.reset) {
@@ -368,7 +363,7 @@
         window.lampac_plugin = true;
         var manifst = {
             type: 'video',
-            version: '1.4.12', // Оновлено версію
+            version: '1.4.13', // Оновлено версію
             name: 'Eneyida',
             description: 'Плагін для пошуку та перегляду фільмів і серіалів',
             component: 'lampac',
@@ -522,8 +517,73 @@
             console.log('Eneyida Plugin: Button added', { selector: render[0] ? render[0].className : 'none' });
         }
 
+        // Логування батьківських елементів
+        function logParentSelectors() {
+            var card = document.querySelector('.card, .full-start, .selector');
+            if (card) {
+                var parents = [];
+                var current = card;
+                while (current && current !== document) {
+                    parents.push({
+                        tag: current.tagName,
+                        class: current.className,
+                        id: current.id
+                    });
+                    current = current.parentElement;
+                }
+                console.log('Eneyida Plugin: Parent selectors for card', parents);
+            } else {
+                console.log('Eneyida Plugin: No card element found');
+            }
+        }
+
+        // Ініціалізація через слухача
+        function setupListener() {
+            if (!Lampa.Listener) {
+                console.log('Eneyida Plugin: Lampa.Listener not available, retrying...');
+                setTimeout(setupListener, 1000);
+                return;
+            }
+            Lampa.Listener.follow('full', function(e) {
+                if (e.type === 'start' || e.type === 'complite' || e.type === 'ready') {
+                    try {
+                        var render = e.object && e.object.activity ?
+                            e.object.activity.render().find('.full-start__buttons, .view--online, .full-start__bottom, .card__buttons, .full__buttons, .card__view, .selector, .full-start') :
+                            null;
+                        var movie = e.data && e.data.movie ? e.data.movie : (e.object && e.object.card ? e.object.card : null);
+                        if (render && render.length && movie && Object.keys(movie).length) {
+                            console.log('Eneyida Plugin: Listener triggered', {
+                                event: e.type,
+                                render: render[0] ? render[0].className : 'none',
+                                movieKeys: Object.keys(movie)
+                            });
+                            addButton(render, movie);
+                        } else {
+                            console.log('Eneyida Plugin: Listener skipped', {
+                                event: e.type,
+                                renderExists: !!render,
+                                renderLength: render ? render.length : 0,
+                                movieExists: !!movie,
+                                movieKeys: movie ? Object.keys(movie) : []
+                            });
+                            logParentSelectors();
+                        }
+                    } catch (err) {
+                        console.error('Eneyida Plugin: Error in listener', err);
+                    }
+                }
+            });
+        }
+
         // Ініціалізація кнопки через інтервал
+        var startTime = Date.now();
         var initInterval = setInterval(function() {
+            if (Date.now() - startTime > 30000) {
+                console.error('Eneyida Plugin: Stopped button initialization after 30 seconds');
+                clearInterval(initInterval);
+                logParentSelectors();
+                return;
+            }
             try {
                 if (!Lampa || !Lampa.Activity || typeof Lampa.Activity.active !== 'function') {
                     console.log('Eneyida Plugin: Lampa not ready', {
@@ -539,15 +599,15 @@
                     return;
                 }
                 if (active.component === 'full') {
-                    var render = active.activity.render().find('.full-start__buttons, .view--online, .full-start__bottom, .card__buttons');
+                    var render = active.activity.render().find('.full-start__buttons, .view--online, .full-start__bottom, .card__buttons, .full__buttons, .card__view, .selector, .full-start');
                     var movie = active.card || (active.data && active.data.movie) || {};
                     if (render && render.length && movie && Object.keys(movie).length) {
                         console.log('Eneyida Plugin: Initializing button', {
-                            movie: movie,
-                            render: render[0] ? render[0].className : 'none'
+                            render: render[0] ? render[0].className : 'none',
+                            movieKeys: Object.keys(movie)
                         });
                         addButton(render, movie);
-                        clearInterval(initInterval); // Зупиняємо інтервал після успіху
+                        clearInterval(initInterval);
                     } else {
                         console.log('Eneyida Plugin: Render or movie not available', {
                             renderExists: !!render,
@@ -555,12 +615,15 @@
                             movieExists: !!movie,
                             movieKeys: movie ? Object.keys(movie) : []
                         });
+                        logParentSelectors();
                     }
                 }
             } catch (e) {
                 console.error('Eneyida Plugin: Error in initButton', e);
             }
         }, 1000);
+
+        setTimeout(setupListener, 100);
     }
 
     if (!window.lampac_plugin) startPlugin();
