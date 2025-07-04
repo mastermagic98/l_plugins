@@ -173,7 +173,7 @@
 
         // Параметри запиту
         this.requestParams = function(url) {
-            var query = encodeURIComponent(object.clarification ? object.search : object.movie.title || object.movie.name);
+            var query = encodeURIComponent(object.clarification ? object.search : object.movie.title || object.movie.name || '');
             return url + query;
         };
 
@@ -744,10 +744,11 @@
             onSelect: function(params, close) {
                 close();
                 var movie = params.element || {};
-                movie.title = movie.title || params.query;
-                movie.original_title = movie.original_title || params.query;
+                movie.title = movie.title || params.query || '';
+                movie.original_title = movie.original_title || params.query || '';
                 movie.id = movie.id || Lampa.Utils.hash(movie.title);
                 movie.poster_path = movie.poster_path || '';
+                movie.number_of_seasons = movie.number_of_seasons || 0;
                 Lampa.Activity.push({
                     url: movie.url || '',
                     title: 'Eneyida - ' + movie.title,
@@ -787,10 +788,10 @@
                 var all = Lampa.Storage.get('clarification_search', '{}');
                 var movie = {
                     id: object.id || id,
-                    title: object.title || object.name,
-                    original_title: object.original_title || object.original_name,
-                    original_name: object.original_name,
-                    release_date: object.release_date || object.first_air_date,
+                    title: object.title || object.name || '',
+                    original_title: object.original_title || object.original_name || '',
+                    original_name: object.original_name || object.title || '',
+                    release_date: object.release_date || object.first_air_date || '',
                     poster_path: object.poster_path || '',
                     number_of_seasons: object.number_of_seasons || 0
                 };
@@ -983,19 +984,20 @@
         resetTemplates();
 
         function addButton(e) {
-            if (!e.render || e.render.find('.lampac--button').length) return;
+            if (!e || !e.render || !e.movie || e.render.find('.lampac--button').length) return;
             var btn = $(Lampa.Lang.translate(button));
             btn.on('hover:enter', function() {
                 resetTemplates();
                 Lampa.Component.add('lampac', component);
                 var movie = e.movie || {};
-                movie.id = movie.id || Lampa.Utils.hash(movie.number_of_seasons ? movie.original_name : movie.original_title);
+                movie.id = movie.id || Lampa.Utils.hash(movie.number_of_seasons ? movie.original_name : movie.original_title || movie.title);
                 movie.title = movie.title || movie.name || '';
-                movie.original_title = movie.original_title || movie.original_name || '';
+                movie.original_title = movie.original_title || movie.original_name || movie.title || '';
                 movie.poster_path = movie.poster_path || '';
                 movie.number_of_seasons = movie.number_of_seasons || 0;
                 var id = Lampa.Utils.hash(movie.number_of_seasons ? movie.original_name : movie.original_title);
                 var all = Lampa.Storage.get('clarification_search', '{}');
+                console.log('Eneyida Plugin: Adding button for movie', movie);
                 Lampa.Activity.push({
                     url: '',
                     title: Lampa.Lang.translate('title_online'),
@@ -1008,28 +1010,49 @@
                     clarification: all[id] ? true : false
                 });
             });
-            e.render.after(btn);
+            e.render.append(btn);
         }
 
+        // Оновлена логіка для слухача подій
         Lampa.Listener.follow('full', function(e) {
-            if (e.type == 'complite') {
-                addButton({
-                    render: e.object.activity.render().find('.view--online'),
-                    movie: e.data.movie
-                });
+            if (e.type === 'complite' || e.type === 'ready') {
+                try {
+                    var render = e.object && e.object.activity ? e.object.activity.render().find('.view--online') : null;
+                    var movie = e.data && e.data.movie ? e.data.movie : null;
+                    if (render && movie) {
+                        addButton({
+                            render: render,
+                            movie: movie
+                        });
+                    }
+                } catch (err) {
+                    console.error('Eneyida Plugin: Error in full listener', err);
+                }
             }
         });
 
-        try {
-            if (Lampa.Activity.active().component == 'full') {
-                addButton({
-                    render: Lampa.Activity.active().activity.render().find('.view--online'),
-                    movie: Lampa.Activity.active().card
-                });
+        // Відкладена ініціалізація кнопки
+        function initButton() {
+            try {
+                if (Lampa.Activity.active().component === 'full' && Lampa.Activity.active().activity) {
+                    var render = Lampa.Activity.active().activity.render().find('.view--online');
+                    var movie = Lampa.Activity.active().card || {};
+                    if (render && movie) {
+                        addButton({
+                            render: render,
+                            movie: movie
+                        });
+                    }
+                }
+            } catch (e) {
+                console.error('Eneyida Plugin: Failed to initialize button', e);
+                // Спробувати ще раз через 1 секунду
+                setTimeout(initButton, 1000);
             }
-        } catch (e) {
-            console.error('Eneyida Plugin: Failed to add button', e);
         }
+
+        // Запуск ініціалізації кнопки
+        setTimeout(initButton, 100);
 
         // Додавання джерел пошуку
         addSourceSearch('Eneyida', 'https://eneyida.tv/search/');
