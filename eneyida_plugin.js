@@ -28,7 +28,8 @@
       var url = main_url;
       url = Lampa.Utils.addUrlComponent(url, 'do=search&subaction=search&story=' + encodeURIComponent(query.replace(' ', '+')));
 
-      Lampa.Noty.show('Пошук: ' + query + ' (рік: ' + year + ', оригінальна назва: ' + orig + ')');
+      console.log('Skaz', 'Search query:', query, 'Year:', year, 'Original title:', orig, 'URL:', url);
+      Lampa.Noty.show('Пошук: ' + query + ' (рік: ' + year + ', оригінальна назва: ' + orig + ', URL: ' + url + ')');
       network.clear();
       network.timeout(10000);
       network.silent(url, function(html) {
@@ -57,7 +58,7 @@
             var yearText = subtitle.match(/\d{4}/)?.[0] || '';
             var originalTitle = subtitle.split('•')[1]?.trim() || title;
             var itemYear = yearText ? parseInt(yearText) : 0;
-            return { title: title, href: href, year: itemYear, original_title: originalTitle, poster: poster };
+            return { title: title, href: href, year: itemYear, original_title: originalTitle, poster: poster, text: title };
           });
 
           Lampa.Noty.show('Знайдено ' + cards.length + ' результатів: ' + (cards[0]?.title || 'немає'));
@@ -358,7 +359,7 @@
             Lampa.Player.playlist(playlist);
             Lampa.Noty.show('Відтворення: ' + item.title);
           } else {
-            Lampa.Noty.show(Lampa.Lang.translate('online_nolink'));
+            Lampa.Noty.show(Lampa.Lang.translate('lampac_nolink'));
           }
         },
         onContextMenu: function(item, html, data, call) {
@@ -409,11 +410,12 @@
   }
 
   function component(object) {
+    var network = new Lampa.Reguest();
     var scroll = new Lampa.Scroll({ mask: true, over: true });
     var files = new Lampa.Explorer(object);
     var filter = new Lampa.Filter(object);
     var source = new EneyidaAPI(this, object);
-    var balanser = Lampa.Storage.field('online_balanser') || 'eneyida';
+    var balanser = 'eneyida';
     var initialized = false;
 
     this.initialize = function() {
@@ -422,19 +424,25 @@
       files.appendHead(filter.render());
       scroll.body().addClass('torrent-list');
       scroll.minus(files.render().find('.explorer__files-head'));
+      scroll.body().append(Lampa.Template.get('lampac_content_loading'));
       this.search();
     };
 
     this.search = function() {
       this.activity.loader(true);
-      var query = object.search || object.movie.title || object.movie.name || object.movie.original_title || object.movie.original_name;
+      var query = object.search || object.movie.title || object.movie.name || object.movie.original_title || object.movie.original_name || '';
+      if (!query) {
+        Lampa.Noty.show('Помилка: Назва для пошуку відсутня');
+        this.doesNotAnswer();
+        return;
+      }
       source.searchByTitle(object, query);
     };
 
     this.similars = function(json) {
       if (!json || !json.length) {
         Lampa.Noty.show('Немає результатів для відображення');
-        component.doesNotAnswer();
+        this.doesNotAnswer();
         return;
       }
 
@@ -443,7 +451,7 @@
           Lampa.Noty.show('Помилка: відсутній href для ' + elem.title);
           return;
         }
-        var item = Lampa.Template.get('online_mod_folder', {
+        var item = Lampa.Template.get('lampac_prestige_folder', {
           title: elem.title || 'Без назви',
           info: elem.year ? elem.year : '',
           time: ''
@@ -452,19 +460,20 @@
           item.find('.online-prestige__folder').replaceWith('<div class="online-prestige__img"><img src="' + elem.poster + '" alt="' + elem.title + '"></div>');
         }
         item.on('hover:enter', function() {
-          component.reset();
+          this.reset();
           Lampa.Noty.show('Обрано: ' + elem.title + ', перехід до ' + elem.href);
           source.find(elem.href, elem.title);
-        }).on('hover:focus', function(e) {
+        }.bind(this)).on('hover:focus', function(e) {
           scroll.update($(e.target), true);
         });
         scroll.append(item);
-      });
+      }.bind(this));
       Lampa.Noty.show('Відображено ' + json.length + ' результатів');
     };
 
     this.reset = function() {
       scroll.clear();
+      scroll.body().append(Lampa.Template.get('lampac_content_loading'));
     };
 
     this.loading = function(status) {
@@ -474,14 +483,104 @@
 
     this.filter = source.filter;
     this.append = source.append;
+
     this.doesNotAnswer = function() {
       this.reset();
-      var html = Lampa.Template.get('online_mod_does_not_answer', { balanser: balanser });
+      var html = Lampa.Template.get('lampac_does_not_answer', { balanser: balanser });
+      html.find('.online-empty__title').text(Lampa.Lang.translate('lampac_balanser_dont_work').replace('{balanser}', 'Eneyida'));
       scroll.append(html);
       this.loading(false);
     };
 
+    this.draw = function(items, params) {
+      var _this = this;
+      scroll.clear();
+      scroll.append(Lampa.Template.get('lampac_prestige_watched', {}));
+
+      items.forEach(function(element, index) {
+        var serial = object.movie.name ? true : false;
+        var episode_num = element.episode || index + 1;
+        var voice_name = element.voice_name || element.title || 'Неизвестно';
+        if (element.quality) {
+          element.qualitys = element.quality;
+          element.quality = Lampa.Arrays.getKeys(element.quality)[0];
+        }
+        Lampa.Arrays.extend(element, {
+          voice_name: voice_name,
+          info: voice_name.length > 60 ? voice_name.substr(0, 60) + '...' : voice_name,
+          quality: '',
+          time: Lampa.Utils.secondsToTime((object.movie.runtime || 0) * 60, true)
+        });
+
+        var hash_timeline = Lampa.Utils.hash(element.season ? [element.season, element.episode, object.movie.original_title].join('') : object.movie.original_title);
+        var hash_behold = Lampa.Utils.hash(element.season ? [element.season, element.episode, object.movie.original_title, element.voice_name].join('') : object.movie.original_title + element.voice_name);
+        element.timeline = Lampa.Timeline.view(hash_timeline);
+
+        var html = Lampa.Template.get('lampac_prestige_full', element);
+        var loader = html.find('.online-prestige__loader');
+        var image = html.find('.online-prestige__img');
+
+        if (serial) {
+          image.append('<div class="online-prestige__number">' + ('0' + episode_num).slice(-2) + '</div>');
+          loader.remove();
+        } else {
+          var img = html.find('img')[0];
+          img.onerror = function() { img.src = './img/img_broken.svg'; };
+          img.onload = function() { image.addClass('online-prestige__img--loaded'); loader.remove(); };
+          img.src = Lampa.TMDB.image('t/p/w300' + (object.movie.backdrop_path || ''));
+        }
+
+        html.find('.online-prestige__timeline').append(Lampa.Timeline.render(element.timeline));
+        html.on('hover:enter', function() {
+          if (object.movie.id) Lampa.Favorite.add('history', object.movie, 100);
+          if (params.onEnter) params.onEnter(element, html);
+        }).on('hover:focus', function(e) {
+          scroll.update($(e.target), true);
+        });
+
+        _this.contextMenu({
+          html: html,
+          element: element,
+          onFile: params.onContextMenu,
+          onClearAllMark: function() {},
+          onClearAllTime: function() {}
+        });
+
+        scroll.append(html);
+      });
+
+      Lampa.Controller.enable('content');
+    };
+
+    this.contextMenu = function(params) {
+      params.html.on('hover:long', function() {
+        var enabled = Lampa.Controller.enabled().name;
+        var menu = [
+          { title: Lampa.Lang.translate('lampac_video'), separator: true },
+          { title: Lampa.Lang.translate('copy_link'), copylink: true }
+        ];
+        Lampa.Select.show({
+          title: Lampa.Lang.translate('title_action'),
+          items: menu,
+          onBack: function() { Lampa.Controller.toggle(enabled); },
+          onSelect: function(a) {
+            Lampa.Controller.toggle(enabled);
+            if (a.copylink && params.onFile) {
+              params.onFile(function(data) {
+                Lampa.Utils.copyTextToClipboard(data.file, function() {
+                  Lampa.Noty.show(Lampa.Lang.translate('copy_secuses'));
+                }, function() {
+                  Lampa.Noty.show(Lampa.Lang.translate('copy_error'));
+                });
+              });
+            }
+          }
+        });
+      });
+    };
+
     this.start = function() {
+      if (Lampa.Activity.active().activity !== this.activity) return;
       if (!initialized) this.initialize();
       Lampa.Background.immediately(Lampa.Utils.cardImgBackgroundBlur(object.movie));
       Lampa.Controller.add('content', {
@@ -509,9 +608,9 @@
     };
 
     this.destroy = function() {
+      network.clear();
       files.destroy();
       scroll.destroy();
-      source.destroy();
       if (modalopen) {
         modalopen = false;
         Lampa.Modal.close();
@@ -523,13 +622,13 @@
     window.online_eneyida = true;
     var manifest = {
       type: 'video',
-      version: '1.0.14',
+      version: '1.0.16',
       name: 'Онлайн - Eneyida',
       description: 'Плагін для пошуку фільмів і серіалів на Eneyida.tv',
       component: 'online_eneyida',
       onContextMenu: function(object) {
         return {
-          name: Lampa.Lang.translate('online_watch'),
+          name: Lampa.Lang.translate('lampac_watch'),
           description: ''
         };
       },
@@ -539,30 +638,32 @@
         try {
           var movie = object.movie || {};
           var search = movie.title || movie.name || movie.original_title || movie.original_name || '';
-          if (!search) {
-            Lampa.Noty.show('Помилка: Назва для пошуку відсутня');
-            return;
-          }
-          console.log('object.movie:', JSON.stringify(object.movie));
-          Lampa.Params.select({
-            source: 'eneyida',
+          var id = Lampa.Utils.hash(movie.number_of_seasons ? movie.original_name : movie.original_title);
+          var all = Lampa.Storage.get('clarification_search', '{}');
+          console.log('Skaz', 'object.movie:', JSON.stringify(object.movie));
+          console.log('Skaz', 'Activity params:', JSON.stringify({
+            url: '',
             title: Lampa.Lang.translate('title_online'),
-            search: search
-          });
+            component: 'online_eneyida',
+            search: all[id] ? all[id] : search,
+            search_one: search,
+            search_two: movie.original_title || movie.original_name,
+            movie: movie,
+            page: 1,
+            clarification: all[id] ? true : false,
+            source: 'eneyida'
+          }));
           Lampa.Activity.push({
             url: '',
             title: Lampa.Lang.translate('title_online'),
             component: 'online_eneyida',
-            source: 'eneyida',
-            search: search,
-            movie: {
-              id: movie.id || Date.now(),
-              title: movie.title || movie.name || 'Unknown Title',
-              original_title: movie.original_title || movie.original_name || movie.title || 'Unknown Original Title',
-              release_date: movie.release_date || movie.first_air_date || '0000-01-01',
-              imdb_id: movie.imdb_id || ''
-            },
-            page: 1
+            search: all[id] ? all[id] : search,
+            search_one: search,
+            search_two: movie.original_title || movie.original_name,
+            movie: movie,
+            page: 1,
+            clarification: all[id] ? true : false,
+            source: 'eneyida'
           });
           Lampa.Noty.show('Активність запущено: ' + search);
         } catch (err) {
@@ -573,11 +674,11 @@
 
     Lampa.Manifest.plugins = manifest;
     Lampa.Lang.add({
-      online_watch: {
+      lampac_watch: {
         uk: 'Дивитися онлайн',
         en: 'Watch online'
       },
-      online_nolink: {
+      lampac_nolink: {
         uk: 'Неможливо отримати посилання',
         en: 'Failed to fetch link'
       },
@@ -585,9 +686,9 @@
         uk: 'Онлайн',
         en: 'Online'
       },
-      online_balanser_dont_work: {
-        uk: 'Пошук не дав результатів',
-        en: 'The search did not return any results'
+      lampac_balanser_dont_work: {
+        uk: 'Пошук на ({balanser}) не дав результатів',
+        en: 'Search on ({balanser}) did not return any results'
       },
       torrent_serial_episode: {
         uk: 'серія',
@@ -596,28 +697,36 @@
       torrent_serial_season: {
         uk: 'сезон',
         en: 'season'
+      },
+      copy_secuses: {
+        uk: 'Посилання скопійовано',
+        en: 'Link copied'
+      },
+      copy_error: {
+        uk: 'Помилка копіювання посилання',
+        en: 'Error copying link'
       }
     });
 
-    Lampa.Template.add('online_mod_css', `
-      <style>
-        .online-prestige{position:relative;border-radius:.3em;background-color:rgba(0,0,0,0.3);display:flex;}
-        .online-prestige__body{padding:1.2em;line-height:1.3;flex-grow:1;}
-        .online-prestige__img{position:relative;width:13em;flex-shrink:0;min-height:8.2em;}
-        .online-prestige__img>img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;border-radius:.3em;opacity:0;transition:opacity .3s;}
-        .online-prestige__img--loaded>img{opacity:1;}
-        .online-prestige__loader{position:absolute;top:50%;left:50%;width:2em;height:2em;margin-left:-1em;margin-top:-1em;background:url(./img/loader.svg) no-repeat center center;background-size:contain;}
-        .online-prestige__head,.online-prestige__footer{display:flex;justify-content:space-between;align-items:center;}
-        .online-prestige__title{font-size:1.7em;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;}
-        .online-prestige__info{display:flex;align-items:center;}
-        .online-prestige__quality{padding-left:1em;white-space:nowrap;}
-        .online-prestige+.online-prestige{margin-top:1.5em;}
-        .online-empty__title{font-size:2em;margin-bottom:.9em;}
-      </style>
-    `);
-
     function resetTemplates() {
-      Lampa.Template.add('online_mod_full', `
+      Lampa.Template.add('lampac_css', `
+        <style>
+          .online-prestige{position:relative;border-radius:.3em;background-color:rgba(0,0,0,0.3);display:flex;}
+          .online-prestige__body{padding:1.2em;line-height:1.3;flex-grow:1;}
+          .online-prestige__img{position:relative;width:13em;flex-shrink:0;min-height:8.2em;}
+          .online-prestige__img>img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;border-radius:.3em;opacity:0;transition:opacity .3s;}
+          .online-prestige__img--loaded>img{opacity:1;}
+          .online-prestige__loader{position:absolute;top:50%;left:50%;width:2em;height:2em;margin-left:-1em;margin-top:-1em;background:url(./img/loader.svg) no-repeat center center;background-size:contain;}
+          .online-prestige__head,.online-prestige__footer{display:flex;justify-content:space-between;align-items:center;}
+          .online-prestige__title{font-size:1.7em;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;}
+          .online-prestige__info{display:flex;align-items:center;}
+          .online-prestige__quality{padding-left:1em;white-space:nowrap;}
+          .online-prestige+.online-prestige{margin-top:1.5em;}
+          .online-empty__title{font-size:2em;margin-bottom:.9em;}
+          .online-prestige__number{position:absolute;top:0;left:0;background:rgba(0,0,0,0.7);color:white;padding:0.5em;}
+        </style>
+      `);
+      Lampa.Template.add('lampac_prestige_full', `
         <div class="online-prestige online-prestige--full selector">
           <div class="online-prestige__img">
             <img alt="">
@@ -632,15 +741,21 @@
               <div class="online-prestige__info">{info}</div>
               <div class="online-prestige__quality">{quality}</div>
             </div>
+            <div class="online-prestige__timeline"></div>
           </div>
         </div>
       `);
-      Lampa.Template.add('online_mod_does_not_answer', `
+      Lampa.Template.add('lampac_content_loading', `
         <div class="online-empty">
-          <div class="online-empty__title">#{online_balanser_dont_work}</div>
+          <div class="online-empty__loader"></div>
         </div>
       `);
-      Lampa.Template.add('online_mod_folder', `
+      Lampa.Template.add('lampac_does_not_answer', `
+        <div class="online-empty">
+          <div class="online-empty__title">#{lampac_balanser_dont_work}</div>
+        </div>
+      `);
+      Lampa.Template.add('lampac_prestige_folder', `
         <div class="online-prestige online-prestige--folder selector">
           <div class="online-prestige__folder">
             <svg viewBox="0 0 128 112" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -660,61 +775,83 @@
           </div>
         </div>
       `);
+      Lampa.Template.add('lampac_prestige_watched', `
+        <div class="online-prestige-watched">
+          <div class="online-prestige-watched__body"></div>
+        </div>
+      `);
     }
 
-    var button = `<div class="full-start__button selector view--online" data-subtitle="Eneyida v${manifest.version}">
-      <svg width="135" height="147" viewBox="0 0 135 147" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M121.5 96.8823C139.5 86.49 139.5 60.5092 121.5 50.1169L41.25 3.78454C23.25 -6.60776 0.750004 6.38265 0.750001 27.1673L0.75 51.9742C4.70314 35.7475 23.6209 26.8138 39.0547 35.7701L94.8534 68.1505C110.252 77.0864 111.909 97.8693 99.8725 109.369L121.5 96.8823Z" fill="currentColor"/>
-        <path d="M63 84.9836C80.3333 94.991 80.3333 120.01 63 130.017L39.75 143.44C22.4167 153.448 0.749999 140.938 0.75 120.924L0.750001 94.0769C0.750002 74.0621 22.4167 61.5528 39.75 71.5602L63 84.9836Z" fill="currentColor"/>
-      </svg>
-      <span>#{title_online}</span>
-    </div>`;
+    var button = `
+      <div class="full-start__button selector view--online lampac--button" data-subtitle="Eneyida v${manifest.version}">
+        <svg width="135" height="147" viewBox="0 0 135 147" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M121.5 96.8823C139.5 86.49 139.5 60.5092 121.5 50.1169L41.25 3.78454C23.25 -6.60776 0.750004 6.38265 0.750001 27.1673L0.75 51.9742C4.70314 35.7475 23.6209 26.8138 39.0547 35.7701L94.8534 68.1505C110.252 77.0864 111.909 97.8693 99.8725 109.369L121.5 96.8823Z" fill="currentColor"/>
+          <path d="M63 84.9836C80.3333 94.991 80.3333 120.01 63 130.017L39.75 143.44C22.4167 153.448 0.749999 140.938 0.75 120.924L0.750001 94.0769C0.750002 74.0621 22.4167 61.5528 39.75 71.5602L63 84.9836Z" fill="currentColor"/>
+        </svg>
+        <span>#{title_online}</span>
+      </div>
+    `;
 
     resetTemplates();
     Lampa.Component.add('online_eneyida', component);
+
+    function addButton(e) {
+      if (e.render.find('.lampac--button').length) return;
+      var btn = $(Lampa.Lang.translate(button));
+      btn.on('hover:enter', function() {
+        resetTemplates();
+        Lampa.Component.add('online_eneyida', component);
+        var id = Lampa.Utils.hash(e.movie.number_of_seasons ? e.movie.original_name : e.movie.original_title);
+        var all = Lampa.Storage.get('clarification_search', '{}');
+        var search = e.movie.title || e.movie.name || e.movie.original_title || e.movie.original_name || '';
+        console.log('Skaz', 'e.movie:', JSON.stringify(e.movie));
+        console.log('Skaz', 'Activity params:', JSON.stringify({
+          url: '',
+          title: Lampa.Lang.translate('title_online'),
+          component: 'online_eneyida',
+          search: all[id] ? all[id] : search,
+          search_one: search,
+          search_two: e.movie.original_title || e.movie.original_name,
+          movie: e.movie,
+          page: 1,
+          clarification: all[id] ? true : false,
+          source: 'eneyida'
+        }));
+        Lampa.Activity.push({
+          url: '',
+          title: Lampa.Lang.translate('title_online'),
+          component: 'online_eneyida',
+          search: all[id] ? all[id] : search,
+          search_one: search,
+          search_two: e.movie.original_title || e.movie.original_name,
+          movie: e.movie,
+          page: 1,
+          clarification: all[id] ? true : false,
+          source: 'eneyida'
+        });
+        Lampa.Noty.show('Активність запущено: ' + search);
+      });
+      e.render.after(btn);
+    }
+
     Lampa.Listener.follow('full', function(e) {
       if (e.type == 'complite') {
-        console.log('e.data.movie:', JSON.stringify(e.data.movie));
-        var btn = $(Lampa.Lang.translate(button));
-        btn.on('hover:enter', function() {
-          resetTemplates();
-          Lampa.Component.add('online_eneyida', component);
-          try {
-            var movie = e.data.movie || {};
-            var search = movie.title || movie.name || movie.original_title || movie.original_name || '';
-            if (!search) {
-              Lampa.Noty.show('Помилка: Назва для пошуку відсутня');
-              return;
-            }
-            console.log('e.data.movie:', JSON.stringify(e.data.movie));
-            Lampa.Params.select({
-              source: 'eneyida',
-              title: Lampa.Lang.translate('title_online'),
-              search: search
-            });
-            Lampa.Activity.push({
-              url: '',
-              title: Lampa.Lang.translate('title_online'),
-              component: 'online_eneyida',
-              source: 'eneyida',
-              search: search,
-              movie: {
-                id: movie.id || Date.now(),
-                title: movie.title || movie.name || 'Unknown Title',
-                original_title: movie.original_title || movie.original_name || movie.title || 'Unknown Original Title',
-                release_date: movie.release_date || movie.first_air_date || '0000-01-01',
-                imdb_id: movie.imdb_id || ''
-              },
-              page: 1
-            });
-            Lampa.Noty.show('Активність запущено: ' + search);
-          } catch (err) {
-            Lampa.Noty.show('Помилка запуску активності: ' + err.message);
-          }
-        });
-        e.object.activity.render().find('.view--torrent').after(btn);
+        addButton({ render: e.object.activity.render().find('.view--torrent'), movie: e.data.movie });
       }
     });
+
+    try {
+      if (Lampa.Activity.active().component == 'full') {
+        addButton({ render: Lampa.Activity.active().activity.render().find('.view--torrent'), movie: Lampa.Activity.active().card });
+      }
+    } catch (e) {
+      console.log('Skaz', 'Error adding button:', e.message);
+    }
+
+    if (Lampa.Manifest.app_digital >= 177) {
+      Lampa.Storage.sync('online_choice_eneyida', 'object_object');
+      Lampa.Storage.sync('online_watched_last', 'object_object');
+    }
   }
 
   if (!window.online_eneyida) startPlugin();
