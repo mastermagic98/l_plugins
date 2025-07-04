@@ -2,8 +2,7 @@
   'use strict';
 
   var main_url = 'https://eneyida.tv';
-  var proxy_urls = ['http://cors.cfhttp.top/', 'https://cors-anywhere.herokuapp.com/', 'https://cors-proxy.htmldriven.com/']; // Додано ще один проксі
-  var current_proxy = proxy_urls[0];
+  var proxy_url = 'http://cors.cfhttp.top/';
   var modalopen = false;
 
   function EneyidaAPI(component, _object) {
@@ -26,12 +25,12 @@
       object = _object;
       var year = parseInt((object.movie.release_date || object.movie.first_air_date || '0000').slice(0, 4));
       var orig = object.movie.original_name || object.movie.original_title || object.movie.title || object.movie.name;
-      var url = current_proxy + main_url;
+      var url = proxy_url + main_url;
       url = Lampa.Utils.addUrlComponent(url, 'do=search&subaction=search&story=' + encodeURIComponent(query.replace(' ', '+')));
 
       Lampa.Noty.show('Пошук: ' + query + ' (рік: ' + year + ', оригінальна назва: ' + orig + ')');
       network.clear();
-      network.timeout(8000);
+      network.timeout(10000);
       network.silent(url, function(html) {
         if (!html) {
           Lampa.Noty.show('Порожня відповідь від сервера для пошуку');
@@ -40,7 +39,6 @@
         }
 
         try {
-          // Очищення HTML від скриптів
           html = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
           var doc = new DOMParser().parseFromString(html, 'text/html');
           var cards = Array.from(doc.querySelectorAll('div.short_in')).map(function(item) {
@@ -76,25 +74,13 @@
           }
         } catch (e) {
           Lampa.Noty.show('Помилка парсингу HTML пошуку: ' + e.message + ' (HTML: ' + html.substring(0, 100) + '...)');
-          tryNextProxy(_this, _object, query);
+          component.doesNotAnswer();
         }
       }, function(a, c) {
         Lampa.Noty.show('Помилка запиту пошуку: ' + a.status + ' (' + url + ')');
-        tryNextProxy(_this, _object, query);
+        component.doesNotAnswer();
       });
     };
-
-    function tryNextProxy(_this, _object, query) {
-      var nextProxyIndex = proxy_urls.indexOf(current_proxy) + 1;
-      if (nextProxyIndex < proxy_urls.length) {
-        current_proxy = proxy_urls[nextProxyIndex];
-        Lampa.Noty.show('Спроба з проксі: ' + current_proxy + '. Якщо це cors-anywhere.herokuapp.com, активуйте доступ за адресою https://cors-anywhere.herokuapp.com/corsdemo');
-        _this.searchByTitle(_object, query);
-      } else {
-        Lampa.Noty.show('Усі проксі не відповіли. Перевірте доступ до https://cors-anywhere.herokuapp.com/corsdemo або додайте інший проксі.');
-        component.doesNotAnswer();
-      }
-    }
 
     this.find = function(url, title) {
       if (!url) {
@@ -103,7 +89,7 @@
         return;
       }
 
-      var full_url = url.startsWith('http') ? current_proxy + url : current_proxy + main_url + (url.startsWith('/') ? url : '/' + url);
+      var full_url = url.startsWith('http') ? proxy_url + url : proxy_url + main_url + (url.startsWith('/') ? url : '/' + url);
       Lampa.Noty.show('Завантаження сторінки контенту: ' + full_url);
       network.clear();
       network.timeout(10000);
@@ -143,12 +129,12 @@
         }
       }, function(a, c) {
         Lampa.Noty.show('Помилка завантаження сторінки контенту: ' + a.status + ' (' + full_url + ')');
-        tryNextProxy(this, this, url);
+        component.doesNotAnswer();
       });
     };
 
     function extractSeries(player_url, title) {
-      var full_player_url = player_url.startsWith('http') ? current_proxy + player_url : current_proxy + player_url;
+      var full_player_url = player_url.startsWith('http') ? proxy_url + player_url : proxy_url + player_url;
       Lampa.Noty.show('Завантаження плеєра: ' + full_player_url);
       network.silent(full_player_url, function(html) {
         if (!html) {
@@ -210,7 +196,7 @@
     }
 
     function extractMovie(player_url, title) {
-      var full_player_url = player_url.startsWith('http') ? current_proxy + player_url : current_proxy + player_url;
+      var full_player_url = player_url.startsWith('http') ? proxy_url + player_url : proxy_url + player_url;
       Lampa.Noty.show('Завантаження плеєра: ' + full_player_url);
       network.silent(full_player_url, function(html) {
         if (!html) {
@@ -505,657 +491,7 @@
     window.online_eneyida = true;
     var manifest = {
       type: 'video',
-      version: '1.0.8',
-      name: 'Онлайн - Eneyida',
-      description: 'Плагін для пошуку фільмів і серіалів на Eneyida.tv',
-      component: 'online_eneyida',
-      onContextMenu: function(object) {
-        return {
-          name: Lampa.Lang.translate('online_watch'),
-          description: ''
-        };
-      },
-      onContextLauch: function(object) {
-        resetTemplates();
-        Lampa.Component.add('online_eneyida', component);
-        try {
-          if (!object.movie || !object.movie.title) {
-            Lampa.Noty.show('Помилка: object.movie або title відсутні');
-            return;
-          }
-          Lampa.Activity.push({
-            url: '',
-            title: Lampa.Lang.translate('title_online'),
-            component: 'online_eneyida',
-            search: object.movie.title,
-            search_one: object.movie.title,
-            search_two: object.movie.original_title,
-            movie: object.movie,
-            page: 1
-          });
-          Lampa.Noty.show('Активність запущено: ' + object.movie.title);
-        } catch (err) {
-          Lampa.Noty.show('Помилка запуску активності: ' + err.message);
-        }
-      }
-    };
-
-    Lampa.Manifest.plugins = manifest;
-    Lampa.Lang.add({
-      online_watch: {
-        uk: 'Дивитися онлайн',
-        en: 'Watch online'
-      },
-      online_nolink: {
-        uk: 'Неможливо отримати посилання',
-        en: 'Failed to fetch link'
-      },
-      title_online: {
-        uk: 'Онлайн',
-        en: 'Online'
-      },
-      online_balanser_dont_work: {
-        uk: 'Пошук не дав результатів',
-        en: 'The search did not return any results'
-      },
-      torrent_serial_episode: {
-        uk: 'серія',
-        en: 'episode'
-      },
-      torrent_serial_season: {
-        uk: 'сезон',
-        en: 'season'
-      }
-    });
-
-    Lampa.Template.add('online_prestige_css', `
-      <style>
-        .online-prestige{position:relative;border-radius:.3em;background-color:rgba(0,0,0,0.3);display:flex;}
-        .online-prestige__body{padding:1.2em;line-height:1.3;flex-grow:1;}
-        .online-prestige__img{position:relative;width:13em;flex-shrink:0;min-height:8.2em;}
-        .online-prestige__img>img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;border-radius:.3em;opacity:0;transition:opacity .3s;}
-        .online-prestige__img--loaded>img{opacity:1;}
-        .online-prestige__loader{position:absolute;top:50%;left:50%;width:2em;height:2em;margin-left:-1em;margin-top:-1em;background:url(./img/loader.svg) no-repeat center center;background-size:contain;}
-        .online-prestige__head,.online-prestige__footer{display:flex;justify-content:space-between;align-items:center;}
-        .online-prestige__title{font-size:1.7em;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;}
-        .online-prestige__info{display:flex;align-items:center;}
-        .online-prestige__quality{padding-left:1em;white-space:nowrap;}
-        .online-prestige+.online-prestige{margin-top:1.5em;}
-        .online-empty__title{font-size:2em;margin-bottom:.9em;}
-      </style>
-    `);
-
-    function resetTemplates()
-System: Дякую за надіслані логи та HTML-код сторінки пошуку. На основі наданої інформації я проаналізував проблему та виявив основні причини помилок. Основна проблема полягає в помилці парсингу HTML у функції `searchByTitle`, що призводить до зупинки виконання перед викликом `find`. Також є проблеми з проксі та можливі помилки в обробці подій у Lampa. Я пропоную оновлений код плагіна з виправленнями та додатковими перевірками, а також рекомендації щодо тестування.
-
----
-
-### Аналіз проблеми
-
-1. **Помилка парсингу JSON**:
-   - Лог: `[Request] GET time: 962ms error of http://cors.cfhttp.top/... : Запитаний синтаксичний аналіз JSON завершився невдало.`
-   - Проблема виникає в `searchByTitle` під час парсингу HTML через `DOMParser`. Хоча відповідь від сервера отримана (HTTP 200 OK), `DOMParser` видає помилку через некоректний формат HTML або наявність скриптів, які порушують парсинг.
-   - HTML сторінки пошуку містить `<script>` теги, які можуть викликати помилку. Наприклад, динамічні скрипти або некоректні символи можуть перешкоджати `DOMParser`.
-
-2. **Проблема з резервним проксі**:
-   - Лог: `[Request] GET time: 943ms error of https://cors-anywhere.herokuapp.com/... : Невідома помилка: See /corsdemo for more info`
-   - Резервний проксі повертає `403 Forbidden`, оскільки не активовано тимчасовий доступ. Для використання `https://cors-anywhere.herokuapp.com/` потрібно відвідати `https://cors-anywhere.herokuapp.com/corsdemo` і натиснути "Request temporary access to the demo server".
-
-3. **Помилка `[Activity] create error`**:
-   - Помилка в `Activity/this.create` (рядок 33093 у `app.min.js`) виникає під час виклику `Lampa.Activity.push` у `startPlugin`. Це може бути пов’язано з:
-     - Некоректною структурою `object.movie` (наприклад, відсутність `title` або `original_title`).
-     - Конфліктом із іншими плагінами чи внутрішньою логікою Lampa.
-
-4. **Відсутність виклику `find`**:
-   - Жоден лог не містить повідомлень типу "Точний збіг" або "Завантаження сторінки контенту", що вказує на те, що код не доходить до виклику `this.find` у `searchByTitle`.
-   - Це підтверджує, що помилка парсингу HTML зупиняє виконання до того, як плагін може знайти точний збіг або відобразити схожі результати.
-
-5. **Аналіз HTML сторінки пошуку**:
-   - HTML містить коректний результат пошуку:
-     ```html
-     <article class="short related_item ignore-select clearfix">
-         <div class="short_in">
-             <a class="short_title" id="short_title" href="https://eneyida.tv/9852-punkt-pryznachennia-rodove-prokliattia.html">Пункт призначення: Родове прокляття</a>
-             <div class="short_subtitle"><a href="https://eneyida.tv/xfsearch/year/2025/">2025</a> • Final Destination: Bloodlines</div>
-         </div>
-     </article>
-     ```
-   - Селектор `div.short_in` коректно витягує `title`, `href`, `year` і `original_title`. Умови для точного збігу (рік 2025 і нормалізована назва `Final Destination: Bloodlines`) виконуються, тому `find` мав би викликатися, якби не помилка парсингу.
-
----
-
-### Виправлення
-
-1. **Очищення HTML від скриптів**:
-   - Додано видалення всіх `<script>` тегів перед парсингом за допомогою `html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')`.
-   - Це зменшить ризик помилок `DOMParser` через некоректні скрипти.
-
-2. **Діагностика HTML**:
-   - Додано виведення перших 100 символів HTML у разі помилки для полегшення діагностики.
-
-3. **Додатковий проксі**:
-   - Додано ще один проксі (`https://cors-proxy.htmldriven.com/`) для підвищення надійності.
-   - Додано повідомлення з інструкцією для активації `cors-anywhere.herokuapp.com`.
-
-4. **Перевірка `object.movie`**:
-   - Додано перевірку наявності `object.movie` і `object.movie.title` перед викликом `Lampa.Activity.push`.
-
-5. **Покращення обробки `similars`**:
-   - Додано додаткову перевірку `href` і логування для відстеження вибору результатів.
-
-6. **Оновлення версії**:
-   - Версія плагіна змінена на `1.0.8`.
-
-### Оновлений код плагіна
-
-<xaiArtifact artifact_id="5d9eaef5-0b57-4486-8387-1fe6fc663476" artifact_version_id="eba192ec-1c8f-4e60-b222-e99728fdd69f" title="eneyida_plugin.js" contentType="text/javascript">
-(function() {
-  'use strict';
-
-  var main_url = 'https://eneyida.tv';
-  var proxy_urls = ['http://cors.cfhttp.top/', 'https://cors-anywhere.herokuapp.com/', 'https://cors-proxy.htmldriven.com/'];
-  var current_proxy = proxy_urls[0];
-  var modalopen = false;
-
-  function EneyidaAPI(component, _object) {
-    var network = new Lampa.Reguest();
-    var object = _object;
-    var extract = {};
-    var filter_items = {};
-    var choice = {
-      season: 0,
-      voice: 0,
-      voice_name: ''
-    };
-
-    function normalizeString(str) {
-      return str ? str.toLowerCase().replace(/[^a-zа-я0-9]/g, '') : '';
-    }
-
-    this.searchByTitle = function(_object, query) {
-      var _this = this;
-      object = _object;
-      var year = parseInt((object.movie.release_date || object.movie.first_air_date || '0000').slice(0, 4));
-      var orig = object.movie.original_name || object.movie.original_title || object.movie.title || object.movie.name;
-      var url = current_proxy + main_url;
-      url = Lampa.Utils.addUrlComponent(url, 'do=search&subaction=search&story=' + encodeURIComponent(query.replace(' ', '+')));
-
-      Lampa.Noty.show('Пошук: ' + query + ' (рік: ' + year + ', оригінальна назва: ' + orig + ')');
-      network.clear();
-      network.timeout(8000);
-      network.silent(url, function(html) {
-        if (!html) {
-          Lampa.Noty.show('Порожня відповідь від сервера для пошуку');
-          component.doesNotAnswer();
-          return;
-        }
-
-        try {
-          html = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
-          var doc = new DOMParser().parseFromString(html, 'text/html');
-          var cards = Array.from(doc.querySelectorAll('div.short_in')).map(function(item) {
-            var title = item.querySelector('a.short_title')?.textContent?.trim() || 'Без назви';
-            var href = item.querySelector('a.short_title')?.getAttribute('href') || '';
-            var poster = main_url + (item.querySelector('a.short_img img')?.getAttribute('data-src') || '');
-            var subtitle = item.querySelector('div.short_subtitle')?.textContent?.trim() || '';
-            var yearText = subtitle.match(/\d{4}/)?.[0] || '';
-            var originalTitle = subtitle.split('•')[1]?.trim() || title;
-            var itemYear = yearText ? parseInt(yearText) : 0;
-            return { title: title, href: href, year: itemYear, original_title: originalTitle, poster: poster };
-          });
-
-          Lampa.Noty.show('Знайдено ' + cards.length + ' результатів: ' + (cards[0]?.title || 'немає'));
-          if (cards.length === 0) {
-            Lampa.Noty.show('Результати відсутні');
-            component.doesNotAnswer();
-            return;
-          }
-
-          var card = cards.find(function(c) {
-            return c.year >= year - 2 && c.year <= year + 2 && 
-                   (normalizeString(c.original_title) == normalizeString(orig) || normalizeString(c.title) == normalizeString(orig));
-          }) || (cards.length == 1 ? cards[0] : null);
-
-          if (card) {
-            Lampa.Noty.show('Точний збіг: ' + card.title + ' (' + card.original_title + ', ' + card.year + '), URL: ' + card.href);
-            _this.find(card.href, card.title);
-          } else {
-            Lampa.Noty.show('Відображаємо схожі результати');
-            component.similars(cards);
-            component.loading(false);
-          }
-        } catch (e) {
-          Lampa.Noty.show('Помилка парсингу HTML пошуку: ' + e.message + ' (HTML: ' + html.substring(0, 100) + '...)');
-          tryNextProxy(_this, _object, query);
-        }
-      }, function(a, c) {
-        Lampa.Noty.show('Помилка запиту пошуку: ' + a.status + ' (' + url + ')');
-        tryNextProxy(_this, _object, query);
-      });
-    };
-
-    function tryNextProxy(_this, _object, query) {
-      var nextProxyIndex = proxy_urls.indexOf(current_proxy) + 1;
-      if (nextProxyIndex < proxy_urls.length) {
-        current_proxy = proxy_urls[nextProxyIndex];
-        Lampa.Noty.show('Спроба з проксі: ' + current_proxy + '. Якщо це cors-anywhere.herokuapp.com, активуйте доступ за адресою https://cors-anywhere.herokuapp.com/corsdemo');
-        _this.searchByTitle(_object, query);
-      } else {
-        Lampa.Noty.show('Усі проксі не відповіли. Перевірте доступ до https://cors-anywhere.herokuapp.com/corsdemo або додайте інший проксі.');
-        component.doesNotAnswer();
-      }
-    }
-
-    this.find = function(url, title) {
-      if (!url) {
-        Lampa.Noty.show('Помилка: URL сторінки контенту відсутній');
-        component.doesNotAnswer();
-        return;
-      }
-
-      var full_url = url.startsWith('http') ? current_proxy + url : current_proxy + main_url + (url.startsWith('/') ? url : '/' + url);
-      Lampa.Noty.show('Завантаження сторінки контенту: ' + full_url);
-      network.clear();
-      network.timeout(10000);
-      network.silent(full_url, function(html) {
-        if (!html) {
-          Lampa.Noty.show('Порожня відповідь від сторінки контенту: ' + full_url);
-          component.doesNotAnswer();
-          return;
-        }
-
-        try {
-          html = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
-          var doc = new DOMParser().parseFromString(html, 'text/html');
-          var full_info = doc.querySelectorAll('.full_info li');
-          var player_url = doc.querySelector('.tabs_b.visible iframe')?.getAttribute('src') || '';
-          var tags = Array.from(full_info[1]?.querySelectorAll('a') || []).map(a => a.textContent);
-          var is_series = tags.includes('серіал') || tags.includes('мультсеріал') || !player_url.includes('/vod/');
-
-          if (!player_url) {
-            Lampa.Noty.show('Фрейм плеєра не знайдено на сторінці: ' + full_url);
-            component.doesNotAnswer();
-            return;
-          }
-
-          Lampa.Noty.show('Знайдено плеєр: ' + player_url);
-          if (is_series) {
-            extractSeries(player_url, title);
-          } else {
-            extractMovie(player_url, title);
-          }
-          filter();
-          append(filtred());
-          component.loading(false);
-        } catch (e) {
-          Lampa.Noty.show('Помилка парсингу сторінки контенту: ' + e.message + ' (HTML: ' + html.substring(0, 100) + '...)');
-          component.doesNotAnswer();
-        }
-      }, function(a, c) {
-        Lampa.Noty.show('Помилка завантаження сторінки контенту: ' + a.status + ' (' + full_url + ')');
-        tryNextProxy(this, this, url);
-      });
-    };
-
-    function extractSeries(player_url, title) {
-      var full_player_url = player_url.startsWith('http') ? current_proxy + player_url : current_proxy + player_url;
-      Lampa.Noty.show('Завантаження плеєра: ' + full_player_url);
-      network.silent(full_player_url, function(html) {
-        if (!html) {
-          Lampa.Noty.show('Порожня відповідь від плеєра');
-          component.doesNotAnswer();
-          return;
-        }
-
-        try {
-          html = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
-          var doc = new DOMParser().parseFromString(html, 'text/html');
-          var player_script = Array.from(doc.querySelectorAll('script')).find(s => s.textContent.includes('file:'))?.textContent || '';
-          var player_json = player_script.match(/file: *['"](.+?)['"]/);
-          if (!player_json) {
-            Lampa.Noty.show('JSON плеєра не знайдено');
-            component.doesNotAnswer();
-            return;
-          }
-
-          var json = JSON.parse(player_json[1]);
-          var transl_id = 0;
-          extract = {};
-
-          json.forEach(function(season) {
-            var seas_num = parseInt(season.title.replace(' сезон', '')) || ++transl_id;
-            season.folder.forEach(function(episode) {
-              episode.folder.forEach(function(dub) {
-                var ep_num = parseInt(episode.title.replace(' серія', '')) || 1;
-                var items = [{
-                  id: seas_num + '_' + ep_num,
-                  comment: ep_num + ' ' + Lampa.Lang.translate('torrent_serial_episode'),
-                  file: dub.file,
-                  episode: ep_num,
-                  season: seas_num,
-                  quality: 720,
-                  translation: transl_id,
-                  subtitle: dub.subtitle || ''
-                }];
-
-                if (!extract[transl_id]) extract[transl_id] = { json: [], file: '' };
-                extract[transl_id].json.push({
-                  id: seas_num,
-                  comment: seas_num + ' ' + Lampa.Lang.translate('torrent_serial_season'),
-                  folder: items,
-                  translation: transl_id
-                });
-              });
-            });
-          });
-          Lampa.Noty.show('Оброблено серіал: ' + Object.keys(extract).length + ' перекладів');
-        } catch (e) {
-          Lampa.Noty.show('Помилка парсингу JSON: ' + e.message + ' (скрипт: ' + player_script.substring(0, 100) + '...)');
-          component.doesNotAnswer();
-        }
-      }, function(a, c) {
-        Lampa.Noty.show('Помилка завантаження плеєра: ' + a.status + ' (' + full_player_url + ')');
-        component.doesNotAnswer();
-      });
-    }
-
-    function extractMovie(player_url, title) {
-      var full_player_url = player_url.startsWith('http') ? current_proxy + player_url : current_proxy + player_url;
-      Lampa.Noty.show('Завантаження плеєра: ' + full_player_url);
-      network.silent(full_player_url, function(html) {
-        if (!html) {
-          Lampa.Noty.show('Порожня відповідь від плеєра');
-          component.doesNotAnswer();
-          return;
-        }
-
-        try {
-          html = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
-          var doc = new DOMParser().parseFromString(html, 'text/html');
-          var player_script = Array.from(doc.querySelectorAll('script')).find(s => s.textContent.includes('file:'))?.textContent || '';
-          var file_url = player_script.match(/file: *["'](.+?)["']/i)?.[1] || '';
-          var subtitle = player_script.match(/subtitle: *["'](.+?)["']/i)?.[1] || '';
-          var qualities = file_url ? [720] : [];
-          var transl_id = 1;
-
-          if (!file_url) {
-            Lampa.Noty.show('Посилання на файл не знайдено в скрипті плеєра');
-            component.doesNotAnswer();
-            return;
-          }
-
-          extract[transl_id] = {
-            file: file_url,
-            translation: title,
-            quality: 720,
-            qualities: qualities,
-            subtitle: subtitle
-          };
-          Lampa.Noty.show('Фільм оброблено: ' + (file_url ? 'посилання знайдено' : 'посилання відсутнє'));
-        } catch (e) {
-          Lampa.Noty.show('Помилка парсингу даних фільму: ' + e.message + ' (скрипт: ' + player_script.substring(0, 100) + '...)');
-          component.doesNotAnswer();
-        }
-      }, function(a, c) {
-        Lampa.Noty.show('Помилка завантаження даних фільму: ' + a.status + ' (' + full_player_url + ')');
-        component.doesNotAnswer();
-      });
-    }
-
-    function getFile(element, max_quality) {
-      var translat = extract[element.translation];
-      var file = translat.file || '';
-      var subtitle = translat.subtitle || '';
-      var quality = {};
-
-      if (file) {
-        var link = file.slice(0, file.lastIndexOf('_')) + '_';
-        var orin = file.split('?');
-        orin = orin.length > 1 ? '?' + orin.slice(1).join('?') : '';
-        quality['720p'] = file;
-      }
-
-      return { file: file, quality: quality, subtitle: subtitle };
-    }
-
-    function filter() {
-      filter_items = { season: [], voice: [], voice_info: [] };
-
-      for (var transl_id in extract) {
-        var trans = extract[transl_id];
-        if (trans.json) {
-          var s = trans.json.length;
-          while (s--) filter_items.season.push(Lampa.Lang.translate('torrent_serial_season') + ' ' + (trans.json.length - s));
-          filter_items.voice.push(trans.json[0]?.comment || 'Default');
-          filter_items.voice_info.push({ id: transl_id });
-        } else {
-          filter_items.voice.push(trans.translation);
-          filter_items.voice_info.push({ id: transl_id });
-        }
-      }
-
-      component.filter(filter_items, choice);
-    }
-
-    function filtred() {
-      var filtred = [];
-
-      for (var transl_id in extract) {
-        var element = extract[transl_id];
-        if (element.json) {
-          element.json.forEach(function(season) {
-            if (season.id == choice.season + 1) {
-              season.folder.forEach(function(media) {
-                if (media.translation == filter_items.voice_info[choice.voice].id) {
-                  filtred.push({
-                    episode: media.episode,
-                    season: media.season,
-                    title: Lampa.Lang.translate('torrent_serial_episode') + ' ' + media.episode,
-                    quality: media.quality + 'p',
-                    translation: media.translation,
-                    voice_name: filter_items.voice[choice.voice],
-                    subtitle: media.subtitle
-                  });
-                }
-              });
-            }
-          });
-        } else {
-          filtred.push({
-            title: element.translation,
-            quality: element.quality + 'p',
-            translation: transl_id,
-            voice_name: element.translation,
-            subtitle: element.subtitle
-          });
-        }
-      }
-
-      return filtred;
-    }
-
-    function append(items) {
-      component.reset();
-      if (!items.length) {
-        Lampa.Noty.show('Немає елементів для відображення');
-        component.doesNotAnswer();
-        return;
-      }
-
-      component.draw(items, {
-        onEnter: function(item, html) {
-          var extra = getFile(item, item.quality);
-          if (extra.file) {
-            var playlist = [toPlayElement(item)];
-            Lampa.Player.play(playlist[0]);
-            Lampa.Player.playlist(playlist);
-            Lampa.Noty.show('Відтворення: ' + item.title);
-          } else {
-            Lampa.Noty.show(Lampa.Lang.translate('online_nolink'));
-          }
-        },
-        onContextMenu: function(item, html, data, call) {
-          call(getFile(item, item.quality));
-        }
-      });
-    }
-
-    function toPlayElement(element) {
-      var extra = getFile(element, element.quality);
-      var subtitle = extra.subtitle ? {
-        name: extra.subtitle.substringAfterLast('[').substringBefore(']') || 'Default',
-        url: extra.subtitle.substringAfter(']') || ''
-      } : null;
-      return {
-        title: element.title,
-        url: extra.file.replace('https://', 'http://'),
-        quality: extra.quality,
-        subtitle: subtitle,
-        headers: { Referer: 'https://tortuga.wtf/' }
-      };
-    }
-
-    this.extendChoice = function(saved) {
-      Lampa.Arrays.extend(choice, saved, true);
-    };
-
-    this.reset = function() {
-      component.reset();
-      choice = { season: 0, voice: 0, voice_name: '' };
-      extract = {};
-      filter();
-      append(filtred());
-    };
-
-    this.filter = function(type, a, b) {
-      choice[a.stype] = b.index;
-      if (a.stype == 'voice') choice.voice_name = filter_items.voice[b.index];
-      component.reset();
-      filter();
-      append(filtred());
-    };
-
-    this.destroy = function() {
-      network.clear();
-      extract = null;
-    };
-  }
-
-  function component(object) {
-    var scroll = new Lampa.Scroll({ mask: true, over: true });
-    var files = new Lampa.Explorer(object);
-    var filter = new Lampa.Filter(object);
-    var source = new EneyidaAPI(this, object);
-    var balanser = 'eneyida';
-    var initialized = false;
-
-    this.initialize = function() {
-      initialized = true;
-      files.appendFiles(scroll.render());
-      files.appendHead(filter.render());
-      scroll.body().addClass('torrent-list');
-      scroll.minus(files.render().find('.explorer__files-head'));
-      this.search();
-    };
-
-    this.search = function() {
-      this.activity.loader(true);
-      source.searchByTitle(object, object.search || object.movie.original_title || object.movie.original_name || object.movie.title || object.movie.name);
-    };
-
-    this.similars = function(json) {
-      if (!json || !json.length) {
-        Lampa.Noty.show('Немає результатів для відображення');
-        component.doesNotAnswer();
-        return;
-      }
-
-      json.forEach(function(elem) {
-        if (!elem.href) {
-          Lampa.Noty.show('Помилка: відсутній href для ' + elem.title);
-          return;
-        }
-        var item = Lampa.Template.get('online_prestige_folder', {
-          title: elem.title || 'Без назви',
-          info: elem.year ? elem.year : '',
-          time: ''
-        });
-        if (elem.poster) {
-          item.find('.online-prestige__folder').replaceWith('<div class="online-prestige__img"><img src="' + elem.poster + '" alt="' + elem.title + '"></div>');
-        }
-        item.on('hover:enter', function() {
-          component.reset();
-          Lampa.Noty.show('Обрано: ' + elem.title + ', перехід до ' + elem.href);
-          source.find(elem.href, elem.title);
-        }).on('hover:focus', function(e) {
-          scroll.update($(e.target), true);
-        });
-        scroll.append(item);
-      });
-      Lampa.Noty.show('Відображено ' + json.length + ' результатів');
-    };
-
-    this.reset = function() {
-      scroll.clear();
-    };
-
-    this.loading = function(status) {
-      this.activity.loader(status);
-      if (!status) this.activity.toggle();
-    };
-
-    this.filter = source.filter;
-    this.append = source.append;
-    this.doesNotAnswer = function() {
-      this.reset();
-      var html = Lampa.Template.get('online_does_not_answer', { balanser: balanser });
-      scroll.append(html);
-      this.loading(false);
-    };
-
-    this.start = function() {
-      if (!initialized) this.initialize();
-      Lampa.Background.immediately(Lampa.Utils.cardImgBackgroundBlur(object.movie));
-      Lampa.Controller.add('content', {
-        toggle: function() {
-          Lampa.Controller.collectionSet(scroll.render(), files.render());
-        },
-        up: function() {
-          Navigator.move('up');
-        },
-        down: function() {
-          Navigator.move('down');
-        },
-        right: function() {
-          filter.show(Lampa.Lang.translate('title_filter'), 'filter');
-        },
-        left: function() {
-          Lampa.Controller.toggle('menu');
-        }
-      });
-      Lampa.Controller.toggle('content');
-    };
-
-    this.render = function() {
-      return files.render();
-    };
-
-    this.destroy = function() {
-      files.destroy();
-      scroll.destroy();
-      source.destroy();
-      if (modalopen) {
-        modalopen = false;
-        Lampa.Modal.close();
-      }
-    };
-  }
-
-  function startPlugin() {
-    window.online_eneyida = true;
-    var manifest = {
-      type: 'video',
-      version: '1.0.8',
+      version: '1.0.9',
       name: 'Онлайн - Eneyida',
       description: 'Плагін для пошуку фільмів і серіалів на Eneyida.tv',
       component: 'online_eneyida',
