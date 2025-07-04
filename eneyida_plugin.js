@@ -33,8 +33,8 @@
         var images = [];
         var filter_sources = {};
         var filter_translate = {
-            season: Lampa.Lang.translate('torrent_serial_season'),
-            voice: Lampa.Lang.translate('torrent_parser_voice'),
+            season: Lampa.Lang.translate('video_serial_season'),
+            voice: Lampa.Lang.translate('video_parser_voice'),
             source: Lampa.Lang.translate('settings_rest_source')
         };
         var filter_find = {
@@ -107,7 +107,7 @@
             };
             if (filter.addButtonBack) filter.addButtonBack();
             filter.render().find('.filter--sort span').text(Lampa.Lang.translate('lampac_balanser'));
-            scroll.body().addClass('torrent-list');
+            scroll.body().addClass('video-list');
             files.appendFiles(scroll.render());
             files.appendHead(filter.render());
             scroll.minus(files.render().find('.explorer__files-head'));
@@ -141,8 +141,8 @@
             return new Promise(function(resolve, reject) {
                 // Список джерел для пошуку
                 var default_sources = [
-                    { name: 'Rezka', url: 'https://api.rezka.cc', show: true },
-                    { name: 'Kodik', url: 'https://api.kodik.info', show: true }
+                    { name: 'Eneyida', url: 'https://api.eneyida.tv', show: true },
+                    { name: 'UAFlix', url: 'https://api.uaflix.net', show: true }
                 ];
                 default_sources.forEach(function(j) {
                     var name = j.name.toLowerCase();
@@ -190,19 +190,19 @@
         // Обробка відповіді
         this.request = function(url) {
             network["native"](account(url), this.parse.bind(this), this.doesNotAnswer.bind(this), false, {
-                dataType: 'text'
+                dataType: 'json'
             });
         };
 
         // Парсинг даних
-        this.parse = function(str) {
+        this.parse = function(data) {
             try {
-                var items = this.parseJsonDate(str, '.videos__item');
-                var buttons = this.parseJsonDate(str, '.videos__button');
+                var items = data.videos || [];
+                var voices = data.voices || [];
                 if (items.length == 1 && items[0].method == 'link') {
                     filter_find.season = items.map(function(s) {
                         return {
-                            title: s.text,
+                            title: s.text || s.title,
                             url: s.url
                         };
                     });
@@ -216,41 +216,41 @@
                         return v.method == 'play' || v.method == 'call';
                     });
                     if (videos.length) {
-                        if (buttons.length) {
-                            filter_find.voice = buttons.map(function(b) {
+                        if (voices.length) {
+                            filter_find.voice = voices.map(function(b) {
                                 return {
-                                    title: b.text,
+                                    title: b.name || b.text,
                                     url: b.url
                                 };
                             });
                             var select_voice_url = this.getChoice(balanser).voice_url;
                             var select_voice_name = this.getChoice(balanser).voice_name;
-                            var find_voice_url = buttons.find(function(v) {
+                            var find_voice_url = voices.find(function(v) {
                                 return v.url == select_voice_url;
                             });
-                            var find_voice_name = buttons.find(function(v) {
-                                return v.text == select_voice_name;
+                            var find_voice_name = voices.find(function(v) {
+                                return v.name == select_voice_name || v.text == select_voice_name;
                             });
-                            var find_voice_active = buttons.find(function(v) {
+                            var find_voice_active = voices.find(function(v) {
                                 return v.active;
                             });
                             if (find_voice_url && !find_voice_url.active) {
                                 this.replaceChoice({
-                                    voice: buttons.indexOf(find_voice_url),
-                                    voice_name: find_voice_url.text
+                                    voice: voices.indexOf(find_voice_url),
+                                    voice_name: find_voice_url.name || find_voice_url.text
                                 });
                                 this.request(find_voice_url.url);
                             } else if (find_voice_name && !find_voice_name.active) {
                                 this.replaceChoice({
-                                    voice: buttons.indexOf(find_voice_name),
-                                    voice_name: find_voice_name.text
+                                    voice: voices.indexOf(find_voice_name),
+                                    voice_name: find_voice_name.name || find_voice_name.text
                                 });
                                 this.request(find_voice_name.url);
                             } else {
                                 if (find_voice_active) {
                                     this.replaceChoice({
-                                        voice: buttons.indexOf(find_voice_active),
-                                        voice_name: find_voice_active.text
+                                        voice: voices.indexOf(find_voice_active),
+                                        voice_name: find_voice_active.name || find_voice_active.text
                                     });
                                 }
                                 this.display(videos);
@@ -269,29 +269,6 @@
                 }
             } catch (e) {
                 this.doesNotAnswer(e);
-            }
-        };
-
-        // Парсинг JSON-дати
-        this.parseJsonDate = function(str, name) {
-            try {
-                var html = $('<div>' + str + '</div>');
-                var elems = [];
-                html.find(name).each(function() {
-                    var item = $(this);
-                    var data = JSON.parse(item.attr('data-json'));
-                    var season = item.attr('s');
-                    var episode = item.attr('e');
-                    var text = item.text();
-                    if (episode) data.episode = parseInt(episode);
-                    if (season) data.season = parseInt(season);
-                    if (text) data.text = text;
-                    data.active = item.hasClass('active');
-                    elems.push(data);
-                });
-                return elems;
-            } catch (e) {
-                return [];
             }
         };
 
@@ -320,7 +297,7 @@
             var play = {
                 title: file.title,
                 url: file.url,
-                quality: file.qualitys,
+                quality: file.qualitys || file.quality,
                 timeline: file.timeline,
                 subtitles: file.subtitles,
                 callback: file.mark
@@ -362,7 +339,7 @@
                             var first = _this.toPlayElement(item);
                             first.url = json.url;
                             first.headers = json_call.headers || json.headers;
-                            first.quality = json_call.quality || item.qualitys;
+                            first.quality = json_call.quality || item.qualitys || item.quality;
                             first.subtitles = json.subtitles;
                             _this.orUrlReserve(first);
                             _this.setDefaultQuality(first);
@@ -376,7 +353,7 @@
                                                 _this.getFileUrl(elem, function(stream, stream_json) {
                                                     if (stream.url) {
                                                         cell.url = stream.url;
-                                                        cell.quality = stream_json.quality || elem.qualitys;
+                                                        cell.quality = stream_json.quality || elem.qualitys || elem.quality;
                                                         cell.subtitles = stream.subtitles;
                                                         _this.orUrlReserve(cell);
                                                         _this.setDefaultQuality(cell);
@@ -420,7 +397,7 @@
                     _this.getFileUrl(item, function(stream) {
                         call({
                             file: stream.url,
-                            quality: item.qualitys
+                            quality: item.qualitys || item.quality
                         });
                     }, true);
                 }
@@ -538,12 +515,12 @@
             };
             filter_items.source = filter_sources;
             select.push({
-                title: Lampa.Lang.translate('torrent_parser_reset'),
+                title: Lampa.Lang.translate('video_parser_reset'),
                 reset: true
             });
             this.saveChoice(choice);
-            if (filter_items.voice && filter_items.voice.length) add('voice', Lampa.Lang.translate('torrent_parser_voice'));
-            if (filter_items.season && filter_items.season.length) add('season', Lampa.Lang.translate('torrent_serial_season'));
+            if (filter_items.voice && filter_items.voice.length) add('voice', Lampa.Lang.translate('video_parser_voice'));
+            if (filter_items.season && filter_items.season.length) add('season', Lampa.Lang.translate('video_serial_season'));
             filter.set('filter', select);
             filter.set('sort', filter_sources.map(function(e) {
                 return {
@@ -655,7 +632,7 @@
         var source = {
             title: spiderName,
             search: function(params, oncomplite) {
-                network.silent(account(spiderUri + '?title=' + params.query), function(json) {
+                network.silent(account(spiderUri + '/search?query=' + encodeURIComponent(params.query)), function(json) {
                     var keys = Lampa.Arrays.getKeys(json);
                     if (keys.length) {
                         var status = new Lampa.Status(keys.length);
@@ -709,7 +686,7 @@
                 close();
                 Lampa.Activity.push({
                     url: params.element.url,
-                    title: 'Lampac - ' + params.element.title,
+                    title: 'Eneyida - ' + params.element.title,
                     component: 'lampac',
                     movie: params.element,
                     page: 1,
@@ -730,8 +707,8 @@
         var manifst = {
             type: 'video',
             version: '1.4.9',
-            name: 'Lampac',
-            description: 'Плагін для пошуку та перегляду фільмів і серіалів',
+            name: 'Eneyida',
+            description: 'Плагін для пошуку та перегляду фільмів і серіалів через Eneyida.tv та UAFlix.net',
             component: 'lampac',
             onContextMenu: function(object) {
                 return {
@@ -791,6 +768,18 @@
             lampac_does_not_answer_text: {
                 uk: 'Пошук на ({balanser}) не дав результатів',
                 en: 'Search on ({balanser}) did not return any results'
+            },
+            video_parser_voice: {
+                uk: 'Озвучка',
+                en: 'Voice'
+            },
+            video_serial_season: {
+                uk: 'Сезон',
+                en: 'Season'
+            },
+            video_parser_reset: {
+                uk: 'Скинути',
+                en: 'Reset'
             }
         });
 
@@ -946,8 +935,8 @@
         } catch (e) {}
 
         // Додавання джерел пошуку
-        addSourceSearch('Rezka', 'https://api.rezka.cc');
-        addSourceSearch('Kodik', 'https://api.kodik.info');
+        addSourceSearch('Eneyida', 'https://api.eneyida.tv');
+        addSourceSearch('UAFlix', 'https://api.uaflix.net');
     }
 
     if (!window.lampac_plugin) startPlugin();
