@@ -1,7 +1,7 @@
 (function () {
 	'use strict';
 
-	const hostAddress = 'http://127.0.0.1:32768';
+	const hostAddress = 'http://127.0.0.1:4500';
 	// @todo: request those from backend instead
 	const sourcesWithSearch = [
 		'alloha', 'anilibria', 'animebesst',
