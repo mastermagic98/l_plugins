@@ -1,928 +1,447 @@
-(function() {
-    console.log("[Lampa Safe Styles] Версія з виправленим вибором кольору в модальному вікні");
+(function () {
+    'use strict';
 
-    // Кеш елементів
-    const elementsCache = new Map();
-    let stylesApplied = false;
+    // Налаштування платформи для телевізора
+    Lampa.Platform.tv();
 
-    /**
-     * Додавання стилів з кешуванням елементів
-     */
-    function safeAddStyleToElements(selector, styles) {
-        if (!elementsCache.has(selector)) {
-            elementsCache.set(selector, {
-                elements: document.querySelectorAll(selector),
-                styled: false
+    // Механізм захисту від налагодження
+    (function () {
+        // Перевірка на спроби налагодження
+        var checkDebug = function () {
+            return checkDebug.toString().search('(((.+)+)+)+$').toString().constructor(checkDebug).search('(((.+)+)+)+$');
+        };
+        checkDebug();
+
+        // Перевизначення методів консолі для запобігання налагодженню
+        var consoleOverride = function () {
+            var global = (function () {
+                try {
+                    return Function('return (function() {}.constructor("return this")())')();
+                } catch (e) {
+                    return window;
+                }
+            })();
+            var consoleMethods = ['log', 'warn', 'info', 'error', 'exception', 'table', 'trace'];
+            consoleMethods.forEach(function (method) {
+                var original = global.console[method] || function () {};
+                global.console[method] = function () {
+                    return original.apply(original, arguments);
+                };
             });
+        };
+        consoleOverride();
+    })();
+
+    // Об'єкт локалізації для трьох мов
+    var translations = {
+        uk: {
+            my_themes: 'Мої теми',
+            description: 'Змінити палітру елементів додатка',
+            categories: 'Категорії тем',
+            install: 'Встановити',
+            remove: 'Видалити',
+            installed: 'Встановлено',
+            theme_installed: 'Тема встановлена:',
+            focus_pack: 'Фокус Пак',
+            color_gallery: 'Колірна галерея',
+            gradient_style: 'Градієнтний стиль',
+            access_error: 'Помилка доступу',
+            language: 'Мова',
+            select_language: 'Вибрати мову'
+        },
+        en: {
+            my_themes: 'My Themes',
+            description: 'Change the color palette of the application',
+            categories: 'Theme Categories',
+            install: 'Install',
+            remove: 'Remove',
+            installed: 'Installed',
+            theme_installed: 'Theme installed:',
+            focus_pack: 'Focus Pack',
+            color_gallery: 'Color Gallery',
+            gradient_style: 'Gradient Style',
+            access_error: 'Access Error',
+            language: 'Language',
+            select_language: 'Select Language'
+        },
+        ru: {
+            my_themes: 'Мои темы',
+            description: 'Измени палитру элементов приложения',
+            categories: 'Категории тем',
+            install: 'Установить',
+            remove: 'Удалить',
+            installed: 'Установлена',
+            theme_installed: 'Тема установлена:',
+            focus_pack: 'Фокус Пак',
+            color_gallery: 'Цветная галерея',
+            gradient_style: 'Градиентный стиль',
+            access_error: 'Ошибка доступа',
+            language: 'Язык',
+            select_language: 'Выбрать язык'
         }
+    };
 
-        const cacheEntry = elementsCache.get(selector);
-        if (cacheEntry.styled) return;
+    // Отримання або встановлення поточної мови (за замовчуванням українська)
+    var currentLanguage = localStorage.getItem('appLanguage') || 'uk';
 
-        cacheEntry.elements.forEach(el => {
-            if (el && !el.dataset.lampaStyled) {
-                Object.entries(styles).forEach(([property, value]) => {
-                    el.style.setProperty(property, value, 'important');
+    // Функція для отримання тексту за ключем і поточною мовою
+    function t(key) {
+        return translations[currentLanguage][key] || translations.uk[key];
+    }
+
+    // Перевірка доступу
+    if (Lampa.Manifest.origin !== 'bylampa') {
+        Lampa.Noty.show(t('access_error'));
+        return;
+    }
+
+    // Завантаження вибраної теми з localStorage
+    var selectedTheme = localStorage.getItem('selectedTheme');
+    if (selectedTheme) {
+        $('head').append(`<link rel="stylesheet" href="${selectedTheme}">`);
+    }
+
+    // Додавання пункту "Мої теми" до налаштувань
+    Lampa.SettingsApi.addParam({
+        component: 'interface',
+        param: {
+            name: 'my_themes',
+            type: 'static'
+        },
+        field: {
+            name: t('my_themes'),
+            description: t('description')
+        },
+        onRender: function (item) {
+            setTimeout(function () {
+                $('.settings-param > div:contains("' + t('my_themes') + '")').parent().insertAfter($('div[data-name="interface_size"]'));
+                item.on('hover:enter', function () {
+                    setTimeout(function () {
+                        if ($('.settings-param').length || $('.settings-folder').length) {
+                            window.history.back();
+                        }
+                    }, 50);
+                    setTimeout(function () {
+                        var activityData = Lampa.Storage.get('themesCurrent');
+                        var activity = activityData ? JSON.parse(JSON.stringify(activityData)) : {
+                            url: 'https://bylampa.github.io/themes/categories/color_gallery.json',
+                            title: t('focus_pack'),
+                            component: 'my_themes',
+                            page: 1
+                        };
+                        Lampa.Activity.push(activity);
+                        Lampa.Storage.set('themesCurrent', JSON.stringify(Lampa.Activity.active()));
+                    }, 100);
                 });
-                el.dataset.lampaStyled = 'true';
-            }
-        });
-        
-        cacheEntry.styled = true;
-    }
-
-    /**
-     * Застосування базових стилів
-     */
-    function applyStyles() {
-        if (stylesApplied) return;
-        
-        // Стилі для body
-        if (!document.body.dataset.lampaStyled) {
-            document.body.style.setProperty('background', '#141414', 'important');
-            document.body.dataset.lampaStyled = 'true';
-        }	
-        
-        // Застосування збереженого акцентного кольору
-        const savedColor = Lampa.Storage.get('accent_color', '#c22222');
-        document.documentElement.style.setProperty('--accent-color', savedColor);
-        
-        stylesApplied = true;
-    }
-
-    /**
-     * Додавання всіх CSS стилів
-     */
-    function addCardStyles() {
-        const styleId = 'lampa-safe-css';
-        if (document.getElementById(styleId)) return;
-
-        const fullCSS = `
-            :root {
-                --dark-bg: #141414;
-                --darker-bg: #1a1a1a;
-                --menu-bg: #181818;
-                --accent-color: #c22222; /* Дефолтний колір, буде перевизначено */
-                --card-radius: 1.4em;
-                --menu-radius: 1.2em;
-            }
-
-            /* Карточки */
-            .card.focus .card__view::after,
-            .card.hover .card__view::after {
-                content: "";
-                position: absolute;
-                top: -0.3em;
-                left: -0.3em;
-                right: -0.3em;
-                bottom: -0.3em;
-                border: 0.3em solid var(--accent-color);
-                border-radius: var(--card-radius);
-                z-index: -1;
-                pointer-events: none;
-                background-color: var(--accent-color);
-            }
-            
-            /* Елементи в фокусі */
-            .settings-param.focus {
-                color: #fff;
-                border-radius: var(--menu-radius);
-                background: var(--accent-color);
-            }
-            
-            .simple-button.focus {
-                color: #fff;
-                background: var(--accent-color);
-            }
-			
-			.head__action {
-				opacity: 0.80;
-			}
-			
-			/* Градієнтний текст для рейтингу */
-            .full-start__rate > div:first-child {
-                color: #1ed5a9;
-				font-weight: bold;
-				background: none;
-            }
-			
-            .torrent-serial.focus,
-            .torrent-file.focus {
-                background: var(--accent-color);
-            }
-            
-            .torrent-item.focus::after {
-                content: "";
-                position: absolute;
-                top: -0.5em;
-                left: -0.5em;
-                right: -0.5em;
-                bottom: -0.5em;
-                border: 0.3em solid var(--accent-color);
-                border-radius: 0.7em;
-                z-index: -1;
-                background: var(--accent-color);
-            }
-            
-            .tag-count.focus,
-            .full-person.focus,
-            .full-review.focus {
-                color: #fff;
-                background: var(--accent-color);
-            }
-			
-			.navigation-bar__body { 
-				background: rgba(0, 0, 0, 0.3);
-			}
-			.console {
-				background: #141414;
-			}
-			.bookmarks-folder__layer {
-				background: rgba(0, 0, 0, 0.3);
-			}
-			.selector__body, .modal-layer {
-				background-color: #141414;
-			}
-
-            .menu__item.focus, 
-            .menu__item.traverse, 
-            .menu__item.hover {
-                color: #fff;
-                background: var(--accent-color);
-            }
-            
-            .card__marker > span {
-                max-width: 11em;
-            }
-            
-            .menu__item.focus .menu__ico path[fill],
-            .menu__item.focus .menu__ico rect[fill],
-            .menu__item.focus .menu__ico circle[fill],
-            .menu__item.traverse .menu__ico path[fill],
-            .menu__item.traverse .menu__ico rect[fill],
-            .menu__item.traverse .menu__ico circle[fill],
-            .menu__item.hover .menu__ico path[fill],
-            .menu__item.hover .menu__ico rect[fill],
-            .menu__item.hover .menu__ico circle[fill] {
-                fill: #ffffff;
-            }
-            
-            .online.focus {
-                box-shadow: 0 0 0 0.2em var(--accent-color);
-                background: var(--accent-color);
-            }
-            
-            .menu__item.focus .menu__ico [stroke],
-            .menu__item.traverse .menu__ico [stroke],
-            .menu__item.hover .menu__ico [stroke] {
-                stroke: #ffffff;
-            }
-            
-            .noty {
-                color: #ffffff;
-            }
-            
-            .head__action.focus {
-                background: var(--accent-color);
-                color: #fff;
-            }
-            
-            .selector:hover {
-                opacity: 0.8;
-            }
-            
-            .online-prestige.focus::after {
-                border: solid .3em var(--accent-color) !important;
-                background-color: #871818;
-            }
-            
-            .full-episode.focus::after,
-            .card-episode.focus .full-episode::after {
-                border: 0.3em solid var(--accent-color);
-            }
-            
-            .wrap__left {
-                box-shadow: 15px 0px 20px 0px var(--dark-bg) !important;
-            }
-            
-            .card-more.focus .card-more__box::after {
-                border: 0.3em solid var(--accent-color);
-            }
-            
-            .card__type {
-                background: var(--accent-color) !important;
-            }
-            
-            .new-interface .card.card--wide+.card-more .card-more__box {
-                background: rgba(0, 0, 0, 0.3);
-            }
-            
-            .helper {
-                background: var(--accent-color);
-            }
-            
-            .extensions__item,
-            .extensions__block-add {
-                background-color: var(--menu-bg);
-            }
-            
-            .extensions__item.focus:after,
-            .extensions__block-empty.focus:after,
-            .extensions__block-add.focus:after {
-                border: 0.3em solid var(--accent-color);
-            }
-            
-            .settings-input--free,
-            .settings-input__content,
-            .extensions {
-                background-color: var(--dark-bg);
-            }
-            
-            .modal__content {
-                background-color: var(--darker-bg) !important;
-                max-height: 90vh;
-                overflow: hidden;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
-            }
-            
-            .settings__content, 
-            .selectbox__content {
-                position: fixed;
-                right: -100%;
-                display: flex;
-                background: var(--darker-bg);
-                top: 1em;
-                left: 98%;
-                max-height: calc(100vh - 2em);
-                border-radius: var(--menu-radius);
-                padding: 0.5em;
-                transform: translateX(100%);
-                transition: transform 0.3s ease;
-                overflow-y: auto;
-                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
-            }
-			
-			.card-more__box {
-				background: rgba(0, 0, 0, 0.3);
-			}
-
-			.items-line__more.focus {
-				background-color: var(--accent-color);
-				color: #fff;
-			}
-
-            .settings__title, 
-            .selectbox__title {
-                font-size: 2.5em;
-                font-weight: 300;
-                text-align: center;
-            }
-            
-            .scroll--mask {
-                -webkit-mask-image: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, rgb(255, 255, 255) 8%, rgb(255, 255, 255) 92%, rgba(255, 255, 255, 0) 100%);
-                mask-image: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, rgb(255, 255, 255) 8%, rgb(255, 255, 255) 92%, rgba(255, 255, 255, 0) 100%);
-            }
-			
-			.full-start__button.focus {
-				color: white !important;
-				background: var(--accent-color) !important;
-			}
-            
-            .menu__item {
-                border-radius: 0em 15em 14em 0em;
-            }
-            
-            .menu__list {
-                padding-left: 0;
-            }
-            
-            body.advanced--animation .head .head__action.focus,
-            body.advanced--animation .head .head__action.hover,
-            body.advanced--animation .menu .menu__item.focus,
-            body.advanced--animation .menu .menu__item.hover,
-            body.advanced--animation .full-start__button.focus,
-            body.advanced--animation .full-start__button.hover,
-            body.advanced--animation .simple-button.focus,
-            body.advanced--animation .simple-button.hover,
-            body.advanced--animation .full-descr__tag.focus,
-            body.advanced--animation .full-descr__tag.hover,
-            body.advanced--animation .tag-count.focus,
-            body.advanced--animation .tag-count.hover,
-            body.advanced--animation .full-review.focus,
-            body.advanced--animation .full-review.hover,
-            body.advanced--animation .full-review-add.focus,
-            body.advanced--animation .full-review-add.hover {
-                animation: none !important;
-            }
-            
-            .full-review-add.focus::after {
-                border: 0.3em solid var(--accent-color);
-            }
-            
-			.explorer__left {
-				display: none;
-			}
-			.explorer__files {
-				width: 100%;
-			}
-			
-            .notification-item {
-                border: 2px solid var(--accent-color) !important;
-            }
-            
-            .notification-date {
-                background: var(--accent-color) !important;
-            }
-			
-			.card__quality {
-				color: #fff;
-				background: var(--accent-color) !important;
-			}
-            
-            .modal {
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                align-items: center;
-            }
-            
-            .noty__body {
-                box-shadow: 0 -2px 6px rgb(22 22 22 / 50%);
-                background: var(--accent-color);
-            }
-			
-			.card__title {
-				text-align: center;
-				font-size: 1.2em;
-				line-height: 1.1;
-			}
-			
-			.background__one.visible, .background__two.visible {
-				opacity: 0;
-			}
-			
-			.card__age {
-				text-align: center;
-				color: #ffffff7a;
-			}
-			
-			body {
-				margin: 1 !important;
-			}
-            
-            /* Стили для рейтинга на карточке */
-            .card__vote {
-                position: absolute;
-                top: 0;
-                right: 0em;
-                background: var(--accent-color);
-                color: #ffffff;
-                font-size: 1.5em;
-                font-weight: 700;
-                padding: 0.5em;
-                border-radius: 0em 0.5em 0em 0.5em;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                bottom: auto;
-            }						
-            
-            /* Стиль для элемента selectbox в фокусе */
-            .selectbox-item.focus {
-                color: #fff;
-                border-radius: var(--menu-radius);
-                background: var(--accent-color);
-            }
-            
-            /* Стиль для папки настроек в фокусе */
-            .settings-folder.focus {
-                color: #fff;
-                border-radius: var(--menu-radius);
-                background: var(--accent-color);
-            }
-			
-			body.glass--style.platform--browser .card .card__icons-inner, 
-			body.glass--style.platform--browser .card .card__marker, 
-			body.glass--style.platform--browser .card .card__vote, 
-			body.glass--style.platform--browser .card .card-watched, 
-			body.glass--style.platform--nw .card .card__icons-inner, 
-			body.glass--style.platform--nw .card .card__marker, 
-			body.glass--style.platform--nw .card .card__vote, 
-			body.glass--style.platform--nw .card .card-watched, 
-			body.glass--style.platform--apple .card .card__icons-inner, 
-			body.glass--style.platform--apple .card .card__marker, 
-			body.glass--style.platform--apple .card .card__vote, 
-			body.glass--style.platform--apple .card .card-watched {
-				background-color: rgba(0, 0, 0, 0.3);
-				-webkit-backdrop-filter: blur(1em);
-				backdrop-filter: none;
-				background: var(--accent-color);
-			}
-
-            /* Стилі для палітри вибору кольору */
-            .color-picker__modal {
-                background: var(--darker-bg);
-                border-radius: var(--menu-radius);
-                padding: 1em;
-                max-width: 300px;
-                margin: auto;
-            }
-            .color-picker__title {
-                font-size: 1.5em;
-                color: #fff;
-                margin-bottom: 0.5em;
-                text-align: center;
-            }
-            .chrome-picker {
-                width: 225px;
-                background: #fff;
-                border-radius: 2px;
-                box-shadow: 0 0 2px rgba(0,0,0,0.3), 0 4px 8px rgba(0,0,0,0.3);
-                font-family: Menlo, monospace;
-                margin: 0 auto;
-            }
-            .saturation-white {
-                background: linear-gradient(to right, #fff, rgba(255,255,255,0));
-            }
-            .saturation-black {
-                background: linear-gradient(to top, #000, rgba(0,0,0,0));
-            }
-            .hue-horizontal {
-                background: linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%);
-                height: 10px !important;
-                display: block !important;
-                border-radius: 2px;
-            }
-            .color-picker__input {
-                width: 100%;
-                height: 21px;
-                font-size: 11px;
-                color: #333;
-                border-radius: 2px;
-                border: none;
-                box-shadow: 0 0 0 1px inset #dadada;
-                text-align: center;
-                margin-top: 12px;
-            }
-            .color-picker__label {
-                text-transform: uppercase;
-                font-size: 11px;
-                line-height: 11px;
-                color: #969696;
-                text-align: center;
-                display: block;
-                margin-top: 12px;
-            }
-            .color-picker__saturation {
-                position: relative;
-                width: 100%;
-                padding-bottom: 55%;
-                border-radius: 2px 2px 0 0;
-                overflow: hidden;
-            }
-            .color-picker__saturation > div {
-                position: absolute;
-                inset: 0;
-            }
-            .color-picker__cursor {
-                position: absolute;
-                width: 12px;
-                height: 12px;
-                border-radius: 6px;
-                box-shadow: inset 0 0 0 1px #fff;
-                transform: translate(-6px, -6px);
-            }
-            .color-picker__hue {
-                height: 10px;
-                position: relative;
-                margin: 12px 0;
-                display: block !important;
-            }
-            .color-picker__hue > div {
-                position: absolute;
-                inset: 0;
-                padding: 0 2px;
-            }
-            .color-picker__hue-cursor {
-                width: 12px;
-                height: 12px;
-                border-radius: 6px;
-                background-color: #f8f8f8;
-                box-shadow: 0 1px 4px rgba(0,0,0,0.37);
-                transform: translate(-6px, -1px);
-            }
-
-            /* Мобільні стилі */
-            @media screen and (max-width: 480px) {
-                .settings__content,
-                .selectbox__content {
-                    left: 0 !important;
-                    top: unset !important;
-                    border-top-left-radius: 2em !important;
-                    border-top-right-radius: 2em !important;
-                }
-                
-                .ru-title-full,
-                .ru-title-full:hover {
-                    max-width: none !important;
-                    text-align: center !important;
-                }
-                
-                .full-start-new__body {
-                    text-align: center !important;
-                }
-                
-                .full-start-new__rate-line {
-                    padding-top: 0.5em !important;
-                    display: flex;
-                    justify-content: center;
-                    margin-bottom: 0em;
-                }
-                
-                .full-start-new__tagline {
-                    margin-bottom: 0.5em !important;
-                    margin-top: 0.5em !important;
-                }
-            }
-			
-			@media screen and (max-width: 480px) {
-				.full-start-new__title img {
-					object-fit: contain;
-					max-width: 10em !important;
-					max-height: 5em !important;
-				}
-			}
-								
-			@media screen and (max-width: 580px) {
-                .full-descr__text {
-                    text-align: justify;
-                }
-                
-                .items-line__head {
-                    justify-content: center !important;
-                }
-                
-                .full-descr__details {
-                    justify-content: center !important;
-                }
-            }
-			
-			@media screen and (max-width: 480px) {
-				.full-start-new__details > span:nth-of-type(7) {
-					display: block;
-					order: 2;
-					opacity: 40%;		
-				}
-			}
-
-            @media screen and (max-width: 480px) {
-                .full-descr__tags {
-                    justify-content: center !important;
-                }
-                
-                .items-line__more {
-                    display: none;
-                }
-                
-                .full-descr__info-body {
-                    justify-content: center !important;
-                    display: flex;
-                }
-                
-                .full-descr__details > * {
-                    text-align: center;
-                }
-            }
-            
-            @media screen and (max-width: 580px) {
-                .full-start-new__buttons {
-                    overflow: auto;
-                    display: flex !important;
-                    justify-content: center !important;
-                    flex-wrap: wrap !important;
-                    max-width: 100% !important;
-                    margin: 0.5em auto !important;
-                }
-            }
-            
-            @media screen and (max-width: 767px) {
-                .full-start-new__details {
-                    display: flex !important;
-                    justify-content: center !important;
-                    flex-wrap: wrap !important;
-                    max-width: 100% !important;
-                    margin: 0.5em auto !important;
-                }
-            }
-			
-			@media screen and (max-width: 480px) {
-				.selectbox.animate .selectbox__content, 
-				.settings.animate .settings__content {
-					background: #1a1a1a;
-				}
-			}
-            
-            @media screen and (max-width: 480px) {
-                .full-start-new__reactions {
-                    display: flex !important;
-                    justify-content: center !important;
-                    flex-wrap: wrap !important;
-                    max-width: 100% !important;
-                    margin: 0.5em auto !important;
-                }
-            }
-        `;
-
-        const style = document.createElement('style');
-        style.id = styleId;
-        style.innerHTML = fullCSS;
-        document.head.appendChild(style);
-    }
-
-    /**
-     * Додавання секції вибору кольору в модальному вікні
-     */
-    function showColorPicker() {
-        const modalContent = document.createElement('div');
-        modalContent.className = 'color-picker__modal';
-
-        // Заголовок модального вікна
-        const title = document.createElement('div');
-        title.className = 'color-picker__title';
-        title.textContent = Lampa.Lang.translate('color_picker_title');
-        modalContent.appendChild(title);
-
-        // Контейнер для палітри
-        const pickerContainer = document.createElement('div');
-        pickerContainer.className = 'chrome-picker';
-
-        // Палітра насиченості
-        const saturationDiv = document.createElement('div');
-        saturationDiv.className = 'color-picker__saturation';
-
-        const saturationWhite = document.createElement('div');
-        saturationWhite.className = 'saturation-white';
-        const saturationBlack = document.createElement('div');
-        saturationBlack.className = 'saturation-black';
-        const saturationCursor = document.createElement('div');
-        saturationCursor.className = 'color-picker__cursor';
-
-        saturationWhite.appendChild(saturationBlack);
-        saturationWhite.appendChild(saturationCursor);
-        saturationDiv.appendChild(saturationWhite);
-        pickerContainer.appendChild(saturationDiv);
-
-        // Повзунок відтінку
-        const hueContainer = document.createElement('div');
-        hueContainer.className = 'color-picker__hue';
-        const hueDiv = document.createElement('div');
-        hueDiv.className = 'hue-horizontal';
-        const hueCursor = document.createElement('div');
-        hueCursor.className = 'color-picker__hue-cursor';
-
-        hueDiv.appendChild(hueCursor);
-        hueContainer.appendChild(hueDiv);
-        pickerContainer.appendChild(hueContainer);
-
-        // Поле для HEX-коду
-        const hexContainer = document.createElement('div');
-        hexContainer.className = 'flexbox-fix';
-        hexContainer.style.paddingTop = '16px';
-        hexContainer.style.display = 'flex';
-
-        const inputContainer = document.createElement('div');
-        inputContainer.style.flex = '1';
-        inputContainer.style.paddingLeft = '6px';
-
-        const input = document.createElement('input');
-        input.className = 'color-picker__input';
-        input.id = 'color-picker-hex';
-        input.value = Lampa.Storage.get('accent_color', '#c22222');
-        input.spellcheck = false;
-
-        const label = document.createElement('label');
-        label.className = 'color-picker__label';
-        label.setAttribute('for', 'color-picker-hex');
-        label.textContent = 'HEX';
-
-        inputContainer.appendChild(input);
-        inputContainer.appendChild(label);
-        hexContainer.appendChild(inputContainer);
-        pickerContainer.appendChild(hexContainer);
-
-        modalContent.appendChild(pickerContainer);
-
-        // Ініціалізація позиції курсорів на основі збереженого кольору
-        const savedColor = Lampa.Storage.get('accent_color', '#c22222');
-        const rgb = hexToRgb(savedColor);
-        const hsv = rgbToHsv(rgb.r, rgb.g, rgb.b);
-        saturationDiv.style.background = `hsl(${hsv.h * 360}, 100%, 50%)`;
-        saturationCursor.style.left = `${hsv.s * 100}%`;
-        saturationCursor.style.top = `${(1 - hsv.v) * 100}%`;
-        hueCursor.style.left = `${hsv.h * 100}%`;
-        console.log('[Lampa Color Picker] Ініціалізація кольору:', savedColor, 'HSV:', hsv);
-
-        // Обробка вибору кольору
-        function updateColorFromSaturation(event) {
-            const rect = saturationDiv.getBoundingClientRect();
-            const x = Math.min(Math.max(event.clientX - rect.left, 0), rect.width);
-            const y = Math.min(Math.max(event.clientY - rect.top, 0), rect.height);
-            const saturation = x / rect.width;
-            const value = 1 - (y / rect.height);
-
-            const hue = parseFloat(hueCursor.style.left || '0') / 100;
-            const rgb = hsvToRgb(hue, saturation, value);
-            const hex = rgbToHex(rgb.r, rgb.g, rgb.b);
-
-            saturationCursor.style.left = `${(x / rect.width) * 100}%`;
-            saturationCursor.style.top = `${(y / rect.height) * 100}%`;
-            saturationDiv.style.background = `hsl(${hue * 360}, 100%, 50%)`;
-            input.value = hex;
-            document.documentElement.style.setProperty('--accent-color', hex);
-            Lampa.Storage.set('accent_color', hex);
-            console.log('[Lampa Color Picker] Оновлено колір через палітру:', hex);
-        }
-
-        function updateColorFromHue(event) {
-            const rect = hueDiv.getBoundingClientRect();
-            const x = Math.min(Math.max(event.clientX - rect.left, 0), rect.width);
-            const hue = x / rect.width;
-
-            hueCursor.style.left = `${(x / rect.width) * 100}%`;
-            const rgb = hsvToRgb(hue, 1, 1);
-            const hex = rgbToHex(rgb.r, rgb.g, rgb.b);
-
-            saturationDiv.style.background = `hsl(${hue * 360}, 100%, 50%)`;
-            input.value = hex;
-            document.documentElement.style.setProperty('--accent-color', hex);
-            Lampa.Storage.set('accent_color', hex);
-            console.log('[Lampa Color Picker] Оновлено колір через повзунок відтінку:', hex);
-        }
-
-        function updateColorFromHex() {
-            const hex = input.value.toUpperCase();
-            if (/^#[0-9A-F]{6}$/i.test(hex)) {
-                document.documentElement.style.setProperty('--accent-color', hex);
-                Lampa.Storage.set('accent_color', hex);
-                const rgb = hexToRgb(hex);
-                const hsv = rgbToHsv(rgb.r, rgb.g, rgb.b);
-                hueCursor.style.left = `${hsv.h * 100}%`;
-                saturationCursor.style.left = `${hsv.s * 100}%`;
-                saturationCursor.style.top = `${(1 - hsv.v) * 100}%`;
-                saturationDiv.style.background = `hsl(${hsv.h * 360}, 100%, 50%)`;
-                console.log('[Lampa Color Picker] Оновлено колір через HEX:', hex);
-            }
-        }
-
-        // Обробники подій
-        saturationDiv.addEventListener('mousedown', (e) => {
-            updateColorFromSaturation(e);
-            const moveHandler = (moveEvent) => updateColorFromSaturation(moveEvent);
-            document.addEventListener('mousemove', moveHandler);
-            document.addEventListener('mouseup', () => {
-                document.removeEventListener('mousemove', moveHandler);
-            }, { once: true });
-        });
-
-        hueDiv.addEventListener('mousedown', (e) => {
-            updateColorFromHue(e);
-            const moveHandler = (moveEvent) => updateColorFromHue(moveEvent);
-            document.addEventListener('mousemove', moveHandler);
-            document.addEventListener('mouseup', () => {
-                document.removeEventListener('mousemove', moveHandler);
-            }, { once: true });
-        });
-
-        input.addEventListener('input', updateColorFromHex);
-
-        // Відкриття модального вікна
-        try {
-            Lampa.Modal.open({
-                title: Lampa.Lang.translate('color_picker_title'),
-                html: modalContent,
-                size: 'medium',
-                onBack: () => {
-                    Lampa.Modal.close();
-                }
-            });
-            console.log('[Lampa Color Picker] Модальне вікно відкрито');
-        } catch (e) {
-            console.error('[Lampa Color Picker] Помилка при відкритті модального вікна:', e);
-        }
-    }
-
-    /**
-     * Допоміжні функції для конвертації кольорів
-     */
-    function hsvToRgb(h, s, v) {
-        let r, g, b;
-        const i = Math.floor(h * 6);
-        const f = h * 6 - i;
-        const p = v * (1 - s);
-        const q = v * (1 - f * s);
-        const t = v * (1 - (1 - f) * s);
-        switch (i % 6) {
-            case 0: r = v; g = t; b = p; break;
-            case 1: r = q; g = v; b = p; break;
-            case 2: r = p; g = v; b = t; break;
-            case 3: r = p; g = q; b = v; break;
-            case 4: r = t; g = p; b = v; break;
-            case 5: r = v; g = p; b = q; break;
-        }
-        return { r: Math.round(r * 255), g: Math.round(g * 255), b: Math.round(b * 255) };
-    }
-
-    function rgbToHex(r, g, b) {
-        return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
-    }
-
-    function hexToRgb(hex) {
-        const r = parseInt(hex.slice(1, 3), 16);
-        const g = parseInt(hex.slice(3, 5), 16);
-        const b = parseInt(hex.slice(5, 7), 16);
-        return { r, g, b };
-    }
-
-    function rgbToHsv(r, g, b) {
-        r /= 255; g /= 255; b /= 255;
-        const max = Math.max(r, g, b), min = Math.min(r, g, b);
-        let h, s, v = max;
-        const d = max - min;
-        s = max === 0 ? 0 : d / max;
-        if (max === min) {
-            h = 0;
-        } else {
-            switch (max) {
-                case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-                case g: h = (b - r) / d + 2; break;
-                case b: h = (r - g) / d + 4; break;
-            }
-            h /= 6;
-        }
-        return { h, s, v };
-    }
-
-    // Додавання компонента в налаштування
-    Lampa.SettingsApi.addComponent({
-        component: 'styleinter',
-        name: Lampa.Lang.translate('style_interface'),
-        icon: `
-        <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m3 16 5-7 6 6.5m6.5 2.5L16 13l-4.286 6M14 10h.01M4 19h16a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1Z"/>
-        </svg>
-        `,
-        onSelect: showColorPicker
-    });
-
-    // Оптимізований спостерігач за DOM
-    const observer = new MutationObserver(() => {
-        if (!stylesApplied) {
-            requestAnimationFrame(applyStyles);
+            }, 0);
         }
     });
 
-    // Ініціалізація
-    function init() {
-        applyStyles();
-        addCardStyles();
-        
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true,
-            attributes: true,
-            attributeFilter: ['class']
-        });
-        
-        // Резервна перевірка кожні 30 секунд
-        const backupInterval = setInterval(() => {
-            if (!stylesApplied) applyStyles();
-        }, 30000);
-        
-        // Функція зупинки
-        window.stopLampaSafeStyles = () => {
-            clearInterval(backupInterval);
-            observer.disconnect();
-            
-            const style = document.getElementById('lampa-safe-css');
-            if (style) style.remove();
-            
-            document.querySelectorAll('[data-lampa-styled]').forEach(el => {
-                el.removeAttribute('data-lampa-styled');
+    // Додавання пункту "Мова" до налаштувань
+    Lampa.SettingsApi.addParam({
+        component: 'interface',
+        param: {
+            name: 'language',
+            type: 'static'
+        },
+        field: {
+            name: t('language'),
+            description: t('select_language')
+        },
+        onRender: function (item) {
+            item.on('hover:enter', function () {
+                var languages = [
+                    { title: 'Українська', code: 'uk' },
+                    { title: 'English', code: 'en' },
+                    { title: 'Русский', code: 'ru' }
+                ];
+                Lampa.Select.show({
+                    title: t('select_language'),
+                    items: languages,
+                    onSelect: function (lang) {
+                        currentLanguage = lang.code;
+                        localStorage.setItem('appLanguage', currentLanguage);
+                        // Оновлення UI після зміни мови
+                        Lampa.Activity.push({
+                            url: Lampa.Activity.active().url,
+                            title: t('focus_pack'),
+                            component: 'my_themes',
+                            page: 1
+                        });
+                        Lampa.Storage.set('themesCurrent', JSON.stringify(Lampa.Activity.active()));
+                    },
+                    onBack: function () {
+                        Lampa.Controller.toggle('content');
+                    }
+                });
             });
-            
-            elementsCache.clear();
-            stylesApplied = false;
-            
-            console.log("[Lampa Safe Styles] Плагін зупинено");
+        }
+    });
+
+    // Компонент тем
+    function ThemeComponent(params) {
+        var request = new Lampa.Reguest();
+        var scroll = new Lampa.Scroll({ mask: true, over: true, step: 250 });
+        var items = [];
+        var html = $('<div class="my_themes category-full"></div>');
+        var body = $('<div></div>');
+        var info, last;
+        var categories = [
+            { title: t('focus_pack'), url: 'https://bylampa.github.io/themes/categories/color_gallery.json' },
+            { title: t('color_gallery'), url: 'https://bylampa.github.io/themes/categories/stroke.json' },
+            { title: t('gradient_style'), url: 'https://bylampa.github.io/themes/categories/gradient_style.json' }
+        ];
+
+        this.create = function () {
+            this.activity.loader(true);
+            request.silent(params.url, this.build.bind(this), function () {
+                var empty = new Lampa.Empty();
+                html.append(empty.render());
+                this.start = empty.start;
+                this.activity.loader(false);
+                this.activity.toggle();
+            });
+            this.append();
+        };
+
+        this.append = function (data) {
+            data.forEach(function (element) {
+                var card = Lampa.Template.get('card', { title: element.title, release_year: '' });
+                card.addClass('card--collection');
+                card.find('.card__img').css({ cursor: 'pointer', backgroundColor: '#353535a6' });
+                card.css({ 'text-align': 'center' });
+                var img = card.find('.card__img')[0];
+                img.onerror = function () {
+                    card.addClass('card--loaded');
+                };
+                img.onload = function () {
+                    img.src = './img/img_broken.svg';
+                };
+                img.src = element.logo;
+
+                // Позначення вибраної теми
+                if (localStorage.getItem('selectedTheme') === element.css) {
+                    var quality = document.createElement('div');
+                    quality.innerText = t('installed');
+                    quality.classList.add('card__quality');
+                    card.find('.card__view').append(quality);
+                    $(quality).css({
+                        position: 'absolute',
+                        left: '-3%',
+                        bottom: '70%',
+                        padding: '0.4em 0.4em',
+                        background: '#ffe216',
+                        color: '#000',
+                        fontSize: '0.8em',
+                        WebkitBorderRadius: '0.3em',
+                        MozBorderRadius: '0.3em',
+                        borderRadius: '0.3em',
+                        textTransform: 'uppercase'
+                    });
+                }
+
+                card.on('hover:focus', function () {
+                    last = card[0];
+                    scroll.update(card, true);
+                    info.find('.info__title').text(element.title);
+                });
+
+                card.on('hover:enter', function () {
+                    var menu = Lampa.Controller.enabled().name;
+                    var itemsMenu = [];
+                    itemsMenu.push({ title: t('install') });
+                    itemsMenu.push({ title: t('remove') });
+                    Lampa.Select.show({
+                        title: '',
+                        items: itemsMenu,
+                        onBack: function () {
+                            Lampa.Controller.toggle('content');
+                        },
+                        onSelect: function (item) {
+                            if (item.title === t('install')) {
+                                $('#stantion_filtr').remove();
+                                $('head').append(`<link rel="stylesheet" href="${element.css}">`);
+                                localStorage.setItem('selectedTheme', element.css);
+                                console.log(t('theme_installed'), element.css);
+                                $('.card__quality').length > 0 && $('.card__quality').remove();
+
+                                var quality = document.createElement('div');
+                                quality.innerText = t('installed');
+                                quality.classList.add('card__quality');
+                                card.find('.card__view').append(quality);
+                                $(quality).css({
+                                    position: 'absolute',
+                                    left: '-3%',
+                                    bottom: '70%',
+                                    padding: '0.4em 0.4em',
+                                    background: '#ffe216',
+                                    color: '#000',
+                                    fontSize: '0.8em',
+                                    WebkitBorderRadius: '0.3em',
+                                    MozBorderRadius: '0.3em',
+                                    borderRadius: '0.3em',
+                                    textTransform: 'uppercase'
+                                });
+
+                                // Скидання інших стилів, якщо вони активні
+                                if (Lampa.Storage.get('myBackground') === true) {
+                                    var bg = Lampa.Storage.get('myBackground');
+                                    Lampa.Storage.set('background', bg);
+                                    Lampa.Storage.set('myBackground', 'false');
+                                }
+                                if (Lampa.Storage.get('myGlassStyle') === true) {
+                                    var glass = Lampa.Storage.get('glass_style');
+                                    Lampa.Storage.set('glass_style', glass);
+                                    Lampa.Storage.set('myGlassStyle', 'false');
+                                }
+                                if (Lampa.Storage.get('myBlackStyle') === true) {
+                                    var black = Lampa.Storage.get('black_style');
+                                    Lampa.Storage.set('black_style', black);
+                                    Lampa.Storage.set('myBlackStyle', 'false');
+                                }
+                                Lampa.Controller.toggle('content');
+                            } else if (item.title === t('remove')) {
+                                $('#stantion_filtr').remove();
+                                localStorage.removeItem('selectedTheme');
+                                $('.card__quality').remove();
+                                if (localStorage.getItem('background')) {
+                                    Lampa.Storage.set('background', Lampa.Storage.get('background'));
+                                    localStorage.removeItem('background');
+                                }
+                                if (localStorage.getItem('myGlassStyle')) {
+                                    Lampa.Storage.set('glass_style', Lampa.Storage.get('myGlassStyle'));
+                                    localStorage.removeItem('myGlassStyle');
+                                }
+                                if (localStorage.getItem('myBlackStyle')) {
+                                    Lampa.Storage.set('black_style', Lampa.Storage.get('myBlackStyle'));
+                                    localStorage.removeItem('myBlackStyle');
+                                }
+                                Lampa.Controller.toggle('content');
+                            }
+                        }
+                    });
+                });
+
+                body.append(card);
+                items.push(card);
+            });
+        };
+
+        this.bu
+ild = function (data) {
+            Lampa.Background.change('');
+            Lampa.Template.addClass('info_tvtv', 'mheight');
+            var button = Lampa.Template.get('button_category');
+            info = Lampa.Template.get('info_tvtv');
+            info.find('.info__right').append(button);
+            info.find('.view--category').on('hover:enter hover:click', this.selectGroup.bind(this));
+            scroll.render().addClass('layer--wheight').data('mheight', info);
+            html.append(info.append());
+            html.append(scroll.render());
+            this.append(data);
+            scroll.append(body);
+            $('.my_themes').append('<div id="spacer" style="height: 25em;"></div>');
+            this.activity.loader(false);
+            this.activity.toggle();
+        };
+
+        this.selectGroup = function () {
+            Lampa.Select.show({
+                title: t('categories'),
+                items: categories,
+                onSelect: function (item) {
+                    Lampa.Activity.push({
+                        url: item.url,
+                        title: item.title,
+                        component: 'my_themes',
+                        page: 1
+                    });
+                    Lampa.Storage.set('themesCurrent', JSON.stringify(Lampa.Activity.active()));
+                },
+                onBack: function () {
+                    Lampa.Controller.toggle('content');
+                }
+            });
+        };
+
+        this.start = function () {
+            Lampa.Controller.add('content', {
+                toggle: function () {
+                    Lampa.Controller.collectionSet(scroll.render());
+                    Lampa.Controller.collectionFocus(last || false, scroll.render());
+                },
+                left: function () {
+                    if (Navigator.canmove('left')) Navigator.move('left');
+                    else Lampa.Controller.toggle('menu');
+                },
+                right: function () {
+                    if (Navigator.canmove('right')) Navigator.move('right');
+                    else this.selectGroup();
+                },
+                up: function () {
+                    if (Navigator.canmove('up')) Navigator.move('up');
+                    else {
+                        if (!info.find('.view--category').hasClass('focus')) {
+                            Lampa.Controller.collectionSet(info);
+                            Navigator.move('right');
+                        } else {
+                            Lampa.Controller.toggle('head');
+                        }
+                    }
+                },
+                down: function () {
+                    if (Navigator.canmove('down')) Navigator.move('down');
+                    else if (info.find('.view--category').hasClass('focus')) {
+                        Lampa.Controller.toggle('content');
+                    }
+                },
+                back: function () {
+                    Lampa.Activity.backward();
+                }
+            });
+            Lampa.Controller.toggle('content');
+        };
+
+        this.pause = function () {};
+        this.stop = function () {};
+        this.render = function () {
+            return html;
+        };
+
+        this.destroy = function () {
+            request.clear();
+            scroll.destroy();
+            if (info) info.remove();
+            html.remove();
+            body.remove();
+            request = null;
+            items = null;
+            html = null;
+            body = null;
+            info = null;
         };
     }
 
-    // Запуск
-    if (document.readyState === 'complete') {
-        init();
+    // Реєстрація компонента тем
+    Lampa.Component.add('my_themes', ThemeComponent);
+
+    // Очищення button_category при зміні активності
+    Lampa.Storage.listener.follow('app', function (e) {
+        if (e.name === 'activity' && Lampa.Activity.active().component !== 'my_themes') {
+            setTimeout(function () {
+                $('#button_category').remove();
+            }, 0);
+        }
+    });
+
+    // Запуск, якщо додаток готовий, або очікування події appready
+    if (window.appready) {
+        ThemeComponent();
     } else {
-        window.addEventListener('load', init);
+        Lampa.Listener.follow('app', function (e) {
+            if (e.type === 'appready') {
+                ThemeComponent();
+            }
+        });
     }
 })();
