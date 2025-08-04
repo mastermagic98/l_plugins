@@ -1,9 +1,6 @@
 (function () {
     'use strict';
 
-    // Set platform to TV
-    Lampa.Platform.tv();
-
     // Language support
     const translations = {
         my_themes: {
