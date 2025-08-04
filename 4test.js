@@ -1,5 +1,5 @@
 (function() {
-    console.log("[Lampa Safe Styles] Оптимизированная версия с выбором цвета и насиченостью");
+    console.log("[Lampa Safe Styles] Оптимизированная версия с выбором цвета в компоненте");
 
     // Кеш элементов
     const elementsCache = new Map();
@@ -637,30 +637,29 @@
     }
 
     /**
-     * Добавление секции выбора цвета в настройки
+     * Добавление секции выбора цвета в компонент styleinter
      */
-    function addColorPicker() {
-        const settingsContent = document.querySelector('.settings__content');
-        if (!settingsContent || settingsContent.querySelector('.color-picker__section')) return;
+    function createColorPickerComponent() {
+        const html = Lampa.Template.get('styleinter_color_picker');
+        if (!html) {
+            console.error('Шаблон styleinter_color_picker не найден');
+            return '';
+        }
 
-        // Создание секции выбора цвета
         const colorSection = document.createElement('div');
         colorSection.className = 'color-picker__section';
 
-        // Заголовок секции
         const title = document.createElement('div');
         title.className = 'color-picker__title';
         title.textContent = Lampa.Lang.translate('color_picker_title');
         colorSection.appendChild(title);
 
-        // Поле выбора цвета
         const colorInput = document.createElement('input');
         colorInput.type = 'color';
         colorInput.className = 'color-picker__input';
         colorInput.value = Lampa.Storage.get('accent_color', '#c22222');
         colorSection.appendChild(colorInput);
 
-        // Поле для HEX-ввода
         const hexInput = document.createElement('input');
         hexInput.type = 'text';
         hexInput.className = 'color-picker__hex-input';
@@ -668,11 +667,9 @@
         hexInput.value = colorInput.value;
         colorSection.appendChild(hexInput);
 
-        // Контейнер для повзунков
         const slidersContainer = document.createElement('div');
         slidersContainer.className = 'color-picker__sliders';
 
-        // Повзунки RGB и насичености
         const slidersData = [
             { class: 'red', label: 'spectrum' },
             { class: 'green', label: 'spectrum' },
@@ -701,7 +698,6 @@
 
         colorSection.appendChild(slidersContainer);
 
-        // Инициализация значений повзунков
         let r = parseInt(colorInput.value.slice(1, 3), 16);
         let g = parseInt(colorInput.value.slice(3, 5), 16);
         let b = parseInt(colorInput.value.slice(5, 7), 16);
@@ -711,7 +707,6 @@
         sliders[2].value = b;
         sliders[3].value = s;
 
-        // Обновление стилей повзунков
         function updateSliderStyles() {
             document.documentElement.style.setProperty('--r', sliders[0].value);
             document.documentElement.style.setProperty('--g', sliders[1].value);
@@ -719,14 +714,12 @@
         }
         updateSliderStyles();
 
-        // Обработчик для поля выбора цвета
         colorInput.addEventListener('input', () => {
             const hex = colorInput.value;
             hexInput.value = hex;
             document.documentElement.style.setProperty('--accent-color', hex);
             Lampa.Storage.set('accent_color', hex);
             
-            // Обновление повзунков
             r = parseInt(hex.slice(1, 3), 16);
             g = parseInt(hex.slice(3, 5), 16);
             b = parseInt(hex.slice(5, 7), 16);
@@ -738,7 +731,6 @@
             updateSliderStyles();
         });
 
-        // Обработчик для HEX-ввода
         hexInput.addEventListener('input', () => {
             const hex = hexInput.value.trim();
             if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
@@ -761,7 +753,6 @@
             }
         });
 
-        // Обработчик для повзунков
         sliders.forEach((slider, index) => {
             slider.addEventListener('input', () => {
                 r = parseInt(sliders[0].value);
@@ -770,11 +761,9 @@
                 s = parseInt(sliders[3].value);
                 
                 if (index < 3) {
-                    // Обновление RGB
                     [h, s, l] = rgbToHsl(r, g, b);
                     sliders[3].value = s;
                 } else {
-                    // Обновление насичености
                     [r, g, b] = hslToRgb(h, s, l);
                     sliders[0].value = r;
                     sliders[1].value = g;
@@ -790,7 +779,7 @@
             });
         });
 
-        settingsContent.prepend(colorSection);
+        return colorSection.outerHTML;
     }
 
     /**
@@ -799,6 +788,7 @@
     Lampa.SettingsApi.addComponent({
         component: 'styleinter',
         name: Lampa.Lang.translate('style_interface'),
+        html: createColorPickerComponent,
         icon: `
         <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m3 16 5-7 6 6.5m6.5 2.5L16 13l-4.286 6M14 10h.01M4 19h16a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1Z"/>
@@ -810,9 +800,6 @@
     const observer = new MutationObserver(() => {
         if (!stylesApplied) {
             requestAnimationFrame(applyStyles);
-        }
-        if (document.querySelector('.settings__content')) {
-            addColorPicker();
         }
     });
 
@@ -831,7 +818,6 @@
         // Резервная проверка каждые 30 секунд
         const backupInterval = setInterval(() => {
             if (!stylesApplied) applyStyles();
-            if (document.querySelector('.settings__content')) addColorPicker();
         }, 30000);
         
         // Функция остановки
