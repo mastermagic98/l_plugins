@@ -1,5 +1,5 @@
 (function() {
-    console.log("[Lampa Safe Styles] Версія з вибором кольору в модальному вікні");
+    console.log("[Lampa Safe Styles] Версія з виправленим вибором кольору в модальному вікні");
 
     // Кеш елементів
     const elementsCache = new Map();
@@ -233,7 +233,7 @@
             }
             
             .settings-input--free,
-            .settings-input__龥content,
+            .settings-input__content,
             .extensions {
                 background-color: var(--dark-bg);
             }
@@ -405,7 +405,21 @@
 			
 			body.glass--style.platform--browser .card .card__icons-inner, 
 			body.glass--style.platform--browser .card .card__marker, 
-			body.glass--style.platform--browser
+			body.glass--style.platform--browser .card .card__vote, 
+			body.glass--style.platform--browser .card .card-watched, 
+			body.glass--style.platform--nw .card .card__icons-inner, 
+			body.glass--style.platform--nw .card .card__marker, 
+			body.glass--style.platform--nw .card .card__vote, 
+			body.glass--style.platform--nw .card .card-watched, 
+			body.glass--style.platform--apple .card .card__icons-inner, 
+			body.glass--style.platform--apple .card .card__marker, 
+			body.glass--style.platform--apple .card .card__vote, 
+			body.glass--style.platform--apple .card .card-watched {
+				background-color: rgba(0, 0, 0, 0.3);
+				-webkit-backdrop-filter: blur(1em);
+				backdrop-filter: none;
+				background: var(--accent-color);
+			}
 
             /* Стилі для палітри вибору кольору */
             .color-picker__modal {
@@ -426,7 +440,7 @@
                 background: #fff;
                 border-radius: 2px;
                 box-shadow: 0 0 2px rgba(0,0,0,0.3), 0 4px 8px rgba(0,0,0,0.3);
-                font-family: Menlo;
+                font-family: Menlo, monospace;
                 margin: 0 auto;
             }
             .saturation-white {
@@ -437,6 +451,9 @@
             }
             .hue-horizontal {
                 background: linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%);
+                height: 10px !important;
+                display: block !important;
+                border-radius: 2px;
             }
             .color-picker__input {
                 width: 100%;
@@ -480,7 +497,8 @@
             .color-picker__hue {
                 height: 10px;
                 position: relative;
-                margin-bottom: 12px;
+                margin: 12px 0;
+                display: block !important;
             }
             .color-picker__hue > div {
                 position: absolute;
@@ -643,7 +661,6 @@
         // Палітра насиченості
         const saturationDiv = document.createElement('div');
         saturationDiv.className = 'color-picker__saturation';
-        saturationDiv.style.background = Lampa.Storage.get('accent_color', '#c22222');
 
         const saturationWhite = document.createElement('div');
         saturationWhite.className = 'saturation-white';
@@ -697,6 +714,16 @@
 
         modalContent.appendChild(pickerContainer);
 
+        // Ініціалізація позиції курсорів на основі збереженого кольору
+        const savedColor = Lampa.Storage.get('accent_color', '#c22222');
+        const rgb = hexToRgb(savedColor);
+        const hsv = rgbToHsv(rgb.r, rgb.g, rgb.b);
+        saturationDiv.style.background = `hsl(${hsv.h * 360}, 100%, 50%)`;
+        saturationCursor.style.left = `${hsv.s * 100}%`;
+        saturationCursor.style.top = `${(1 - hsv.v) * 100}%`;
+        hueCursor.style.left = `${hsv.h * 100}%`;
+        console.log('[Lampa Color Picker] Ініціалізація кольору:', savedColor, 'HSV:', hsv);
+
         // Обробка вибору кольору
         function updateColorFromSaturation(event) {
             const rect = saturationDiv.getBoundingClientRect();
@@ -715,6 +742,7 @@
             input.value = hex;
             document.documentElement.style.setProperty('--accent-color', hex);
             Lampa.Storage.set('accent_color', hex);
+            console.log('[Lampa Color Picker] Оновлено колір через палітру:', hex);
         }
 
         function updateColorFromHue(event) {
@@ -730,6 +758,7 @@
             input.value = hex;
             document.documentElement.style.setProperty('--accent-color', hex);
             Lampa.Storage.set('accent_color', hex);
+            console.log('[Lampa Color Picker] Оновлено колір через повзунок відтінку:', hex);
         }
 
         function updateColorFromHex() {
@@ -743,6 +772,7 @@
                 saturationCursor.style.left = `${hsv.s * 100}%`;
                 saturationCursor.style.top = `${(1 - hsv.v) * 100}%`;
                 saturationDiv.style.background = `hsl(${hsv.h * 360}, 100%, 50%)`;
+                console.log('[Lampa Color Picker] Оновлено колір через HEX:', hex);
             }
         }
 
@@ -768,14 +798,19 @@
         input.addEventListener('input', updateColorFromHex);
 
         // Відкриття модального вікна
-        Lampa.Modal.open({
-            title: Lampa.Lang.translate('color_picker_title'),
-            html: modalContent,
-            size: 'medium',
-            onBack: () => {
-                Lampa.Modal.close();
-            }
-        });
+        try {
+            Lampa.Modal.open({
+                title: Lampa.Lang.translate('color_picker_title'),
+                html: modalContent,
+                size: 'medium',
+                onBack: () => {
+                    Lampa.Modal.close();
+                }
+            });
+            console.log('[Lampa Color Picker] Модальне вікно відкрито');
+        } catch (e) {
+            console.error('[Lampa Color Picker] Помилка при відкритті модального вікна:', e);
+        }
     }
 
     /**
