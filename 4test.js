@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    // Language support
+       // Language support
     const translations = {
         my_themes: {
             en: 'My Themes',
