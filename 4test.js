@@ -7,14 +7,7 @@
         return;
     }
 
-    // Налаштування платформи на телевізійний режим
-    try {
-        Lampa.Platform.tv();
-        console.log('Платформа встановлена: TV');
-    } catch (e) {
-        console.error('Помилка при виклику Lampa.Platform.tv:', e);
-    }
-
+   
     // Словник перекладів для трьох мов
     const translations = {
         my_themes: {
