@@ -1,7 +1,10 @@
 (function () {
     'use strict';
 
-       // Language support
+    // Встановлення платформи на TV
+    Lampa.Platform.tv();
+
+    // Словник перекладів для трьох мов
     const translations = {
         my_themes: {
             en: 'My Themes',
@@ -45,20 +48,20 @@
         }
     };
 
-    // Translation function
+    // Функція для отримання перекладу
     function t(key) {
         const lang = Lampa.Storage.get('language') || navigator.language.split('-')[0] || 'en';
         return translations[key][lang] || translations[key].en;
     }
 
-    // Load selected theme from localStorage and apply it
+    // Завантаження вибраної теми з localStorage та її застосування
     let selectedTheme = localStorage.getItem('selectedTheme');
     if (selectedTheme) {
         let themeLink = $(`<link rel="stylesheet" href="${selectedTheme}">`);
         $('head').append(themeLink);
     }
 
-    // Add "My Themes" settings parameter
+    // Додавання параметру "Мої теми" до налаштувань
     Lampa.SettingsApi.addParam({
         component: 'interface',
         param: {
@@ -70,15 +73,60 @@
             description: t('description')
         },
         onRender: function (settings) {
+            console.log('Викликано onRender для my_themes'); // Дебаг: перевірка виклику onRender
+            console.log('Кількість .settings-folder:', $('.settings-folder').length); // Дебаг: перевірка селектора
+            console.log('Кількість .settings-param:', $('.settings-param').length); // Дебаг: перевірка альтернативного селектора
+            console.log('Кількість .settings:', $('.settings').length); // Дебаг: перевірка іншого селектора
+
             setTimeout(() => {
-                $('.settings-folder').last().after($('<div class="my_themes category-full"></div>'));
-                settings.on('hover:enter hover:click', () => {
+                // Спроба додати елемент після .settings-folder
+                let folder = $('.settings-folder').last();
+                if (folder.length) {
+                    console.log('Додаємо div після .settings-folder');
+                    folder.after($('<div class="my_themes category-full"></div>'));
+                } else {
+                    // Альтернативний селектор .settings-param
+                    console.log('Селектор .settings-folder не знайдено, пробуємо .settings-param');
+                    let param = $('.settings-param').last();
+                    if (param.length) {
+                        param.after($('<div class="my_themes category-full"></div>'));
+                    } else {
+                        // Альтернативний спосіб: додавання до .settings
+                        console.log('Додаємо div до .settings');
+                        $('.settings').append($('<div class="my_themes category-full"></div>'));
+                    }
+                }
+
+                // Альтернативне додавання пункту меню
+                let menuItem = $('<div class="settings-param selector"><span>' + t('my_themes') + '</span></div>');
+                menuItem.on('hover:enter hover:click', () => {
+                    console.log('Клік по Мої теми'); // Дебаг: перевірка кліку
                     setTimeout(() => {
                         if ($('.view--category').length || $('#button_category').length) {
                             window.activity.back();
                         }
                     }, 50);
+                    setTimeout(() => {
+                        let themesCurrent = localStorage.getItem('themesCurrent');
+                        let activityData = themesCurrent ? JSON.parse(themesCurrent) : {
+                            url: 'https://bylampa.github.io/themes/categories/stroke.json',
+                            title: t('focus_pack'),
+                            component: 'my_themes',
+                            page: 1
+                        };
+                        Lampa.Activity.push(activityData);
+                        Lampa.Storage.set('themesCurrent', JSON.stringify(Lampa.Activity.data()));
+                    }, 100);
+                });
+                $('.settings-folder').last().after(menuItem);
 
+                settings.on('hover:enter hover:click', () => {
+                    console.log('Клік по settings для my_themes'); // Дебаг: перевірка кліку
+                    setTimeout(() => {
+                        if ($('.view--category').length || $('#button_category').length) {
+                            window.activity.back();
+                        }
+                    }, 50);
                     setTimeout(() => {
                         let themesCurrent = localStorage.getItem('themesCurrent');
                         let activityData = themesCurrent ? JSON.parse(themesCurrent) : {
@@ -95,7 +143,7 @@
         }
     });
 
-    // Themes component
+    // Компонент для роботи з темами
     function ThemesComponent(params) {
         let request = new Lampa.Reguest();
         let scroll = new Lampa.Scroll({ mask: true, over: true, step: 250 });
@@ -110,6 +158,7 @@
         ];
 
         this.create = function () {
+            // Активуємо завантажувач
             this.activity.loader(true);
             request.follow(params.url, this.build.bind(this), () => {
                 let empty = new Lampa.Empty();
@@ -134,6 +183,7 @@
 
                 $('.info__title').text(item.title);
 
+                // Функція для додавання кнопки "Встановити"
                 function addInstallButton() {
                     let button = document.createElement('div');
                     button.innerText = t('install');
@@ -175,7 +225,7 @@
                         onBack: () => Lampa.Controller.toggle('content'),
                         onSelect: (selected) => {
                             if (selected.title === t('install')) {
-                                $('link[rel="stylesheet"][href^="https://bylampa.github.io/themes/css/"]').rect>remove();
+                                $('link[rel="stylesheet"][href^="https://bylampa.github.io/themes/css/"]').remove();
                                 let themeLink = $(`<link rel="stylesheet" href="${item.css}">`);
                                 $('head').append(themeLink);
                                 localStorage.setItem('selectedTheme', item.css);
@@ -345,17 +395,17 @@
         };
     }
 
-    // Register the Themes component
+    // Реєстрація компонента тем
     Lampa.Component.add('my_themes', ThemesComponent);
 
-    // Remove theme stylesheet when not in 'my_themes' component
+    // Видалення стилів тем, коли компонент не активний
     Lampa.Storage.listener.follow('app', (e) => {
         if (e.name === 'activity' && Lampa.Activity.data().component !== 'my_themes') {
             $('link[rel="stylesheet"][href^="https://bylampa.github.io/themes/css/"]').remove();
         }
     });
 
-    // Initialize on app ready
+    // Ініціалізація при готовності програми
     if (window.appready) {
         ThemesComponent();
     } else {
