@@ -11,6 +11,11 @@
             ru: 'Мои темы',
             uk: 'Мої теми'
         },
+        my_themes_category: {
+            en: 'Themes',
+            ru: 'Темы',
+            uk: 'Теми'
+        },
         description: {
             en: 'Change the palette of application elements',
             ru: 'Измени палитру элементов приложения',
@@ -61,10 +66,19 @@
         jQuery('head').append(themeLink);
     }
 
-    // Додавання параметру "Мої теми" до налаштувань
+    // Додавання категорії "Теми" до меню налаштувань
     console.log('Ініціалізація плагіна тем'); // Дебаг: перевірка запуску плагіна
+    Lampa.SettingsApi.addComponent({
+        component: 'my_themes_category',
+        name: t('my_themes_category'),
+        icon: '<svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">' +
+              '<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0a8.949 8.949 0 0 0 4.951-1.488A3.987 3.987 0 0 0 13 16h-2a3.987 3.987 0 0 0-3.951 3.512A8.949 8.949 0 0 0 12 21Zm3-11a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>' +
+              '</svg>'
+    });
+
+    // Додавання параметру "Мої теми" до категорії
     Lampa.SettingsApi.addParam({
-        component: 'interface',
+        component: 'my_themes_category',
         param: {
             name: 'my_themes',
             type: 'card'
@@ -75,33 +89,12 @@
         },
         onRender: function (settings) {
             console.log('Викликано onRender для my_themes'); // Дебаг: перевірка виклику onRender
-            console.log('Кількість .settings-folder: ' + jQuery('.settings-folder').length); // Дебаг: перевірка селектора
-            console.log('Кількість .settings-param: ' + jQuery('.settings-param').length); // Дебаг: перевірка альтернативного селектора
+            console.log('Кількість .settings-param: ' + jQuery('.settings-param').length); // Дебаг: перевірка селектора
             console.log('Кількість .settings: ' + jQuery('.settings').length); // Дебаг: перевірка іншого селектора
-            console.log('Кількість .menu: ' + jQuery('.menu').length); // Дебаг: перевірка селектора меню
 
             setTimeout(function () {
-                // Спроба додати елемент після .settings-folder
-                var folder = jQuery('.settings-folder').last();
-                if (folder.length) {
-                    console.log('Додаємо div після .settings-folder');
-                    folder.after(jQuery('<div class="my_themes category-full"></div>'));
-                } else {
-                    // Альтернативний селектор .settings-param
-                    console.log('Селектор .settings-folder не знайдено, пробуємо .settings-param');
-                    var param = jQuery('.settings-param').last();
-                    if (param.length) {
-                        param.after(jQuery('<div class="my_themes category-full"></div>'));
-                    } else {
-                        // Альтернативний спосіб: додавання до .settings
-                        console.log('Додаємо div до .settings');
-                        jQuery('.settings').append(jQuery('<div class="my_themes category-full"></div>'));
-                    }
-                }
-
-                // Альтернативне додавання пункту меню
-                var menuItem = jQuery('<div class="settings-param selector"><span>' + t('my_themes') + '</span></div>');
-                menuItem.on('hover:enter hover:click', function () {
+                // Додавання обробника для переходу до компонента тем
+                settings.on('hover:enter hover:click', function () {
                     console.log('Клік по Мої теми'); // Дебаг: перевірка кліку
                     setTimeout(function () {
                         if (jQuery('.view--category').length || jQuery('#button_category').length) {
@@ -120,16 +113,6 @@
                         Lampa.Storage.set('themesCurrent', JSON.stringify(Lampa.Activity.data()));
                     }, 100);
                 });
-                // Спроба додати до .settings-folder або .settings
-                if (folder.length) {
-                    folder.after(menuItem);
-                } else if (jQuery('.settings').length) {
-                    jQuery('.settings').append(menuItem);
-                } else {
-                    // Остання спроба: додавання до .menu (головне меню Lampa)
-                    console.log('Додаємо пункт меню до .menu');
-                    jQuery('.menu').append(menuItem);
-                }
             }, 0);
         }
     });
