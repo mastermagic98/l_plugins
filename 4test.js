@@ -1,12 +1,12 @@
 (function() {
-    console.log("[Lampa Safe Styles] Оптимизированная версия с выбором цвета в компоненте");
+    console.log("[Lampa Safe Styles] Версія з вибором кольору в модальному вікні");
 
-    // Кеш элементов
+    // Кеш елементів
     const elementsCache = new Map();
     let stylesApplied = false;
 
     /**
-     * Добавление стилей с кешированием элементов
+     * Додавання стилів з кешуванням елементів
      */
     function safeAddStyleToElements(selector, styles) {
         if (!elementsCache.has(selector)) {
@@ -32,18 +32,18 @@
     }
 
     /**
-     * Применение базовых стилей
+     * Застосування базових стилів
      */
     function applyStyles() {
         if (stylesApplied) return;
         
-        // Стили для body
+        // Стилі для body
         if (!document.body.dataset.lampaStyled) {
             document.body.style.setProperty('background', '#141414', 'important');
             document.body.dataset.lampaStyled = 'true';
         }	
         
-        // Применение сохраненного акцентного цвета
+        // Застосування збереженого акцентного кольору
         const savedColor = Lampa.Storage.get('accent_color', '#c22222');
         document.documentElement.style.setProperty('--accent-color', savedColor);
         
@@ -51,7 +51,7 @@
     }
 
     /**
-     * Добавление всех CSS стилей
+     * Додавання всіх CSS стилів
      */
     function addCardStyles() {
         const styleId = 'lampa-safe-css';
@@ -62,7 +62,7 @@
                 --dark-bg: #141414;
                 --darker-bg: #1a1a1a;
                 --menu-bg: #181818;
-                --accent-color: #c22222; /* Дефолтный цвет, будет переопределен */
+                --accent-color: #c22222; /* Дефолтний колір, буде перевизначено */
                 --card-radius: 1.4em;
                 --menu-radius: 1.2em;
             }
@@ -83,7 +83,7 @@
                 background-color: var(--accent-color);
             }
             
-            /* Элементы в фокусе */
+            /* Елементи в фокусі */
             .settings-param.focus {
                 color: #fff;
                 border-radius: var(--menu-radius);
@@ -99,7 +99,7 @@
 				opacity: 0.80;
 			}
 			
-			/* Градиентный текст для рейтинга */
+			/* Градієнтний текст для рейтингу */
             .full-start__rate > div:first-child {
                 color: #1ed5a9;
 				font-weight: bold;
@@ -233,7 +233,7 @@
             }
             
             .settings-input--free,
-            .settings-input__content,
+            .settings-input__龥content,
             .extensions {
                 background-color: var(--dark-bg);
             }
@@ -368,7 +368,6 @@
 				color: #ffffff7a;
 			}
 			
-			
 			body {
 				margin: 1 !important;
 			}
@@ -404,71 +403,100 @@
                 background: var(--accent-color);
             }
 			
-			body.glass--style.platform--browser .card .card__icons-inner, body.glass--style.platform--browser .card .card__marker, body.glass--style.platform--browser .card .card__vote, body.glass--style.platform--browser .card .card-watched, body.glass--style.platform--nw .card .card__icons-inner, body.glass--style.platform--nw .card .card__marker, body.glass--style.platform--nw .card .card__vote, body.glass--style.platform--nw .card .card-watched, body.glass--style.platform--apple .card .card__icons-inner, body.glass--style.platform--apple .card .card__marker, body.glass--style.platform--apple .card .card__vote, body.glass--style.platform--apple .card .card-watched {
-				background-color: rgba(0, 0, 0, 0.3);
-				-webkit-backdrop-filter: blur(1em);
-				backdrop-filter: none;
-				background: var(--accent-color);
-			}
+			body.glass--style.platform--browser .card .card__icons-inner, 
+			body.glass--style.platform--browser .card .card__marker, 
+			body.glass--style.platform--browser
 
-            /* Стили для секции выбора цвета */
-            .color-picker__section {
-                padding: 1em;
+            /* Стилі для палітри вибору кольору */
+            .color-picker__modal {
                 background: var(--darker-bg);
                 border-radius: var(--menu-radius);
-                margin-bottom: 1em;
+                padding: 1em;
+                max-width: 300px;
+                margin: auto;
             }
-            
             .color-picker__title {
                 font-size: 1.5em;
                 color: #fff;
                 margin-bottom: 0.5em;
+                text-align: center;
             }
-            
+            .chrome-picker {
+                width: 225px;
+                background: #fff;
+                border-radius: 2px;
+                box-shadow: 0 0 2px rgba(0,0,0,0.3), 0 4px 8px rgba(0,0,0,0.3);
+                font-family: Menlo;
+                margin: 0 auto;
+            }
+            .saturation-white {
+                background: linear-gradient(to right, #fff, rgba(255,255,255,0));
+            }
+            .saturation-black {
+                background: linear-gradient(to top, #000, rgba(0,0,0,0));
+            }
+            .hue-horizontal {
+                background: linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%);
+            }
             .color-picker__input {
                 width: 100%;
-                height: 3em;
-                margin-bottom: 1em;
+                height: 21px;
+                font-size: 11px;
+                color: #333;
+                border-radius: 2px;
+                border: none;
+                box-shadow: 0 0 0 1px inset #dadada;
+                text-align: center;
+                margin-top: 12px;
             }
-            
-            .color-picker__slider {
-                width: 100%;
-                margin: 0.5em 0;
-                background: linear-gradient(to right, #000, #fff);
-            }
-            
-            .color-picker__slider.red {
-                background: linear-gradient(to right, rgb(0, var(--g), var(--b)), rgb(255, var(--g), var(--b)));
-            }
-            
-            .color-picker__slider.green {
-                background: linear-gradient(to right, rgb(var(--r), 0, var(--b)), rgb(var(--r), 255, var(--b)));
-            }
-            
-            .color-picker__slider.blue {
-                background: linear-gradient(to right, rgb(var(--r), var(--g), 0), rgb(var(--r), var(--g), 255));
-            }
-            
-            .color-picker__slider.saturation {
-                background: linear-gradient(to right, #808080, rgb(var(--r), var(--g), var(--b)));
-            }
-            
             .color-picker__label {
-                color: #fff;
-                margin-right: 0.5em;
+                text-transform: uppercase;
+                font-size: 11px;
+                line-height: 11px;
+                color: #969696;
+                text-align: center;
+                display: block;
+                margin-top: 12px;
             }
-            
-            .color-picker__hex-input {
+            .color-picker__saturation {
+                position: relative;
                 width: 100%;
-                padding: 0.5em;
-                margin-top: 0.5em;
-                background: var(--dark-bg);
-                color: #fff;
-                border: 1px solid #fff;
-                border-radius: 0.5em;
+                padding-bottom: 55%;
+                border-radius: 2px 2px 0 0;
+                overflow: hidden;
+            }
+            .color-picker__saturation > div {
+                position: absolute;
+                inset: 0;
+            }
+            .color-picker__cursor {
+                position: absolute;
+                width: 12px;
+                height: 12px;
+                border-radius: 6px;
+                box-shadow: inset 0 0 0 1px #fff;
+                transform: translate(-6px, -6px);
+            }
+            .color-picker__hue {
+                height: 10px;
+                position: relative;
+                margin-bottom: 12px;
+            }
+            .color-picker__hue > div {
+                position: absolute;
+                inset: 0;
+                padding: 0 2px;
+            }
+            .color-picker__hue-cursor {
+                width: 12px;
+                height: 12px;
+                border-radius: 6px;
+                background-color: #f8f8f8;
+                box-shadow: 0 1px 4px rgba(0,0,0,0.37);
+                transform: translate(-6px, -1px);
             }
 
-            /* Мобильные стили */
+            /* Мобільні стилі */
             @media screen and (max-width: 480px) {
                 .settings__content,
                 .selectbox__content {
@@ -509,8 +537,7 @@
 				}
 			}
 								
-			
-            @media screen and (max-width: 580px) {
+			@media screen and (max-width: 580px) {
                 .full-descr__text {
                     text-align: justify;
                 }
@@ -524,13 +551,12 @@
                 }
             }
 			
-			
 			@media screen and (max-width: 480px) {
-			.full-start-new__details > span:nth-of-type(7) {
-				display: block;
-				order: 2;
-				opacity: 40%;		
-			}
+				.full-start-new__details > span:nth-of-type(7) {
+					display: block;
+					order: 2;
+					opacity: 40%;		
+				}
 			}
 
             @media screen and (max-width: 480px) {
@@ -574,7 +600,8 @@
             }
 			
 			@media screen and (max-width: 480px) {
-				.selectbox.animate .selectbox__content, .settings.animate .settings__content {
+				.selectbox.animate .selectbox__content, 
+				.settings.animate .settings__content {
 					background: #1a1a1a;
 				}
 			}
@@ -597,18 +624,201 @@
     }
 
     /**
-     * Конвертация RGB в HSL и обратно
+     * Додавання секції вибору кольору в модальному вікні
      */
-    function rgbToHsl(r, g, b) {
+    function showColorPicker() {
+        const modalContent = document.createElement('div');
+        modalContent.className = 'color-picker__modal';
+
+        // Заголовок модального вікна
+        const title = document.createElement('div');
+        title.className = 'color-picker__title';
+        title.textContent = Lampa.Lang.translate('color_picker_title');
+        modalContent.appendChild(title);
+
+        // Контейнер для палітри
+        const pickerContainer = document.createElement('div');
+        pickerContainer.className = 'chrome-picker';
+
+        // Палітра насиченості
+        const saturationDiv = document.createElement('div');
+        saturationDiv.className = 'color-picker__saturation';
+        saturationDiv.style.background = Lampa.Storage.get('accent_color', '#c22222');
+
+        const saturationWhite = document.createElement('div');
+        saturationWhite.className = 'saturation-white';
+        const saturationBlack = document.createElement('div');
+        saturationBlack.className = 'saturation-black';
+        const saturationCursor = document.createElement('div');
+        saturationCursor.className = 'color-picker__cursor';
+
+        saturationWhite.appendChild(saturationBlack);
+        saturationWhite.appendChild(saturationCursor);
+        saturationDiv.appendChild(saturationWhite);
+        pickerContainer.appendChild(saturationDiv);
+
+        // Повзунок відтінку
+        const hueContainer = document.createElement('div');
+        hueContainer.className = 'color-picker__hue';
+        const hueDiv = document.createElement('div');
+        hueDiv.className = 'hue-horizontal';
+        const hueCursor = document.createElement('div');
+        hueCursor.className = 'color-picker__hue-cursor';
+
+        hueDiv.appendChild(hueCursor);
+        hueContainer.appendChild(hueDiv);
+        pickerContainer.appendChild(hueContainer);
+
+        // Поле для HEX-коду
+        const hexContainer = document.createElement('div');
+        hexContainer.className = 'flexbox-fix';
+        hexContainer.style.paddingTop = '16px';
+        hexContainer.style.display = 'flex';
+
+        const inputContainer = document.createElement('div');
+        inputContainer.style.flex = '1';
+        inputContainer.style.paddingLeft = '6px';
+
+        const input = document.createElement('input');
+        input.className = 'color-picker__input';
+        input.id = 'color-picker-hex';
+        input.value = Lampa.Storage.get('accent_color', '#c22222');
+        input.spellcheck = false;
+
+        const label = document.createElement('label');
+        label.className = 'color-picker__label';
+        label.setAttribute('for', 'color-picker-hex');
+        label.textContent = 'HEX';
+
+        inputContainer.appendChild(input);
+        inputContainer.appendChild(label);
+        hexContainer.appendChild(inputContainer);
+        pickerContainer.appendChild(hexContainer);
+
+        modalContent.appendChild(pickerContainer);
+
+        // Обробка вибору кольору
+        function updateColorFromSaturation(event) {
+            const rect = saturationDiv.getBoundingClientRect();
+            const x = Math.min(Math.max(event.clientX - rect.left, 0), rect.width);
+            const y = Math.min(Math.max(event.clientY - rect.top, 0), rect.height);
+            const saturation = x / rect.width;
+            const value = 1 - (y / rect.height);
+
+            const hue = parseFloat(hueCursor.style.left || '0') / 100;
+            const rgb = hsvToRgb(hue, saturation, value);
+            const hex = rgbToHex(rgb.r, rgb.g, rgb.b);
+
+            saturationCursor.style.left = `${(x / rect.width) * 100}%`;
+            saturationCursor.style.top = `${(y / rect.height) * 100}%`;
+            saturationDiv.style.background = `hsl(${hue * 360}, 100%, 50%)`;
+            input.value = hex;
+            document.documentElement.style.setProperty('--accent-color', hex);
+            Lampa.Storage.set('accent_color', hex);
+        }
+
+        function updateColorFromHue(event) {
+            const rect = hueDiv.getBoundingClientRect();
+            const x = Math.min(Math.max(event.clientX - rect.left, 0), rect.width);
+            const hue = x / rect.width;
+
+            hueCursor.style.left = `${(x / rect.width) * 100}%`;
+            const rgb = hsvToRgb(hue, 1, 1);
+            const hex = rgbToHex(rgb.r, rgb.g, rgb.b);
+
+            saturationDiv.style.background = `hsl(${hue * 360}, 100%, 50%)`;
+            input.value = hex;
+            document.documentElement.style.setProperty('--accent-color', hex);
+            Lampa.Storage.set('accent_color', hex);
+        }
+
+        function updateColorFromHex() {
+            const hex = input.value.toUpperCase();
+            if (/^#[0-9A-F]{6}$/i.test(hex)) {
+                document.documentElement.style.setProperty('--accent-color', hex);
+                Lampa.Storage.set('accent_color', hex);
+                const rgb = hexToRgb(hex);
+                const hsv = rgbToHsv(rgb.r, rgb.g, rgb.b);
+                hueCursor.style.left = `${hsv.h * 100}%`;
+                saturationCursor.style.left = `${hsv.s * 100}%`;
+                saturationCursor.style.top = `${(1 - hsv.v) * 100}%`;
+                saturationDiv.style.background = `hsl(${hsv.h * 360}, 100%, 50%)`;
+            }
+        }
+
+        // Обробники подій
+        saturationDiv.addEventListener('mousedown', (e) => {
+            updateColorFromSaturation(e);
+            const moveHandler = (moveEvent) => updateColorFromSaturation(moveEvent);
+            document.addEventListener('mousemove', moveHandler);
+            document.addEventListener('mouseup', () => {
+                document.removeEventListener('mousemove', moveHandler);
+            }, { once: true });
+        });
+
+        hueDiv.addEventListener('mousedown', (e) => {
+            updateColorFromHue(e);
+            const moveHandler = (moveEvent) => updateColorFromHue(moveEvent);
+            document.addEventListener('mousemove', moveHandler);
+            document.addEventListener('mouseup', () => {
+                document.removeEventListener('mousemove', moveHandler);
+            }, { once: true });
+        });
+
+        input.addEventListener('input', updateColorFromHex);
+
+        // Відкриття модального вікна
+        Lampa.Modal.open({
+            title: Lampa.Lang.translate('color_picker_title'),
+            html: modalContent,
+            size: 'medium',
+            onBack: () => {
+                Lampa.Modal.close();
+            }
+        });
+    }
+
+    /**
+     * Допоміжні функції для конвертації кольорів
+     */
+    function hsvToRgb(h, s, v) {
+        let r, g, b;
+        const i = Math.floor(h * 6);
+        const f = h * 6 - i;
+        const p = v * (1 - s);
+        const q = v * (1 - f * s);
+        const t = v * (1 - (1 - f) * s);
+        switch (i % 6) {
+            case 0: r = v; g = t; b = p; break;
+            case 1: r = q; g = v; b = p; break;
+            case 2: r = p; g = v; b = t; break;
+            case 3: r = p; g = q; b = v; break;
+            case 4: r = t; g = p; b = v; break;
+            case 5: r = v; g = p; b = q; break;
+        }
+        return { r: Math.round(r * 255), g: Math.round(g * 255), b: Math.round(b * 255) };
+    }
+
+    function rgbToHex(r, g, b) {
+        return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase()}`;
+    }
+
+    function hexToRgb(hex) {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return { r, g, b };
+    }
+
+    function rgbToHsv(r, g, b) {
         r /= 255; g /= 255; b /= 255;
         const max = Math.max(r, g, b), min = Math.min(r, g, b);
-        let h, s, l = (max + min) / 2;
-
+        let h, s, v = max;
+        const d = max - min;
+        s = max === 0 ? 0 : d / max;
         if (max === min) {
-            h = s = 0;
+            h = 0;
         } else {
-            const d = max - min;
-            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
             switch (max) {
                 case r: h = (g - b) / d + (g < b ? 6 : 0); break;
                 case g: h = (b - r) / d + 2; break;
@@ -616,194 +826,29 @@
             }
             h /= 6;
         }
-        return [h * 360, s * 100, l * 100];
+        return { h, s, v };
     }
 
-    function hslToRgb(h, s, l) {
-        s /= 100; l /= 100;
-        const c = (1 - Math.abs(2 * l - 1)) * s;
-        const x = c * (1 - Math.abs((h / 60) % 2 - 1));
-        const m = l - c / 2;
-        let r = 0, g = 0, b = 0;
-
-        if (0 <= h && h < 60) { r = c; g = x; b = 0; }
-        else if (60 <= h && h < 120) { r = x; g = c; b = 0; }
-        else if (120 <= h && h < 180) { r = 0; g = c; b = x; }
-        else if (180 <= h && h < 240) { r = 0; g = x; b = c; }
-        else if (240 <= h && h < 300) { r = x; g = 0; b = c; }
-        else if (300 <= h && h < 360) { r = c; g = 0; b = x; }
-
-        return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255)];
-    }
-
-    /**
-     * Добавление секции выбора цвета в компонент styleinter
-     */
-    function createColorPickerComponent() {
-        const html = Lampa.Template.get('styleinter_color_picker');
-        if (!html) {
-            console.error('Шаблон styleinter_color_picker не найден');
-            return '';
-        }
-
-        const colorSection = document.createElement('div');
-        colorSection.className = 'color-picker__section';
-
-        const title = document.createElement('div');
-        title.className = 'color-picker__title';
-        title.textContent = Lampa.Lang.translate('color_picker_title');
-        colorSection.appendChild(title);
-
-        const colorInput = document.createElement('input');
-        colorInput.type = 'color';
-        colorInput.className = 'color-picker__input';
-        colorInput.value = Lampa.Storage.get('accent_color', '#c22222');
-        colorSection.appendChild(colorInput);
-
-        const hexInput = document.createElement('input');
-        hexInput.type = 'text';
-        hexInput.className = 'color-picker__hex-input';
-        hexInput.placeholder = '#RRGGBB';
-        hexInput.value = colorInput.value;
-        colorSection.appendChild(hexInput);
-
-        const slidersContainer = document.createElement('div');
-        slidersContainer.className = 'color-picker__sliders';
-
-        const slidersData = [
-            { class: 'red', label: 'spectrum' },
-            { class: 'green', label: 'spectrum' },
-            { class: 'blue', label: 'spectrum' },
-            { class: 'saturation', label: 'saturation' }
-        ];
-
-        const sliders = slidersData.map(data => {
-            const sliderContainer = document.createElement('div');
-            const label = document.createElement('span');
-            label.className = 'color-picker__label';
-            label.textContent = Lampa.Lang.translate(data.label);
-            
-            const slider = document.createElement('input');
-            slider.type = 'range';
-            slider.className = `color-picker__slider ${data.class}`;
-            slider.min = data.class === 'saturation' ? '0' : '0';
-            slider.max = data.class === 'saturation' ? '100' : '255';
-            slider.value = data.class === 'saturation' ? '100' : '0';
-            
-            sliderContainer.appendChild(label);
-            sliderContainer.appendChild(slider);
-            slidersContainer.appendChild(sliderContainer);
-            return slider;
-        });
-
-        colorSection.appendChild(slidersContainer);
-
-        let r = parseInt(colorInput.value.slice(1, 3), 16);
-        let g = parseInt(colorInput.value.slice(3, 5), 16);
-        let b = parseInt(colorInput.value.slice(5, 7), 16);
-        let [h, s, l] = rgbToHsl(r, g, b);
-        sliders[0].value = r;
-        sliders[1].value = g;
-        sliders[2].value = b;
-        sliders[3].value = s;
-
-        function updateSliderStyles() {
-            document.documentElement.style.setProperty('--r', sliders[0].value);
-            document.documentElement.style.setProperty('--g', sliders[1].value);
-            document.documentElement.style.setProperty('--b', sliders[2].value);
-        }
-        updateSliderStyles();
-
-        colorInput.addEventListener('input', () => {
-            const hex = colorInput.value;
-            hexInput.value = hex;
-            document.documentElement.style.setProperty('--accent-color', hex);
-            Lampa.Storage.set('accent_color', hex);
-            
-            r = parseInt(hex.slice(1, 3), 16);
-            g = parseInt(hex.slice(3, 5), 16);
-            b = parseInt(hex.slice(5, 7), 16);
-            [h, s, l] = rgbToHsl(r, g, b);
-            sliders[0].value = r;
-            sliders[1].value = g;
-            sliders[2].value = b;
-            sliders[3].value = s;
-            updateSliderStyles();
-        });
-
-        hexInput.addEventListener('input', () => {
-            const hex = hexInput.value.trim();
-            if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
-                colorInput.value = hex;
-                document.documentElement.style.setProperty('--accent-color', hex);
-                Lampa.Storage.set('accent_color', hex);
-                
-                r = parseInt(hex.slice(1, 3), 16);
-                g = parseInt(hex.slice(3, 5), 16);
-                b = parseInt(hex.slice(5, 7), 16);
-                [h, s, l] = rgbToHsl(r, g, b);
-                sliders[0].value = r;
-                sliders[1].value = g;
-                sliders[2].value = b;
-                sliders[3].value = s;
-                updateSliderStyles();
-            } else {
-                hexInput.style.borderColor = '#ff0000';
-                setTimeout(() => hexInput.style.borderColor = '#fff', 1000);
-            }
-        });
-
-        sliders.forEach((slider, index) => {
-            slider.addEventListener('input', () => {
-                r = parseInt(sliders[0].value);
-                g = parseInt(sliders[1].value);
-                b = parseInt(sliders[2].value);
-                s = parseInt(sliders[3].value);
-                
-                if (index < 3) {
-                    [h, s, l] = rgbToHsl(r, g, b);
-                    sliders[3].value = s;
-                } else {
-                    [r, g, b] = hslToRgb(h, s, l);
-                    sliders[0].value = r;
-                    sliders[1].value = g;
-                    sliders[2].value = b;
-                }
-                
-                const hex = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
-                colorInput.value = hex;
-                hexInput.value = hex;
-                document.documentElement.style.setProperty('--accent-color', hex);
-                Lampa.Storage.set('accent_color', hex);
-                updateSliderStyles();
-            });
-        });
-
-        return colorSection.outerHTML;
-    }
-
-    /**
-     * Добавление компонента в меню настроек
-     */
+    // Додавання компонента в налаштування
     Lampa.SettingsApi.addComponent({
         component: 'styleinter',
         name: Lampa.Lang.translate('style_interface'),
-        html: createColorPickerComponent,
         icon: `
         <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m3 16 5-7 6 6.5m6.5 2.5L16 13l-4.286 6M14 10h.01M4 19h16a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1Z"/>
         </svg>
-        `
+        `,
+        onSelect: showColorPicker
     });
 
-    // Оптимизированный наблюдатель за DOM
+    // Оптимізований спостерігач за DOM
     const observer = new MutationObserver(() => {
         if (!stylesApplied) {
             requestAnimationFrame(applyStyles);
         }
     });
 
-    // Инициализация
+    // Ініціалізація
     function init() {
         applyStyles();
         addCardStyles();
@@ -815,12 +860,12 @@
             attributeFilter: ['class']
         });
         
-        // Резервная проверка каждые 30 секунд
+        // Резервна перевірка кожні 30 секунд
         const backupInterval = setInterval(() => {
             if (!stylesApplied) applyStyles();
         }, 30000);
         
-        // Функция остановки
+        // Функція зупинки
         window.stopLampaSafeStyles = () => {
             clearInterval(backupInterval);
             observer.disconnect();
@@ -835,7 +880,7 @@
             elementsCache.clear();
             stylesApplied = false;
             
-            console.log("[Lampa Safe Styles] Плагин остановлен");
+            console.log("[Lampa Safe Styles] Плагін зупинено");
         };
     }
 
