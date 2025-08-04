@@ -1,6 +1,456 @@
-(function() {
-	'use strict';
+(function () {
+    'use strict';
 
-         Lampa.Platform.tv();
-         (function(_0x5c2c50,_0x33f082){var _0x4f6d7b=_0xe602,_0x45e3d3=_0x5c2c50();while(!![]){try{var _0x29dd46=-parseInt(_0x4f6d7b(0xc1))/0x1*(-parseInt(_0x4f6d7b(0x7d))/0x2)+parseInt(_0x4f6d7b(0x9d))/0x3*(parseInt(_0x4f6d7b(0xe6))/0x4)+-parseInt(_0x4f6d7b(0x85))/0x5*(parseInt(_0x4f6d7b(0x103))/0x6)+parseInt(_0x4f6d7b(0xdc))/0x7*(parseInt(_0x4f6d7b(0x7c))/0x8)+parseInt(_0x4f6d7b(0x8e))/0x9*(parseInt(_0x4f6d7b(0xeb))/0xa)+-parseInt(_0x4f6d7b(0x93))/0xb*(-parseInt(_0x4f6d7b(0x100))/0xc)+-parseInt(_0x4f6d7b(0xa7))/0xd;if(_0x29dd46===_0x33f082)break;else _0x45e3d3['push'](_0x45e3d3['shift']());}catch(_0x4e8137){_0x45e3d3['push'](_0x45e3d3['shift']());}}}(_0x2f6c,0xe74e9),(function(){var _0x519e0a=_0xe602,_0x2902a2=(function(){var _0x3ba9a4=!![];return function(_0x5b7cb3,_0x3bd1ac){var _0x4245fe=_0x3ba9a4?function(){var _0x4c097d=_0xe602;if(_0x3bd1ac){var _0x389575=_0x3bd1ac[_0x4c097d(0x9e)](_0x5b7cb3,arguments);return _0x3bd1ac=null,_0x389575;}}:function(){};return _0x3ba9a4=![],_0x4245fe;};}()),_0x20094e=(function(){var _0x30da22=!![];return function(_0x5459f3,_0x5b6ab4){var _0x47549f=_0x30da22?function(){var _0x1f48df=_0xe602;if(_0x5b6ab4){var _0x4a789f=_0x5b6ab4[_0x1f48df(0x9e)](_0x5459f3,arguments);return _0x5b6ab4=null,_0x4a789f;}}:function(){};return _0x30da22=![],_0x47549f;};}());'use strict';function _0x1a2c77(){var _0x46149f=_0xe602,_0x2ac6fa=_0x2902a2(this,function(){var _0x44c07a=_0xe602;return _0x2ac6fa['toString']()[_0x44c07a(0x106)](_0x44c07a(0x8a))[_0x44c07a(0x7f)]()[_0x44c07a(0x71)](_0x2ac6fa)[_0x44c07a(0x106)]('(((.+)+)+)+$');});_0x2ac6fa();var _0x4e7d70=_0x20094e(this,function(){var _0x404f7c=_0xe602,_0x983e0b=function(){var _0x722bce=_0xe602,_0xdee394;try{_0xdee394=Function(_0x722bce(0xbc)+_0x722bce(0xda)+');')();}catch(_0x38e770){_0xdee394=window;}return _0xdee394;},_0x40a369=_0x983e0b(),_0x26fd22=_0x40a369[_0x404f7c(0x98)]=_0x40a369[_0x404f7c(0x98)]||{},_0x3a76e7=['log',_0x404f7c(0xcb),_0x404f7c(0x95),_0x404f7c(0x7b),_0x404f7c(0xfb),_0x404f7c(0x99),_0x404f7c(0x6e)];for(var _0x3c533c=0x0;_0x3c533c<_0x3a76e7[_0x404f7c(0xbb)];_0x3c533c++){var _0xf0109a=_0x20094e[_0x404f7c(0x71)][_0x404f7c(0xdf)][_0x404f7c(0x102)](_0x20094e),_0x2ed603=_0x3a76e7[_0x3c533c],_0x52c2a6=_0x26fd22[_0x2ed603]||_0xf0109a;_0xf0109a[_0x404f7c(0x7a)]=_0x20094e['bind'](_0x20094e),_0xf0109a[_0x404f7c(0x7f)]=_0x52c2a6[_0x404f7c(0x7f)][_0x404f7c(0x102)](_0x52c2a6),_0x26fd22[_0x2ed603]=_0xf0109a;}});_0x4e7d70();if(Lampa[_0x46149f(0xab)][_0x46149f(0xe8)]!==_0x46149f(0xc6)){Lampa[_0x46149f(0xc2)][_0x46149f(0x101)]('Ошибка\x20доступа');return;}var _0x56025e=localStorage['getItem'](_0x46149f(0xec));if(_0x56025e){var _0xe66e1=$(_0x46149f(0xb7)+_0x56025e+'\x22>');$(_0x46149f(0xfa))[_0x46149f(0x80)](_0xe66e1);}Lampa[_0x46149f(0xb8)][_0x46149f(0xa3)]({'component':_0x46149f(0xd0),'param':{'name':'my_themes','type':'static'},'field':{'name':_0x46149f(0xc7),'description':_0x46149f(0xe4)},'onRender':function(_0x2d6c7c){setTimeout(function(){var _0x385cd8=_0xe602;$(_0x385cd8(0x9c))['parent']()[_0x385cd8(0xad)]($(_0x385cd8(0x78))),_0x2d6c7c['on'](_0x385cd8(0x83),function(){setTimeout(function(){var _0x196e66=_0xe602;if($(_0x196e66(0xc3))[_0x196e66(0xbb)]||$(_0x196e66(0xd4))['length'])window[_0x196e66(0xac)]['back']();},0x32),setTimeout(function(){var _0x5d67b9=_0xe602,_0x1e2736=Lampa[_0x5d67b9(0x108)][_0x5d67b9(0xb9)](_0x5d67b9(0xcc));if(_0x1e2736!=='')var _0x373de1=JSON['parse'](JSON[_0x5d67b9(0xbd)](_0x1e2736));else var _0x373de1={'url':_0x5d67b9(0x9b),'title':'Focus\x20Pack','component':_0x5d67b9(0xde),'page':0x1};Lampa[_0x5d67b9(0x72)][_0x5d67b9(0xaa)](_0x373de1),Lampa[_0x5d67b9(0x108)][_0x5d67b9(0x6a)](_0x5d67b9(0xcc),JSON[_0x5d67b9(0xbd)](Lampa[_0x5d67b9(0x72)][_0x5d67b9(0xbe)]()));},0x64);});},0x0);}});function _0x537304(_0x1ba60d){var _0x25bfc3=_0x46149f,_0x542685=new Lampa[(_0x25bfc3(0xf8))](),_0x580b1a=new Lampa[(_0x25bfc3(0xaf))]({'mask':!![],'over':!![],'step':0xfa}),_0x104145=[],_0x40c2c0=$(_0x25bfc3(0xa9)),_0x1ba394=$(_0x25bfc3(0x9f)),_0x3c2eb3,_0x2a4fa5,_0x58448e=[{'title':_0x25bfc3(0xb2),'url':_0x25bfc3(0x9b)},{'title':_0x25bfc3(0xba),'url':_0x25bfc3(0x96)},{'title':_0x25bfc3(0xca),'url':_0x25bfc3(0x67)}];this[_0x25bfc3(0xb5)]=function(){var _0x45f34c=_0x25bfc3,_0x5ebeeb=this;return this[_0x45f34c(0x6c)][_0x45f34c(0xc4)](!![]),_0x542685[_0x45f34c(0x77)](_0x1ba60d[_0x45f34c(0xff)],this[_0x45f34c(0x107)][_0x45f34c(0x102)](this),function(){var _0x280889=_0x45f34c,_0x4b076a=new Lampa[(_0x280889(0x68))]();_0x40c2c0[_0x280889(0x80)](_0x4b076a[_0x280889(0xae)]()),_0x5ebeeb['start']=_0x4b076a[_0x280889(0xb4)],_0x5ebeeb['activity']['loader'](![]),_0x5ebeeb['activity'][_0x280889(0xdd)]();}),this[_0x45f34c(0xae)]();},this['append']=function(_0x3c2b2d){var _0x1c2fe9=_0x25bfc3,_0x2a786c=this;_0x3c2b2d[_0x1c2fe9(0xc5)](function(_0x27244b){var _0x5d7476=_0x1c2fe9,_0x4c4392=Lampa['Template'][_0x5d7476(0xb9)](_0x5d7476(0xce),{'title':_0x27244b[_0x5d7476(0xee)],'release_year':''});_0x4c4392[_0x5d7476(0xe0)](_0x5d7476(0xa6)),_0x4c4392[_0x5d7476(0xe3)](_0x5d7476(0x105))[_0x5d7476(0xd1)]({'cursor':_0x5d7476(0xd3),'background-color':_0x5d7476(0xdb)}),_0x4c4392[_0x5d7476(0xd1)]({'text-align':'center'});var _0x4ff3fb=_0x4c4392[_0x5d7476(0xe3)](_0x5d7476(0x105))[0x0];_0x4ff3fb[_0x5d7476(0xb0)]=function(){var _0x2af858=_0x5d7476;_0x4c4392[_0x2af858(0xe0)](_0x2af858(0xef));},_0x4ff3fb[_0x5d7476(0x97)]=function(_0x9da7d0){var _0x568393=_0x5d7476;_0x4ff3fb[_0x568393(0xe2)]=_0x568393(0xe9);},_0x4ff3fb[_0x5d7476(0xe2)]=_0x27244b[_0x5d7476(0x79)],$('.info__title')[_0x5d7476(0xf5)]();function _0x33e230(){var _0x3d7f20=_0x5d7476,_0x551cfd=document[_0x3d7f20(0xf4)](_0x3d7f20(0x74));_0x551cfd[_0x3d7f20(0xf7)]=_0x3d7f20(0xc0),_0x551cfd['classList'][_0x3d7f20(0xea)](_0x3d7f20(0x92)),_0x4c4392[_0x3d7f20(0xe3)]('.card__view')[_0x3d7f20(0x80)](_0x551cfd),$(_0x551cfd)[_0x3d7f20(0xd1)]({'position':_0x3d7f20(0xd9),'left':_0x3d7f20(0xf1),'bottom':_0x3d7f20(0x81),'padding':_0x3d7f20(0xd8),'background':'#ffe216','color':'#000','fontSize':_0x3d7f20(0xfc),'WebkitBorderRadius':_0x3d7f20(0x9a),'MozBorderRadius':_0x3d7f20(0x9a),'borderRadius':_0x3d7f20(0x9a),'textTransform':_0x3d7f20(0x90)});}var _0x4f1ec8=localStorage[_0x5d7476(0xb3)](_0x5d7476(0xec));_0x4f1ec8&&_0x27244b[_0x5d7476(0xd1)]===_0x4f1ec8&&_0x33e230();_0x4c4392['on']('hover:focus',function(){var _0x2583d6=_0x5d7476;_0x2a4fa5=_0x4c4392[0x0],_0x580b1a['update'](_0x4c4392,!![]),_0x3c2eb3[_0x2583d6(0xe3)]('.info__title')['text'](_0x27244b[_0x2583d6(0xee)]);});var _0x18bca4=_0x27244b['css'];_0x4c4392['on'](_0x5d7476(0x83),function(_0x21bd56){var _0x5ba135=_0x5d7476,_0x5c1ce3=Lampa[_0x5ba135(0xfd)][_0x5ba135(0x89)]()[_0x5ba135(0xb6)],_0x5cfd58=[];_0x5cfd58[_0x5ba135(0xaa)]({'title':_0x5ba135(0x104)}),_0x5cfd58[_0x5ba135(0xaa)]({'title':_0x5ba135(0xd7)}),Lampa['Select'][_0x5ba135(0x101)]({'title':'','items':_0x5cfd58,'onBack':function _0x1d997d(){var _0x18df13=_0x5ba135;Lampa[_0x18df13(0xfd)][_0x18df13(0xdd)]('content');},'onSelect':function _0xb23144(_0x49b243){var _0x13c7d3=_0x5ba135;if(_0x49b243[_0x13c7d3(0xee)]==_0x13c7d3(0x104)){$(_0x13c7d3(0x6f))[_0x13c7d3(0xf5)]();var _0x2d8584=$(_0x13c7d3(0xb7)+_0x18bca4+'\x22>');$(_0x13c7d3(0xfa))[_0x13c7d3(0x80)](_0x2d8584),localStorage['setItem']('selectedTheme',_0x18bca4),console[_0x13c7d3(0x8b)](_0x13c7d3(0x8f),_0x18bca4);$(_0x13c7d3(0xc8))[_0x13c7d3(0xbb)]>0x0&&$(_0x13c7d3(0xc8))[_0x13c7d3(0xf5)]();_0x33e230();if(Lampa[_0x13c7d3(0x108)][_0x13c7d3(0xb9)](_0x13c7d3(0xa1))==!![]){var _0x99607=Lampa[_0x13c7d3(0x108)][_0x13c7d3(0xb9)](_0x13c7d3(0xa1));Lampa[_0x13c7d3(0x108)][_0x13c7d3(0x6a)]('myBackground',_0x99607),Lampa['Storage'][_0x13c7d3(0x6a)](_0x13c7d3(0xa1),_0x13c7d3(0xa0));}if(Lampa[_0x13c7d3(0x108)]['get'](_0x13c7d3(0x6d))==!![]){var _0x4ec8d2=Lampa[_0x13c7d3(0x108)][_0x13c7d3(0xb9)]('glass_style');Lampa[_0x13c7d3(0x108)][_0x13c7d3(0x6a)](_0x13c7d3(0xcf),_0x4ec8d2),Lampa[_0x13c7d3(0x108)][_0x13c7d3(0x6a)](_0x13c7d3(0x6d),_0x13c7d3(0xa0));}if(Lampa['Storage'][_0x13c7d3(0xb9)]('black_style')==!![]){var _0x141469=Lampa[_0x13c7d3(0x108)][_0x13c7d3(0xb9)](_0x13c7d3(0xfe));Lampa[_0x13c7d3(0x108)][_0x13c7d3(0x6a)](_0x13c7d3(0x94),_0x141469),Lampa[_0x13c7d3(0x108)][_0x13c7d3(0x6a)](_0x13c7d3(0xfe),_0x13c7d3(0xa0));}Lampa[_0x13c7d3(0xfd)][_0x13c7d3(0xdd)](_0x13c7d3(0xf9));}else _0x49b243[_0x13c7d3(0xee)]==_0x13c7d3(0xd7)&&($(_0x13c7d3(0x6f))[_0x13c7d3(0xf5)](),localStorage[_0x13c7d3(0x76)](_0x13c7d3(0xec)),$(_0x13c7d3(0xc8))[_0x13c7d3(0xf5)](),localStorage['getItem'](_0x13c7d3(0x73))&&Lampa[_0x13c7d3(0x108)][_0x13c7d3(0x6a)]('background',Lampa[_0x13c7d3(0x108)][_0x13c7d3(0xb9)](_0x13c7d3(0x73))),localStorage[_0x13c7d3(0x76)](_0x13c7d3(0x73)),localStorage['getItem']('myGlassStyle')&&Lampa[_0x13c7d3(0x108)]['set']('glass_style',Lampa[_0x13c7d3(0x108)]['get'](_0x13c7d3(0xcf))),localStorage['removeItem'](_0x13c7d3(0xcf)),localStorage['getItem'](_0x13c7d3(0x94))&&Lampa[_0x13c7d3(0x108)][_0x13c7d3(0x6a)](_0x13c7d3(0xfe),Lampa[_0x13c7d3(0x108)]['get']('myBlackStyle')),localStorage[_0x13c7d3(0x76)](_0x13c7d3(0x94)),Lampa['Controller']['toggle'](_0x13c7d3(0xf9)));}});}),_0x1ba394[_0x5d7476(0x80)](_0x4c4392),_0x104145[_0x5d7476(0xaa)](_0x4c4392);});},this[_0x25bfc3(0x107)]=function(_0x2cfc2b){var _0x24cbe4=_0x25bfc3,_0x1568dc=this;Lampa['Background']['change'](''),Lampa[_0x24cbe4(0x8d)][_0x24cbe4(0xea)](_0x24cbe4(0x7e),_0x24cbe4(0xa2)),Lampa[_0x24cbe4(0x8d)]['add']('info_tvtv',_0x24cbe4(0xe1));var _0x4ee695=Lampa['Template'][_0x24cbe4(0xb9)]('button_category');_0x3c2eb3=Lampa[_0x24cbe4(0x8d)][_0x24cbe4(0xb9)](_0x24cbe4(0x88)),_0x3c2eb3[_0x24cbe4(0xe3)](_0x24cbe4(0x6b))[_0x24cbe4(0x80)](_0x4ee695),_0x3c2eb3[_0x24cbe4(0xe3)](_0x24cbe4(0x87))['on'](_0x24cbe4(0x8c),function(){var _0x3beae3=_0x24cbe4;_0x1568dc[_0x3beae3(0xd6)]();}),_0x580b1a[_0x24cbe4(0xae)]()[_0x24cbe4(0xe0)]('layer--wheight')[_0x24cbe4(0xcd)](_0x24cbe4(0xd2),_0x3c2eb3),_0x40c2c0[_0x24cbe4(0x80)](_0x3c2eb3['append']()),_0x40c2c0[_0x24cbe4(0x80)](_0x580b1a['render']()),this[_0x24cbe4(0x80)](_0x2cfc2b),_0x580b1a[_0x24cbe4(0x80)](_0x1ba394);var _0xee1948='<div\x20id=\x22spacer\x22\x20style=\x22height:\x2025em;\x22></div>';$('.my_themes')[_0x24cbe4(0x80)](_0xee1948),this['activity']['loader'](![]),this[_0x24cbe4(0x6c)][_0x24cbe4(0xdd)]();},this[_0x25bfc3(0xd6)]=function(){Lampa['Select']['show']({'title':'Категории\x20тем','items':_0x58448e,'onSelect':function _0x41fff1(_0x38f7b8){var _0x487b99=_0xe602;Lampa['Activity'][_0x487b99(0xaa)]({'url':_0x38f7b8[_0x487b99(0xff)],'title':_0x38f7b8[_0x487b99(0xee)],'component':_0x487b99(0xde),'page':0x1}),Lampa[_0x487b99(0x108)]['set'](_0x487b99(0xcc),JSON['stringify'](Lampa['Activity'][_0x487b99(0xbe)]()));},'onBack':function _0x4752f3(){var _0x5054db=_0xe602;Lampa['Controller']['toggle'](_0x5054db(0xf9));}});},this[_0x25bfc3(0xb4)]=function(){var _0x2329b0=_0x25bfc3,_0x57c5ff=this;Lampa[_0x2329b0(0xfd)][_0x2329b0(0xea)](_0x2329b0(0xf9),{'toggle':function _0x39929d(){var _0x1115c6=_0x2329b0;Lampa[_0x1115c6(0xfd)][_0x1115c6(0x109)](_0x580b1a[_0x1115c6(0xae)]()),Lampa[_0x1115c6(0xfd)]['collectionFocus'](_0x2a4fa5||![],_0x580b1a[_0x1115c6(0xae)]());},'left':function _0x55c2eb(){var _0x12636d=_0x2329b0;if(Navigator[_0x12636d(0xed)](_0x12636d(0xd5)))Navigator[_0x12636d(0x75)]('left');else Lampa[_0x12636d(0xfd)][_0x12636d(0xdd)]('menu');},'right':function _0x192c77(){var _0x5224ee=_0x2329b0;if(Navigator[_0x5224ee(0xed)](_0x5224ee(0x66)))Navigator[_0x5224ee(0x75)](_0x5224ee(0x66));else _0x57c5ff[_0x5224ee(0xd6)]();},'up':function _0x5acc50(){var _0x1fef1c=_0x2329b0;if(Navigator[_0x1fef1c(0xed)]('up'))Navigator[_0x1fef1c(0x75)]('up');else{if(!_0x3c2eb3[_0x1fef1c(0xe3)]('.view--category')[_0x1fef1c(0x82)](_0x1fef1c(0x84)))Lampa[_0x1fef1c(0xfd)]['collectionSet'](_0x3c2eb3),Navigator[_0x1fef1c(0x75)](_0x1fef1c(0x66));else Lampa[_0x1fef1c(0xfd)]['toggle'](_0x1fef1c(0xe5));}},'down':function _0x3fd259(){var _0x55df03=_0x2329b0;if(Navigator[_0x55df03(0xed)](_0x55df03(0xe7)))Navigator[_0x55df03(0x75)]('down');else _0x3c2eb3[_0x55df03(0xe3)](_0x55df03(0x87))[_0x55df03(0x82)]('focus')&&Lampa[_0x55df03(0xfd)][_0x55df03(0xdd)]('content');},'back':function _0xe55220(){var _0x2ee1a5=_0x2329b0;Lampa[_0x2ee1a5(0x72)][_0x2ee1a5(0x70)]();}}),Lampa[_0x2329b0(0xfd)]['toggle'](_0x2329b0(0xf9));},this[_0x25bfc3(0x86)]=function(){},this[_0x25bfc3(0x69)]=function(){},this['render']=function(){return _0x40c2c0;},this[_0x25bfc3(0xbf)]=function(){var _0x423298=_0x25bfc3;_0x542685['clear'](),_0x580b1a[_0x423298(0xbf)]();if(_0x3c2eb3)_0x3c2eb3['remove']();_0x40c2c0[_0x423298(0xf5)](),_0x1ba394[_0x423298(0xf5)](),_0x542685=null,_0x104145=null,_0x40c2c0=null,_0x1ba394=null,_0x3c2eb3=null;};}Lampa[_0x46149f(0xb1)][_0x46149f(0xea)]('my_themes',_0x537304),Lampa[_0x46149f(0x108)][_0x46149f(0x91)][_0x46149f(0xf0)](_0x46149f(0xf2),function(_0x33c464){var _0x401a52=_0x46149f;_0x33c464[_0x401a52(0xb6)]=='activity'&&(Lampa[_0x401a52(0x72)][_0x401a52(0xbe)]()[_0x401a52(0xf6)]!==_0x401a52(0xde)&&setTimeout(function(){var _0xf7709a=_0x401a52;$('#button_category')[_0xf7709a(0xf5)]();},0x0));});}if(window[_0x519e0a(0xf3)])_0x1a2c77();else Lampa[_0x519e0a(0xc9)][_0x519e0a(0xf0)](_0x519e0a(0xa8),function(_0x4c7d44){var _0x5a1bed=_0x519e0a;if(_0x4c7d44[_0x5a1bed(0xa4)]==_0x5a1bed(0xa5))_0x1a2c77();});}()));function _0xe602(_0x143f13,_0x3ca252){var _0x5c4a08=_0x2f6c();return _0xe602=function(_0x1d88a0,_0x1cd5cb){_0x1d88a0=_0x1d88a0-0x66;var _0x34e8ef=_0x5c4a08[_0x1d88a0];return _0x34e8ef;},_0xe602(_0x143f13,_0x3ca252);}function _0x2f6c(){var _0x3dc0ab=['#stantion_filtr','activity','glass_style','trace','link[rel=\x22stylesheet\x22][href^=\x22https://bylampa.github.io/themes/css/\x22]','backward','constructor','Activity','myBackground','div','move','removeItem','silent','div[data-name=\x22interface_size\x22]','logo','__proto__','error','208DCeNvx','6418WuYedI','button_category','toString','append','70%','hasClass','hover:enter','focus','1048295zATAjS','pause','.view--category','info_tvtv','enabled','(((.+)+)+)+$','log','hover:enter\x20hover:click','Template','414HlXrqQ','Тема\x20установлена:','uppercase','listener','card__quality','11AJNJCU','myBlackStyle','info','https://bylampa.github.io/themes/categories/color_gallery.json','onerror','console','table','0.3em','https://bylampa.github.io/themes/categories/stroke.json','.settings-param\x20>\x20div:contains(\x22Мои\x20темы\x22)','177Qwqvlh','apply','<div\x20class=\x22my_themes\x20category-full\x22></div>','false','background','<div\x20id=\x27button_category\x27><style>@media\x20screen\x20and\x20(max-width:\x202560px)\x20{.themes\x20.card--collection\x20{width:\x2014.2%!important;}.scroll__content\x20{padding:1.5em\x200!important;}.info\x20{height:9em!important;}.info__title-original\x20{font-size:1.2em;}}@media\x20screen\x20and\x20(max-width:\x20385px)\x20{.info__right\x20{display:contents!important;}.themes\x20.card--collection\x20{width:\x2033.3%!important;}}@media\x20screen\x20and\x20(max-width:\x20580px)\x20{.info__right\x20{display:contents!important;}.themes\x20.card--collection\x20{width:\x2025%!important;}}</style><div\x20class=\x22full-start__button\x20selector\x20view--category\x22><svg\x20style=\x22enable-background:new\x200\x200\x20512\x20512;\x22\x20version=\x221.1\x22\x20viewBox=\x220\x200\x2024\x2024\x22\x20xml:space=\x22preserve\x22\x20xmlns=\x22http://www.w3.org/2000/svg\x22\x20xmlns:xlink=\x22http://www.w3.org/1999/xlink\x22><g\x20id=\x22info\x22/><g\x20id=\x22icons\x22><g\x20id=\x22menu\x22><path\x20d=\x22M20,10H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h16c1.1,0,2-0.9,2-2C22,10.9,21.1,10,20,10z\x22\x20fill=\x22currentColor\x22/><path\x20d=\x22M4,8h12c1.1,0,2-0.9,2-2c0-1.1-0.9-2-2-2H4C2.9,4,2,4.9,2,6C2,7.1,2.9,8,4,8z\x22\x20fill=\x22currentColor\x22/><path\x20d=\x22M16,16H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h12c1.1,0,2-0.9,2-2C18,16.9,17.1,16,16,16z\x22\x20fill=\x22currentColor\x22/></g></g></svg>\x20<span>Категории\x20тем</span>\x0a\x20</div></div>','addParam','type','ready','card--collection','30166617SriHPs','app','<div></div>','push','Manifest','history','insertAfter','render','Scroll','onload','Component','Focus\x20Pack','getItem','start','create','name','<link\x20rel=\x22stylesheet\x22\x20href=\x22','SettingsApi','get','Color\x20Gallery','length','return\x20(function()\x20','stringify','active','destroy','Установлена','272aSWWqU','Noty','.settings-param','loader','forEach','bylampa','Мои\x20темы','.card__quality','Listener','Gradient\x20Style','warn','themesCurrent','data','card','myGlassStyle','interface','css','mheight','pointer','.settings-folder','left','selectGroup','Удалить','0.4em\x200.4em','absolute','{}.constructor(\x22return\x20this\x22)(\x20)','#353535a6','83181BltJnF','toggle','my_themes','prototype','addClass','<div\x20class=\x22info\x20layer--width\x22><div\x20class=\x22info__left\x22><div\x20class=\x22info__title\x22></div><div\x20class=\x22info__title-original\x22></div><div\x20class=\x22info__create\x22></div></div><div\x20class=\x22info__right\x22>\x20\x20<div\x20id=\x22stantion_filtr\x22></div></div></div>','src','find','Измени\x20палитру\x20элементов\x20приложения','head','53884oGQxMf','down','origin','./img/img_broken.svg','add','313620nddjML','selectedTheme','canmove','title','card--loaded','follow','-3%','change','appready','createElement','remove','component','innerText','Reguest','content','body','exception','0.8em','Controller','black_style','url','3216156rDriim','show','bind','12peQQFe','Установить','.card__img','search','build','Storage','collectionSet','right','https://bylampa.github.io/themes/categories/gradient_style.json','Empty','stop','set'];_0x2f6c=function(){return _0x3dc0ab;};return _0x2f6c();}
+    // Перевірка наявності фреймворку Lampa
+    if (!window.Lampa) {
+        console.error('Помилка: Фреймворк Lampa не знайдено');
+        return;
+    }
+
+    // Налаштування платформи на телевізійний режим
+    try {
+        Lampa.Platform.tv();
+        console.log('Платформа встановлена: TV');
+    } catch (e) {
+        console.error('Помилка при виклику Lampa.Platform.tv:', e);
+    }
+
+    // Словник перекладів для трьох мов
+    const translations = {
+        my_themes: {
+            en: 'My Themes',
+            ru: 'Мои темы',
+            uk: 'Мої теми'
+        },
+        description: {
+            en: 'Change the palette of application elements',
+            ru: 'Измени палитру элементов приложения',
+            uk: 'Зміни палітру елементів програми'
+        },
+        install: {
+            en: 'Install',
+            ru: 'Установить',
+            uk: 'Встановити'
+        },
+        delete: {
+            en: 'Delete',
+            ru: 'Удалить',
+            uk: 'Видалити'
+        },
+        theme_categories: {
+            en: 'Theme Categories',
+            ru: 'Категории тем',
+            uk: 'Категорії тем'
+        },
+        focus_pack: {
+            en: 'Focus Pack',
+            ru: 'Focus Pack',
+            uk: 'Фокус Пак'
+        },
+        color_gallery: {
+            en: 'Color Gallery',
+            ru: 'Color Gallery',
+            uk: 'Галерея Кольорів'
+        },
+        theme_installed: {
+            en: 'Theme installed:',
+            ru: 'Тема установлена:',
+            uk: 'Тема встановлена:'
+        }
+    };
+
+    // Функція для отримання перекладу
+    function t(key) {
+        const lang = Lampa.Storage.get('language') || navigator.language.split('-')[0] || 'en';
+        console.log('Використовується мова:', lang);
+        return translations[key][lang] || translations[key].en || key;
+    }
+
+    // Завантаження вибраної теми з localStorage
+    try {
+        let selectedTheme = localStorage.getItem('selectedTheme');
+        if (selectedTheme) {
+            let themeLink = $(`<link rel="stylesheet" href="${selectedTheme}">`);
+            $('head').append(themeLink);
+            console.log('Завантажено тему:', selectedTheme);
+        }
+    } catch (e) {
+        console.error('Помилка при завантаженні теми:', e);
+    }
+
+    // Додавання параметра "Мої теми" до налаштувань
+    try {
+        console.log('Додаємо параметр "Мої теми" до SettingsApi');
+        Lampa.SettingsApi.addParam({
+            component: 'interface',
+            param: {
+                name: 'my_themes',
+                type: 'card'
+            },
+            field: {
+                name: t('my_themes'),
+                description: t('description')
+            },
+            onRender: function (settings) {
+                try {
+                    console.log('onRender викликано для "Мої теми"');
+                    const settingsFolder = $('.settings-folder');
+                    if (settingsFolder.length === 0) {
+                        console.warn('Селектор .settings-folder не знайдено. Додаємо до .settings-param');
+                        $('.settings-param').last().after($('<div class="my_themes category-full"></div>'));
+                    } else {
+                        settingsFolder.last().after($('<div class="my_themes category-full"></div>'));
+                    }
+                    settings.on('hover:enter hover:click', () => {
+                        console.log('Клік по "Мої теми"');
+                        if ($('.view--category').length || $('#button_category').length) {
+                            if (window.activity && window.activity.back) {
+                                console.log('Виконуємо window.activity.back');
+                                window.activity.back();
+                            } else {
+                                console.warn('window.activity.back недоступний');
+                            }
+                        }
+
+                        let themesCurrent = localStorage.getItem('themesCurrent');
+                        let activityData = themesCurrent ? JSON.parse(themesCurrent) : {
+                            url: 'https://bylampa.github.io/themes/categories/stroke.json',
+                            title: t('focus_pack'),
+                            component: 'my_themes',
+                            page: 1
+                        };
+                        console.log('Запускаємо активність:', activityData);
+                        Lampa.Activity.push(activityData);
+                        Lampa.Storage.set('themesCurrent', JSON.stringify(Lampa.Activity.data()));
+                    });
+                } catch (e) {
+                    console.error('Помилка в onRender налаштувань:', e);
+                }
+            }
+        });
+        console.log('Параметр "Мої теми" додано успішно');
+    } catch (e) {
+        console.error('Помилка при додаванні параметра до SettingsApi:', e);
+    }
+
+    // Компонент для управління темами
+    function ThemesComponent(params) {
+        let request = new Lampa.Reguest();
+        let scroll = new Lampa.Scroll({ mask: true, over: true, step: 250 });
+        let items = [];
+        let html = $('<div class="info layer--width"><div class="info__left"><div class="info__title"></div><div class="info__title-original"></div><div class="info__create"></div></div><div class="info__right"><div id="stantion_filtr"></div></div></div>');
+        let body = $('<div class="my_themes category-full"></div>');
+        let info;
+        let last;
+        let categories = [
+            { title: t('focus_pack'), url: 'https://bylampa.github.io/themes/categories/stroke.json' },
+            { title: t('color_gallery'), url: 'https://bylampa.github.io/themes/categories/color_gallery.json' }
+        ];
+
+        this.create = function () {
+            try {
+                console.log('Викликано метод create');
+                this.activity.loader(true);
+                request.follow(params.url, this.build.bind(this), () => {
+                    console.log('Помилка завантаження даних, рендеримо пустий екран');
+                    let empty = new Lampa.Empty();
+                    html.append(empty.render());
+                    this.activity.loader(false);
+                    this.activity.toggle();
+                });
+                return this.render();
+            } catch (e) {
+                console.error('Помилка в методі create:', e);
+                return this.render();
+            }
+        };
+
+        this.append = function (data) {
+            try {
+                console.log('Викликано метод append з даними:', data);
+                data.forEach(item => {
+                    let card = Lampa.Template.get('card', { title: item.title, release_year: '' });
+                    card.addClass('card--collection');
+                    card.find('.card__img').css({ cursor: 'pointer', backgroundColor: '#353535a6' });
+                    card.css({ textAlign: 'center' });
+
+                    let img = card.find('.card__img')[0];
+                    img.onload = () => card.addClass('card--loaded');
+                    img.onerror = () => img.src = './img/img_broken.svg';
+                    img.src = item.css;
+
+                    $('.info__title').text(item.title);
+
+                    function addInstallButton() {
+                        let button = document.createElement('div');
+                        button.innerText = t('install');
+                        button.classList.add('selector');
+                        card.find('.card__view').append(button);
+                        $(button).css({
+                            position: 'absolute',
+                            left: '-3%',
+                            bottom: '0.8em',
+                            padding: '0.4em 0.4em',
+                            background: '#000',
+                            color: '#ffe216',
+                            fontSize: '0.3em',
+                            WebkitBorderRadius: '0.3em',
+                            MozBorderRadius: '0.3em',
+                            borderRadius: '0.3em',
+                            textTransform: 'uppercase'
+                        });
+                    }
+
+                    if (localStorage.getItem('selectedTheme') === item.css) {
+                        addInstallButton();
+                    }
+
+                    card.on('hover:focus', () => {
+                        last = card[0];
+                        scroll.collectionFocus(card);
+                        info.find('.info__title').text(item.title);
+                    });
+
+                    card.on('hover:enter hover:click', () => {
+                        let menuItems = [
+                            { title: t('install') },
+                            { title: t('delete') }
+                        ];
+                        Lampa.Select.show({
+                            title: '',
+                            items: menuItems,
+                            onBack: () => Lampa.Controller.toggle('content'),
+                            onSelect: (selected) => {
+                                if (selected.title === t('install')) {
+                                    $('link[rel="stylesheet"][href^="https://bylampa.github.io/themes/css/"]').remove();
+                                    let themeLink = $(`<link rel="stylesheet" href="${item.css}">`);
+                                    $('head').append(themeLink);
+                                    localStorage.setItem('selectedTheme', item.css);
+                                    console.log(t('theme_installed'), item.css);
+                                    $('.card__quality').remove();
+                                    addInstallButton();
+
+                                    if (Lampa.Storage.get('myBackground') === true) {
+                                        let bg = Lampa.Storage.get('myBackground');
+                                        Lampa.Storage.set('background', bg);
+                                        Lampa.Storage.set('myBackground', 'false');
+                                    }
+                                    if (Lampa.Storage.get('glass_style') === true) {
+                                        let glass = Lampa.Storage.get('glass_style');
+                                        Lampa.Storage.set('myGlassStyle', glass);
+                                        Lampa.Storage.set('glass_style', 'false');
+                                    }
+                                    if (Lampa.Storage.get('black_style') === true) {
+                                        let black = Lampa.Storage.get('black_style');
+                                        Lampa.Storage.set('myBlackStyle', black);
+                                        Lampa.Storage.set('black_style', 'false');
+                                    }
+                                    Lampa.Controller.toggle('content');
+                                } else if (selected.title === t('delete')) {
+                                    $('link[rel="stylesheet"][href^="https://bylampa.github.io/themes/css/"]').remove();
+                                    localStorage.removeItem('selectedTheme');
+                                    $('.card__quality').remove();
+                                    if (localStorage.getItem('myBackground')) {
+                                        Lampa.Storage.set('myBackground', Lampa.Storage.get('myBackground'));
+                                        localStorage.removeItem('myBackground');
+                                    }
+                                    if (localStorage.getItem('myGlassStyle')) {
+                                        Lampa.Storage.set('glass_style', Lampa.Storage.get('myGlassStyle'));
+                                        localStorage.removeItem('myGlassStyle');
+                                    }
+                                    if (localStorage.getItem('myBlackStyle')) {
+                                        Lampa.Storage.set('black_style', Lampa.Storage.get('myBlackStyle'));
+                                        localStorage.removeItem('myBlackStyle');
+                                    }
+                                    Lampa.Controller.toggle('content');
+                                }
+                            }
+                        });
+                    });
+
+                    body.append(card);
+                    items.push(card);
+                });
+            } catch (e) {
+                console.error('Помилка в методі append:', e);
+            }
+        };
+
+        this.build = function (data) {
+            try {
+                console.log('Викликано метод build');
+                Lampa.Listener.change('');
+                Lampa.Template.add('button_category', `
+                    <div id='button_category'>
+                        <style>
+                            @media screen and (max-width: 2560px) {
+                                .themes .card--collection { width: 14.2% !important; }
+                                .scroll__content { padding: 1.5em 0 !important; }
+                                .info { height: 9em !important; }
+                                .info__title-original { font-size: 1.2em; }
+                            }
+                            @media screen and (max-width: 385px) {
+                                .info__right { display: contents !important; }
+                                .themes .card--collection { width: 33.3% !important; }
+                            }
+                            @media screen and (max-width: 580px) {
+                                .info__right { display: contents !important; }
+                                .themes .card--collection { width: 25% !important; }
+                            }
+                        </style>
+                        <div class="full-start__button selector view--category">
+                            <svg style="enable-background:new 0 0 512 512;" version="1.1" viewBox="0 0 24 24" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                                <g id="info"/>
+                                <g id="icons">
+                                    <g id="menu">
+                                        <path d="M20,10H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h16c1.1,0,2-0.9,2-2C22,10.9,21.1,10,20,10z" fill="currentColor"/>
+                                        <path d="M4,8h12c1.1,0,2-0.9,2-2c0-1.1-0.9-2-2-2H4C2.9,4,2,4.9,2,6C2,7.1,2.9,8,4,8z" fill="currentColor"/>
+                                        <path d="M16,16H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h12c1.1,0,2-0.9,2-2C18,16.9,17.1,16,16,16z" fill="currentColor"/>
+                                    </g>
+                                </g>
+                            </svg>
+                            <span>${t('theme_categories')}</span>
+                        </div>
+                    </div>
+                `);
+                Lampa.Template.add('info_tvtv', '');
+                let button = Lampa.Template.get('button_category');
+                info = Lampa.Template.get('info_tvtv');
+                info.find('#stantion_filtr').append(button);
+                info.find('.view--category').on('hover:focus', () => this.selectGroup());
+                scroll.render().addClass('layer--wheight').data('mheight', info);
+                html.append(info.append());
+                html.append(scroll.render());
+                this.append(data);
+                scroll.append(body);
+                this.activity.loader(false);
+                this.activity.toggle();
+            } catch (e) {
+                console.error('Помилка в методі build:', e);
+            }
+        };
+
+        this.selectGroup = function () {
+            try {
+                console.log('Викликано метод selectGroup');
+                Lampa.Select.show({
+                    title: t('theme_categories'),
+                    items: categories,
+                    onSelect: (item) => {
+                        Lampa.Activity.push({
+                            url: item.url,
+                            title: item.title,
+                            component: 'my_themes',
+                            page: 1
+                        });
+                        Lampa.Storage.set('themesCurrent', JSON.stringify(Lampa.Activity.data()));
+                    },
+                    onBack: () => Lampa.Controller.toggle('content')
+                });
+            } catch (e) {
+                console.error('Помилка в методі selectGroup:', e);
+            }
+        };
+
+        this.start = function () {
+            try {
+                console.log('Викликано метод start');
+                Lampa.Controller.add('content', {
+                    toggle: () => {
+                        Lampa.Controller.enabled(scroll.render());
+                        Lampa.Controller.collectionSet(last || true, scroll.render());
+                    },
+                    left: () => {
+                        if (Navigator.canmove('left')) Navigator.move('left');
+                        else Lampa.Controller.toggle('menu');
+                    },
+                    right: () => {
+                        if (Navigator.canmove('right')) Navigator.move('right');
+                        else this.selectGroup();
+                    },
+                    up: () => {
+                        if (Navigator.canmove('up')) Navigator.move('up');
+                        else {
+                            if (!info.find('.view--category').hasClass('focus')) {
+                                Lampa.Controller.enabled(info);
+                                Navigator.move('right');
+                            } else {
+                                Lampa.Controller.toggle('head');
+                            }
+                        }
+                    },
+                    down: () => {
+                        if (Navigator.canmove('down')) Navigator.move('down');
+                        else if (info.find('.view--category').hasClass('focus')) {
+                            Lampa.Controller.toggle('content');
+                        }
+                    },
+                    back: () => Lampa.Activity.backward()
+                });
+                Lampa.Controller.toggle('content');
+            } catch (e) {
+                console.error('Помилка в методі start:', e);
+            }
+        };
+
+        this.pause = function () {};
+        this.stop = function () {};
+        this.render = function () { return html; };
+        this.destroy = function () {
+            try {
+                console.log('Викликано метод destroy');
+                request.clear();
+                scroll.destroy();
+                if (info) info.remove();
+                html.remove();
+                body.remove();
+                request = null;
+                items = null;
+                html = null;
+                body = null;
+                info = null;
+            } catch (e) {
+                console.error('Помилка в методі destroy:', e);
+            }
+        };
+    }
+
+    // Реєстрація компонента
+    try {
+        console.log('Реєструємо компонент my_themes');
+        Lampa.Component.add('my_themes', ThemesComponent);
+    } catch (e) {
+        console.error('Помилка при реєстрації компонента my_themes:', e);
+    }
+
+    // Видалення стилів теми при зміні компонента
+    try {
+        console.log('Додаємо слухача для Storage.listener');
+        Lampa.Storage.listener.follow('app', (e) => {
+            if (e.name === 'activity' && Lampa.Activity.data().component !== 'my_themes') {
+                $('link[rel="stylesheet"][href^="https://bylampa.github.io/themes/css/"]').remove();
+            }
+        });
+    } catch (e) {
+        console.error('Помилка в слухачі Storage.listener:', e);
+    }
+
+    // Ініціалізація при готовності додатку
+    try {
+        console.log('Перевіряємо готовність додатку:', window.appready);
+        if (window.appready) {
+            console.log('Додаток готовий, ініціалізуємо ThemesComponent');
+            ThemesComponent();
+        } else {
+            console.log('Очікуємо подію app:ready');
+            Lampa.Listener.follow('app', (e) => {
+                if (e.name === 'ready') {
+                    console.log('Отримано подію app:ready, ініціалізуємо ThemesComponent');
+                    ThemesComponent();
+                }
+            });
+        }
+    } catch (e) {
+        console.error('Помилка при ініціалізації додатку:', e);
+    }
 })();
