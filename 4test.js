@@ -78,105 +78,42 @@
         console.error('Помилка при завантаженні теми: ' + e);
     }
 
-    // Додавання параметра "Мої теми" до налаштувань
-    try {
-        console.log('Додаємо параметр "Мої теми" до SettingsApi');
-        Lampa.SettingsApi.addParam({
-            component: 'main', // Змінено на 'main' замість 'interface'
-            param: {
-                name: 'my_themes',
-                type: 'card'
-            },
-            field: {
-                name: t('my_themes'),
-                description: t('description')
-            },
-            onRender: function (settings) {
+    // Додавання пункту меню після готовності додатку
+    function addMenuItem() {
+        try {
+            console.log('Спроба прямого додавання пункту меню до DOM');
+            console.log('Доступність селектора .settings: ' + $('.settings').length);
+            var menuItem = $('<div class="settings-param selector" data-name="my_themes">' + t('my_themes') + '</div>');
+            $('.settings').last().append(menuItem);
+            console.log('Пункт меню додано до DOM, перевірка: ' + $('.settings-param[data-name="my_themes"]').length);
+            menuItem.on('hover:enter hover:click', function () {
+                console.log('Клік по пункту меню "Мої теми" (DOM)');
                 try {
-                    console.log('onRender викликано для "Мої теми"');
-                    // Спробуємо знайти контейнер для налаштувань
-                    var container = $('[class*="settings"]').last();
-                    if (container.length === 0) {
-                        console.warn('Селектор [class*="settings"] не знайдено, пробуємо .settings');
-                        container = $('.settings').last();
-                    }
-                    if (container.length === 0) {
-                        console.warn('Селектор .settings не знайдено, додаємо до body');
-                        container = $('body');
-                    }
-                    console.log('Контейнер для додавання: ' + (container[0] ? container[0].outerHTML : 'null'));
-                    container.append($('<div class="my_themes category-full" style="background: red; height: 50px;"></div>'));
-                    console.log('Додано елемент .my_themes.category-full, перевірка: ' + $('.my_themes.category-full').length);
-
-                    settings.on('hover:enter hover:click', function () {
-                        console.log('Клік по "Мої теми"');
-                        try {
-                            if ($('.view--category').length || $('#button_category').length) {
-                                if (window.activity && window.activity.back) {
-                                    console.log('Виконуємо window.activity.back');
-                                    window.activity.back();
-                                } else {
-                                    console.warn('window.activity.back недоступний');
-                                }
-                            }
-
-                            var themesCurrent = localStorage.getItem('themesCurrent');
-                            var activityData = themesCurrent ? JSON.parse(themesCurrent) : {
-                                url: 'https://bylampa.github.io/themes/categories/stroke.json',
-                                title: t('focus_pack'),
-                                component: 'my_themes',
-                                page: 1
-                            };
-                            console.log('Запускаємо активність: ' + JSON.stringify(activityData));
-                            Lampa.Activity.push(activityData);
-                            Lampa.Storage.set('themesCurrent', JSON.stringify(Lampa.Activity.data()));
-                        } catch (e) {
-                            console.error('Помилка при кліку по "Мої теми": ' + e);
+                    if ($('.view--category').length || $('#button_category').length) {
+                        if (window.activity && window.activity.back) {
+                            console.log('Виконуємо window.activity.back');
+                            window.activity.back();
+                        } else {
+                            console.warn('window.activity.back недоступний');
                         }
-                    });
-                } catch (e) {
-                    console.error('Помилка в onRender налаштувань: ' + e);
-                }
-            }
-        });
-        console.log('Параметр "Мої теми" додано успішно');
-    } catch (e) {
-        console.error('Помилка при додаванні параметра до SettingsApi: ' + e);
-    }
-
-    // Альтернативне додавання пункту меню через DOM
-    try {
-        console.log('Спроба прямого додавання пункту меню до DOM');
-        var menuItem = $('<div class="settings-param selector" data-name="my_themes">' + t('my_themes') + '</div>');
-        $('[class*="settings"]').last().append(menuItem);
-        console.log('Пункт меню додано до DOM, перевірка: ' + $('.settings-param[data-name="my_themes"]').length);
-        menuItem.on('hover:enter hover:click', function () {
-            console.log('Клік по пункту меню "Мої теми" (DOM)');
-            try {
-                if ($('.view--category').length || $('#button_category').length) {
-                    if (window.activity && window.activity.back) {
-                        console.log('Виконуємо window.activity.back');
-                        window.activity.back();
-                    } else {
-                        console.warn('window.activity.back недоступний');
                     }
+                    var themesCurrent = localStorage.getItem('themesCurrent');
+                    var activityData = themesCurrent ? JSON.parse(themesCurrent) : {
+                        url: 'https://bylampa.github.io/themes/categories/stroke.json',
+                        title: t('focus_pack'),
+                        component: 'my_themes',
+                        page: 1
+                    };
+                    console.log('Запускаємо активність: ' + JSON.stringify(activityData));
+                    Lampa.Activity.push(activityData);
+                    Lampa.Storage.set('themesCurrent', JSON.stringify(Lampa.Activity.data()));
+                } catch (e) {
+                    console.error('Помилка при кліку по пункту меню (DOM): ' + e);
                 }
-                var themesCurrent = localStorage.getItem('themesCurrent');
-                var activityData = themesCurrent ? JSON.parse(themesCurrent) : {
-                    url: 'https://bylampa.github.io/themes/categories/stroke.json',
-                    title: t('focus_pack'),
-                    component: 'my_themes',
-                    page: 1
-                };
-                console.log('Запускаємо активність: ' + JSON.stringify(activityData));
-                Lampa.Activity.push(activityData);
-                Lampa.Storage.set('themesCurrent', JSON.stringify(Lampa.Activity.data()));
-            } catch (e) {
-                console.error('Помилка при кліку по пункту меню (DOM): ' + e);
-            }
-        });
-    } catch (e) {
-        console.error('Помилка при прямому додаванні пункту меню до DOM: ' + e);
+            });
+        } catch (e) {
+            console.error('Помилка при прямому додаванні пункту меню до DOM: ' + e);
+        }
     }
 
     // Компонент для управління темами
@@ -480,7 +417,7 @@
     try {
         console.log('Додаємо слухача для Storage.listener');
         Lampa.Storage.listener.follow('app', function (e) {
-            if (e.name === 'activity' && Lampa.Activity.data().component !== 'my_themes') {
+            if (e.name === 'egg' && Lampa.Activity.data().component !== 'my_themes') {
                 $('link[rel="stylesheet"][href^="https://bylampa.github.io/themes/css/"]').remove();
             }
         });
@@ -493,6 +430,7 @@
         console.log('Перевіряємо готовність додатку: ' + window.appready);
         if (window.appready) {
             console.log('Додаток готовий, запускаємо активність my_themes');
+            addMenuItem();
             Lampa.Activity.push({
                 url: 'https://bylampa.github.io/themes/categories/stroke.json',
                 title: t('focus_pack'),
@@ -504,7 +442,8 @@
             console.log('Очікуємо подію app:ready');
             Lampa.Listener.follow('app', function (e) {
                 if (e.name === 'ready') {
-                    console.log('Отримано подію app:ready, запускаємо активність my_themes');
+                    console.log('Отримано подію app:ready, додаємо пункт меню та запускаємо активність my_themes');
+                    addMenuItem();
                     Lampa.Activity.push({
                         url: 'https://bylampa.github.io/themes/categories/stroke.json',
                         title: t('focus_pack'),
