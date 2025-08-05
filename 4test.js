@@ -92,7 +92,6 @@
     // Функція для отримання перекладу
     function t(key) {
         var lang = Lampa.Storage.get('language') || navigator.language.split('-')[0] || 'en';
-        console.log('Використовується мова: ' + lang);
         return translations[key] && translations[key][lang] ? translations[key][lang] : translations[key] && translations[key].en ? translations[key].en : key;
     }
 
@@ -102,21 +101,15 @@
         if (selectedTheme) {
             var themeLink = $('<link rel="stylesheet" href="' + selectedTheme + '">');
             $('head').append(themeLink);
-            console.log('Завантажено тему: ' + selectedTheme);
         }
-    } catch (e) {
-        console.error('Помилка при завантаженні теми: ' + e);
-    }
+    } catch (e) {}
 
     // Додавання компонента в меню налаштувань
     try {
-        console.log('Реєструємо компонент my_themes у SettingsApi');
         Lampa.SettingsApi.addComponent({
             component: 'my_themes',
             name: t('my_themes'),
-            icon: '<svg fill="none" stroke="currentColor" stroke-width="2" width="24px" height="24px" viewBox="0 0 14 14" role="img" focusable="false" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">' +
-                  '<path d="m 12.52,3.08629 -1.49808,0 -0.6618,0.72 1.92,0 0,5.76 -10.56,0 0,-5.76 6.1428,0 0.50724,-0.72 -6.89016,0 c -0.26508,0 -0.48,0.21492 -0.48,0.48 l 0,6.96 c 0,0.26508 0.21492,0.48 0.48,0.48 l 11.04,0 c 0.26508,0 0.48,-0.21492 0.48,-0.48 l 0,-6.96 c 0,-0.26508 -0.21492,-0.48 -0.48,-0.48 z M 11.0092,1.45069 C 10.68664,1.19101 10.153,1.31893 9.81664,1.73629 L 6.40984,6.57661 C 6.07348,6.99385 6.07516,6.91417 6.39736,7.17361 6.71956,7.43329 6.64192,7.45189 6.97828,7.03465 L 10.9834,2.67661 c 0.33636,-0.4176 0.34812,-0.96636 0.0258,-1.22592 z m -0.87612,0.57936 c 0,0 -0.04992,-0.05796 -0.21588,-0.19068 0.24888,-0.40644 0.738,-0.33192 0.738,-0.33192 -0.46368,0.27384 -0.52212,0.5226 -0.52212,0.5226 z M 4.19992,8.38453 C 4.864,8.37933 4.94668,8.21929 5.16316,7.55257 5.5624,6.50041 7.36024,7.82809 6.24604,8.28889 5.13184,8.74993 3.53584,8.38969 4.19992,8.38453 Z m 4.35096,3.98292 C 8.34304,12.21457 8.32072,11.98489 8.32072,11.98489 l -0.078,-0.4986 -2.48568,0 -0.07824,0.49824 c 0,0 -0.02172,0.22992 -0.22968,0.3828 -0.20784,0.15288 -0.37188,0.28416 -0.20784,0.30648 0.15804,0.02136 1.6488,0.0019 1.75872,0 0.11016,0.0019 1.60056,0.02136 1.75848,0 0.16392,-0.02208 -2.4e-4,-0.15312 -0.2076,-0.30636 z"/>' +
-                  '</svg>'
+            icon: '<svg fill="none" width="24px" height="24px" viewBox="0 0 14 14" role="img" focusable="false" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><path d="m 12.52,3.08629 -1.49808,0 -0.6618,0.72 1.92,0 0,5.76 -10.56,0 0,-5.76 6.1428,0 0.50724,-0.72 -6.89016,0 c -0.26508,0 -0.48,0.21492 -0.48,0.48 l 0,6.96 c 0,0.26508 0.21492,0.48 0.48,0.48 l 11.04,0 c 0.26508,0 0.48,-0.21492 0.48,-0.48 l 0,-6.96 c 0,-0.26508 -0.21492,-0.48 -0.48,-0.48 z M 11.0092,1.45069 C 10.68664,1.19101 10.153,1.31893 9.81664,1.73629 L 6.40984,6.57661 C 6.07348,6.99385 6.07516,6.91417 6.39736,7.17361 6.71956,7.43329 6.64192,7.45189 6.97828,7.03465 L 10.9834,2.67661 c 0.33636,-0.4176 0.34812,-0.96636 0.0258,-1.22592 z m -0.87612,0.57936 c 0,0 -0.04992,-0.05796 -0.21588,-0.19068 0.24888,-0.40644 0.738,-0.33192 0.738,-0.33192 -0.46368,0.27384 -0.52212,0.5226 -0.52212,0.5226 z M 4.19992,8.38453 C 4.864,8.37933 4.94668,8.21929 5.16316,7.55257 5.5624,6.50041 7.36024,7.82809 6.24604,8.28889 5.13184,8.74993 3.53584,8.38969 4.19992,8.38453 Z m 4.35096,3.98292 C 8.34304,12.21457 8.32072,11.98489 8.32072,11.98489 l -0.078,-0.4986 -2.48568,0 -0.07824,0.49824 c 0,0 -0.02172,0.22992 -0.22968,0.3828 -0.20784,0.15288 -0.37188,0.28416 -0.20784,0.30648 0.15804,0.02136 1.6488,0.0019 1.75872,0 0.11016,0.0019 1.60056,0.02136 1.75848,0 0.16392,-0.02208 -2.4e-4,-0.15312 -0.2076,-0.30636 z"/></svg>'
         });
 
         Lampa.SettingsApi.addParam({
@@ -131,14 +124,10 @@
                 description: t('description')
             },
             onChange: function () {
-                console.log('Клік по пункту меню "Мої теми"');
                 try {
                     if ($('.view--category').length || $('#button_category').length) {
                         if (window.activity && window.activity.back) {
-                            console.log('Виконуємо window.activity.back');
                             window.activity.back();
-                        } else {
-                            console.warn('window.activity.back недоступний');
                         }
                     }
                     var themesCurrent = localStorage.getItem('themesCurrent');
@@ -148,17 +137,12 @@
                         component: 'my_themes',
                         page: 1
                     };
-                    console.log('Запускаємо активність: ' + JSON.stringify(activityData));
                     Lampa.Activity.push(activityData);
                     Lampa.Storage.set('themesCurrent', JSON.stringify(activityData));
-                } catch (e) {
-                    console.error('Помилка при кліку по пункту меню: ' + e);
-                }
+                } catch (e) {}
             }
         });
-    } catch (e) {
-        console.error('Помилка при додаванні компонента my_themes у SettingsApi: ' + e);
-    }
+    } catch (e) {}
 
     // Компонент для управління темами
     function ThemesComponent(params) {
@@ -167,7 +151,6 @@
 
         // Перевірка параметрів
         if (!params) {
-            console.warn('Параметри для ThemesComponent не передані, використовуємо значення за замовчуванням');
             params = {
                 url: 'https://bylampa.github.io/themes/categories/stroke.json',
                 title: t('focus_pack'),
@@ -189,31 +172,22 @@
 
         this.create = function () {
             try {
-                console.log('Викликано метод create з параметрами: ' + JSON.stringify(params));
                 this.activity.loader(true);
-
-                // Використовуємо jQuery AJAX
                 $.get(params.url, this.build.bind(this)).fail(function () {
-                    console.log('Помилка завантаження даних, рендеримо пустий екран');
                     var empty = new Lampa.Empty();
                     html.append(empty.render());
                     this.activity.loader(false);
                     this.activity.toggle();
                 });
-
                 return this.render();
             } catch (e) {
-                console.error('Помилка в методі create: ' + e);
                 return this.render();
             }
         };
 
         this.append = function (data) {
             try {
-                console.log('Викликано метод append з даними: ' + JSON.stringify(data));
                 data.forEach(function (item) {
-                    console.log('Обробка елемента: ' + JSON.stringify(item));
-                    // Нормалізація title
                     item.title = normalizeTitle(item.title);
                     var card = Lampa.Template.get('card', { title: t(item.title), release_year: '' });
                     card.addClass('card--collection');
@@ -222,11 +196,9 @@
 
                     var img = card.find('.card__img')[0];
                     img.onload = function () {
-                        console.log('Зображення завантажено: ' + img.src);
                         card.addClass('card--loaded');
                     };
                     img.onerror = function () {
-                        console.error('Помилка завантаження зображення: ' + img.src);
                         img.src = 'data:image/svg+xml;base64,' + btoa(
                             '<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150">' +
                             '<rect fill="#444" width="150" height="150"/>' +
@@ -235,9 +207,7 @@
                         );
                     };
                     var imageUrl = item.logo || '';
-                    console.log('Спроба завантаження зображення: ' + imageUrl);
                     if (!imageUrl) {
-                        console.warn('Немає URL зображення для: ' + item.title);
                         img.src = 'data:image/svg+xml;base64,' + btoa(
                             '<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150">' +
                             '<rect fill="#444" width="150" height="150"/>' +
@@ -291,7 +261,6 @@
                                     var themeLink = $('<link rel="stylesheet" href="' + item.css + '">');
                                     $('head').append(themeLink);
                                     localStorage.setItem('selectedTheme', item.css);
-                                    console.log(t('theme_installed') + ' ' + item.css);
                                     $('.card__quality').remove();
                                     var installedButton = document.createElement('div');
                                     installedButton.innerText = t('install');
@@ -355,14 +324,11 @@
 
                 // Додаємо body до .info__left перед .info__create
                 info.find('.info__create').before(body);
-            } catch (e) {
-                console.error('Помилка в методі append: ' + e);
-            }
+            } catch (e) {}
         };
 
         this.build = function (data) {
             try {
-                console.log('Викликано метод build');
                 Lampa.Template.add('button_category', '<div id="button_category">' +
                     '<style>' +
                     '@media screen and (max-width: 2560px) {' +
@@ -371,7 +337,8 @@
                     '.info { height: auto !important; margin-bottom: 0.5em !important; }' +
                     '.info__left { float: left; width: 100%; }' +
                     '.info__right { display: none !important; }' +
-                    '.view--category { display: inline-block; margin: 0.5em 0.5em 0.5em auto; }' +
+                    '.view--category { display: flex; align-items: center; margin: 0.5em 0.5em 0.5em auto; }' +
+                    '.view--category svg { margin-right: 0.3em; }' +
                     '.info__title-original { font-size: 1.2em; }' +
                     '}' +
                     '@media screen and (max-width: 385px) {' +
@@ -397,7 +364,6 @@
                 var button = Lampa.Template.get('button_category');
                 info.find('.info__left').prepend(button);
                 info.find('.view--category').on('click', function () {
-                    console.log('Клік по кнопці "Категорії тем"');
                     self.selectGroup();
                 });
                 scroll.render().addClass('layer--wheight').data('mheight', info);
@@ -406,14 +372,11 @@
                 this.append(data);
                 this.activity.loader(false);
                 this.activity.toggle();
-            } catch (e) {
-                console.error('Помилка в методі build: ' + e);
-            }
+            } catch (e) {}
         };
 
         this.selectGroup = function () {
             try {
-                console.log('Викликано метод selectGroup');
                 Lampa.Select.show({
                     title: t('theme_categories'),
                     items: categories,
@@ -424,29 +387,20 @@
                             component: 'my_themes',
                             page: 1
                         };
-                        console.log('Запускаємо активність у selectGroup: ' + JSON.stringify(activityData));
                         Lampa.Activity.push(activityData);
                         Lampa.Storage.set('themesCurrent', JSON.stringify(activityData));
                     },
                     onBack: function () { 
-                        console.log('Викликано onBack у selectGroup');
                         Lampa.Controller.toggle('content'); 
                     }
                 });
-            } catch (e) {
-                console.error('Помилка в методі selectGroup: ' + e);
-            }
+            } catch (e) {}
         };
 
         this.start = function () {
             try {
-                console.log('Викликано метод start');
-                console.log('Тип html: ' + (html instanceof jQuery ? 'jQuery' : typeof html));
-                console.log('Тип scroll.render(): ' + (scroll.render() instanceof jQuery ? 'jQuery' : typeof scroll.render()));
-                console.log('Тип info: ' + (info instanceof jQuery ? 'jQuery' : typeof info));
                 Lampa.Controller.add('content', {
                     toggle: function () {
-                        console.log('Викликано toggle в Controller');
                         if (scroll.render().find('.card').length > 0) {
                             Navigator.focus(scroll.render().find('.card')[0]);
                         } else if (info.find('.view--category').length > 0) {
@@ -454,17 +408,14 @@
                         }
                     },
                     left: function () {
-                        console.log('Викликано left в Controller');
                         if (Navigator.canmove('left')) Navigator.move('left');
                         else Lampa.Controller.toggle('menu');
                     },
                     right: function () {
-                        console.log('Викликано right в Controller');
                         if (Navigator.canmove('right')) Navigator.move('right');
                         else self.selectGroup();
                     },
                     up: function () {
-                        console.log('Викликано up в Controller');
                         if (Navigator.canmove('up')) Navigator.move('up');
                         else {
                             if (info.find('.view--category').length > 0 && !info.find('.view--category').hasClass('focus')) {
@@ -475,7 +426,6 @@
                         }
                     },
                     down: function () {
-                        console.log('Викликано down в Controller');
                         if (Navigator.canmove('down')) Navigator.move('down');
                         else if (info.find('.view--category').hasClass('focus')) {
                             if (scroll.render().find('.card').length > 0) {
@@ -484,25 +434,20 @@
                         }
                     },
                     back: function () {
-                        console.log('Викликано back в Controller');
                         Lampa.Activity.backward();
                     }
                 });
                 Lampa.Controller.toggle('content');
-            } catch (e) {
-                console.error('Помилка в методі start: ' + e);
-            }
+            } catch (e) {}
         };
 
         this.pause = function () {};
         this.stop = function () {};
         this.render = function () { 
-            console.log('Викликано render, тип html: ' + (html instanceof jQuery ? 'jQuery' : typeof html));
             return html; 
         };
         this.destroy = function () {
             try {
-                console.log('Викликано метод destroy');
                 scroll.destroy();
                 if (info) info.remove();
                 html.remove();
@@ -511,29 +456,21 @@
                 html = null;
                 body = null;
                 info = null;
-            } catch (e) {
-                console.error('Помилка в методі destroy: ' + e);
-            }
+            } catch (e) {}
         };
     }
 
     // Реєстрація компонента
     try {
-        console.log('Реєструємо компонент my_themes');
         Lampa.Component.add('my_themes', ThemesComponent);
-    } catch (e) {
-        console.error('Помилка при реєстрації компонента my_themes: ' + e);
-    }
+    } catch (e) {}
 
     // Видалення стилів теми при зміні компонента
     try {
-        console.log('Додаємо слухача для Storage.listener');
         Lampa.Storage.listener.follow('app', function (e) {
             if (e.name === 'egg' && Lampa.Activity.active().component !== 'my_themes') {
                 $('link[rel="stylesheet"][href^="https://bylampa.github.io/themes/css/"]').remove();
             }
         });
-    } catch (e) {
-        console.error('Помилка в слухачі Storage.listener: ' + e);
-    }
+    } catch (e) {}
 })();
