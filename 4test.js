@@ -78,13 +78,25 @@
         console.error('Помилка при завантаженні теми: ' + e);
     }
 
-    // Додавання пункту меню після готовності додатку
+    // Додавання пункту меню після готовності DOM
     function addMenuItem() {
         try {
             console.log('Спроба прямого додавання пункту меню до DOM');
             console.log('Доступність селектора .settings: ' + $('.settings').length);
+            console.log('Доступність селектора .settings-folder: ' + $('.settings-folder').length);
+            console.log('Доступність селектора body: ' + $('body').length);
+            var container = $('.settings').last();
+            if (container.length === 0) {
+                console.warn('Селектор .settings не знайдено, пробуємо .settings-folder');
+                container = $('.settings-folder').last();
+            }
+            if (container.length === 0) {
+                console.warn('Селектор .settings-folder не знайдено, додаємо до body');
+                container = $('body');
+            }
+            console.log('Вибрано контейнер: ' + (container[0] ? container[0].outerHTML : 'null'));
             var menuItem = $('<div class="settings-param selector" data-name="my_themes">' + t('my_themes') + '</div>');
-            $('.settings').last().append(menuItem);
+            container.append(menuItem);
             console.log('Пункт меню додано до DOM, перевірка: ' + $('.settings-param[data-name="my_themes"]').length);
             menuItem.on('hover:enter hover:click', function () {
                 console.log('Клік по пункту меню "Мої теми" (DOM)');
@@ -425,32 +437,38 @@
         console.error('Помилка в слухачі Storage.listener: ' + e);
     }
 
-    // Ініціалізація при готовності додатку
+    // Ініціалізація при готовності додатку з затримкою
     try {
         console.log('Перевіряємо готовність додатку: ' + window.appready);
         if (window.appready) {
-            console.log('Додаток готовий, запускаємо активність my_themes');
-            addMenuItem();
-            Lampa.Activity.push({
-                url: 'https://bylampa.github.io/themes/categories/stroke.json',
-                title: t('focus_pack'),
-                component: 'my_themes',
-                page: 1
-            });
-            Lampa.Storage.set('themesCurrent', JSON.stringify(Lampa.Activity.data()));
+            console.log('Додаток готовий, додаємо пункт меню з затримкою');
+            setTimeout(function () {
+                addMenuItem();
+                console.log('Запускаємо активність my_themes');
+                Lampa.Activity.push({
+                    url: 'https://bylampa.github.io/themes/categories/stroke.json',
+                    title: t('focus_pack'),
+                    component: 'my_themes',
+                    page: 1
+                });
+                Lampa.Storage.set('themesCurrent', JSON.stringify(Lampa.Activity.data()));
+            }, 1000);
         } else {
             console.log('Очікуємо подію app:ready');
             Lampa.Listener.follow('app', function (e) {
                 if (e.name === 'ready') {
-                    console.log('Отримано подію app:ready, додаємо пункт меню та запускаємо активність my_themes');
-                    addMenuItem();
-                    Lampa.Activity.push({
-                        url: 'https://bylampa.github.io/themes/categories/stroke.json',
-                        title: t('focus_pack'),
-                        component: 'my_themes',
-                        page: 1
-                    });
-                    Lampa.Storage.set('themesCurrent', JSON.stringify(Lampa.Activity.data()));
+                    console.log('Отримано подію app:ready, додаємо пункт меню з затримкою');
+                    setTimeout(function () {
+                        addMenuItem();
+                        console.log('Запускаємо активність my_themes');
+                        Lampa.Activity.push({
+                            url: 'https://bylampa.github.io/themes/categories/stroke.json',
+                            title: t('focus_pack'),
+                            component: 'my_themes',
+                            page: 1
+                        });
+                        Lampa.Storage.set('themesCurrent', JSON.stringify(Lampa.Activity.data()));
+                    }, 1000);
                 }
             });
         }
