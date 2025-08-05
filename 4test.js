@@ -42,6 +42,12 @@
             en: 'Theme installed:',
             ru: 'Тема установлена:',
             uk: 'Тема встановлена:'
+        },
+        // Додаємо переклади для назв тем
+        red: {
+            en: 'Red',
+            ru: 'Красный',
+            uk: 'Червоний'
         }
     };
 
@@ -49,7 +55,7 @@
     function t(key) {
         var lang = Lampa.Storage.get('language') || navigator.language.split('-')[0] || 'en';
         console.log('Використовується мова: ' + lang);
-        return translations[key][lang] || translations[key].en || key;
+        return translations[key] && translations[key][lang] ? translations[key][lang] : translations[key] && translations[key].en ? translations[key].en : key;
     }
 
     // Завантаження вибраної теми з localStorage
@@ -166,7 +172,7 @@
                 console.log('Викликано метод append з даними: ' + JSON.stringify(data));
                 data.forEach(function (item) {
                     console.log('Обробка елемента: ' + JSON.stringify(item));
-                    var card = Lampa.Template.get('card', { title: item.title, release_year: '' });
+                    var card = Lampa.Template.get('card', { title: t(item.title), release_year: '' });
                     card.addClass('card--collection');
                     card.find('.card__img').css({ cursor: 'pointer', backgroundColor: '#353535a6' });
                     card.css({ textAlign: 'center' });
@@ -199,7 +205,7 @@
                         img.src = imageUrl;
                     }
 
-                    html.find('.info__title').text(item.title);
+                    html.find('.info__title').text(t(item.title));
 
                     function addInstallButton() {
                         var button = document.createElement('div');
@@ -230,7 +236,7 @@
                         if (scroll && scroll.collectionFocus) {
                             scroll.collectionFocus(card);
                         }
-                        html.find('.info__title').text(item.title);
+                        html.find('.info__title').text(t(item.title));
                     });
 
                     card.on('hover:enter hover:click', function () {
@@ -304,18 +310,20 @@
                 Lampa.Template.add('button_category', '<div id="button_category">' +
                     '<style>' +
                     '@media screen and (max-width: 2560px) {' +
-                    '.themes .card--collection { width: 14.2% !important; }' +
-                    '.scroll__content { padding: 1.5em 0 !important; }' +
-                    '.info { height: 9em !important; }' +
+                    '.themes .card--collection { width: 14.2% !important; margin-top: 1em !important; }' +
+                    '.scroll__content { padding: 0.5em 0 !important; }' +
+                    '.info { height: auto !important; margin-bottom: 0.5em !important; }' +
                     '.info__title-original { font-size: 1.2em; }' +
+                    '#button_category { float: left; margin-left: 0; width: 100%; }' +
+                    '.view--category { display: inline-block; margin: 0.5em; }' +
                     '}' +
                     '@media screen and (max-width: 385px) {' +
-                    '.info__right { display: contents !important; }' +
-                    '.themes .card--collection { width: 33.3% !important; }' +
+                    '.themes .card--collection { width: 33.3% !important; margin-top: 1em !important; }' +
+                    '.info__right { display: none !important; }' +
                     '}' +
                     '@media screen and (max-width: 580px) {' +
-                    '.info__right { display: contents !important; }' +
-                    '.themes .card--collection { width: 25% !important; }' +
+                    '.themes .card--collection { width: 25% !important; margin-top: 1em !important; }' +
+                    '.info__right { display: none !important; }' +
                     '}' +
                     '</style>' +
                     '<div class="full-start__button selector view--category">' +
@@ -330,7 +338,7 @@
                     '<span>' + t('theme_categories') + '</span>' +
                     '</div></div>');
                 var button = Lampa.Template.get('button_category');
-                info.find('#stantion_filtr').append(button);
+                info.find('.info__left').prepend(button); // Додаємо кнопку в info__left
                 info.find('.view--category').on('click', function () {
                     console.log('Клік по кнопці "Категорії тем"');
                     this.selectGroup();
