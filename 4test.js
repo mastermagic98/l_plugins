@@ -9,10 +9,7 @@
 
         function main() {
             // Check platform access
-            if (Lampa.Manifest.origin !== 'bylampa') {
-                Lampa.Noty.show('Ошибка доступа');
-                return;
-            }
+            
 
             // Load saved theme from localStorage
             var savedTheme = localStorage.getItem('selectedTheme');
