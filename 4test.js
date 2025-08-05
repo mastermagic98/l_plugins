@@ -68,15 +68,23 @@
     function addMenuItem() {
         try {
             console.log('Спроба прямого додавання пункту меню до DOM');
-            console.log('Доступність селектора .settings: ' + $('.settings').length);
+            console.log('Доступність селектора .settings-folder[data-name="interface"] .settings-folder--inner: ' + $('.settings-folder[data-name="interface"] .settings-folder--inner').length);
             console.log('Доступність селектора body: ' + $('body').length);
-            var container = $('.settings').last();
+            if ($('.settings-param[data-name="my_themes"]').length > 0) {
+                console.log('Пункт меню "Мої теми" вже існує');
+                return true;
+            }
+            var container = $('.settings-folder[data-name="interface"] .settings-folder--inner').last();
+            if (container.length === 0) {
+                console.warn('Селектор .settings-folder[data-name="interface"] .settings-folder--inner не знайдено, додаємо до .settings');
+                container = $('.settings').last();
+            }
             if (container.length === 0) {
                 console.warn('Селектор .settings не знайдено, додаємо до body');
                 container = $('body');
             }
             console.log('Вибрано контейнер: ' + (container[0] ? container[0].tagName + '.' + container[0].className : 'null'));
-            var menuItem = $('<div class="settings-param selector" data-name="my_themes">' + t('my_themes') + '</div>');
+            var menuItem = $('<div class="settings-param selector" data-name="my_themes" data-type="toggle">' + t('my_themes') + '</div>');
             container.append(menuItem);
             console.log('Пункт меню додано до DOM, перевірка: ' + $('.settings-param[data-name="my_themes"]').length);
             menuItem.on('hover:enter hover:click', function () {
@@ -118,8 +126,8 @@
                 console.error('Не вдалося додати пункт меню після ' + maxAttempts + ' спроб');
                 return;
             }
-            console.log('Спроба ' + (attempts + 1) + ': перевірка наявності .settings');
-            if ($('.settings').length > 0) {
+            console.log('Спроба ' + (attempts + 1) + ': перевірка наявності .settings-folder[data-name="interface"]');
+            if ($('.settings-folder[data-name="interface"] .settings-folder--inner').length > 0 || $('.settings').length > 0) {
                 if (addMenuItem()) {
                     setTimeout(function () {
                         var activityData = {
@@ -341,7 +349,10 @@
                     '</div></div>');
                 var button = Lampa.Template.get('button_category');
                 info.find('#stantion_filtr').append(button);
-                info.find('.view--category').on('hover:focus', this.selectGroup.bind(this));
+                info.find('.view--category').on('hover:enter hover:click', function () {
+                    console.log('Клік по кнопці "Категорії тем"');
+                    this.selectGroup();
+                }.bind(this));
                 scroll.render().addClass('layer--wheight').data('mheight', info);
                 html.append(info);
                 html.append(scroll.render());
@@ -367,10 +378,14 @@
                             component: 'my_themes',
                             page: 1
                         };
+                        console.log('Запускаємо активність у selectGroup: ' + JSON.stringify(activityData));
                         Lampa.Activity.push(activityData);
                         Lampa.Storage.set('themesCurrent', JSON.stringify(activityData));
                     },
-                    onBack: function () { Lampa.Controller.toggle('content'); }
+                    onBack: function () { 
+                        console.log('Викликано onBack у selectGroup');
+                        Lampa.Controller.toggle('content'); 
+                    }
                 });
             } catch (e) {
                 console.error('Помилка в методі selectGroup: ' + e);
@@ -386,8 +401,13 @@
                 Lampa.Controller.add('content', {
                     toggle: function () {
                         console.log('Викликано toggle в Controller');
-                        Lampa.Controller.enabled(scroll.render()[0]);
-                        Lampa.Controller.collectionSet(last || scroll.render().find('.card')[0] || scroll.render()[0], scroll.render()[0]);
+                        // Спрощуємо ініціалізацію, уникаємо collectionSet
+                        if (scroll.render().find('.card').length > 0) {
+                            Lampa.Controller.enabled(scroll.render()[0]);
+                            Navigator.focus(scroll.render().find('.card')[0]);
+                        } else {
+                            Lampa.Controller.enabled(scroll.render()[0]);
+                        }
                     },
                     left: function () {
                         console.log('Викликано left в Controller');
