@@ -99,7 +99,7 @@
                     };
                     console.log('Запускаємо активність: ' + JSON.stringify(activityData));
                     Lampa.Activity.push(activityData);
-                    Lampa.Storage.set('themesCurrent', JSON.stringify(Lampa.Activity.data()));
+                    Lampa.Storage.set('themesCurrent', JSON.stringify(activityData));
                 } catch (e) {
                     console.error('Помилка при кліку по пункту меню (DOM): ' + e);
                 }
@@ -111,21 +111,30 @@
 
     // Періодична перевірка DOM
     function tryAddMenuItem(attempts, maxAttempts) {
-        if (attempts >= maxAttempts) {
-            console.error('Не вдалося додати пункт меню після ' + maxAttempts + ' спроб');
-            return;
-        }
-        console.log('Спроба ' + (attempts + 1) + ': перевірка наявності .settings');
-        if ($('.settings').length > 0) {
-            addMenuItem();
-            Lampa.Activity.push({
-                url: 'https://bylampa.github.io/themes/categories/stroke.json',
-                title: t('focus_pack'),
-                component: 'my_themes',
-                page: 1
-            });
-            Lampa.Storage.set('themesCurrent', JSON.stringify(Lampa.Activity.data()));
-        } else {
+        try {
+            if (attempts >= maxAttempts) {
+                console.error('Не вдалося додати пункт меню після ' + maxAttempts + ' спроб');
+                return;
+            }
+            console.log('Спроба ' + (attempts + 1) + ': перевірка наявності .settings');
+            if ($('.settings').length > 0) {
+                addMenuItem();
+                var activityData = {
+                    url: 'https://bylampa.github.io/themes/categories/stroke.json',
+                    title: t('focus_pack'),
+                    component: 'my_themes',
+                    page: 1
+                };
+                console.log('Запускаємо активність: ' + JSON.stringify(activityData));
+                Lampa.Activity.push(activityData);
+                Lampa.Storage.set('themesCurrent', JSON.stringify(activityData));
+            } else {
+                setTimeout(function () {
+                    tryAddMenuItem(attempts + 1, maxAttempts);
+                }, 500);
+            }
+        } catch (e) {
+            console.error('Помилка в tryAddMenuItem, спроба ' + (attempts + 1) + ': ' + e);
             setTimeout(function () {
                 tryAddMenuItem(attempts + 1, maxAttempts);
             }, 500);
@@ -349,7 +358,12 @@
                             component: 'my_themes',
                             page: 1
                         });
-                        Lampa.Storage.set('themesCurrent', JSON.stringify(Lampa.Activity.data()));
+                        Lampa.Storage.set('themesCurrent', JSON.stringify({
+                            url: item.url,
+                            title: item.title,
+                            component: 'my_themes',
+                            page: 1
+                        }));
                     },
                     onBack: function () { Lampa.Controller.toggle('content'); }
                 });
@@ -365,7 +379,7 @@
                     toggle: function () {
                         console.log('Викликано toggle в Controller');
                         Lampa.Controller.enabled(scroll.render());
-                        Lampa.Controller.collectionSet(last || scroll.find('.card')[0] || true, scroll.render().get(0));
+                        Lampa.Controller.collectionSet(last || scroll.render().find('.card')[0] || true, scroll.render().get(0));
                     },
                     left: function () {
                         console.log('Викликано left в Controller');
@@ -439,7 +453,7 @@
     try {
         console.log('Додаємо слухача для Storage.listener');
         Lampa.Storage.listener.follow('app', function (e) {
-            if (e.name === 'egg' && Lampa.Activity.data().component !== 'my_themes') {
+            if (e.name === 'egg' && Lampa.Activity.active().component !== 'my_themes') {
                 $('link[rel="stylesheet"][href^="https://bylampa.github.io/themes/css/"]').remove();
             }
         });
@@ -450,7 +464,7 @@
     // Запуск періодичної перевірки DOM
     try {
         console.log('Запускаємо періодичну перевірку DOM');
-        tryAddMenuItem(0, 10);
+        tryAddMenuItem(0, 15);
     } catch (e) {
         console.error('Помилка при ініціалізації періодичної перевірки: ' + e);
     }
