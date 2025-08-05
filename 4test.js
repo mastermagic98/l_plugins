@@ -70,8 +70,8 @@
         Lampa.SettingsApi.addComponent({
             component: 'my_themes',
             name: t('my_themes'),
-            icon: '<svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">' +
-                  '<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 21V3h16v18H4zm4-6h8m-4-4v8"/>' +
+            icon: '<svg fill="#000000" width="24px" height="24px" viewBox="0 0 14 14" role="img" focusable="false" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">' +
+                  '<path d="m 12.52,3.08629 -1.49808,0 -0.6618,0.72 1.92,0 0,5.76 -10.56,0 0,-5.76 6.1428,0 0.50724,-0.72 -6.89016,0 c -0.26508,0 -0.48,0.21492 -0.48,0.48 l 0,6.96 c 0,0.26508 0.21492,0.48 0.48,0.48 l 11.04,0 c 0.26508,0 0.48,-0.21492 0.48,-0.48 l 0,-6.96 c 0,-0.26508 -0.21492,-0.48 -0.48,-0.48 z M 11.0092,1.45069 C 10.68664,1.19101 10.153,1.31893 9.81664,1.73629 L 6.40984,6.57661 C 6.07348,6.99385 6.07516,6.91417 6.39736,7.17361 6.71956,7.43329 6.64192,7.45189 6.97828,7.03465 L 10.9834,2.67661 c 0.33636,-0.4176 0.34812,-0.96636 0.0258,-1.22592 z m -0.87612,0.57936 c 0,0 -0.04992,-0.05796 -0.21588,-0.19068 0.24888,-0.40644 0.738,-0.33192 0.738,-0.33192 -0.46368,0.27384 -0.52212,0.5226 -0.52212,0.5226 z M 4.19992,8.38453 C 4.864,8.37933 4.94668,8.21929 5.16316,7.55257 5.5624,6.50041 7.36024,7.82809 6.24604,8.28889 5.13184,8.74993 3.53584,8.38969 4.19992,8.38453 Z m 4.35096,3.98292 C 8.34304,12.21457 8.32072,11.98489 8.32072,11.98489 l -0.078,-0.4986 -2.48568,0 -0.07824,0.49824 c 0,0 -0.02172,0.22992 -0.22968,0.3828 -0.20784,0.15288 -0.37188,0.28416 -0.20784,0.30648 0.15804,0.02136 1.6488,0.0019 1.75872,0 0.11016,0.0019 1.60056,0.02136 1.75848,0 0.16392,-0.02208 -2.4e-4,-0.15312 -0.2076,-0.30636 z"/>' +
                   '</svg>'
         });
 
@@ -165,15 +165,22 @@
             try {
                 console.log('Викликано метод append з даними: ' + JSON.stringify(data));
                 data.forEach(function (item) {
+                    console.log('Обробка елемента: ' + JSON.stringify(item));
                     var card = Lampa.Template.get('card', { title: item.title, release_year: '' });
                     card.addClass('card--collection');
                     card.find('.card__img').css({ cursor: 'pointer', backgroundColor: '#353535a6' });
                     card.css({ textAlign: 'center' });
 
                     var img = card.find('.card__img')[0];
-                    img.onload = function () { card.addClass('card--loaded'); };
-                    img.onerror = function () { img.src = './img/img_broken.svg'; };
-                    img.src = item.css;
+                    img.onload = function () {
+                        console.log('Зображення завантажено: ' + img.src);
+                        card.addClass('card--loaded');
+                    };
+                    img.onerror = function () {
+                        console.error('Помилка завантаження зображення: ' + img.src);
+                        img.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR42mNgAAIAAAUAAXqN5R4AAAAASUVORK5CYII='; // Прозорий PNG
+                    };
+                    img.src = item.image || item.css || './img/img_broken.svg'; // Використовуємо item.image, якщо є
 
                     html.find('.info__title').text(item.title);
 
