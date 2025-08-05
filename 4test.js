@@ -121,30 +121,32 @@
             console.log('Спроба ' + (attempts + 1) + ': перевірка наявності .settings');
             if ($('.settings').length > 0) {
                 if (addMenuItem()) {
-                    var activityData = {
-                        url: 'https://bylampa.github.io/themes/categories/stroke.json',
-                        title: t('focus_pack'),
-                        component: 'my_themes',
-                        page: 1
-                    };
-                    console.log('Запускаємо активність: ' + JSON.stringify(activityData));
-                    try {
-                        Lampa.Activity.push(activityData);
-                        Lampa.Storage.set('themesCurrent', JSON.stringify(activityData));
-                    } catch (e) {
-                        console.error('Помилка при запуску активності в tryAddMenuItem: ' + e);
-                    }
+                    setTimeout(function () {
+                        var activityData = {
+                            url: 'https://bylampa.github.io/themes/categories/stroke.json',
+                            title: t('focus_pack'),
+                            component: 'my_themes',
+                            page: 1
+                        };
+                        console.log('Запускаємо активність: ' + JSON.stringify(activityData));
+                        try {
+                            Lampa.Activity.push(activityData);
+                            Lampa.Storage.set('themesCurrent', JSON.stringify(activityData));
+                        } catch (e) {
+                            console.error('Помилка при запуску активності в tryAddMenuItem: ' + e);
+                        }
+                    }, 1000);
                 }
             } else {
                 setTimeout(function () {
                     tryAddMenuItem(attempts + 1, maxAttempts);
-                }, 500);
+                }, 1000);
             }
         } catch (e) {
             console.error('Помилка в tryAddMenuItem, спроба ' + (attempts + 1) + ': ' + e);
             setTimeout(function () {
                 tryAddMenuItem(attempts + 1, maxAttempts);
-            }, 500);
+            }, 1000);
         }
     }
 
@@ -378,11 +380,14 @@
         this.start = function () {
             try {
                 console.log('Викликано метод start');
+                console.log('Тип html: ' + (html instanceof jQuery ? 'jQuery' : typeof html));
+                console.log('Тип scroll.render(): ' + (scroll.render() instanceof jQuery ? 'jQuery' : typeof scroll.render()));
+                console.log('Тип info: ' + (info instanceof jQuery ? 'jQuery' : typeof info));
                 Lampa.Controller.add('content', {
                     toggle: function () {
                         console.log('Викликано toggle в Controller');
-                        Lampa.Controller.enabled($(scroll.render()));
-                        Lampa.Controller.collectionSet(last || $(scroll.render()).find('.card')[0] || true, $(scroll.render())[0]);
+                        Lampa.Controller.enabled(scroll.render()[0]);
+                        Lampa.Controller.collectionSet(last || scroll.render().find('.card')[0] || scroll.render()[0], scroll.render()[0]);
                     },
                     left: function () {
                         console.log('Викликано left в Controller');
@@ -398,8 +403,8 @@
                         console.log('Викликано up в Controller');
                         if (Navigator.canmove('up')) Navigator.move('up');
                         else {
-                            if (!$(info).find('.view--category').hasClass('focus')) {
-                                Lampa.Controller.enabled($(info));
+                            if (!info.find('.view--category').hasClass('focus')) {
+                                Lampa.Controller.enabled(info[0]);
                                 Navigator.move('right');
                             } else {
                                 Lampa.Controller.toggle('head');
@@ -409,7 +414,7 @@
                     down: function () {
                         console.log('Викликано down в Controller');
                         if (Navigator.canmove('down')) Navigator.move('down');
-                        else if ($(info).find('.view--category').hasClass('focus')) {
+                        else if (info.find('.view--category').hasClass('focus')) {
                             Lampa.Controller.toggle('content');
                         }
                     },
@@ -426,7 +431,10 @@
 
         this.pause = function () {};
         this.stop = function () {};
-        this.render = function () { return html; };
+        this.render = function () { 
+            console.log('Викликано render, тип html: ' + (html instanceof jQuery ? 'jQuery' : typeof html));
+            return html; 
+        };
         this.destroy = function () {
             try {
                 console.log('Викликано метод destroy');
