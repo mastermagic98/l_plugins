@@ -76,6 +76,19 @@
         }
     };
 
+    // Функція для нормалізації title до ключа
+    function normalizeTitle(title) {
+        var map = {
+            'Красная': 'red',
+            'Зелёная': 'green',
+            'Фиолетовая': 'violet',
+            'Тёмно-синяя': 'dark_blue',
+            'Оранжевая': 'orange',
+            'Розовая': 'pink'
+        };
+        return map[title] || title.toLowerCase().replace(/\s/g, '_');
+    }
+
     // Функція для отримання перекладу
     function t(key) {
         var lang = Lampa.Storage.get('language') || navigator.language.split('-')[0] || 'en';
@@ -200,11 +213,8 @@
                 console.log('Викликано метод append з даними: ' + JSON.stringify(data));
                 data.forEach(function (item) {
                     console.log('Обробка елемента: ' + JSON.stringify(item));
-                    // Якщо title у JSON уже перекладений, використовуємо ключ
-                    var titleKey = item.title.toLowerCase().replace(/\s/g, '_');
-                    if (translations[titleKey]) {
-                        item.title = titleKey;
-                    }
+                    // Нормалізація title
+                    item.title = normalizeTitle(item.title);
                     var card = Lampa.Template.get('card', { title: t(item.title), release_year: '' });
                     card.addClass('card--collection');
                     card.find('.card__img').css({ cursor: 'pointer', backgroundColor: '#353535a6' });
@@ -237,8 +247,6 @@
                     } else {
                         img.src = imageUrl;
                     }
-
-                    html.find('.info__title').text(t(item.title));
 
                     function addInstallButton() {
                         var button = document.createElement('div');
@@ -366,6 +374,9 @@
                     body.append(card);
                     items.push(card);
                 });
+
+                // Додаємо body до .info__left перед .info__create
+                info.find('.info__create').before(body);
             } catch (e) {
                 console.error('Помилка в методі append: ' + e);
             }
@@ -382,7 +393,7 @@
                     '.info { height: auto !important; margin-bottom: 0.5em !important; }' +
                     '.info__left { float: left; width: 100%; }' +
                     '.info__right { display: none !important; }' +
-                    '.view--category { display: inline-block; margin: 0.5em 0 0.5em 0.5em; }' +
+                    '.view--category { display: inline-block; margin: 0.5em 0.5em 0.5em auto; }' +
                     '}' +
                     '@media screen and (max-width: 385px) {' +
                     '.themes .card--collection { width: 33.3% !important; margin-top: 1em !important; }' +
@@ -412,7 +423,6 @@
                 html.append(info);
                 html.append(scroll.render());
                 this.append(data);
-                scroll.append(body);
                 this.activity.loader(false);
                 this.activity.toggle();
             } catch (e) {
