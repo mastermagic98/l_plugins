@@ -82,7 +82,7 @@
     try {
         console.log('Додаємо параметр "Мої теми" до SettingsApi');
         Lampa.SettingsApi.addParam({
-            component: 'interface', // Спробуємо 'main', якщо не спрацює
+            component: 'main', // Змінено на 'main' замість 'interface'
             param: {
                 name: 'my_themes',
                 type: 'card'
@@ -144,6 +144,41 @@
         console.error('Помилка при додаванні параметра до SettingsApi: ' + e);
     }
 
+    // Альтернативне додавання пункту меню через DOM
+    try {
+        console.log('Спроба прямого додавання пункту меню до DOM');
+        var menuItem = $('<div class="settings-param selector" data-name="my_themes">' + t('my_themes') + '</div>');
+        $('[class*="settings"]').last().append(menuItem);
+        console.log('Пункт меню додано до DOM, перевірка: ' + $('.settings-param[data-name="my_themes"]').length);
+        menuItem.on('hover:enter hover:click', function () {
+            console.log('Клік по пункту меню "Мої теми" (DOM)');
+            try {
+                if ($('.view--category').length || $('#button_category').length) {
+                    if (window.activity && window.activity.back) {
+                        console.log('Виконуємо window.activity.back');
+                        window.activity.back();
+                    } else {
+                        console.warn('window.activity.back недоступний');
+                    }
+                }
+                var themesCurrent = localStorage.getItem('themesCurrent');
+                var activityData = themesCurrent ? JSON.parse(themesCurrent) : {
+                    url: 'https://bylampa.github.io/themes/categories/stroke.json',
+                    title: t('focus_pack'),
+                    component: 'my_themes',
+                    page: 1
+                };
+                console.log('Запускаємо активність: ' + JSON.stringify(activityData));
+                Lampa.Activity.push(activityData);
+                Lampa.Storage.set('themesCurrent', JSON.stringify(Lampa.Activity.data()));
+            } catch (e) {
+                console.error('Помилка при кліку по пункту меню (DOM): ' + e);
+            }
+        });
+    } catch (e) {
+        console.error('Помилка при прямому додаванні пункту меню до DOM: ' + e);
+    }
+
     // Компонент для управління темами
     function ThemesComponent(params) {
         // Перевірка параметрів
@@ -157,30 +192,23 @@
             };
         }
 
+        var scroll = new Lampa.Scroll({ mask: true, over: true, step: 250 });
         var html = $('<div class="info layer--width"><div class="info__left"><div class="info__title"></div><div class="info__title-original"></div><div class="info__create"></div></div><div class="info__right"><div id="stantion_filtr"></div></div></div>');
         var body = $('<div class="my_themes category-full"></div>');
         var info;
         var last;
+        var items = [];
         var categories = [
             { title: t('focus_pack'), url: 'https://bylampa.github.io/themes/categories/stroke.json' },
             { title: t('color_gallery'), url: 'https://bylampa.github.io/themes/categories/color_gallery.json' }
         ];
-
-        // Перевірка доступних методів Lampa.Reguest
-        var request;
-        try {
-            request = new Lampa.Reguest();
-            console.log('Lampa.Reguest ініціалізовано, доступні методи: ' + Object.keys(request).join(', '));
-        } catch (e) {
-            console.error('Помилка ініціалізації Lampa.Reguest: ' + e);
-        }
 
         this.create = function () {
             try {
                 console.log('Викликано метод create з параметрами: ' + JSON.stringify(params));
                 this.activity.loader(true);
 
-                // Використовуємо jQuery AJAX замість Lampa.Reguest.follow
+                // Використовуємо jQuery AJAX
                 $.get(params.url, this.build.bind(this)).fail(function () {
                     console.log('Помилка завантаження даних, рендеримо пустий екран');
                     var empty = new Lampa.Empty();
@@ -312,7 +340,6 @@
         this.build = function (data) {
             try {
                 console.log('Викликано метод build');
-                Lampa.Listener.change('');
                 Lampa.Template.add('button_category', '<div id="button_category">' +
                     '<style>' +
                     '@media screen and (max-width: 2560px) {' +
@@ -346,7 +373,6 @@
                 info = Lampa.Template.get('info_tvtv');
                 info.find('#stantion_filtr').append(button);
                 info.find('.view--category').on('hover:focus', this.selectGroup.bind(this));
-                scroll = Lampa.Scroll({ mask: true, over: true, step: 250 });
                 scroll.render().addClass('layer--wheight').data('mheight', info);
                 html.append(info.append());
                 html.append(scroll.render());
@@ -428,12 +454,10 @@
         this.destroy = function () {
             try {
                 console.log('Викликано метод destroy');
-                if (request && request.clear) request.clear();
-                if (scroll && scroll.destroy) scroll.destroy();
+                scroll.destroy();
                 if (info) info.remove();
                 html.remove();
                 body.remove();
-                request = null;
                 items = null;
                 html = null;
                 body = null;
