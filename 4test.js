@@ -104,8 +104,10 @@
                     console.error('Помилка при кліку по пункту меню (DOM): ' + e);
                 }
             });
+            return true;
         } catch (e) {
             console.error('Помилка при прямому додаванні пункту меню до DOM: ' + e);
+            return false;
         }
     }
 
@@ -118,16 +120,21 @@
             }
             console.log('Спроба ' + (attempts + 1) + ': перевірка наявності .settings');
             if ($('.settings').length > 0) {
-                addMenuItem();
-                var activityData = {
-                    url: 'https://bylampa.github.io/themes/categories/stroke.json',
-                    title: t('focus_pack'),
-                    component: 'my_themes',
-                    page: 1
-                };
-                console.log('Запускаємо активність: ' + JSON.stringify(activityData));
-                Lampa.Activity.push(activityData);
-                Lampa.Storage.set('themesCurrent', JSON.stringify(activityData));
+                if (addMenuItem()) {
+                    var activityData = {
+                        url: 'https://bylampa.github.io/themes/categories/stroke.json',
+                        title: t('focus_pack'),
+                        component: 'my_themes',
+                        page: 1
+                    };
+                    console.log('Запускаємо активність: ' + JSON.stringify(activityData));
+                    try {
+                        Lampa.Activity.push(activityData);
+                        Lampa.Storage.set('themesCurrent', JSON.stringify(activityData));
+                    } catch (e) {
+                        console.error('Помилка при запуску активності в tryAddMenuItem: ' + e);
+                    }
+                }
             } else {
                 setTimeout(function () {
                     tryAddMenuItem(attempts + 1, maxAttempts);
@@ -352,18 +359,14 @@
                     title: t('theme_categories'),
                     items: categories,
                     onSelect: function (item) {
-                        Lampa.Activity.push({
+                        var activityData = {
                             url: item.url,
                             title: item.title,
                             component: 'my_themes',
                             page: 1
-                        });
-                        Lampa.Storage.set('themesCurrent', JSON.stringify({
-                            url: item.url,
-                            title: item.title,
-                            component: 'my_themes',
-                            page: 1
-                        }));
+                        };
+                        Lampa.Activity.push(activityData);
+                        Lampa.Storage.set('themesCurrent', JSON.stringify(activityData));
                     },
                     onBack: function () { Lampa.Controller.toggle('content'); }
                 });
@@ -378,8 +381,8 @@
                 Lampa.Controller.add('content', {
                     toggle: function () {
                         console.log('Викликано toggle в Controller');
-                        Lampa.Controller.enabled(scroll.render());
-                        Lampa.Controller.collectionSet(last || scroll.render().find('.card')[0] || true, scroll.render().get(0));
+                        Lampa.Controller.enabled($(scroll.render()));
+                        Lampa.Controller.collectionSet(last || $(scroll.render()).find('.card')[0] || true, $(scroll.render())[0]);
                     },
                     left: function () {
                         console.log('Викликано left в Controller');
@@ -395,8 +398,8 @@
                         console.log('Викликано up в Controller');
                         if (Navigator.canmove('up')) Navigator.move('up');
                         else {
-                            if (!info.find('.view--category').hasClass('focus')) {
-                                Lampa.Controller.enabled(info);
+                            if (!$(info).find('.view--category').hasClass('focus')) {
+                                Lampa.Controller.enabled($(info));
                                 Navigator.move('right');
                             } else {
                                 Lampa.Controller.toggle('head');
@@ -406,7 +409,7 @@
                     down: function () {
                         console.log('Викликано down в Controller');
                         if (Navigator.canmove('down')) Navigator.move('down');
-                        else if (info.find('.view--category').hasClass('focus')) {
+                        else if ($(info).find('.view--category').hasClass('focus')) {
                             Lampa.Controller.toggle('content');
                         }
                     },
