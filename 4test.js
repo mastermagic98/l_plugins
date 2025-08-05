@@ -64,31 +64,30 @@
         console.error('Помилка при завантаженні теми: ' + e);
     }
 
-    // Додавання пункту меню після готовності DOM
-    function addMenuItem() {
-        try {
-            console.log('Спроба прямого додавання пункту меню до DOM');
-            console.log('Доступність селектора .settings-folder[data-name="interface"] .settings-folder--inner: ' + $('.settings-folder[data-name="interface"] .settings-folder--inner').length);
-            console.log('Доступність селектора body: ' + $('body').length);
-            if ($('.settings-param[data-name="my_themes"]').length > 0) {
-                console.log('Пункт меню "Мої теми" вже існує');
-                return true;
-            }
-            var container = $('.settings-folder[data-name="interface"] .settings-folder--inner').last();
-            if (container.length === 0) {
-                console.warn('Селектор .settings-folder[data-name="interface"] .settings-folder--inner не знайдено, додаємо до .settings');
-                container = $('.settings').last();
-            }
-            if (container.length === 0) {
-                console.warn('Селектор .settings не знайдено, додаємо до body');
-                container = $('body');
-            }
-            console.log('Вибрано контейнер: ' + (container[0] ? container[0].tagName + '.' + container[0].className : 'null'));
-            var menuItem = $('<div class="settings-param selector" data-name="my_themes" data-type="toggle">' + t('my_themes') + '</div>');
-            container.append(menuItem);
-            console.log('Пункт меню додано до DOM, перевірка: ' + $('.settings-param[data-name="my_themes"]').length);
-            menuItem.on('hover:enter hover:click', function () {
-                console.log('Клік по пункту меню "Мої теми" (DOM)');
+    // Додавання компонента в меню налаштувань
+    try {
+        console.log('Реєструємо компонент my_themes у SettingsApi');
+        Lampa.SettingsApi.addComponent({
+            component: 'my_themes',
+            name: t('my_themes'),
+            icon: '<svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">' +
+                  '<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 21V3h16v18H4zm4-6h8m-4-4v8"/>' +
+                  '</svg>'
+        });
+
+        Lampa.SettingsApi.addParam({
+            component: 'my_themes',
+            param: {
+                name: 'open_themes',
+                type: 'trigger',
+                default: ''
+            },
+            field: {
+                name: t('my_themes'),
+                description: t('description')
+            },
+            onChange: function () {
+                console.log('Клік по пункту меню "Мої теми"');
                 try {
                     if ($('.view--category').length || $('#button_category').length) {
                         if (window.activity && window.activity.back) {
@@ -109,53 +108,12 @@
                     Lampa.Activity.push(activityData);
                     Lampa.Storage.set('themesCurrent', JSON.stringify(activityData));
                 } catch (e) {
-                    console.error('Помилка при кліку по пункту меню (DOM): ' + e);
+                    console.error('Помилка при кліку по пункту меню: ' + e);
                 }
-            });
-            return true;
-        } catch (e) {
-            console.error('Помилка при прямому додаванні пункту меню до DOM: ' + e);
-            return false;
-        }
-    }
-
-    // Періодична перевірка DOM
-    function tryAddMenuItem(attempts, maxAttempts) {
-        try {
-            if (attempts >= maxAttempts) {
-                console.error('Не вдалося додати пункт меню після ' + maxAttempts + ' спроб');
-                return;
             }
-            console.log('Спроба ' + (attempts + 1) + ': перевірка наявності .settings-folder[data-name="interface"]');
-            if ($('.settings-folder[data-name="interface"] .settings-folder--inner').length > 0 || $('.settings').length > 0) {
-                if (addMenuItem()) {
-                    setTimeout(function () {
-                        var activityData = {
-                            url: 'https://bylampa.github.io/themes/categories/stroke.json',
-                            title: t('focus_pack'),
-                            component: 'my_themes',
-                            page: 1
-                        };
-                        console.log('Запускаємо активність: ' + JSON.stringify(activityData));
-                        try {
-                            Lampa.Activity.push(activityData);
-                            Lampa.Storage.set('themesCurrent', JSON.stringify(activityData));
-                        } catch (e) {
-                            console.error('Помилка при запуску активності в tryAddMenuItem: ' + e);
-                        }
-                    }, 1000);
-                }
-            } else {
-                setTimeout(function () {
-                    tryAddMenuItem(attempts + 1, maxAttempts);
-                }, 1000);
-            }
-        } catch (e) {
-            console.error('Помилка в tryAddMenuItem, спроба ' + (attempts + 1) + ': ' + e);
-            setTimeout(function () {
-                tryAddMenuItem(attempts + 1, maxAttempts);
-            }, 1000);
-        }
+        });
+    } catch (e) {
+        console.error('Помилка при додаванні компонента my_themes у SettingsApi: ' + e);
     }
 
     // Компонент для управління темами
@@ -349,7 +307,7 @@
                     '</div></div>');
                 var button = Lampa.Template.get('button_category');
                 info.find('#stantion_filtr').append(button);
-                info.find('.view--category').on('hover:enter hover:click', function () {
+                info.find('.view--category').on('click', function () {
                     console.log('Клік по кнопці "Категорії тем"');
                     this.selectGroup();
                 }.bind(this));
@@ -401,12 +359,10 @@
                 Lampa.Controller.add('content', {
                     toggle: function () {
                         console.log('Викликано toggle в Controller');
-                        // Спрощуємо ініціалізацію, уникаємо collectionSet
                         if (scroll.render().find('.card').length > 0) {
-                            Lampa.Controller.enabled(scroll.render()[0]);
                             Navigator.focus(scroll.render().find('.card')[0]);
-                        } else {
-                            Lampa.Controller.enabled(scroll.render()[0]);
+                        } else if (info.find('.view--category').length > 0) {
+                            Navigator.focus(info.find('.view--category')[0]);
                         }
                     },
                     left: function () {
@@ -423,9 +379,8 @@
                         console.log('Викликано up в Controller');
                         if (Navigator.canmove('up')) Navigator.move('up');
                         else {
-                            if (!info.find('.view--category').hasClass('focus')) {
-                                Lampa.Controller.enabled(info[0]);
-                                Navigator.move('right');
+                            if (info.find('.view--category').length > 0 && !info.find('.view--category').hasClass('focus')) {
+                                Navigator.focus(info.find('.view--category')[0]);
                             } else {
                                 Lampa.Controller.toggle('head');
                             }
@@ -435,7 +390,9 @@
                         console.log('Викликано down в Controller');
                         if (Navigator.canmove('down')) Navigator.move('down');
                         else if (info.find('.view--category').hasClass('focus')) {
-                            Lampa.Controller.toggle('content');
+                            if (scroll.render().find('.card').length > 0) {
+                                Navigator.focus(scroll.render().find('.card')[0]);
+                            }
                         }
                     },
                     back: function () {
@@ -490,13 +447,5 @@
         });
     } catch (e) {
         console.error('Помилка в слухачі Storage.listener: ' + e);
-    }
-
-    // Запуск періодичної перевірки DOM
-    try {
-        console.log('Запускаємо періодичну перевірку DOM');
-        tryAddMenuItem(0, 15);
-    } catch (e) {
-        console.error('Помилка при ініціалізації періодичної перевірки: ' + e);
     }
 })();
