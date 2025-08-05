@@ -43,11 +43,36 @@
             ru: 'Тема установлена:',
             uk: 'Тема встановлена:'
         },
-        // Додаємо переклади для назв тем
+        // Переклади для назв тем
         red: {
             en: 'Red',
-            ru: 'Красный',
-            uk: 'Червоний'
+            ru: 'Красная',
+            uk: 'Червона'
+        },
+        green: {
+            en: 'Green',
+            ru: 'Зелёная',
+            uk: 'Зелена'
+        },
+        violet: {
+            en: 'Violet',
+            ru: 'Фиолетовая',
+            uk: 'Фіолетова'
+        },
+        dark_blue: {
+            en: 'Dark Blue',
+            ru: 'Тёмно-синяя',
+            uk: 'Темно-синя'
+        },
+        orange: {
+            en: 'Orange',
+            ru: 'Оранжевая',
+            uk: 'Помаранчева'
+        },
+        pink: {
+            en: 'Pink',
+            ru: 'Розовая',
+            uk: 'Рожева'
         }
     };
 
@@ -228,6 +253,24 @@
                     }
 
                     if (localStorage.getItem('selectedTheme') === item.css) {
+                        var installedButton = document.createElement('div');
+                        installedButton.innerText = t('install');
+                        installedButton.className = 'card__quality';
+                        card.find('.card__view').append(installedButton);
+                        $(installedButton).css({
+                            position: 'absolute',
+                            left: '-3%',
+                            bottom: '70%',
+                            padding: '0.4em',
+                            background: '#ffe216',
+                            color: '#000',
+                            fontSize: '0.8em',
+                            WebkitBorderRadius: '0.3em',
+                            MozBorderRadius: '0.3em',
+                            borderRadius: '0.3em',
+                            textTransform: 'uppercase'
+                        });
+                    } else {
                         addInstallButton();
                     }
 
@@ -256,7 +299,23 @@
                                     localStorage.setItem('selectedTheme', item.css);
                                     console.log(t('theme_installed') + ' ' + item.css);
                                     $('.card__quality').remove();
-                                    addInstallButton();
+                                    var installedButton = document.createElement('div');
+                                    installedButton.innerText = t('install');
+                                    installedButton.className = 'card__quality';
+                                    card.find('.card__view').append(installedButton);
+                                    $(installedButton).css({
+                                        position: 'absolute',
+                                        left: '-3%',
+                                        bottom: '70%',
+                                        padding: '0.4em',
+                                        background: '#ffe216',
+                                        color: '#000',
+                                        fontSize: '0.8em',
+                                        WebkitBorderRadius: '0.3em',
+                                        MozBorderRadius: '0.3em',
+                                        borderRadius: '0.3em',
+                                        textTransform: 'uppercase'
+                                    });
 
                                     if (Lampa.Storage.get('myBackground') === true) {
                                         var bg = Lampa.Storage.get('myBackground');
@@ -313,17 +372,15 @@
                     '.themes .card--collection { width: 14.2% !important; margin-top: 1em !important; }' +
                     '.scroll__content { padding: 0.5em 0 !important; }' +
                     '.info { height: auto !important; margin-bottom: 0.5em !important; }' +
-                    '.info__title-original { font-size: 1.2em; }' +
-                    '#button_category { float: left; margin-left: 0; width: 100%; }' +
-                    '.view--category { display: inline-block; margin: 0.5em; }' +
+                    '.info__left { float: left; width: 100%; }' +
+                    '.info__right { display: none !important; }' +
+                    '.view--category { display: inline-block; margin: 0.5em 0 0.5em 0.5em; }' +
                     '}' +
                     '@media screen and (max-width: 385px) {' +
                     '.themes .card--collection { width: 33.3% !important; margin-top: 1em !important; }' +
-                    '.info__right { display: none !important; }' +
                     '}' +
                     '@media screen and (max-width: 580px) {' +
                     '.themes .card--collection { width: 25% !important; margin-top: 1em !important; }' +
-                    '.info__right { display: none !important; }' +
                     '}' +
                     '</style>' +
                     '<div class="full-start__button selector view--category">' +
@@ -338,7 +395,7 @@
                     '<span>' + t('theme_categories') + '</span>' +
                     '</div></div>');
                 var button = Lampa.Template.get('button_category');
-                info.find('.info__left').prepend(button); // Додаємо кнопку в info__left
+                info.find('.info__left').prepend(button);
                 info.find('.view--category').on('click', function () {
                     console.log('Клік по кнопці "Категорії тем"');
                     this.selectGroup();
