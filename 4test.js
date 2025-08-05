@@ -1,20 +1,6 @@
 (function () {
     'use strict';
 
-    // Перевірка наявності фреймворку Lampa
-    if (!window.Lampa) {
-        console.error('Помилка: Фреймворк Lampa не знайдено');
-        return;
-    }
-
-    // Налаштування платформи на телевізійний режим
-    try {
-        Lampa.Platform.tv();
-        console.log('Платформа встановлена: TV');
-    } catch (e) {
-        console.error('Помилка при виклику Lampa.Platform.tv: ' + e);
-    }
-
     // Словник перекладів для трьох мов
     var translations = {
         my_themes: {
@@ -83,15 +69,10 @@
         try {
             console.log('Спроба прямого додавання пункту меню до DOM');
             console.log('Доступність селектора .settings: ' + $('.settings').length);
-            console.log('Доступність селектора .settings-folder: ' + $('.settings-folder').length);
             console.log('Доступність селектора body: ' + $('body').length);
             var container = $('.settings').last();
             if (container.length === 0) {
-                console.warn('Селектор .settings не знайдено, пробуємо .settings-folder');
-                container = $('.settings-folder').last();
-            }
-            if (container.length === 0) {
-                console.warn('Селектор .settings-folder не знайдено, додаємо до body');
+                console.warn('Селектор .settings не знайдено, додаємо до body');
                 container = $('body');
             }
             console.log('Вибрано контейнер: ' + (container[0] ? container[0].outerHTML : 'null'));
@@ -128,6 +109,22 @@
         }
     }
 
+    // Періодична перевірка DOM
+    function tryAddMenuItem(attempts, maxAttempts) {
+        if (attempts >= maxAttempts) {
+            console.error('Не вдалося додати пункт меню після ' + maxAttempts + ' спроб');
+            return;
+        }
+        console.log('Спроба ' + (attempts + 1) + ': перевірка наявності .settings');
+        if ($('.settings').length > 0) {
+            addMenuItem();
+        } else {
+            setTimeout(function () {
+                tryAddMenuItem(attempts + 1, maxAttempts);
+            }, 1000);
+        }
+    }
+
     // Компонент для управління темами
     function ThemesComponent(params) {
         // Перевірка параметрів
@@ -144,7 +141,7 @@
         var scroll = new Lampa.Scroll({ mask: true, over: true, step: 250 });
         var html = $('<div class="info layer--width"><div class="info__left"><div class="info__title"></div><div class="info__title-original"></div><div class="info__create"></div></div><div class="info__right"><div id="stantion_filtr"></div></div></div>');
         var body = $('<div class="my_themes category-full"></div>');
-        var info;
+        var info = html; // Використовуємо html замість шаблону info_tvtv
         var last;
         var items = [];
         var categories = [
@@ -187,7 +184,7 @@
                     img.onerror = function () { img.src = './img/img_broken.svg'; };
                     img.src = item.css;
 
-                    $('.info__title').text(item.title);
+                    html.find('.info__title').text(item.title);
 
                     function addInstallButton() {
                         var button = document.createElement('div');
@@ -218,7 +215,7 @@
                         if (scroll && scroll.collectionFocus) {
                             scroll.collectionFocus(card);
                         }
-                        info.find('.info__title').text(item.title);
+                        html.find('.info__title').text(item.title);
                     });
 
                     card.on('hover:enter hover:click', function () {
@@ -317,13 +314,11 @@
                     '</g></g></svg>' +
                     '<span>' + t('theme_categories') + '</span>' +
                     '</div></div>');
-                Lampa.Template.add('info_tvtv', '');
                 var button = Lampa.Template.get('button_category');
-                info = Lampa.Template.get('info_tvtv');
                 info.find('#stantion_filtr').append(button);
                 info.find('.view--category').on('hover:focus', this.selectGroup.bind(this));
                 scroll.render().addClass('layer--wheight').data('mheight', info);
-                html.append(info.append());
+                html.append(info);
                 html.append(scroll.render());
                 this.append(data);
                 scroll.append(body);
@@ -443,7 +438,7 @@
         if (window.appready) {
             console.log('Додаток готовий, додаємо пункт меню з затримкою');
             setTimeout(function () {
-                addMenuItem();
+                tryAddMenuItem(0, 5); // Спробувати 5 разів
                 console.log('Запускаємо активність my_themes');
                 Lampa.Activity.push({
                     url: 'https://bylampa.github.io/themes/categories/stroke.json',
@@ -452,14 +447,14 @@
                     page: 1
                 });
                 Lampa.Storage.set('themesCurrent', JSON.stringify(Lampa.Activity.data()));
-            }, 1000);
+            }, 2000);
         } else {
             console.log('Очікуємо подію app:ready');
             Lampa.Listener.follow('app', function (e) {
                 if (e.name === 'ready') {
                     console.log('Отримано подію app:ready, додаємо пункт меню з затримкою');
                     setTimeout(function () {
-                        addMenuItem();
+                        tryAddMenuItem(0, 5); // Спробувати 5 разів
                         console.log('Запускаємо активність my_themes');
                         Lampa.Activity.push({
                             url: 'https://bylampa.github.io/themes/categories/stroke.json',
@@ -468,7 +463,7 @@
                             page: 1
                         });
                         Lampa.Storage.set('themesCurrent', JSON.stringify(Lampa.Activity.data()));
-                    }, 1000);
+                    }, 2000);
                 }
             });
         }
