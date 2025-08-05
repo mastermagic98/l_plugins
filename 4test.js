@@ -75,7 +75,7 @@
                 console.warn('Селектор .settings не знайдено, додаємо до body');
                 container = $('body');
             }
-            console.log('Вибрано контейнер: ' + (container[0] ? container[0].outerHTML : 'null'));
+            console.log('Вибрано контейнер: ' + (container[0] ? container[0].tagName + '.' + container[0].className : 'null'));
             var menuItem = $('<div class="settings-param selector" data-name="my_themes">' + t('my_themes') + '</div>');
             container.append(menuItem);
             console.log('Пункт меню додано до DOM, перевірка: ' + $('.settings-param[data-name="my_themes"]').length);
@@ -118,10 +118,17 @@
         console.log('Спроба ' + (attempts + 1) + ': перевірка наявності .settings');
         if ($('.settings').length > 0) {
             addMenuItem();
+            Lampa.Activity.push({
+                url: 'https://bylampa.github.io/themes/categories/stroke.json',
+                title: t('focus_pack'),
+                component: 'my_themes',
+                page: 1
+            });
+            Lampa.Storage.set('themesCurrent', JSON.stringify(Lampa.Activity.data()));
         } else {
             setTimeout(function () {
                 tryAddMenuItem(attempts + 1, maxAttempts);
-            }, 1000);
+            }, 500);
         }
     }
 
@@ -141,7 +148,7 @@
         var scroll = new Lampa.Scroll({ mask: true, over: true, step: 250 });
         var html = $('<div class="info layer--width"><div class="info__left"><div class="info__title"></div><div class="info__title-original"></div><div class="info__create"></div></div><div class="info__right"><div id="stantion_filtr"></div></div></div>');
         var body = $('<div class="my_themes category-full"></div>');
-        var info = html; // Використовуємо html замість шаблону info_tvtv
+        var info = html;
         var last;
         var items = [];
         var categories = [
@@ -356,18 +363,22 @@
                 console.log('Викликано метод start');
                 Lampa.Controller.add('content', {
                     toggle: function () {
+                        console.log('Викликано toggle в Controller');
                         Lampa.Controller.enabled(scroll.render());
-                        Lampa.Controller.collectionSet(last || true, scroll.render().get(0));
+                        Lampa.Controller.collectionSet(last || scroll.find('.card')[0] || true, scroll.render().get(0));
                     },
                     left: function () {
+                        console.log('Викликано left в Controller');
                         if (Navigator.canmove('left')) Navigator.move('left');
                         else Lampa.Controller.toggle('menu');
                     },
                     right: function () {
+                        console.log('Викликано right в Controller');
                         if (Navigator.canmove('right')) Navigator.move('right');
                         else this.selectGroup();
                     },
                     up: function () {
+                        console.log('Викликано up в Controller');
                         if (Navigator.canmove('up')) Navigator.move('up');
                         else {
                             if (!info.find('.view--category').hasClass('focus')) {
@@ -379,12 +390,16 @@
                         }
                     },
                     down: function () {
+                        console.log('Викликано down в Controller');
                         if (Navigator.canmove('down')) Navigator.move('down');
                         else if (info.find('.view--category').hasClass('focus')) {
                             Lampa.Controller.toggle('content');
                         }
                     },
-                    back: function () { Lampa.Activity.backward(); }
+                    back: function () {
+                        console.log('Викликано back в Controller');
+                        Lampa.Activity.backward();
+                    }
                 });
                 Lampa.Controller.toggle('content');
             } catch (e) {
@@ -432,42 +447,11 @@
         console.error('Помилка в слухачі Storage.listener: ' + e);
     }
 
-    // Ініціалізація при готовності додатку з затримкою
+    // Запуск періодичної перевірки DOM
     try {
-        console.log('Перевіряємо готовність додатку: ' + window.appready);
-        if (window.appready) {
-            console.log('Додаток готовий, додаємо пункт меню з затримкою');
-            setTimeout(function () {
-                tryAddMenuItem(0, 5); // Спробувати 5 разів
-                console.log('Запускаємо активність my_themes');
-                Lampa.Activity.push({
-                    url: 'https://bylampa.github.io/themes/categories/stroke.json',
-                    title: t('focus_pack'),
-                    component: 'my_themes',
-                    page: 1
-                });
-                Lampa.Storage.set('themesCurrent', JSON.stringify(Lampa.Activity.data()));
-            }, 2000);
-        } else {
-            console.log('Очікуємо подію app:ready');
-            Lampa.Listener.follow('app', function (e) {
-                if (e.name === 'ready') {
-                    console.log('Отримано подію app:ready, додаємо пункт меню з затримкою');
-                    setTimeout(function () {
-                        tryAddMenuItem(0, 5); // Спробувати 5 разів
-                        console.log('Запускаємо активність my_themes');
-                        Lampa.Activity.push({
-                            url: 'https://bylampa.github.io/themes/categories/stroke.json',
-                            title: t('focus_pack'),
-                            component: 'my_themes',
-                            page: 1
-                        });
-                        Lampa.Storage.set('themesCurrent', JSON.stringify(Lampa.Activity.data()));
-                    }, 2000);
-                }
-            });
-        }
+        console.log('Запускаємо періодичну перевірку DOM');
+        tryAddMenuItem(0, 10);
     } catch (e) {
-        console.error('Помилка при ініціалізації активності: ' + e);
+        console.error('Помилка при ініціалізації періодичної перевірки: ' + e);
     }
 })();
