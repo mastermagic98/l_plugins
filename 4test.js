@@ -180,6 +180,7 @@
                 });
                 return this.render();
             } catch (e) {
+                console.log('Error in create:', e);
                 return this.render();
             }
         };
@@ -240,7 +241,7 @@
 
                     card.on('hover:focus', function () {
                         last = card[0];
-                        $('.card--collection').removeClass('focus');
+                        $('.selector').removeClass('focus');
                         card.addClass('focus');
                         if (scroll && scroll.collectionFocus) {
                             scroll.collectionFocus(card);
@@ -448,15 +449,14 @@
                 console.log('Category button:', info.find('.view--category').length);
                 Lampa.Controller.add('content', {
                     toggle: function () {
+                        $('.selector').removeClass('focus');
                         if (scroll.render().find('.card').length > 0) {
                             var firstCard = scroll.render().find('.card')[0];
                             Navigator.focus(firstCard);
-                            $('.selector').removeClass('focus');
                             $(firstCard).addClass('focus');
                         } else if (info.find('.view--category').length > 0) {
                             var categoryButton = info.find('.view--category')[0];
                             Navigator.focus(categoryButton);
-                            $('.selector').removeClass('focus');
                             $(categoryButton).addClass('focus');
                         }
                     },
@@ -464,6 +464,7 @@
                         if (Navigator.canmove('left')) {
                             Navigator.move('left');
                             $('.selector').removeClass('focus');
+                            Navigator.focus($('.selector:hover')[0]);
                             $('.selector:hover').addClass('focus');
                         } else {
                             Lampa.Controller.toggle('menu');
@@ -473,6 +474,7 @@
                         if (Navigator.canmove('right')) {
                             Navigator.move('right');
                             $('.selector').removeClass('focus');
+                            Navigator.focus($('.selector:hover')[0]);
                             $('.selector:hover').addClass('focus');
                         } else {
                             self.selectGroup();
@@ -482,6 +484,7 @@
                         if (Navigator.canmove('up')) {
                             Navigator.move('up');
                             $('.selector').removeClass('focus');
+                            Navigator.focus($('.selector:hover')[0]);
                             $('.selector:hover').addClass('focus');
                         } else {
                             if (info.find('.view--category').length > 0 && !info.find('.view--category').hasClass('focus')) {
@@ -498,6 +501,7 @@
                         if (Navigator.canmove('down')) {
                             Navigator.move('down');
                             $('.selector').removeClass('focus');
+                            Navigator.focus($('.selector:hover')[0]);
                             $('.selector:hover').addClass('focus');
                         } else if (info.find('.view--category').hasClass('focus')) {
                             if (scroll.render().find('.card').length > 0) {
