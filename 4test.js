@@ -164,7 +164,6 @@
         var info = html;
         var last;
         var items = [];
-
         var categories = [
             { title: t('focus_pack'), url: 'https://bylampa.github.io/themes/categories/stroke.json' },
             { title: t('color_gallery'), url: 'https://bylampa.github.io/themes/categories/color_gallery.json' }
@@ -347,7 +346,7 @@
                     '.settings::before, .settings::after, .settings__content::before, .settings__content::after, .layer--width::before, .layer--width::after, .scroll::before, .scroll::after { display: none !important; }' +
                     '.settings-folders, .settings-folder, .settings-param { box-shadow: none !important; background: none !important; }' +
                     '.settings-folders::before, .settings-folders::after, .settings-folder::before, .settings-folder::after, .settings-param::before, .settings-param::after { display: none !important; }' +
-                    '.settings-folders.focus, .settings-folder.focus, .settings-param.focus { box-shadow: initial !important; }' +
+                    '.settings-folders.focus, .settings-folder.focus, .settings-param.focus { box-shadow: 0 0 5px rgba(255, 255, 255, 0.8) !important; background: initial !important; }' +
                     '.view--category { display: flex; align-items: center; margin: 0.5em 0.5em 0.5em auto; }' +
                     '.view--category.focus { box-shadow: 0 0 5px rgba(255, 255, 255, 0.8) !important; }' +
                     '.view--category svg { margin-right: 0.3em; }' +
@@ -362,7 +361,7 @@
                     '.settings::before, .settings::after, .settings__content::before, .settings__content::after, .layer--width::before, .layer--width::after, .scroll::before, .scroll::after { display: none !important; }' +
                     '.settings-folders, .settings-folder, .settings-param { box-shadow: none !important; background: none !important; }' +
                     '.settings-folders::before, .settings-folders::after, .settings-folder::before, .settings-folder::after, .settings-param::before, .settings-param::after { display: none !important; }' +
-                    '.settings-folders.focus, .settings-folder.focus, .settings-param.focus { box-shadow: initial !important; }' +
+                    '.settings-folders.focus, .settings-folder.focus, .settings-param.focus { box-shadow: 0 0 5px rgba(255, 255, 255, 0.8) !important; background: initial !important; }' +
                     '.view--category.focus { box-shadow: 0 0 5px rgba(255, 255, 255, 0.8) !important; }' +
                     '}' +
                     '@media screen and (max-width: 580px) {' +
@@ -373,7 +372,7 @@
                     '.settings::before, .settings::after, .settings__content::before, .settings__content::after, .layer--width::before, .layer--width::after, .scroll::before, .scroll::after { display: none !important; }' +
                     '.settings-folders, .settings-folder, .settings-param { box-shadow: none !important; background: none !important; }' +
                     '.settings-folders::before, .settings-folders::after, .settings-folder::before, .settings-folder::after, .settings-param::before, .settings-param::after { display: none !important; }' +
-                    '.settings-folders.focus, .settings-folder.focus, .settings-param.focus { box-shadow: initial !important; }' +
+                    '.settings-folders.focus, .settings-folder.focus, .settings-param.focus { box-shadow: 0 0 5px rgba(255, 255, 255, 0.8) !important; background: initial !important; }' +
                     '.view--category.focus { box-shadow: 0 0 5px rgba(255, 255, 255, 0.8) !important; }' +
                     '}' +
                     '</style>' +
@@ -432,21 +431,25 @@
                 console.log('Category button:', info.find('.view--category').length);
                 Lampa.Controller.add('content', {
                     toggle: function () {
+                        console.log('Settings folders:', $('.settings-folder').length);
+                        console.log('Settings params:', $('.settings-param').length);
                         if (scroll.render().find('.card').length > 0) {
                             var firstCard = scroll.render().find('.card')[0];
                             Navigator.focus(firstCard);
+                            $('.card--collection, .view--category, .settings-folder, .settings-param').removeClass('focus');
                             $(firstCard).addClass('focus');
                         } else if (info.find('.view--category').length > 0) {
                             var categoryButton = info.find('.view--category')[0];
                             Navigator.focus(categoryButton);
+                            $('.card--collection, .view--category, .settings-folder, .settings-param').removeClass('focus');
                             $(categoryButton).addClass('focus');
                         }
                     },
                     left: function () {
                         if (Navigator.canmove('left')) {
                             Navigator.move('left');
-                            $('.card--collection, .view--category').removeClass('focus');
-                            $('.card--collection:hover, .view--category:hover').addClass('focus');
+                            $('.card--collection, .view--category, .settings-folder, .settings-param').removeClass('focus');
+                            $('.card--collection:hover, .view--category:hover, .settings-folder:hover, .settings-param:hover').addClass('focus');
                         } else {
                             Lampa.Controller.toggle('menu');
                         }
@@ -454,8 +457,8 @@
                     right: function () {
                         if (Navigator.canmove('right')) {
                             Navigator.move('right');
-                            $('.card--collection, .view--category').removeClass('focus');
-                            $('.card--collection:hover, .view--category:hover').addClass('focus');
+                            $('.card--collection, .view--category, .settings-folder, .settings-param').removeClass('focus');
+                            $('.card--collection:hover, .view--category:hover, .settings-folder:hover, .settings-param:hover').addClass('focus');
                         } else {
                             self.selectGroup();
                         }
@@ -463,13 +466,13 @@
                     up: function () {
                         if (Navigator.canmove('up')) {
                             Navigator.move('up');
-                            $('.card--collection, .view--category').removeClass('focus');
-                            $('.card--collection:hover, .view--category:hover').addClass('focus');
+                            $('.card--collection, .view--category, .settings-folder, .settings-param').removeClass('focus');
+                            $('.card--collection:hover, .view--category:hover, .settings-folder:hover, .settings-param:hover').addClass('focus');
                         } else {
                             if (info.find('.view--category').length > 0 && !info.find('.view--category').hasClass('focus')) {
                                 var categoryButton = info.find('.view--category')[0];
                                 Navigator.focus(categoryButton);
-                                $('.card--collection, .view--category').removeClass('focus');
+                                $('.card--collection, .view--category, .settings-folder, .settings-param').removeClass('focus');
                                 $(categoryButton).addClass('focus');
                             } else {
                                 Lampa.Controller.toggle('head');
@@ -479,13 +482,13 @@
                     down: function () {
                         if (Navigator.canmove('down')) {
                             Navigator.move('down');
-                            $('.card--collection, .view--category').removeClass('focus');
-                            $('.card--collection:hover, .view--category:hover').addClass('focus');
+                            $('.card--collection, .view--category, .settings-folder, .settings-param').removeClass('focus');
+                            $('.card--collection:hover, .view--category:hover, .settings-folder:hover, .settings-param:hover').addClass('focus');
                         } else if (info.find('.view--category').hasClass('focus')) {
                             if (scroll.render().find('.card').length > 0) {
                                 var firstCard = scroll.render().find('.card')[0];
                                 Navigator.focus(firstCard);
-                                $('.card--collection, .view--category').removeClass('focus');
+                                $('.card--collection, .view--category, .settings-folder, .settings-param').removeClass('focus');
                                 $(firstCard).addClass('focus');
                             }
                         }
