@@ -94,7 +94,7 @@
         }
     ];
 
-    // Нормалізація назви теми для відповідності ключам
+    // Нормалізація назви теми
     function normalizeTitle(title) {
         console.log('Нормалізація назви:', title);
         var map = {
@@ -115,7 +115,7 @@
         return translations[key] && translations[key][lang] ? translations[key][lang] : translations[key] && translations[key].en ? translations[key].en : key;
     }
 
-    // Отримання кольору фокусування на основі активної теми
+    // Отримання кольору фокусування
     function getFocusColor() {
         var themeLink = $('link[rel="stylesheet"][href^="https://bylampa.github.io/themes/css/"]');
         console.log('Посилання на тему:', themeLink.length ? themeLink.attr('href') : 'немає');
@@ -131,7 +131,7 @@
             };
             return colorMap[themeUrl.split('/').pop()] || 'var(--focus-color, rgba(255, 255, 255, 0.2))';
         }
-        return 'var(--focus-color, rgba(255, 255, 255, 0.2))';
+        return 'var(--focus-color, rgba(255, 255, %AE2))';
     }
 
     // Оновлення стилів фокусування
@@ -145,8 +145,7 @@
             }
             styleElement.text(
                 '.my_themes .selector.focus { background: ' + focusColor + ' !important; }' +
-                '.my_themes .card.focus, .my_themes .card--collection.focus { background: none !important; outline: none !important; border: none !important; }' +
-                '.settings, .settings__content { background: rgba(0, 0, 0, 0.8) !important; }'
+                '.my_themes .card.focus, .my_themes .card--collection.focus { background: none !important; outline: none !important; border: none !important; }'
             );
             console.log('Оновлено колір фокусу:', focusColor);
         }, 100);
@@ -280,6 +279,7 @@
                     var img = card.find('.card__img')[0];
                     img.onload = function () {
                         card.addClass('card--loaded');
+                        console.log('Зображення завантажено:', item.title);
                     };
                     img.onerror = function () {
                         img.src = 'data:image/svg+xml;base64,' + btoa(
@@ -288,14 +288,10 @@
                             '<text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#fff" font-size="20">No Image</text>' +
                             '</svg>'
                         );
+                        console.log('Помилка завантаження зображення:', item.title);
                     };
-                    var imageUrl = item.logo || '';
-                    img.src = imageUrl || 'data:image/svg+xml;base64,' + btoa(
-                        '<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150">' +
-                        '<rect fill="#444" width="150" height="150"/>' +
-                        '<text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#fff" font-size="20">No Image</text>' +
-                        '</svg>'
-                    );
+                    var imageUrl = item.logo && item.logo !== 'url_to_image' ? item.logo : 'https://via.placeholder.com/150?text=' + encodeURIComponent(t(item.title));
+                    img.src = imageUrl;
 
                     if (localStorage.getItem('selectedTheme') === item.css) {
                         var installedButton = document.createElement('div');
@@ -422,7 +418,6 @@
                     '.themes .card--collection { width: 14.2% !important; margin-top: 1em !important; }' +
                     '.my_themes .selector.focus { background: var(--focus-color, rgba(255, 255, 255, 0.2)) !important; }' +
                     '.my_themes .card.focus, .my_themes .card--collection.focus { background: none !important; outline: none !important; border: none !important; }' +
-                    '.settings, .settings__content { background: rgba(0, 0, 0, 0.8) !important; }' +
                     '.settings-component__icon svg { display: block !important; }' +
                     '.scroll__content { padding: 1.5em 0 !important; box-shadow: none !important; background: none !important; }' +
                     '.scroll__content::before, .scroll__content::after { display: none !important; }' +
@@ -444,13 +439,12 @@
                     '.themes .card--collection { width: 33.3% !important; margin-top: 1em !important; }' +
                     '.my_themes .selector.focus { background: var(--focus-color, rgba(255, 255, 255, 0.2)) !important; }' +
                     '.my_themes .card.focus, .my_themes .card--collection.focus { background: none !important; outline: none !important; border: none !important; }' +
-                    '.settings, .settings__content { background: rgba(0, 0, 0, 0.8) !important; }' +
                     '.settings-component__icon svg { display: block !important; }' +
                     '.info__right { display: none !important; }' +
                     '.scroll__content { box-shadow: none !important; background: none !important; }' +
                     '.scroll__content::before, .scroll__content::after { display: none !important; }' +
                     '.layer--wheight { box-shadow: none !important; background: none !important; }' +
-                    '.layer--wheight::before, . layer--wheight::after { display: none !important; }' +
+                    '.layer--wheight::before, .layer--wheight::after { display: none !important; }' +
                     '.layer--width, .scroll { box-shadow: none !important; background: none !important; }' +
                     '.settings::before, .settings::after, .settings__content::before, .settings__content::after, .layer--width::before, .layer--width::after, .scroll::before, .scroll::after { display: none !important; }' +
                     '.settings-folders, .settings-folder, .settings-param { box-shadow: none !important; background: none !important; }' +
@@ -463,7 +457,6 @@
                     '.themes .card--collection { width: 25% !important; margin-top: 1em !important; }' +
                     '.my_themes .selector.focus { background: var(--focus-color, rgba(255, 255, 255, 0.2)) !important; }' +
                     '.my_themes .card.focus, .my_themes .card--collection.focus { background: none !important; outline: none !important; border: none !important; }' +
-                    '.settings, .settings__content { background: rgba(0, 0, 0, 0.8) !important; }' +
                     '.settings-component__icon svg { display: block !important; }' +
                     '.info__right { display: none !important; }' +
                     '.scroll__content { box-shadow: none !important; background: none !important; }' +
