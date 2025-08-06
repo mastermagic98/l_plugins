@@ -335,45 +335,56 @@
                     '@media screen and (max-width: 2560px) {' +
                     '.themes .card--collection { width: 14.2% !important; margin-top: 1em !important; }' +
                     '.card--collection.focus { box-shadow: 0 0 5px rgba(255, 255, 255, 0.8) !important; }' +
-                    '.scroll__content { padding: 0.5em 0 !important; box-shadow: none !important; background: none !important; }' +
+                    '.scroll__content { padding: 1.5em 0 !important; box-shadow: none !important; background: none !important; }' +
                     '.scroll__content::before, .scroll__content::after { display: none !important; }' +
-                    '.info { height: auto !important; margin-bottom: 0.5em !important; }' +
+                    '.info { height: 9em !important; margin-bottom: 0.5em !important; }' +
                     '.info__left { float: left; width: 100%; }' +
                     '.info__right { display: none !important; }' +
+                    '.info__title-original { font-size: 1.2em; }' +
                     '.layer--wheight { box-shadow: none !important; background: none !important; }' +
                     '.layer--wheight::before, .layer--wheight::after { display: none !important; }' +
                     '.layer--width, .scroll { box-shadow: none !important; background: none !important; }' +
                     '.settings::before, .settings::after, .settings__content::before, .settings__content::after, .layer--width::before, .layer--width::after, .scroll::before, .scroll::after { display: none !important; }' +
                     '.settings-folders, .settings-folder, .settings-param { box-shadow: none !important; background: none !important; }' +
                     '.settings-folders::before, .settings-folders::after, .settings-folder::before, .settings-folder::after, .settings-param::before, .settings-param::after { display: none !important; }' +
-                    '.settings-folders.focus, .settings-folder.focus, .settings-param.focus { box-shadow: 0 0 5px rgba(255, 255, 255, 0.8) !important; background: initial !important; }' +
+                    '.full-start__button { width: fit-content !important; margin-right: 0.75em; font-size: 1.3em; background-color: rgba(0, 0, 0, 0.3); padding: 0.3em 1em; display: flex; border-radius: 1em; align-items: center; height: 2.8em; }' +
                     '.view--category { display: flex; align-items: center; margin: 0.5em 0.5em 0.5em auto; }' +
                     '.view--category.focus { box-shadow: 0 0 5px rgba(255, 255, 255, 0.8) !important; }' +
                     '.view--category svg { margin-right: 0.3em; }' +
-                    '.info__title-original { font-size: 1.2em; }' +
-                    '.full-start__button { margin-right: 0.75em; font-size: 1.3em; background-color: rgba(0, 0, 0, 0.3); padding: 0.3em 1em; display: flex; border-radius: 1em; align-items: center; height: 2.8em; }' +
                     '}' +
                     '@media screen and (max-width: 385px) {' +
                     '.themes .card--collection { width: 33.3% !important; margin-top: 1em !important; }' +
                     '.card--collection.focus { box-shadow: 0 0 5px rgba(255, 255, 255, 0.8) !important; }' +
                     '.info__right { display: none !important; }' +
+                    '.scroll__content { box-shadow: none !important; background: none !important; }' +
+                    '.scroll__content::before, .scroll__content::after { display: none !important; }' +
+                    '.layer--wheight { box-shadow: none !important; background: none !important; }' +
+                    '.layer--wheight::before, .layer--wheight::after { display: none !important; }' +
                     '.layer--width, .scroll { box-shadow: none !important; background: none !important; }' +
                     '.settings::before, .settings::after, .settings__content::before, .settings__content::after, .layer--width::before, .layer--width::after, .scroll::before, .scroll::after { display: none !important; }' +
                     '.settings-folders, .settings-folder, .settings-param { box-shadow: none !important; background: none !important; }' +
                     '.settings-folders::before, .settings-folders::after, .settings-folder::before, .settings-folder::after, .settings-param::before, .settings-param::after { display: none !important; }' +
-                    '.settings-folders.focus, .settings-folder.focus, .settings-param.focus { box-shadow: 0 0 5px rgba(255, 255, 255, 0.8) !important; background: initial !important; }' +
+                    '.full-start__button { width: fit-content !important; margin-right: 0.75em; font-size: 1.3em; background-color: rgba(0, 0, 0, 0.3); padding: 0.3em 1em; display: flex; border-radius: 1em; align-items: center; height: 2.8em; }' +
+                    '.view--category { display: flex; align-items: center; margin: 0.5em 0.5em 0.5em auto; }' +
                     '.view--category.focus { box-shadow: 0 0 5px rgba(255, 255, 255, 0.8) !important; }' +
+                    '.view--category svg { margin-right: 0.3em; }' +
                     '}' +
                     '@media screen and (max-width: 580px) {' +
                     '.themes .card--collection { width: 25% !important; margin-top: 1em !important; }' +
                     '.card--collection.focus { box-shadow: 0 0 5px rgba(255, 255, 255, 0.8) !important; }' +
                     '.info__right { display: none !important; }' +
+                    '.scroll__content { box-shadow: none !important; background: none !important; }' +
+                    '.scroll__content::before, .scroll__content::after { display: none !important; }' +
+                    '.layer--wheight { box-shadow: none !important; background: none !important; }' +
+                    '.layer--wheight::before, .layer--wheight::after { display: none !important; }' +
                     '.layer--width, .scroll { box-shadow: none !important; background: none !important; }' +
                     '.settings::before, .settings::after, .settings__content::before, .settings__content::after, .layer--width::before, .layer--width::after, .scroll::before, .scroll::after { display: none !important; }' +
                     '.settings-folders, .settings-folder, .settings-param { box-shadow: none !important; background: none !important; }' +
                     '.settings-folders::before, .settings-folders::after, .settings-folder::before, .settings-folder::after, .settings-param::before, .settings-param::after { display: none !important; }' +
-                    '.settings-folders.focus, .settings-folder.focus, .settings-param.focus { box-shadow: 0 0 5px rgba(255, 255, 255, 0.8) !important; background: initial !important; }' +
+                    '.full-start__button { width: fit-content !important; margin-right: 0.75em; font-size: 1.3em; background-color: rgba(0, 0, 0, 0.3); padding: 0.3em 1em; display: flex; border-radius: 1em; align-items: center; height: 2.8em; }' +
+                    '.view--category { display: flex; align-items: center; margin: 0.5em 0.5em 0.5em auto; }' +
                     '.view--category.focus { box-shadow: 0 0 5px rgba(255, 255, 255, 0.8) !important; }' +
+                    '.view--category svg { margin-right: 0.3em; }' +
                     '}' +
                     '</style>' +
                     '<div class="full-start__button selector view--category">' +
@@ -431,25 +442,23 @@
                 console.log('Category button:', info.find('.view--category').length);
                 Lampa.Controller.add('content', {
                     toggle: function () {
-                        console.log('Settings folders:', $('.settings-folder').length);
-                        console.log('Settings params:', $('.settings-param').length);
                         if (scroll.render().find('.card').length > 0) {
                             var firstCard = scroll.render().find('.card')[0];
                             Navigator.focus(firstCard);
-                            $('.card--collection, .view--category, .settings-folder, .settings-param').removeClass('focus');
+                            $('.card--collection, .view--category').removeClass('focus');
                             $(firstCard).addClass('focus');
                         } else if (info.find('.view--category').length > 0) {
                             var categoryButton = info.find('.view--category')[0];
                             Navigator.focus(categoryButton);
-                            $('.card--collection, .view--category, .settings-folder, .settings-param').removeClass('focus');
+                            $('.card--collection, .view--category').removeClass('focus');
                             $(categoryButton).addClass('focus');
                         }
                     },
                     left: function () {
                         if (Navigator.canmove('left')) {
                             Navigator.move('left');
-                            $('.card--collection, .view--category, .settings-folder, .settings-param').removeClass('focus');
-                            $('.card--collection:hover, .view--category:hover, .settings-folder:hover, .settings-param:hover').addClass('focus');
+                            $('.card--collection, .view--category').removeClass('focus');
+                            $('.card--collection:hover, .view--category:hover').addClass('focus');
                         } else {
                             Lampa.Controller.toggle('menu');
                         }
@@ -457,8 +466,8 @@
                     right: function () {
                         if (Navigator.canmove('right')) {
                             Navigator.move('right');
-                            $('.card--collection, .view--category, .settings-folder, .settings-param').removeClass('focus');
-                            $('.card--collection:hover, .view--category:hover, .settings-folder:hover, .settings-param:hover').addClass('focus');
+                            $('.card--collection, .view--category').removeClass('focus');
+                            $('.card--collection:hover, .view--category:hover').addClass('focus');
                         } else {
                             self.selectGroup();
                         }
@@ -466,13 +475,13 @@
                     up: function () {
                         if (Navigator.canmove('up')) {
                             Navigator.move('up');
-                            $('.card--collection, .view--category, .settings-folder, .settings-param').removeClass('focus');
-                            $('.card--collection:hover, .view--category:hover, .settings-folder:hover, .settings-param:hover').addClass('focus');
+                            $('.card--collection, .view--category').removeClass('focus');
+                            $('.card--collection:hover, .view--category:hover').addClass('focus');
                         } else {
                             if (info.find('.view--category').length > 0 && !info.find('.view--category').hasClass('focus')) {
                                 var categoryButton = info.find('.view--category')[0];
                                 Navigator.focus(categoryButton);
-                                $('.card--collection, .view--category, .settings-folder, .settings-param').removeClass('focus');
+                                $('.card--collection, .view--category').removeClass('focus');
                                 $(categoryButton).addClass('focus');
                             } else {
                                 Lampa.Controller.toggle('head');
@@ -482,13 +491,13 @@
                     down: function () {
                         if (Navigator.canmove('down')) {
                             Navigator.move('down');
-                            $('.card--collection, .view--category, .settings-folder, .settings-param').removeClass('focus');
-                            $('.card--collection:hover, .view--category:hover, .settings-folder:hover, .settings-param:hover').addClass('focus');
+                            $('.card--collection, .view--category').removeClass('focus');
+                            $('.card--collection:hover, .view--category:hover').addClass('focus');
                         } else if (info.find('.view--category').hasClass('focus')) {
                             if (scroll.render().find('.card').length > 0) {
                                 var firstCard = scroll.render().find('.card')[0];
                                 Navigator.focus(firstCard);
-                                $('.card--collection, .view--category, .settings-folder, .settings-param').removeClass('focus');
+                                $('.card--collection, .view--category').removeClass('focus');
                                 $(firstCard).addClass('focus');
                             }
                         }
