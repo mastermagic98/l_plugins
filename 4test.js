@@ -101,12 +101,14 @@
             'Красная': 'red',
             'Зелёная': 'green',
             'Фиолетовая': 'violet',
-            'Тёмно-синяя': 'dark_blue',
+            'Синяя': 'dark_blue',
             'Оранжевая': 'orange',
             'Розовая': 'pink',
-            'синяя': 'dark_blue'
+            'Тёмно-синяя': 'dark_blue'
         };
-        return map[title] || title.toLowerCase().replace(/\s/g, '_');
+        var normalized = map[title] || title.toLowerCase().replace(/\s/g, '_');
+        console.log('Нормалізована назва:', normalized);
+        return normalized;
     }
 
     // Отримання перекладу для заданої мови
@@ -127,11 +129,17 @@
                 'violet.css': 'rgba(128, 0, 128, 0.3)',
                 'dark_blue.css': 'rgba(0, 0, 128, 0.3)',
                 'orange.css': 'rgba(255, 165, 0, 0.3)',
-                'pink.css': 'rgba(255, 192, 203, 0.3)'
+                'pink.css': 'rgba(255, 192, 203, 0.3)',
+                'red_stroke.css': 'rgba(255, 0, 0, 0.3)',
+                'green_stroke.css': 'rgba(0, 128, 0, 0.3)',
+                'violet_stroke.css': 'rgba(128, 0, 128, 0.3)',
+                'dark_blue_stroke.css': 'rgba(0, 0, 128, 0.3)',
+                'orange_stroke.css': 'rgba(255, 165, 0, 0.3)',
+                'pink_stroke.css': 'rgba(255, 192, 203, 0.3)'
             };
             return colorMap[themeUrl.split('/').pop()] || 'var(--focus-color, rgba(255, 255, 255, 0.2))';
         }
-        return 'var(--focus-color, rgba(255, 255, %AE2))';
+        return 'var(--focus-color, rgba(255, 255, 255, 0.2))';
     }
 
     // Оновлення стилів фокусування
@@ -264,17 +272,27 @@
                     return;
                 }
                 body.empty();
-                data.forEach(function (item) {
+                items = [];
+                data.forEach(function (item, index) {
                     if (!item.title || !item.css) {
-                        console.log('Некоректний елемент:', item);
+                        console.log('Некоректний елемент на позиції', index, ':', item);
                         return;
                     }
                     console.log('Обробка елемента:', item.title);
                     item.title = normalizeTitle(item.title);
                     var card = Lampa.Template.get('card', { title: t(item.title), release_year: '' });
+                    if (!card || card.length === 0) {
+                        console.log('Помилка: шаблон card не знайдено для', item.title);
+                        card = $('<div class="card card--collection selector"><div class="card__view"><img class="card__img" /><div class="card__quality"></div></div><div class="card__title">' + t(item.title) + '</div></div>');
+                    }
                     card.addClass('card--collection selector');
-                    card.find('.card__img').css({ cursor: 'pointer', backgroundColor: '#353535a6' });
-                    card.css({ textAlign: 'center' });
+                    card.css({
+                        textAlign: 'center',
+                        display: 'inline-block',
+                        visibility: 'visible',
+                        opacity: 1
+                    });
+                    card.find('.card__img').css({ cursor: 'pointer', backgroundColor: '#353535a6', width: '100%', height: 'auto' });
 
                     var img = card.find('.card__img')[0];
                     img.onload = function () {
@@ -399,10 +417,11 @@
 
                     body.append(card);
                     items.push(card);
+                    console.log('Додано картку:', item.title, 'Загальна кількість:', items.length);
                 });
                 console.log('Додано карток:', items.length);
-                info.find('.info__create').before(body);
-                console.log('Body додано до DOM:', body.parent().length);
+                scroll.render().find('.scroll__content').append(body);
+                console.log('Body додано до scroll__content:', body.parent().length);
             } catch (e) {
                 console.log('Помилка в append:', e);
             }
@@ -415,7 +434,7 @@
                 Lampa.Template.add('button_category', '<div id="button_category">' +
                     '<style>' +
                     '@media screen and (max-width: 2560px) {' +
-                    '.themes .card--collection { width: 14.2% !important; margin-top: 1em !important; }' +
+                    '.themes .card--collection { width: 14.2% !important; margin-top: 1em !important; display: inline-block !important; visibility: visible !important; opacity: 1 !important; }' +
                     '.my_themes .selector.focus { background: var(--focus-color, rgba(255, 255, 255, 0.2)) !important; }' +
                     '.my_themes .card.focus, .my_themes .card--collection.focus { background: none !important; outline: none !important; border: none !important; }' +
                     '.settings-component__icon svg { display: block !important; }' +
@@ -428,15 +447,12 @@
                     '.layer--wheight { box-shadow: none !important; background: none !important; }' +
                     '.layer--wheight::before, .layer--wheight::after { display: none !important; }' +
                     '.layer--width, .scroll { box-shadow: none !important; background: none !important; }' +
-                    '.settings::before, .settings::after, .settings__content::before, .settings__content::after, .layer--width::before, .layer--width::after, .scroll::before, .scroll::after { display: none !important; }' +
-                    '.settings-folders, .settings-folder, .settings-param { box-shadow: none !important; background: none !important; }' +
-                    '.settings-folders::before, .settings-folders::after, .settings-folder::before, .settings-folder::after, .settings-param::before, .settings-param::after { display: none !important; }' +
                     '.full-start__button { width: fit-content !important; margin-right: 0.75em; font-size: 1.3em; background-color: rgba(0, 0, 0, 0.3); padding: 0.3em 1em; display: flex; border-radius: 1em; align-items: center; height: 2.8em; }' +
                     '.view--category { display: flex; align-items: center; margin: 0.5em 0.5em 0.5em auto; }' +
                     '.view--category svg { margin-right: 0.3em; }' +
                     '}' +
                     '@media screen and (max-width: 385px) {' +
-                    '.themes .card--collection { width: 33.3% !important; margin-top: 1em !important; }' +
+                    '.themes .card--collection { width: 33.3% !important; margin-top: 1em !important; display: inline-block !important; visibility: visible !important; opacity: 1 !important; }' +
                     '.my_themes .selector.focus { background: var(--focus-color, rgba(255, 255, 255, 0.2)) !important; }' +
                     '.my_themes .card.focus, .my_themes .card--collection.focus { background: none !important; outline: none !important; border: none !important; }' +
                     '.settings-component__icon svg { display: block !important; }' +
@@ -446,15 +462,12 @@
                     '.layer--wheight { box-shadow: none !important; background: none !important; }' +
                     '.layer--wheight::before, .layer--wheight::after { display: none !important; }' +
                     '.layer--width, .scroll { box-shadow: none !important; background: none !important; }' +
-                    '.settings::before, .settings::after, .settings__content::before, .settings__content::after, .layer--width::before, .layer--width::after, .scroll::before, .scroll::after { display: none !important; }' +
-                    '.settings-folders, .settings-folder, .settings-param { box-shadow: none !important; background: none !important; }' +
-                    '.settings-folders::before, .settings-folders::after, .settings-folder::before, .settings-folder::after, .settings-param::before, .settings-param::after { display: none !important; }' +
                     '.full-start__button { width: fit-content !important; margin-right: 0.75em; font-size: 1.3em; background-color: rgba(0, 0, 0, 0.3); padding: 0.3em 1em; display: flex; border-radius: 1em; align-items: center; height: 2.8em; }' +
                     '.view--category { display: flex; align-items: center; margin: 0.5em 0.5em 0.5em auto; }' +
                     '.view--category svg { margin-right: 0.3em; }' +
                     '}' +
                     '@media screen and (max-width: 580px) {' +
-                    '.themes .card--collection { width: 25% !important; margin-top: 1em !important; }' +
+                    '.themes .card--collection { width: 25% !important; margin-top: 1em !important; display: inline-block !important; visibility: visible !important; opacity: 1 !important; }' +
                     '.my_themes .selector.focus { background: var(--focus-color, rgba(255, 255, 255, 0.2)) !important; }' +
                     '.my_themes .card.focus, .my_themes .card--collection.focus { background: none !important; outline: none !important; border: none !important; }' +
                     '.settings-component__icon svg { display: block !important; }' +
@@ -464,9 +477,6 @@
                     '.layer--wheight { box-shadow: none !important; background: none !important; }' +
                     '.layer--wheight::before, .layer--wheight::after { display: none !important; }' +
                     '.layer--width, .scroll { box-shadow: none !important; background: none !important; }' +
-                    '.settings::before, .settings::after, .settings__content::before, .settings__content::after, .layer--width::before, .layer--width::after, .scroll::before, .scroll::after { display: none !important; }' +
-                    '.settings-folders, .settings-folder, .settings-param { box-shadow: none !important; background: none !important; }' +
-                    '.settings-folders::before, .settings-folders::after, .settings-folder::before, .settings-folder::after, .settings-param::before, .settings-param::after { display: none !important; }' +
                     '.full-start__button { width: fit-content !important; margin-right: 0.75em; font-size: 1.3em; background-color: rgba(0, 0, 0, 0.3); padding: 0.3em 1em; display: flex; border-radius: 1em; align-items: center; height: 2.8em; }' +
                     '.view--category { display: flex; align-items: center; margin: 0.5em 0.5em 0.5em auto; }' +
                     '.view--category svg { margin-right: 0.3em; }' +
@@ -503,8 +513,8 @@
                 setTimeout(function () {
                     self.activity.loader(false);
                     self.activity.toggle();
+                    console.log('Картки у DOM:', scroll.render().find('.card').length);
                 }, 100);
-                console.log('Перевірка іконки:', $('.settings-component__icon svg').length);
             } catch (e) {
                 console.log('Помилка в build:', e);
                 this.append(fallbackThemes);
