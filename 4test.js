@@ -43,7 +43,6 @@
             ru: 'Тема установлена:',
             uk: 'Тема встановлена:'
         },
-        // Переклади для назв тем
         red: {
             en: 'Red',
             ru: 'Красная',
@@ -165,6 +164,7 @@
         var info = html;
         var last;
         var items = [];
+
         var categories = [
             { title: t('focus_pack'), url: 'https://bylampa.github.io/themes/categories/stroke.json' },
             { title: t('color_gallery'), url: 'https://bylampa.github.io/themes/categories/color_gallery.json' }
@@ -240,6 +240,8 @@
 
                     card.on('hover:focus', function () {
                         last = card[0];
+                        $('.card--collection').removeClass('focus');
+                        card.addClass('focus');
                         if (scroll && scroll.collectionFocus) {
                             scroll.collectionFocus(card);
                         }
@@ -333,6 +335,7 @@
                     '<style>' +
                     '@media screen and (max-width: 2560px) {' +
                     '.themes .card--collection { width: 14.2% !important; margin-top: 1em !important; }' +
+                    '.card--collection.focus { box-shadow: 0 0 5px rgba(255, 255, 255, 0.8) !important; }' +
                     '.scroll__content { padding: 0.5em 0 !important; box-shadow: none !important; background: none !important; }' +
                     '.scroll__content::before, .scroll__content::after { display: none !important; }' +
                     '.info { height: auto !important; margin-bottom: 0.5em !important; }' +
@@ -344,26 +347,34 @@
                     '.settings::before, .settings::after, .settings__content::before, .settings__content::after, .layer--width::before, .layer--width::after, .scroll::before, .scroll::after { display: none !important; }' +
                     '.settings-folders, .settings-folder, .settings-param { box-shadow: none !important; background: none !important; }' +
                     '.settings-folders::before, .settings-folders::after, .settings-folder::before, .settings-folder::after, .settings-param::before, .settings-param::after { display: none !important; }' +
+                    '.settings-folders.focus, .settings-folder.focus, .settings-param.focus { box-shadow: initial !important; }' +
                     '.view--category { display: flex; align-items: center; margin: 0.5em 0.5em 0.5em auto; }' +
+                    '.view--category.focus { box-shadow: 0 0 5px rgba(255, 255, 255, 0.8) !important; }' +
                     '.view--category svg { margin-right: 0.3em; }' +
                     '.info__title-original { font-size: 1.2em; }' +
                     '.full-start__button { margin-right: 0.75em; font-size: 1.3em; background-color: rgba(0, 0, 0, 0.3); padding: 0.3em 1em; display: flex; border-radius: 1em; align-items: center; height: 2.8em; }' +
                     '}' +
                     '@media screen and (max-width: 385px) {' +
                     '.themes .card--collection { width: 33.3% !important; margin-top: 1em !important; }' +
+                    '.card--collection.focus { box-shadow: 0 0 5px rgba(255, 255, 255, 0.8) !important; }' +
                     '.info__right { display: none !important; }' +
                     '.layer--width, .scroll { box-shadow: none !important; background: none !important; }' +
                     '.settings::before, .settings::after, .settings__content::before, .settings__content::after, .layer--width::before, .layer--width::after, .scroll::before, .scroll::after { display: none !important; }' +
                     '.settings-folders, .settings-folder, .settings-param { box-shadow: none !important; background: none !important; }' +
                     '.settings-folders::before, .settings-folders::after, .settings-folder::before, .settings-folder::after, .settings-param::before, .settings-param::after { display: none !important; }' +
+                    '.settings-folders.focus, .settings-folder.focus, .settings-param.focus { box-shadow: initial !important; }' +
+                    '.view--category.focus { box-shadow: 0 0 5px rgba(255, 255, 255, 0.8) !important; }' +
                     '}' +
                     '@media screen and (max-width: 580px) {' +
                     '.themes .card--collection { width: 25% !important; margin-top: 1em !important; }' +
+                    '.card--collection.focus { box-shadow: 0 0 5px rgba(255, 255, 255, 0.8) !important; }' +
                     '.info__right { display: none !important; }' +
                     '.layer--width, .scroll { box-shadow: none !important; background: none !important; }' +
                     '.settings::before, .settings::after, .settings__content::before, .settings__content::after, .layer--width::before, .layer--width::after, .scroll::before, .scroll::after { display: none !important; }' +
                     '.settings-folders, .settings-folder, .settings-param { box-shadow: none !important; background: none !important; }' +
                     '.settings-folders::before, .settings-folders::after, .settings-folder::before, .settings-folder::after, .settings-param::before, .settings-param::after { display: none !important; }' +
+                    '.settings-folders.focus, .settings-folder.focus, .settings-param.focus { box-shadow: initial !important; }' +
+                    '.view--category.focus { box-shadow: 0 0 5px rgba(255, 255, 255, 0.8) !important; }' +
                     '}' +
                     '</style>' +
                     '<div class="full-start__button selector view--category">' +
@@ -379,8 +390,10 @@
                     '</div></div>');
                 var button = Lampa.Template.get('button_category');
                 info.find('.info__left').prepend(button);
-                info.find('.view--category').on('click', function () {
-                    self.selectGroup();
+                info.find('.view--category').addClass('selector').on('hover:focus', function () {
+                    $('.view--category').removeClass('focus');
+                    $(this).addClass('focus');
+                    Lampa.Controller.toggle('content');
                 });
                 scroll.render().addClass('layer--wheight').data('mheight', info);
                 html.append(info);
@@ -415,37 +428,65 @@
 
         this.start = function () {
             try {
+                console.log('Cards:', scroll.render().find('.card').length);
+                console.log('Category button:', info.find('.view--category').length);
                 Lampa.Controller.add('content', {
                     toggle: function () {
                         if (scroll.render().find('.card').length > 0) {
-                            Navigator.focus(scroll.render().find('.card')[0]);
+                            var firstCard = scroll.render().find('.card')[0];
+                            Navigator.focus(firstCard);
+                            $(firstCard).addClass('focus');
                         } else if (info.find('.view--category').length > 0) {
-                            Navigator.focus(info.find('.view--category')[0]);
+                            var categoryButton = info.find('.view--category')[0];
+                            Navigator.focus(categoryButton);
+                            $(categoryButton).addClass('focus');
                         }
                     },
                     left: function () {
-                        if (Navigator.canmove('left')) Navigator.move('left');
-                        else Lampa.Controller.toggle('menu');
+                        if (Navigator.canmove('left')) {
+                            Navigator.move('left');
+                            $('.card--collection, .view--category').removeClass('focus');
+                            $('.card--collection:hover, .view--category:hover').addClass('focus');
+                        } else {
+                            Lampa.Controller.toggle('menu');
+                        }
                     },
                     right: function () {
-                        if (Navigator.canmove('right')) Navigator.move('right');
-                        else self.selectGroup();
+                        if (Navigator.canmove('right')) {
+                            Navigator.move('right');
+                            $('.card--collection, .view--category').removeClass('focus');
+                            $('.card--collection:hover, .view--category:hover').addClass('focus');
+                        } else {
+                            self.selectGroup();
+                        }
                     },
                     up: function () {
-                        if (Navigator.canmove('up')) Navigator.move('up');
-                        else {
+                        if (Navigator.canmove('up')) {
+                            Navigator.move('up');
+                            $('.card--collection, .view--category').removeClass('focus');
+                            $('.card--collection:hover, .view--category:hover').addClass('focus');
+                        } else {
                             if (info.find('.view--category').length > 0 && !info.find('.view--category').hasClass('focus')) {
-                                Navigator.focus(info.find('.view--category')[0]);
+                                var categoryButton = info.find('.view--category')[0];
+                                Navigator.focus(categoryButton);
+                                $('.card--collection, .view--category').removeClass('focus');
+                                $(categoryButton).addClass('focus');
                             } else {
                                 Lampa.Controller.toggle('head');
                             }
                         }
                     },
                     down: function () {
-                        if (Navigator.canmove('down')) Navigator.move('down');
-                        else if (info.find('.view--category').hasClass('focus')) {
+                        if (Navigator.canmove('down')) {
+                            Navigator.move('down');
+                            $('.card--collection, .view--category').removeClass('focus');
+                            $('.card--collection:hover, .view--category:hover').addClass('focus');
+                        } else if (info.find('.view--category').hasClass('focus')) {
                             if (scroll.render().find('.card').length > 0) {
-                                Navigator.focus(scroll.render().find('.card')[0]);
+                                var firstCard = scroll.render().find('.card')[0];
+                                Navigator.focus(firstCard);
+                                $('.card--collection, .view--category').removeClass('focus');
+                                $(firstCard).addClass('focus');
                             }
                         }
                     },
