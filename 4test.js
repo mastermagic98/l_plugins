@@ -283,7 +283,7 @@
                     var card = Lampa.Template.get('card', { title: t(item.title), release_year: '' });
                     if (!card || card.length === 0) {
                         console.log('Помилка: шаблон card не знайдено для', item.title);
-                        card = $('<div class="card card--collection selector"><div class="card__view"><img class="card__img" /><div class="card__quality"></div></div><div class="card__title">' + t(item.title) + '</div><div class="card__age"></div></div>');
+                        card = $('<div class="card card--collection selector"><div class="card__view"><img class="card__img" /><div class="card__quality"></div><div class="card__icons"><div class="card__icons-inner"></div></div></div><div class="card__title">' + t(item.title) + '</div><div class="card__age"></div></div>');
                     }
                     card.addClass('card--collection selector');
                     card.css({
@@ -291,14 +291,16 @@
                         display: 'inline-block',
                         visibility: 'visible',
                         opacity: 1,
-                        margin: '0.5em'
+                        margin: '0.5em',
+                        maxWidth: '150px'
                     });
                     card.find('.card__img').css({
                         cursor: 'pointer',
                         backgroundColor: '#353535a6',
                         width: '100%',
                         height: 'auto',
-                        aspectRatio: '2/3'
+                        aspectRatio: '2/3',
+                        objectFit: 'cover'
                     });
 
                     var img = card.find('.card__img')[0];
@@ -354,11 +356,13 @@
                             { title: t('install') },
                             { title: t('delete') }
                         ];
+                        console.log('Пункти меню для картки:', menuItems);
                         Lampa.Select.show({
-                            title: '',
+                            title: t(item.title),
                             items: menuItems,
                             onBack: function () { Lampa.Controller.toggle('content'); },
                             onSelect: function (selected) {
+                                console.log('Обрано пункт меню:', selected.title);
                                 if (selected.title === t('install')) {
                                     $('link[rel="stylesheet"][href^="https://bylampa.github.io/themes/css/"]').remove();
                                     var themeLink = $('<link rel="stylesheet" href="' + item.css + '">');
@@ -427,7 +431,7 @@
                     console.log('Додано картку:', item.title, 'Загальна кількість:', items.length);
                 });
                 console.log('Додано карток:', items.length);
-                scroll.render().find('.scroll__content').append(body);
+                scroll.render().find('.scroll__content').empty().append(body);
                 console.log('Body додано до scroll__content:', body.parent().length);
                 setTimeout(function () {
                     var cards = scroll.render().find('.card--collection');
@@ -447,59 +451,59 @@
                 Lampa.Template.add('button_category', '<div id="button_category">' +
                     '<style>' +
                     '@media screen and (max-width: 2560px) {' +
-                    '.themes .card--collection { width: 16.6% !important; margin: 0.5em !important; display: inline-block !important; visibility: visible !important; opacity: 1 !important; }' +
-                    '.themes .card--collection .card__img { aspect-ratio: 2/3 !important; }' +
+                    '.themes .card--collection { width: 16.6% !important; max-width: 150px !important; margin: 0.5em !important; display: inline-block !important; visibility: visible !important; opacity: 1 !important; }' +
+                    '.themes .card--collection .card__img { aspect-ratio: 2/3 !important; object-fit: cover !important; }' +
                     '.my_themes .selector.focus { background: var(--focus-color, rgba(255, 255, 255, 0.2)) !important; }' +
                     '.my_themes .card.focus, .my_themes .card--collection.focus { background: none !important; outline: none !important; border: none !important; }' +
                     '.settings-component__icon svg { display: block !important; }' +
                     '.scroll__body { display: none !important; }' +
-                    '.scroll__content { padding: 0.5em 0 !important; box-shadow: none !important; background: none !important; margin-top: 3em !important; }' +
+                    '.scroll__content { padding: 0.5em 0 !important; box-shadow: none !important; background: none !important; margin-top: 3em !important; width: 100% !important; clear: both !important; }' +
                     '.scroll__content::before, .scroll__content::after { display: none !important; }' +
-                    '.info { height: auto !important; margin-bottom: 0.5em !important; position: relative !important; }' +
-                    '.info__left { float: none !important; width: 100%; }' +
+                    '.info { display: block !important; height: auto !important; margin-bottom: 0.5em !important; position: relative !important; width: 100% !important; }' +
+                    '.info__left { float: none !important; width: 100% !important; }' +
                     '.info__right { display: none !important; }' +
                     '.info__title-original { font-size: 1.2em; }' +
                     '.layer--wheight { box-shadow: none !important; background: none !important; }' +
                     '.layer--wheight::before, .layer--wheight::after { display: none !important; }' +
-                    '.layer--width, .scroll { box-shadow: none !important; background: none !important; }' +
+                    '.layer--width, .scroll { box-shadow: none !important; background: none !important; display: block !important; width: 100% !important; }' +
                     '.full-start__button { width: fit-content !important; margin: 0.5em 0.5em 0.5em auto !important; font-size: 1.3em; background-color: rgba(0, 0, 0, 0.3); padding: 0.3em 1em; display: flex; border-radius: 1em; align-items: center; height: 2.8em; }' +
                     '.view--category { display: flex; align-items: center; margin: 0.5em 0.5em 0.5em auto; }' +
                     '.view--category svg { margin-right: 0.3em; }' +
                     '}' +
                     '@media screen and (max-width: 580px) {' +
-                    '.themes .card--collection { width: 20% !important; margin: 0.5em !important; display: inline-block !important; visibility: visible !important; opacity: 1 !important; }' +
-                    '.themes .card--collection .card__img { aspect-ratio: 2/3 !important; }' +
+                    '.themes .card--collection { width: 20% !important; max-width: 150px !important; margin: 0.5em !important; display: inline-block !important; visibility: visible !important; opacity: 1 !important; }' +
+                    '.themes .card--collection .card__img { aspect-ratio: 2/3 !important; object-fit: cover !important; }' +
                     '.my_themes .selector.focus { background: var(--focus-color, rgba(255, 255, 255, 0.2)) !important; }' +
                     '.my_themes .card.focus, .my_themes .card--collection.focus { background: none !important; outline: none !important; border: none !important; }' +
                     '.settings-component__icon svg { display: block !important; }' +
                     '.scroll__body { display: none !important; }' +
-                    '.scroll__content { padding: 0.5em 0 !important; box-shadow: none !important; background: none !important; margin-top: 3em !important; }' +
+                    '.scroll__content { padding: 0.5em 0 !important; box-shadow: none !important; background: none !important; margin-top: 3em !important; width: 100% !important; clear: both !important; }' +
                     '.scroll__content::before, .scroll__content::after { display: none !important; }' +
-                    '.info { height: auto !important; margin-bottom: 0.5em !important; position: relative !important; }' +
-                    '.info__left { float: none !important; width: 100%; }' +
+                    '.info { display: block !important; height: auto !important; margin-bottom: 0.5em !important; position: relative !important; width: 100% !important; }' +
+                    '.info__left { float: none !important; width: 100% !important; }' +
                     '.info__right { display: none !important; }' +
                     '.layer--wheight { box-shadow: none !important; background: none !important; }' +
                     '.layer--wheight::before, .layer--wheight::after { display: none !important; }' +
-                    '.layer--width, .scroll { box-shadow: none !important; background: none !important; }' +
+                    '.layer--width, .scroll { box-shadow: none !important; background: none !important; display: block !important; width: 100% !important; }' +
                     '.full-start__button { width: fit-content !important; margin: 0.5em 0.5em 0.5em auto !important; font-size: 1.3em; background-color: rgba(0, 0, 0, 0.3); padding: 0.3em 1em; display: flex; border-radius: 1em; align-items: center; height: 2.8em; }' +
                     '.view--category { display: flex; align-items: center; margin: 0.5em 0.5em 0.5em auto; }' +
                     '.view--category svg { margin-right: 0.3em; }' +
                     '}' +
                     '@media screen and (max-width: 385px) {' +
-                    '.themes .card--collection { width: 33.3% !important; margin: 0.5em !important; display: inline-block !important; visibility: visible !important; opacity: 1 !important; }' +
-                    '.themes .card--collection .card__img { aspect-ratio: 2/3 !important; }' +
+                    '.themes .card--collection { width: 33.3% !important; max-width: 150px !important; margin: 0.5em !important; display: inline-block !important; visibility: visible !important; opacity: 1 !important; }' +
+                    '.themes .card--collection .card__img { aspect-ratio: 2/3 !important; object-fit: cover !important; }' +
                     '.my_themes .selector.focus { background: var(--focus-color, rgba(255, 255, 255, 0.2)) !important; }' +
                     '.my_themes .card.focus, .my_themes .card--collection.focus { background: none !important; outline: none !important; border: none !important; }' +
                     '.settings-component__icon svg { display: block !important; }' +
                     '.scroll__body { display: none !important; }' +
-                    '.scroll__content { padding: 0.5em 0 !important; box-shadow: none !important; background: none !important; margin-top: 3em !important; }' +
+                    '.scroll__content { padding: 0.5em 0 !important; box-shadow: none !important; background: none !important; margin-top: 3em !important; width: 100% !important; clear: both !important; }' +
                     '.scroll__content::before, .scroll__content::after { display: none !important; }' +
-                    '.info { height: auto !important; margin-bottom: 0.5em !important; position: relative !important; }' +
-                    '.info__left { float: none !important; width: 100%; }' +
+                    '.info { display: block !important; height: auto !important; margin-bottom: 0.5em !important; position: relative !important; width: 100% !important; }' +
+                    '.info__left { float: none !important; width: 100% !important; }' +
                     '.info__right { display: none !important; }' +
                     '.layer--wheight { box-shadow: none !important; background: none !important; }' +
                     '.layer--wheight::before, .layer--wheight::after { display: none !important; }' +
-                    '.layer--width, .scroll { box-shadow: none !important; background: none !important; }' +
+                    '.layer--width, .scroll { box-shadow: none !important; background: none !important; display: block !important; width: 100% !important; }' +
                     '.full-start__button { width: fit-content !important; margin: 0.5em 0.5em 0.5em auto !important; font-size: 1.3em; background-color: rgba(0, 0, 0, 0.3); padding: 0.3em 1em; display: flex; border-radius: 1em; align-items: center; height: 2.8em; }' +
                     '.view--category { display: flex; align-items: center; margin: 0.5em 0.5em 0.5em auto; }' +
                     '.view--category svg { margin-right: 0.3em; }' +
@@ -553,10 +557,19 @@
         // Вибір категорії тем
         this.selectGroup = function () {
             try {
+                console.log('Категорії для вибору:', categories);
+                if (!categories || categories.length === 0) {
+                    console.log('Помилка: масив категорій порожній');
+                    categories = [
+                        { title: t('focus_pack'), url: 'https://bylampa.github.io/themes/categories/stroke.json' },
+                        { title: t('color_gallery'), url: 'https://bylampa.github.io/themes/categories/color_gallery.json' }
+                    ];
+                }
                 Lampa.Select.show({
                     title: t('theme_categories'),
                     items: categories,
                     onSelect: function (item) {
+                        console.log('Обрано категорію:', item.title);
                         var activityData = {
                             url: item.url,
                             title: item.title,
