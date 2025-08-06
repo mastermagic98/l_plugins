@@ -340,7 +340,7 @@
                     '.info__right { display: none !important; }' +
                     '.layer--wheight { box-shadow: none !important; background: none !important; }' +
                     '.layer--wheight::before, .layer--wheight::after { display: none !important; }' +
-                    '.settings, .settings__content, .layer--width, .scroll { box-shadow: none !important; background: none !important; }' +
+                    '.layer--width, .scroll { box-shadow: none !important; background: none !important; }' +
                     '.settings::before, .settings::after, .settings__content::before, .settings__content::after, .layer--width::before, .layer--width::after, .scroll::before, .scroll::after { display: none !important; }' +
                     '.settings-folders, .settings-folder, .settings-param { box-shadow: none !important; background: none !important; }' +
                     '.settings-folders::before, .settings-folders::after, .settings-folder::before, .settings-folder::after, .settings-param::before, .settings-param::after { display: none !important; }' +
@@ -352,7 +352,7 @@
                     '@media screen and (max-width: 385px) {' +
                     '.themes .card--collection { width: 33.3% !important; margin-top: 1em !important; }' +
                     '.info__right { display: none !important; }' +
-                    '.settings, .settings__content, .layer--width, .scroll { box-shadow: none !important; background: none !important; }' +
+                    '.layer--width, .scroll { box-shadow: none !important; background: none !important; }' +
                     '.settings::before, .settings::after, .settings__content::before, .settings__content::after, .layer--width::before, .layer--width::after, .scroll::before, .scroll::after { display: none !important; }' +
                     '.settings-folders, .settings-folder, .settings-param { box-shadow: none !important; background: none !important; }' +
                     '.settings-folders::before, .settings-folders::after, .settings-folder::before, .settings-folder::after, .settings-param::before, .settings-param::after { display: none !important; }' +
@@ -360,7 +360,7 @@
                     '@media screen and (max-width: 580px) {' +
                     '.themes .card--collection { width: 25% !important; margin-top: 1em !important; }' +
                     '.info__right { display: none !important; }' +
-                    '.settings, .settings__content, .layer--width, .scroll { box-shadow: none !important; background: none !important; }' +
+                    '.layer--width, .scroll { box-shadow: none !important; background: none !important; }' +
                     '.settings::before, .settings::after, .settings__content::before, .settings__content::after, .layer--width::before, .layer--width::after, .scroll::before, .scroll::after { display: none !important; }' +
                     '.settings-folders, .settings-folder, .settings-param { box-shadow: none !important; background: none !important; }' +
                     '.settings-folders::before, .settings-folders::after, .settings-folder::before, .settings-folder::after, .settings-param::before, .settings-param::after { display: none !important; }' +
@@ -373,7 +373,7 @@
                     '<g id="menu">' +
                     '<path d="M20,10H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h16c1.1,0,2-0.9,2-2C22,10.9,21.1,10,20,10z" fill="currentColor"/>' +
                     '<path d="M4,8h12c1.1,0,2-0.9,2-2c0-1.1-0.9-2-2-2H4C2.9,4,2,4.9,2,6C2,7.1,2.9,8,4,8z" fill="currentColor"/>' +
-                    '<path d="M16,16H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2 zehn16c1.1,0,2-0.9,2-2C18,16.9,17.1,16,16,16z" fill="currentColor"/>' +
+                    '<path d="M16,16H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h12c1.1,0,2-0.9,2-2C18,16.9,17.1,16,16,16z" fill="currentColor"/>' +
                     '</g></g></svg>' +
                     '<span>' + t('theme_categories') + '</span>' +
                     '</div></div>');
