@@ -75,6 +75,25 @@
         }
     };
 
+    // Резервні тестові дані для тем
+    var fallbackThemes = [
+        {
+            title: 'Red',
+            css: 'https://bylampa.github.io/themes/css/red.css',
+            logo: 'https://via.placeholder.com/150?text=Red'
+        },
+        {
+            title: 'Green',
+            css: 'https://bylampa.github.io/themes/css/green.css',
+            logo: 'https://via.placeholder.com/150?text=Green'
+        },
+        {
+            title: 'Violet',
+            css: 'https://bylampa.github.io/themes/css/violet.css',
+            logo: 'https://via.placeholder.com/150?text=Violet'
+        }
+    ];
+
     // Нормалізація назви теми для відповідності ключам
     function normalizeTitle(title) {
         console.log('Нормалізація назви:', title);
@@ -221,16 +240,18 @@
             try {
                 console.log('Створення компонента, URL:', params.url);
                 this.activity.loader(true);
-                $.get(params.url, this.build.bind(this)).fail(function () {
-                    console.log('Помилка завантаження даних із:', params.url);
-                    var empty = new Lampa.Empty();
-                    html.append(empty.render());
-                    this.activity.loader(false);
-                    this.activity.toggle();
-                });
+                $.get(params.url, function (data) {
+                    console.log('Дані успішно отримано:', data);
+                    this.build(data);
+                }.bind(this)).fail(function (jqXHR, textStatus, errorThrown) {
+                    console.log('Помилка завантаження даних із:', params.url, 'Статус:', textStatus, 'Помилка:', errorThrown);
+                    console.log('Використовуємо резервні дані');
+                    this.build(fallbackThemes);
+                }.bind(this));
                 return this.render();
             } catch (e) {
                 console.log('Помилка в create:', e);
+                this.build(fallbackThemes);
                 return this.render();
             }
         };
@@ -429,7 +450,7 @@
                     '.scroll__content { box-shadow: none !important; background: none !important; }' +
                     '.scroll__content::before, .scroll__content::after { display: none !important; }' +
                     '.layer--wheight { box-shadow: none !important; background: none !important; }' +
-                    '.layer--wheight::before, .layer--wheight::after { display: none !important; }' +
+                    '.layer--wheight::before, . layer--wheight::after { display: none !important; }' +
                     '.layer--width, .scroll { box-shadow: none !important; background: none !important; }' +
                     '.settings::before, .settings::after, .settings__content::before, .settings__content::after, .layer--width::before, .layer--width::after, .scroll::before, .scroll::after { display: none !important; }' +
                     '.settings-folders, .settings-folder, .settings-param { box-shadow: none !important; background: none !important; }' +
@@ -480,22 +501,22 @@
                 }).on('hover:enter', self.selectGroup.bind(self));
                 scroll.render().addClass('layer--wheight').data('mheight', info);
                 html.empty().append(info).append(scroll.render());
-                if (data && data.length) {
+                if (data && Array.isArray(data) && data.length) {
                     this.append(data);
                 } else {
-                    console.log('Дані порожні або некоректні');
-                    var empty = new Lampa.Empty();
-                    html.append(empty.render());
+                    console.log('Дані порожні або некоректні, використовуємо резервні дані');
+                    this.append(fallbackThemes);
                 }
-                this.activity.loader(false);
-                this.activity.toggle();
+                setTimeout(function () {
+                    self.activity.loader(false);
+                    self.activity.toggle();
+                }, 100);
                 console.log('Перевірка іконки:', $('.settings-component__icon svg').length);
             } catch (e) {
                 console.log('Помилка в build:', e);
-                var empty = new Lampa.Empty();
-                html.append(empty.render());
-                this.activity.loader(false);
-                this.activity.toggle();
+                this.append(fallbackThemes);
+                self.activity.loader(false);
+                self.activity.toggle();
             }
         };
 
