@@ -115,7 +115,7 @@
         return 'var(--focus-color, rgba(255, 255, 255, 0.2))';
     }
 
-    // Оновлення стилів фокусування для елементів інтерфейсу
+    // Оновлення стилів фокусування
     function updateFocusStyle() {
         setTimeout(function () {
             var focusColor = getFocusColor();
@@ -133,7 +133,7 @@
         }, 100);
     }
 
-    // Завантаження збереженої теми з localStorage
+    // Завантаження збереженої теми
     try {
         var selectedTheme = localStorage.getItem('selectedTheme');
         if (selectedTheme) {
@@ -195,7 +195,7 @@
     function ThemesComponent(params) {
         var self = this;
 
-        // Ініціалізація параметрів за замовчуванням
+        // Ініціалізація параметрів
         if (!params) {
             params = {
                 url: 'https://bylampa.github.io/themes/categories/stroke.json',
@@ -206,9 +206,9 @@
         }
 
         var scroll = new Lampa.Scroll({ mask: true, over: true, step: 250 });
-        var html = $('<div class="info layer--width"><div class="info__left"><div class="info__title"></div><div class="info__title-original"></div><div class="info__create"></div></div><div class="info__right"><div id="stantion_filtr"></div></div></div>');
+        var html = $('<div class="info layer--width"></div>');
+        var info = $('<div class="info__left"><div class="info__title"></div><div class="info__title-original"></div><div class="info__create"></div></div>');
         var body = $('<div class="my_themes category-full"></div>');
-        var info = html;
         var last;
         var items = [];
         var categories = [
@@ -219,8 +219,10 @@
         // Створення компонента
         this.create = function () {
             try {
+                console.log('Створення компонента, URL:', params.url);
                 this.activity.loader(true);
                 $.get(params.url, this.build.bind(this)).fail(function () {
+                    console.log('Помилка завантаження даних із:', params.url);
                     var empty = new Lampa.Empty();
                     html.append(empty.render());
                     this.activity.loader(false);
@@ -233,12 +235,20 @@
             }
         };
 
-        // Додавання карток тем до інтерфейсу
+        // Додавання карток тем
         this.append = function (data) {
             try {
                 console.log('Додавання даних:', data);
+                if (!Array.isArray(data)) {
+                    console.log('Дані не є масивом:', data);
+                    return;
+                }
                 body.empty();
                 data.forEach(function (item) {
+                    if (!item.title || !item.css) {
+                        console.log('Некоректний елемент:', item);
+                        return;
+                    }
                     console.log('Обробка елемента:', item.title);
                     item.title = normalizeTitle(item.title);
                     var card = Lampa.Template.get('card', { title: t(item.title), release_year: '' });
@@ -259,16 +269,12 @@
                         );
                     };
                     var imageUrl = item.logo || '';
-                    if (!imageUrl) {
-                        img.src = 'data:image/svg+xml;base64,' + btoa(
-                            '<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150">' +
-                            '<rect fill="#444" width="150" height="150"/>' +
-                            '<text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#fff" font-size="20">No Image</text>' +
-                            '</svg>'
-                        );
-                    } else {
-                        img.src = imageUrl;
-                    }
+                    img.src = imageUrl || 'data:image/svg+xml;base64,' + btoa(
+                        '<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150">' +
+                        '<rect fill="#444" width="150" height="150"/>' +
+                        '<text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#fff" font-size="20">No Image</text>' +
+                        '</svg>'
+                    );
 
                     if (localStorage.getItem('selectedTheme') === item.css) {
                         var installedButton = document.createElement('div');
@@ -385,7 +391,7 @@
             }
         };
 
-        // Побудова інтерфейсу з отриманими даними
+        // Побудова інтерфейсу
         this.build = function (data) {
             try {
                 console.log('Отримані дані:', data);
@@ -464,7 +470,7 @@
                     '<span>' + t('theme_categories') + '</span>' +
                     '</div></div>');
                 var button = Lampa.Template.get('button_category');
-                info.find('.info__left').empty().prepend(button);
+                info.empty().append(button);
                 var categoryButton = info.find('.view--category');
                 categoryButton.addClass('selector').on('hover:focus', function () {
                     $('.selector').removeClass('focus');
@@ -473,14 +479,23 @@
                     console.log('Фокус на кнопці категорії');
                 }).on('hover:enter', self.selectGroup.bind(self));
                 scroll.render().addClass('layer--wheight').data('mheight', info);
-                html.empty().append(info);
-                html.append(scroll.render());
-                this.append(data);
+                html.empty().append(info).append(scroll.render());
+                if (data && data.length) {
+                    this.append(data);
+                } else {
+                    console.log('Дані порожні або некоректні');
+                    var empty = new Lampa.Empty();
+                    html.append(empty.render());
+                }
                 this.activity.loader(false);
                 this.activity.toggle();
                 console.log('Перевірка іконки:', $('.settings-component__icon svg').length);
             } catch (e) {
                 console.log('Помилка в build:', e);
+                var empty = new Lampa.Empty();
+                html.append(empty.render());
+                this.activity.loader(false);
+                this.activity.toggle();
             }
         };
 
@@ -633,7 +648,7 @@
     // Реєстрація компонента
     Lampa.Component.add('my_themes', ThemesComponent);
 
-    // Слухач подій для скидання теми при певних умовах
+    // Слухач подій для скидання теми
     Lampa.Storage.listener.follow('app', function (e) {
         if (e.name === 'egg' && Lampa.Activity.active().component !== 'my_themes') {
             $('link[rel="stylesheet"][href^="https://bylampa.github.io/themes/css/"]').remove();
