@@ -77,13 +77,15 @@
 
     // Функція для нормалізації title до ключа
     function normalizeTitle(title) {
+        console.log('Normalizing title:', title);
         var map = {
             'Красная': 'red',
             'Зелёная': 'green',
             'Фиолетовая': 'violet',
             'Тёмно-синяя': 'dark_blue',
             'Оранжевая': 'orange',
-            'Розовая': 'pink'
+            'Розовая': 'pink',
+            'синяя': 'dark_blue' // Додано для виправлення помилки
         };
         return map[title] || title.toLowerCase().replace(/\s/g, '_');
     }
@@ -128,7 +130,7 @@
                 '.settings, .settings__content { background: rgba(0, 0, 0, 0.8) !important; }'
             );
             console.log('Focus color updated:', focusColor);
-        }, 100); // Затримка для асинхронного завантаження CSS
+        }, 100);
     }
 
     // Завантаження вибраної теми з localStorage
@@ -150,49 +152,48 @@
             name: t('my_themes'),
             icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" focusable="false" aria-hidden="true"><path d="M 491.522 428.593 L 427.586 428.593 L 399.361 397.117 L 481.281 397.117 L 481.281 145.313 L 30.721 145.313 L 30.721 397.117 L 292.833 397.117 L 314.433 428.593 L 20.48 428.593 C 9.179 428.593 0 419.183 0 407.607 L 0 103.346 C 0 91.642 9.179 82.362 20.48 82.362 L 491.522 82.362 C 502.818 82.362 512 91.642 512 103.346 L 512 407.607 C 512 419.183 502.818 428.593 491.522 428.593 Z M 427.041 500.036 C 413.25 511.314 390.56 505.805 376.194 487.542 L 230.819 275.968 C 216.48 257.706 216.548 261.248 230.303 249.837 C 244.066 238.459 240.708 237.706 255.037 255.837 L 425.954 446.462 C 440.289 464.625 440.801 488.659 427.041 500.036 Z M 389.665 474.757 C 389.665 474.757 387.554 477.183 380.449 482.986 C 391.105 500.756 412 497.544 412 497.544 C 392.162 485.544 389.665 474.757 389.665 474.757 Z M 136.581 196.92 C 164.868 197.083 168.383 204.166 177.63 233.216 C 194.626 279.281 271.361 221.182 223.809 201.084 C 176.219 180.986 108.127 196.723 136.581 196.92 Z M 322.145 22.788 C 313.313 29.476 312.32 39.51 312.32 39.51 L 309.056 61.378 L 202.91 61.378 L 199.62 39.543 C 199.62 39.543 198.685 29.509 189.857 22.788 C 180.901 16.066 173.98 10.329 180.901 9.444 C 187.744 8.491 251.328 9.246 256.001 9.444 C 260.671 9.246 324.224 8.491 331.072 9.444 C 337.986 10.296 331.072 16.035 322.145 22.788 Z" style="fill: currentColor; transform-box: fill-box; transform-origin: 50% 50%;" transform="matrix(-1, 0, 0, -1, 0.000057, 0.000065)"></path></svg>'
         });
-
-        Lampa.SettingsApi.addParam({
-            component: 'my_themes',
-            param: {
-                name: 'open_themes',
-                type: 'trigger',
-                default: ''
-            },
-            field: {
-                name: t('my_themes'),
-                description: t('description')
-            },
-            onChange: function () {
-                try {
-                    if ($('.view--category').length || $('#button_category').length) {
-                        if (window.activity && window.activity.back) {
-                            window.activity.back();
-                        }
-                    }
-                    var themesCurrent = localStorage.getItem('themesCurrent');
-                    var activityData = themesCurrent ? JSON.parse(themesCurrent) : {
-                        url: 'https://bylampa.github.io/themes/categories/stroke.json',
-                        title: t('focus_pack'),
-                        component: 'my_themes',
-                        page: 1
-                    };
-                    Lampa.Activity.push(activityData);
-                    Lampa.Storage.set('themesCurrent', JSON.stringify(activityData));
-                } catch (e) {
-                    console.log('Error in onChange:', e);
-                }
-            }
-        });
+        console.log('Settings component added:', $('.settings-component__icon').length);
     } catch (e) {
         console.log('Error adding component:', e);
     }
 
+    Lampa.SettingsApi.addParam({
+        component: 'my_themes',
+        param: {
+            name: 'open_themes',
+            type: 'trigger',
+            default: ''
+        },
+        field: {
+            name: t('my_themes'),
+            description: t('description')
+        },
+        onChange: function () {
+            try {
+                if ($('.view--category').length || $('#button_category').length) {
+                    if (window.activity && window.activity.back) {
+                        window.activity.back();
+                    }
+                }
+                var themesCurrent = localStorage.getItem('themesCurrent');
+                var activityData = themesCurrent ? JSON.parse(themesCurrent) : {
+                    url: 'https://bylampa.github.io/themes/categories/stroke.json',
+                    title: t('focus_pack'),
+                    component: 'my_themes',
+                    page: 1
+                };
+                Lampa.Activity.push(activityData);
+                Lampa.Storage.set('themesCurrent', JSON.stringify(activityData));
+            } catch (e) {
+                console.log('Error in onChange:', e);
+            }
+        }
+    });
+
     // Компонент для управління темами
     function ThemesComponent(params) {
-        // Зберігаємо контекст для методів
         var self = this;
 
-        // Перевірка параметрів
         if (!params) {
             params = {
                 url: 'https://bylampa.github.io/themes/categories/stroke.json',
@@ -232,7 +233,9 @@
         this.append = function (data) {
             try {
                 console.log('Appending data:', data);
+                body.empty(); // Очистити body перед додаванням
                 data.forEach(function (item) {
+                    console.log('Processing item:', item.title);
                     item.title = normalizeTitle(item.title);
                     var card = Lampa.Template.get('card', { title: t(item.title), release_year: '' });
                     card.addClass('card--collection selector');
@@ -291,6 +294,7 @@
                             scroll.collectionFocus(card);
                         }
                         html.find('.info__title').text(t(item.title));
+                        console.log('Card focused:', t(item.title));
                     });
 
                     card.on('hover:enter hover:click', function () {
@@ -327,7 +331,6 @@
                                         textTransform: 'uppercase'
                                     });
                                     updateFocusStyle();
-
                                     if (Lampa.Storage.get('myBackground') === true) {
                                         var bg = Lampa.Storage.get('myBackground');
                                         Lampa.Storage.set('background', bg);
@@ -370,9 +373,9 @@
                     body.append(card);
                     items.push(card);
                 });
-
-                // Додаємо body до .info__left перед .info__create
+                console.log('Cards appended:', items.length);
                 info.find('.info__create').before(body);
+                console.log('Body appended to DOM:', body.parent().length);
             } catch (e) {
                 console.log('Error in append:', e);
             }
@@ -388,6 +391,7 @@
                     '.my_themes .selector.focus { background: var(--focus-color, rgba(255, 255, 255, 0.2)) !important; }' +
                     '.my_themes .card.focus, .my_themes .card--collection.focus { background: none !important; outline: none !important; border: none !important; }' +
                     '.settings, .settings__content { background: rgba(0, 0, 0, 0.8) !important; }' +
+                    '.settings-component__icon svg { display: block !important; }' +
                     '.scroll__content { padding: 1.5em 0 !important; box-shadow: none !important; background: none !important; }' +
                     '.scroll__content::before, .scroll__content::after { display: none !important; }' +
                     '.info { height: 9em !important; margin-bottom: 0.5em !important; }' +
@@ -409,6 +413,7 @@
                     '.my_themes .selector.focus { background: var(--focus-color, rgba(255, 255, 255, 0.2)) !important; }' +
                     '.my_themes .card.focus, .my_themes .card--collection.focus { background: none !important; outline: none !important; border: none !important; }' +
                     '.settings, .settings__content { background: rgba(0, 0, 0, 0.8) !important; }' +
+                    '.settings-component__icon svg { display: block !important; }' +
                     '.info__right { display: none !important; }' +
                     '.scroll__content { box-shadow: none !important; background: none !important; }' +
                     '.scroll__content::before, .scroll__content::after { display: none !important; }' +
@@ -427,6 +432,7 @@
                     '.my_themes .selector.focus { background: var(--focus-color, rgba(255, 255, 255, 0.2)) !important; }' +
                     '.my_themes .card.focus, .my_themes .card--collection.focus { background: none !important; outline: none !important; border: none !important; }' +
                     '.settings, .settings__content { background: rgba(0, 0, 0, 0.8) !important; }' +
+                    '.settings-component__icon svg { display: block !important; }' +
                     '.info__right { display: none !important; }' +
                     '.scroll__content { box-shadow: none !important; background: none !important; }' +
                     '.scroll__content::before, .scroll__content::after { display: none !important; }' +
@@ -453,15 +459,16 @@
                     '<span>' + t('theme_categories') + '</span>' +
                     '</div></div>');
                 var button = Lampa.Template.get('button_category');
-                info.find('.info__left').prepend(button);
+                info.find('.info__left').empty().prepend(button); // Очистити перед додаванням кнопки
                 var categoryButton = info.find('.view--category');
                 categoryButton.addClass('selector').on('hover:focus', function () {
                     $('.selector').removeClass('focus');
                     $(this).addClass('focus');
                     Lampa.Controller.toggle('content');
+                    console.log('Category button focused');
                 }).on('hover:enter', self.selectGroup.bind(self));
                 scroll.render().addClass('layer--wheight').data('mheight', info);
-                html.append(info);
+                html.empty().append(info); // Очистити html перед додаванням
                 html.append(scroll.render());
                 this.append(data);
                 this.activity.loader(false);
@@ -507,10 +514,12 @@
                             var firstCard = scroll.render().find('.card')[0];
                             Navigator.focus(firstCard);
                             $(firstCard).addClass('focus');
+                            console.log('Focused first card');
                         } else if (info.find('.view--category').length > 0) {
                             var categoryButton = info.find('.view--category')[0];
                             Navigator.focus(categoryButton);
                             $(categoryButton).addClass('focus');
+                            console.log('Focused category button');
                         }
                     },
                     left: function () {
@@ -521,6 +530,7 @@
                             if (focused) {
                                 Navigator.focus(focused);
                                 $(focused).addClass('focus');
+                                console.log('Moved left, focused:', focused);
                             }
                         } else {
                             Lampa.Controller.toggle('menu');
@@ -534,6 +544,7 @@
                             if (focused) {
                                 Navigator.focus(focused);
                                 $(focused).addClass('focus');
+                                console.log('Moved right, focused:', focused);
                             }
                         } else {
                             self.selectGroup();
@@ -547,6 +558,7 @@
                             if (focused) {
                                 Navigator.focus(focused);
                                 $(focused).addClass('focus');
+                                console.log('Moved up, focused:', focused);
                             }
                         } else {
                             if (info.find('.view--category').length > 0 && !info.find('.view--category').hasClass('focus')) {
@@ -554,6 +566,7 @@
                                 Navigator.focus(categoryButton);
                                 $('.selector').removeClass('focus');
                                 $(categoryButton).addClass('focus');
+                                console.log('Moved up to category button');
                             } else {
                                 Lampa.Controller.toggle('head');
                             }
@@ -567,6 +580,7 @@
                             if (focused) {
                                 Navigator.focus(focused);
                                 $(focused).addClass('focus');
+                                console.log('Moved down, focused:', focused);
                             }
                         } else if (info.find('.view--category').hasClass('focus')) {
                             if (scroll.render().find('.card').length > 0) {
@@ -574,6 +588,7 @@
                                 Navigator.focus(firstCard);
                                 $('.selector').removeClass('focus');
                                 $(firstCard).addClass('focus');
+                                console.log('Moved down to first card');
                             }
                         }
                     },
@@ -608,22 +623,12 @@
         };
     }
 
-    // Реєстрація компонента
-    try {
-        Lampa.Component.add('my_themes', ThemesComponent);
-    } catch (e) {
-        console.log('Error registering component:', e);
-    }
+    Lampa.Component.add('my_themes', ThemesComponent);
 
-    // Видалення стилів теми при зміні компонента
-    try {
-        Lampa.Storage.listener.follow('app', function (e) {
-            if (e.name === 'egg' && Lampa.Activity.active().component !== 'my_themes') {
-                $('link[rel="stylesheet"][href^="https://bylampa.github.io/themes/css/"]').remove();
-                updateFocusStyle();
-            }
-        });
-    } catch (e) {
-        console.log('Error in app listener:', e);
-    }
+    Lampa.Storage.listener.follow('app', function (e) {
+        if (e.name === 'egg' && Lampa.Activity.active().component !== 'my_themes') {
+            $('link[rel="stylesheet"][href^="https://bylampa.github.io/themes/css/"]').remove();
+            updateFocusStyle();
+        }
+    });
 })();
