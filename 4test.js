@@ -186,10 +186,11 @@
 
         this.append = function (data) {
             try {
+                console.log('Appending data:', data);
                 data.forEach(function (item) {
                     item.title = normalizeTitle(item.title);
                     var card = Lampa.Template.get('card', { title: t(item.title), release_year: '' });
-                    card.addClass('card--collection');
+                    card.addClass('card--collection selector');
                     card.find('.card__img').css({ cursor: 'pointer', backgroundColor: '#353535a6' });
                     card.css({ textAlign: 'center' });
 
@@ -325,16 +326,19 @@
 
                 // Додаємо body до .info__left перед .info__create
                 info.find('.info__create').before(body);
-            } catch (e) {}
+            } catch (e) {
+                console.log('Error in append:', e);
+            }
         };
 
         this.build = function (data) {
             try {
+                console.log('Received data:', data);
                 Lampa.Template.add('button_category', '<div id="button_category">' +
                     '<style>' +
                     '@media screen and (max-width: 2560px) {' +
                     '.themes .card--collection { width: 14.2% !important; margin-top: 1em !important; }' +
-                    '.card--collection.focus { box-shadow: 0 0 5px rgba(255, 255, 255, 0.8) !important; }' +
+                    '.selector.focus { background: rgba(255, 255, 255, 0.2) !important; }' +
                     '.scroll__content { padding: 1.5em 0 !important; box-shadow: none !important; background: none !important; }' +
                     '.scroll__content::before, .scroll__content::after { display: none !important; }' +
                     '.info { height: 9em !important; margin-bottom: 0.5em !important; }' +
@@ -349,12 +353,11 @@
                     '.settings-folders::before, .settings-folders::after, .settings-folder::before, .settings-folder::after, .settings-param::before, .settings-param::after { display: none !important; }' +
                     '.full-start__button { width: fit-content !important; margin-right: 0.75em; font-size: 1.3em; background-color: rgba(0, 0, 0, 0.3); padding: 0.3em 1em; display: flex; border-radius: 1em; align-items: center; height: 2.8em; }' +
                     '.view--category { display: flex; align-items: center; margin: 0.5em 0.5em 0.5em auto; }' +
-                    '.view--category.focus { box-shadow: 0 0 5px rgba(255, 255, 255, 0.8) !important; }' +
                     '.view--category svg { margin-right: 0.3em; }' +
                     '}' +
                     '@media screen and (max-width: 385px) {' +
                     '.themes .card--collection { width: 33.3% !important; margin-top: 1em !important; }' +
-                    '.card--collection.focus { box-shadow: 0 0 5px rgba(255, 255, 255, 0.8) !important; }' +
+                    '.selector.focus { background: rgba(255, 255, 255, 0.2) !important; }' +
                     '.info__right { display: none !important; }' +
                     '.scroll__content { box-shadow: none !important; background: none !important; }' +
                     '.scroll__content::before, .scroll__content::after { display: none !important; }' +
@@ -366,12 +369,11 @@
                     '.settings-folders::before, .settings-folders::after, .settings-folder::before, .settings-folder::after, .settings-param::before, .settings-param::after { display: none !important; }' +
                     '.full-start__button { width: fit-content !important; margin-right: 0.75em; font-size: 1.3em; background-color: rgba(0, 0, 0, 0.3); padding: 0.3em 1em; display: flex; border-radius: 1em; align-items: center; height: 2.8em; }' +
                     '.view--category { display: flex; align-items: center; margin: 0.5em 0.5em 0.5em auto; }' +
-                    '.view--category.focus { box-shadow: 0 0 5px rgba(255, 255, 255, 0.8) !important; }' +
                     '.view--category svg { margin-right: 0.3em; }' +
                     '}' +
                     '@media screen and (max-width: 580px) {' +
                     '.themes .card--collection { width: 25% !important; margin-top: 1em !important; }' +
-                    '.card--collection.focus { box-shadow: 0 0 5px rgba(255, 255, 255, 0.8) !important; }' +
+                    '.selector.focus { background: rgba(255, 255, 255, 0.2) !important; }' +
                     '.info__right { display: none !important; }' +
                     '.scroll__content { box-shadow: none !important; background: none !important; }' +
                     '.scroll__content::before, .scroll__content::after { display: none !important; }' +
@@ -383,7 +385,6 @@
                     '.settings-folders::before, .settings-folders::after, .settings-folder::before, .settings-folder::after, .settings-param::before, .settings-param::after { display: none !important; }' +
                     '.full-start__button { width: fit-content !important; margin-right: 0.75em; font-size: 1.3em; background-color: rgba(0, 0, 0, 0.3); padding: 0.3em 1em; display: flex; border-radius: 1em; align-items: center; height: 2.8em; }' +
                     '.view--category { display: flex; align-items: center; margin: 0.5em 0.5em 0.5em auto; }' +
-                    '.view--category.focus { box-shadow: 0 0 5px rgba(255, 255, 255, 0.8) !important; }' +
                     '.view--category svg { margin-right: 0.3em; }' +
                     '}' +
                     '</style>' +
@@ -400,18 +401,21 @@
                     '</div></div>');
                 var button = Lampa.Template.get('button_category');
                 info.find('.info__left').prepend(button);
-                info.find('.view--category').addClass('selector').on('hover:focus', function () {
-                    $('.view--category').removeClass('focus');
+                var categoryButton = info.find('.view--category');
+                categoryButton.addClass('selector').on('hover:focus', function () {
+                    $('.selector').removeClass('focus');
                     $(this).addClass('focus');
                     Lampa.Controller.toggle('content');
-                });
+                }).on('hover:enter', self.selectGroup.bind(self));
                 scroll.render().addClass('layer--wheight').data('mheight', info);
                 html.append(info);
                 html.append(scroll.render());
                 this.append(data);
                 this.activity.loader(false);
                 this.activity.toggle();
-            } catch (e) {}
+            } catch (e) {
+                console.log('Error in build:', e);
+            }
         };
 
         this.selectGroup = function () {
@@ -433,7 +437,9 @@
                         Lampa.Controller.toggle('content'); 
                     }
                 });
-            } catch (e) {}
+            } catch (e) {
+                console.log('Error in selectGroup:', e);
+            }
         };
 
         this.start = function () {
@@ -445,20 +451,20 @@
                         if (scroll.render().find('.card').length > 0) {
                             var firstCard = scroll.render().find('.card')[0];
                             Navigator.focus(firstCard);
-                            $('.card--collection, .view--category').removeClass('focus');
+                            $('.selector').removeClass('focus');
                             $(firstCard).addClass('focus');
                         } else if (info.find('.view--category').length > 0) {
                             var categoryButton = info.find('.view--category')[0];
                             Navigator.focus(categoryButton);
-                            $('.card--collection, .view--category').removeClass('focus');
+                            $('.selector').removeClass('focus');
                             $(categoryButton).addClass('focus');
                         }
                     },
                     left: function () {
                         if (Navigator.canmove('left')) {
                             Navigator.move('left');
-                            $('.card--collection, .view--category').removeClass('focus');
-                            $('.card--collection:hover, .view--category:hover').addClass('focus');
+                            $('.selector').removeClass('focus');
+                            $('.selector:hover').addClass('focus');
                         } else {
                             Lampa.Controller.toggle('menu');
                         }
@@ -466,8 +472,8 @@
                     right: function () {
                         if (Navigator.canmove('right')) {
                             Navigator.move('right');
-                            $('.card--collection, .view--category').removeClass('focus');
-                            $('.card--collection:hover, .view--category:hover').addClass('focus');
+                            $('.selector').removeClass('focus');
+                            $('.selector:hover').addClass('focus');
                         } else {
                             self.selectGroup();
                         }
@@ -475,13 +481,13 @@
                     up: function () {
                         if (Navigator.canmove('up')) {
                             Navigator.move('up');
-                            $('.card--collection, .view--category').removeClass('focus');
-                            $('.card--collection:hover, .view--category:hover').addClass('focus');
+                            $('.selector').removeClass('focus');
+                            $('.selector:hover').addClass('focus');
                         } else {
                             if (info.find('.view--category').length > 0 && !info.find('.view--category').hasClass('focus')) {
                                 var categoryButton = info.find('.view--category')[0];
                                 Navigator.focus(categoryButton);
-                                $('.card--collection, .view--category').removeClass('focus');
+                                $('.selector').removeClass('focus');
                                 $(categoryButton).addClass('focus');
                             } else {
                                 Lampa.Controller.toggle('head');
@@ -491,13 +497,13 @@
                     down: function () {
                         if (Navigator.canmove('down')) {
                             Navigator.move('down');
-                            $('.card--collection, .view--category').removeClass('focus');
-                            $('.card--collection:hover, .view--category:hover').addClass('focus');
+                            $('.selector').removeClass('focus');
+                            $('.selector:hover').addClass('focus');
                         } else if (info.find('.view--category').hasClass('focus')) {
                             if (scroll.render().find('.card').length > 0) {
                                 var firstCard = scroll.render().find('.card')[0];
                                 Navigator.focus(firstCard);
-                                $('.card--collection, .view--category').removeClass('focus');
+                                $('.selector').removeClass('focus');
                                 $(firstCard).addClass('focus');
                             }
                         }
@@ -507,7 +513,9 @@
                     }
                 });
                 Lampa.Controller.toggle('content');
-            } catch (e) {}
+            } catch (e) {
+                console.log('Error in start:', e);
+            }
         };
 
         this.pause = function () {};
