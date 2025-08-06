@@ -94,12 +94,46 @@
         return translations[key] && translations[key][lang] ? translations[key][lang] : translations[key] && translations[key].en ? translations[key].en : key;
     }
 
+    // Функція для отримання кольору фокусування з теми
+    function getFocusColor() {
+        var themeLink = $('link[rel="stylesheet"][href^="https://bylampa.github.io/themes/css/"]');
+        if (themeLink.length) {
+            var themeUrl = themeLink.attr('href');
+            var colorMap = {
+                'red.css': 'rgba(255, 0, 0, 0.3)',
+                'green.css': 'rgba(0, 128, 0, 0.3)',
+                'violet.css': 'rgba(128, 0, 128, 0.3)',
+                'dark_blue.css': 'rgba(0, 0, 128, 0.3)',
+                'orange.css': 'rgba(255, 165, 0, 0.3)',
+                'pink.css': 'rgba(255, 192, 203, 0.3)'
+            };
+            return colorMap[themeUrl.split('/').pop()] || 'var(--focus-color, rgba(255, 255, 255, 0.2))';
+        }
+        return 'var(--focus-color, rgba(255, 255, 255, 0.2))';
+    }
+
+    // Оновлення стилю фокусування
+    function updateFocusStyle() {
+        var focusColor = getFocusColor();
+        var styleElement = $('#dynamic-focus-style');
+        if (!styleElement.length) {
+            styleElement = $('<style id="dynamic-focus-style"></style>');
+            $('head').append(styleElement);
+        }
+        styleElement.text(
+            '.selector.focus { background: ' + focusColor + ' !important; }' +
+            '.card--collection.focus { background: none !important; outline: none !important; }'
+        );
+        console.log('Focus color updated:', focusColor);
+    }
+
     // Завантаження вибраної теми з localStorage
     try {
         var selectedTheme = localStorage.getItem('selectedTheme');
         if (selectedTheme) {
             var themeLink = $('<link rel="stylesheet" href="' + selectedTheme + '">');
             $('head').append(themeLink);
+            updateFocusStyle();
         }
     } catch (e) {}
 
@@ -282,6 +316,7 @@
                                         borderRadius: '0.3em',
                                         textTransform: 'uppercase'
                                     });
+                                    updateFocusStyle();
 
                                     if (Lampa.Storage.get('myBackground') === true) {
                                         var bg = Lampa.Storage.get('myBackground');
@@ -303,6 +338,7 @@
                                     $('link[rel="stylesheet"][href^="https://bylampa.github.io/themes/css/"]').remove();
                                     localStorage.removeItem('selectedTheme');
                                     $('.card__quality').remove();
+                                    updateFocusStyle();
                                     if (localStorage.getItem('myBackground')) {
                                         Lampa.Storage.set('myBackground', Lampa.Storage.get('myBackground'));
                                         localStorage.removeItem('myBackground');
@@ -339,7 +375,8 @@
                     '<style>' +
                     '@media screen and (max-width: 2560px) {' +
                     '.themes .card--collection { width: 14.2% !important; margin-top: 1em !important; }' +
-                    '.selector.focus { background: rgba(255, 255, 255, 0.2) !important; }' +
+                    '.selector.focus { background: var(--focus-color, rgba(255, 255, 255, 0.2)) !important; }' +
+                    '.card--collection.focus { background: none !important; outline: none !important; }' +
                     '.scroll__content { padding: 1.5em 0 !important; box-shadow: none !important; background: none !important; }' +
                     '.scroll__content::before, .scroll__content::after { display: none !important; }' +
                     '.info { height: 9em !important; margin-bottom: 0.5em !important; }' +
@@ -358,7 +395,8 @@
                     '}' +
                     '@media screen and (max-width: 385px) {' +
                     '.themes .card--collection { width: 33.3% !important; margin-top: 1em !important; }' +
-                    '.selector.focus { background: rgba(255, 255, 255, 0.2) !important; }' +
+                    '.selector.focus { background: var(--focus-color, rgba(255, 255, 255, 0.2)) !important; }' +
+                    '.card--collection.focus { background: none !important; outline: none !important; }' +
                     '.info__right { display: none !important; }' +
                     '.scroll__content { box-shadow: none !important; background: none !important; }' +
                     '.scroll__content::before, .scroll__content::after { display: none !important; }' +
@@ -374,7 +412,8 @@
                     '}' +
                     '@media screen and (max-width: 580px) {' +
                     '.themes .card--collection { width: 25% !important; margin-top: 1em !important; }' +
-                    '.selector.focus { background: rgba(255, 255, 255, 0.2) !important; }' +
+                    '.selector.focus { background: var(--focus-color, rgba(255, 255, 255, 0.2)) !important; }' +
+                    '.card--collection.focus { background: none !important; outline: none !important; }' +
                     '.info__right { display: none !important; }' +
                     '.scroll__content { box-shadow: none !important; background: none !important; }' +
                     '.scroll__content::before, .scroll__content::after { display: none !important; }' +
@@ -395,7 +434,7 @@
                     '<g id="icons">' +
                     '<g id="menu">' +
                     '<path d="M20,10H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h16c1.1,0,2-0.9,2-2C22,10.9,21.1,10,20,10z" fill="currentColor"/>' +
-                    '<path d="M4,8h12c1.1,0,2-0.9,2-2c0-1.1-0.9-2-2-2H4C2.9,4,2,4.9,2,6C2,7.1,2.9,8,4,8z" fill="currentColor"/>' +
+                    '<path d="M4,8h12c1.1,0-2,0.9-2c0-1.1-0.9-2-2-2H4C2.9,4,2,4.9,2,6C2,7.1,2.9,8,4,8z" fill="currentColor"/>' +
                     '<path d="M16,16H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h12c1.1,0,2-0.9,2-2C18,16.9,17.1,16,16,16z" fill="currentColor"/>' +
                     '</g></g></svg>' +
                     '<span>' + t('theme_categories') + '</span>' +
@@ -464,8 +503,11 @@
                         if (Navigator.canmove('left')) {
                             Navigator.move('left');
                             $('.selector').removeClass('focus');
-                            Navigator.focus($('.selector:hover')[0]);
-                            $('.selector:hover').addClass('focus');
+                            var focused = $('.selector:hover')[0];
+                            if (focused) {
+                                Navigator.focus(focused);
+                                $(focused).addClass('focus');
+                            }
                         } else {
                             Lampa.Controller.toggle('menu');
                         }
@@ -474,8 +516,11 @@
                         if (Navigator.canmove('right')) {
                             Navigator.move('right');
                             $('.selector').removeClass('focus');
-                            Navigator.focus($('.selector:hover')[0]);
-                            $('.selector:hover').addClass('focus');
+                            var focused = $('.selector:hover')[0];
+                            if (focused) {
+                                Navigator.focus(focused);
+                                $(focused).addClass('focus');
+                            }
                         } else {
                             self.selectGroup();
                         }
@@ -484,8 +529,11 @@
                         if (Navigator.canmove('up')) {
                             Navigator.move('up');
                             $('.selector').removeClass('focus');
-                            Navigator.focus($('.selector:hover')[0]);
-                            $('.selector:hover').addClass('focus');
+                            var focused = $('.selector:hover')[0];
+                            if (focused) {
+                                Navigator.focus(focused);
+                                $(focused).addClass('focus');
+                            }
                         } else {
                             if (info.find('.view--category').length > 0 && !info.find('.view--category').hasClass('focus')) {
                                 var categoryButton = info.find('.view--category')[0];
@@ -501,8 +549,11 @@
                         if (Navigator.canmove('down')) {
                             Navigator.move('down');
                             $('.selector').removeClass('focus');
-                            Navigator.focus($('.selector:hover')[0]);
-                            $('.selector:hover').addClass('focus');
+                            var focused = $('.selector:hover')[0];
+                            if (focused) {
+                                Navigator.focus(focused);
+                                $(focused).addClass('focus');
+                            }
                         } else if (info.find('.view--category').hasClass('focus')) {
                             if (scroll.render().find('.card').length > 0) {
                                 var firstCard = scroll.render().find('.card')[0];
@@ -551,6 +602,7 @@
         Lampa.Storage.listener.follow('app', function (e) {
             if (e.name === 'egg' && Lampa.Activity.active().component !== 'my_themes') {
                 $('link[rel="stylesheet"][href^="https://bylampa.github.io/themes/css/"]').remove();
+                updateFocusStyle();
             }
         });
     } catch (e) {}
