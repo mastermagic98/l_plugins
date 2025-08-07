@@ -75,7 +75,7 @@
                 '.settings, .settings__content { background: rgba(0, 0, 0, 0.8) !important; }' +
                 '.settings-component__icon svg { display: block !important; width: 24px; height: 24px; }' +
                 '.info__left { margin-bottom: 1em; }' +
-                '.my_themes.category-full { margin-top: 2em; width: 100% !important; }'
+                '.my_themes.category-full { margin-top: 4em; width: 100% !important; }'
             );
             console.log('Focus color updated:', focusColor);
         }, 100);
@@ -324,7 +324,8 @@
                 setTimeout(function () {
                     console.log('Cards in DOM:', scroll.render().find('.card').length);
                     console.log('Scroll content HTML:', scroll.render().find('.scroll__content').html());
-                }, 300);
+                    console.log('my_themes HTML:', $('.my_themes').html());
+                }, 500);
             } catch (e) {
                 console.log('Error in append:', e);
             }
@@ -356,7 +357,7 @@
                     '.full-start__button { width: fit-content !important; margin: 0.5em 0; font-size: 1.3em; background-color: rgba(0, 0, 0, 0.3); padding: 0.3em 1em; display: flex; border-radius: 1em; align-items: center; height: 2.8em; }' +
                     '.view--category { display: flex; align-items: center; margin: 0.5em 0; }' +
                     '.view--category svg { margin-right: 0.3em; }' +
-                    '.my_themes.category-full { margin-top: 2em; width: 100% !important; }' +
+                    '.my_themes.category-full { margin-top: 4em; width: 100% !important; }' +
                     '}' +
                     '@media screen and (max-width: 385px), (max-width: 580px) {' +
                     '.themes .card--collection { width: 33.3% !important; margin-top: 1em !important; }' +
@@ -376,14 +377,14 @@
                     '.full-start__button { width: fit-content !important; margin: 0.5em 0; font-size: 1.3em; background-color: rgba(0, 0, 0, 0.3); padding: 0.3em 1em; display: flex; border-radius: 1em; align-items: center; height: 2.8em; }' +
                     '.view--category { display: flex; align-items: center; margin: 0.5em 0; }' +
                     '.view--category svg { margin-right: 0.3em; }' +
-                    '.my_themes.category-full { margin-top: 2em; width: 100% !important; }' +
+                    '.my_themes.category-full { margin-top: 4em; width: 100% !important; }' +
                     '}' +
                     '</style>' +
                     '<div class="full-start__button selector view--category">' +
                     '<svg style="enable-background:new 0 0 24 24;" version="1.1" viewBox="0 0 24 24" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">' +
                     '<g id="info"/>' +
                     '<g id="icons"><g id="menu">' +
-                    '<path d="M20,10H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h16c1.1,0,2-0.9,2-2C22,10.9,21.1,10,20,10z" fill="currentColor"/>' +
+                    '<path d="M20,10H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h16c1.1,0,2-0..9,2-2C22,10.9,21.1,10,20,10z" fill="currentColor"/>' +
                     '<path d="M4,8h12c1.1,0,2-0.9,2-2c0-1.1-0.9-2-2-2H4C2.9,4,2,4.9,2,6C2,7.1,2.9,8,4,8z" fill="currentColor"/>' +
                     '<path d="M16,16H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h12c1.1,0,2-0.9,2-2C18,16.9,17.1,16,16,16z" fill="currentColor"/>' +
                     '</g></g></svg>' +
