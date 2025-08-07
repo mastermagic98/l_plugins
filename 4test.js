@@ -2,15 +2,17 @@
 Lampa.SettingsApi.addComponent({
     component: 'my_themes',
     name: Lampa.Lang.translate('my_themes'),
-    icon: '<span style="font-size: 20px;">🖌️</span>' // Використовуємо емодзі як іконку
+    icon: '<span style="font-size: 20px;">🖌️</span>' // Проста іконка-емодзі
 });
 
 // Функція для створення інтерфейсу вибору кольору
 function createColorPicker(content) {
-    // Очищаємо вміст для уникнення дублювання
+    console.log('[MyThemes] Починаємо створення інтерфейсу вибору кольору');
+
+    // Очищаємо вміст
     content.innerHTML = '';
 
-    // Створюємо контейнер для повзунків та поля введення
+    // Створюємо контейнер
     var container = document.createElement('div');
     container.style.padding = '20px';
     container.style.background = '#333';
@@ -31,7 +33,7 @@ function createColorPicker(content) {
     ];
 
     sliders.forEach(function(slider) {
-        // Створюємо мітку для повзунка
+        // Створюємо мітку
         var label = document.createElement('label');
         label.textContent = slider.label + ': ';
         label.style.display = 'block';
@@ -43,10 +45,10 @@ function createColorPicker(content) {
         input.min = '0';
         input.max = slider.max.toString();
         input.value = values[slider.id].toString();
-        input.id = 'color_' + slider.id; // Унікальний ID
+        input.id = 'color_' + slider.id;
         input.style.width = '100%';
 
-        // Обробник події для оновлення теми
+        // Обробник для повзунка
         input.oninput = function() {
             values[slider.id] = parseInt(this.value);
             updateTheme();
@@ -56,7 +58,7 @@ function createColorPicker(content) {
         container.appendChild(input);
     });
 
-    // Створюємо поле для введення HEX-коду
+    // Створюємо поле для HEX-коду
     var hexLabel = document.createElement('label');
     hexLabel.textContent = 'HEX-код: ';
     hexLabel.style.display = 'block';
@@ -69,7 +71,7 @@ function createColorPicker(content) {
     hexInput.style.padding = '5px';
     hexInput.style.borderRadius = '5px';
 
-    // Обробник для HEX-введення
+    // Обробник для HEX-коду
     hexInput.oninput = function() {
         var hex = this.value.replace('#', '');
         if (hex.length === 6) {
@@ -93,14 +95,19 @@ function createColorPicker(content) {
 
     // Функція для оновлення теми
     function updateTheme() {
-        var rgba = 'rgba(' + values.red + ',' + values.green + ',' + values.blue + ',' + (values.alpha / 100) + ')';
+        console.log('[MyThemes] Оновлення теми з RGBA:', values);
+
+        // Формуємо HEX-код без прозорості
         var hex = '#' + ((1 << 24) + (values.red << 16) + (values.green << 8) + values.blue).toString(16).slice(1);
         hexInput.value = hex;
 
-        // Оновлюємо стилі Lampa
+        // Формуємо RGBA для прозорості
+        var rgba = 'rgba(' + values.red + ',' + values.green + ',' + values.blue + ',' + (values.alpha / 100) + ')';
+
+        // Оновлюємо змінну --accent-color у :root
         var style = document.createElement('style');
         style.id = 'custom-theme';
-        style.textContent = '.lampa .background--fill, .lampa .selector { background-color: ' + rgba + ' !important; }';
+        style.textContent = ':root { --accent-color: ' + rgba + ' !important; }';
 
         var oldStyle = document.getElementById('custom-theme');
         if (oldStyle) oldStyle.remove();
@@ -118,6 +125,7 @@ function createColorPicker(content) {
     // Завантажуємо збережені налаштування
     var savedTheme = Lampa.Storage.get('custom_theme', null);
     if (savedTheme) {
+        console.log('[MyThemes] Завантажено збережені налаштування:', savedTheme);
         values.red = savedTheme.red;
         values.green = savedTheme.green;
         values.blue = savedTheme.blue;
@@ -127,18 +135,23 @@ function createColorPicker(content) {
         document.getElementById('color_blue').value = savedTheme.blue;
         document.getElementById('color_alpha').value = savedTheme.alpha;
         updateTheme();
+    } else {
+        console.log('[MyThemes] Немає збережених налаштувань, використовуємо стандартні');
+        updateTheme();
     }
 
     // Додаємо контейнер до вмісту
     content.appendChild(container);
+    console.log('[MyThemes] Інтерфейс вибору кольору додано до DOM');
 }
 
-// Додаємо обробник для рендерингу компонента
+// Додаємо обробник для рендерингу
 Lampa.SettingsApi.addComponent({
     component: 'my_themes',
     name: Lampa.Lang.translate('my_themes'),
     icon: '<span style="font-size: 20px;">🖌️</span>',
     onRender: function(content) {
+        console.log('[MyThemes] Викликано onRender для my_themes');
         createColorPicker(content);
     }
 });
