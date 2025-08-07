@@ -48,6 +48,11 @@
     // Поточні налаштування
     var settings = JSON.parse(JSON.stringify(defaultSettings));
 
+    // Валідація позиції оцінки
+    function isValidVotePosition(value) {
+        return ['top-right', 'top-left', 'bottom-right', 'bottom-left'].indexOf(value) !== -1;
+    }
+
     // Завантаження налаштувань з localStorage
     function loadSettings() {
         var savedSettings = localStorage.getItem('lampa_safe_styles_settings');
@@ -61,6 +66,12 @@
                         }
                     });
                 });
+                // Валідація votePosition
+                if (!isValidVotePosition(settings.vote.votePosition)) {
+                    console.log("[Lampa Safe Styles] Некоректне значення votePosition:", settings.vote.votePosition);
+                    settings.vote.votePosition = defaultSettings.vote.votePosition;
+                    saveSettings();
+                }
             } catch (e) {
                 console.log("[Lampa Safe Styles] Помилка завантаження налаштувань:", e);
             }
@@ -84,11 +95,6 @@
     // Валідація значення em
     function isValidEm(value) {
         return /^\d*\.?\d+em$/.test(value) || /^\d*\.?\d+em\s\d*\.?\d+em\s\d*\.?\d+em\s\d*\.?\d+em$/.test(value);
-    }
-
-    // Валідація позиції оцінки
-    function isValidVotePosition(value) {
-        return ['top-right', 'top-left', 'bottom-right', 'bottom-left'].indexOf(value) !== -1;
     }
 
     // Оновлення CSS-перемінних
@@ -423,9 +429,6 @@
         '.card__age {' +
             'text-align: center;' +
             'color: #ffffff7a;' +
-        '}' +
-        'body {' +
-            'margin: 1 !important;' +
         '}' +
         '.card__vote {' +
             'position: absolute;' +
@@ -871,7 +874,7 @@
                     'bottom-right': 'Нижній правий',
                     'bottom-left': 'Нижній лівий'
                 },
-                default: settings.vote.votePosition,
+                default: isValidVotePosition(settings.vote.votePosition) ? settings.vote.votePosition : 'top-right',
                 onChange: function(value) {
                     if (isValidVotePosition(value)) {
                         settings.vote.votePosition = value;
