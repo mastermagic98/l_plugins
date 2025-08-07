@@ -73,7 +73,9 @@
                 '.my_themes .selector.focus { background: ' + focusColor + ' !important; }' +
                 '.my_themes .card.focus, .my_themes .card--collection.focus { background: none !important; outline: none !important; border: none !important; }' +
                 '.settings, .settings__content { background: rgba(0, 0, 0, 0.8) !important; }' +
-                '.settings-component__icon svg { display: block !important; width: 24px; height: 24px; }'
+                '.settings-component__icon svg { display: block !important; width: 24px; height: 24px; }' +
+                '.info__left { margin-bottom: 1em; }' +
+                '.my_themes.category-full { margin-top: 0; }'
             );
             console.log('Focus color updated:', focusColor);
         }, 100);
@@ -322,7 +324,7 @@
                 setTimeout(function () {
                     console.log('Cards in DOM:', scroll.render().find('.card').length);
                     console.log('Scroll content HTML:', scroll.render().find('.scroll__content').html());
-                }, 100);
+                }, 200);
             } catch (e) {
                 console.log('Error in append:', e);
             }
@@ -341,18 +343,18 @@
                     '.settings-component__icon svg { display: block !important; width: 24px; height: 24px; }' +
                     '.scroll__content { padding: 1.5em 0 !important; box-shadow: none !important; background: none !important; }' +
                     '.scroll__content::before, .scroll__content::after { display: none !important; }' +
-                    '.info { height: 9em !important; margin-bottom: 0.5em !important; }' +
-                    '.info__left { float: left; width: 100%; }' +
+                    '.info { height: auto !important; margin-bottom: 0.5em !important; }' +
+                    '.info__left { float: none; width: 100%; display: flex; justify-content: flex-end; }' +
+                    '.info__title, .info__title-original, .info__create { display: none; }' +
                     '.info__right { display: none !important; }' +
-                    '.info__title-original { font-size: 1.2em; }' +
                     '.layer--wheight { box-shadow: none !important; background: none !important; }' +
                     '.layer--wheight::before, .layer--wheight::after { display: none !important; }' +
                     '.layer--width, .scroll { box-shadow: none !important; background: none !important; }' +
                     '.settings::before, .settings::after, .settings__content::before, .settings__content::after, .layer--width::before, .layer--width::after, .scroll::before, .scroll::after { display: none !important; }' +
                     '.settings-folders, .settings-folder, .settings-param { box-shadow: none !important; background: none !important; }' +
                     '.settings-folders::before, .settings-folders::after, .settings-folder::before, .settings-folder::after, .settings-param::before, .settings-param::after { display: none !important; }' +
-                    '.full-start__button { width: fit-content !important; margin-right: 0.75em; font-size: 1.3em; background-color: rgba(0, 0, 0, 0.3); padding: 0.3em 1em; display: flex; border-radius: 1em; align-items: center; height: 2.8em; }' +
-                    '.view--category { display: flex; align-items: center; margin: 0.5em 0.5em 0.5em auto; }' +
+                    '.full-start__button { width: fit-content !important; margin: 0.5em 0; font-size: 1.3em; background-color: rgba(0, 0, 0, 0.3); padding: 0.3em 1em; display: flex; border-radius: 1em; align-items: center; height: 2.8em; }' +
+                    '.view--category { display: flex; align-items: center; margin: 0.5em 0; }' +
                     '.view--category svg { margin-right: 0.3em; }' +
                     '}' +
                     '@media screen and (max-width: 385px), (max-width: 580px) {' +
@@ -370,8 +372,8 @@
                     '.settings::before, .settings::after, .settings__content::before, .settings__content::after, .layer--width::before, .layer--width::after, .scroll::before, .scroll::after { display: none !important; }' +
                     '.settings-folders, .settings-folder, .settings-param { box-shadow: none !important; background: none !important; }' +
                     '.settings-folders::before, .settings-folders::after, .settings-folder::before, .settings-folder::after, .settings-param::before, .settings-param::after { display: none !important; }' +
-                    '.full-start__button { width: fit-content !important; margin-right: 0.75em; font-size: 1.3em; background-color: rgba(0, 0, 0, 0.3); padding: 0.3em 1em; display: flex; border-radius: 1em; align-items: center; height: 2.8em; }' +
-                    '.view--category { display: flex; align-items: center; margin: 0.5em 0.5em 0.5em auto; }' +
+                    '.full-start__button { width: fit-content !important; margin: 0.5em 0; font-size: 1.3em; background-color: rgba(0, 0, 0, 0.3); padding: 0.3em 1em; display: flex; border-radius: 1em; align-items: center; height: 2.8em; }' +
+                    '.view--category { display: flex; align-items: center; margin: 0.5em 0; }' +
                     '.view--category svg { margin-right: 0.3em; }' +
                     '}' +
                     '</style>' +
@@ -386,7 +388,6 @@
                     '<span>' + t('theme_categories') + '</span>' +
                     '</div></div>');
                 html.empty();
-                html.append(info);
                 var button = Lampa.Template.get('button_category');
                 info.empty().prepend(button);
                 var categoryButton = info.find('.view--category');
@@ -397,6 +398,7 @@
                     console.log('Category button focused');
                 }).on('hover:enter', self.selectGroup.bind(self));
                 scroll.render().addClass('layer--wheight').data('mheight', info);
+                html.append(info); // Додаємо info (з кнопкою) перед scroll
                 html.append(scroll.render());
                 this.append(data);
                 this.activity.loader(false);
@@ -439,16 +441,16 @@
                 Lampa.Controller.add('content', {
                     toggle: function () {
                         $('.selector').removeClass('focus');
-                        if (scroll.render().find('.card').length > 0) {
-                            var firstCard = scroll.render().find('.card')[0];
-                            Navigator.focus(firstCard);
-                            $(firstCard).addClass('focus');
-                            console.log('Focused first card');
-                        } else if (info.find('.view--category').length > 0) {
+                        if (info.find('.view--category').length > 0) {
                             var categoryButton = info.find('.view--category')[0];
                             Navigator.focus(categoryButton);
                             $(categoryButton).addClass('focus');
                             console.log('Focused category button');
+                        } else if (scroll.render().find('.card').length > 0) {
+                            var firstCard = scroll.render().find('.card')[0];
+                            Navigator.focus(firstCard);
+                            $(firstCard).addClass('focus');
+                            console.log('Focused first card');
                         }
                     },
                     left: function () {
@@ -556,7 +558,7 @@
 
     Lampa.Storage.listener.follow('app', function (e) {
         if (e.name === 'egg' && Lampa.Activity.active().component !== 'my_themes') {
-            $('link[rel="stylesheet"][href^="https://bylampa.github.io/themes/css/"]').remove();
+            $('link[rel="stylesheet"][href^="https://b Plains of Yonderylampa.github.io/themes/css/"]').remove();
             updateFocusStyle();
         }
     });
