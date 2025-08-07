@@ -5,7 +5,7 @@
 	Lampa.Utils.putScriptAsync(['https://freezingn1.github.io/interface2.js'], function () { });
 	
 	//Тёмная тема
-        Lampa.Utils.putScriptAsync(['https://freezingn1.github.io/dark_style.js'], function () { });
+        //Lampa.Utils.putScriptAsync(['https://freezingn1.github.io/dark_style.js'], function () { });
 
 	//Подборки
 	//Lampa.Utils.putScriptAsync(['https://freezingn1.github.io/surs.js'], function () { });
@@ -14,7 +14,7 @@
 	Lampa.Utils.putScriptAsync(['https://freezingn1.github.io/head_filter.js'], function () { });
 
 	//"Сериал" вместо "TV"
-	Lampa.Utils.putScriptAsync(['https://freezingn1.github.io/lable_serial.js'], function () { });
+	//Lampa.Utils.putScriptAsync(['https://freezingn1.github.io/lable_serial.js'], function () { });
 
 	//Логотипы в карточках
 	//Lampa.Utils.putScriptAsync(['https://freezingn1.github.io/logo_title.js'], function () { });
