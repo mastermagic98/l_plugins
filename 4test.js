@@ -10,6 +10,7 @@
         theme_categories: { en: 'Theme Categories', ru: 'Категории тем', uk: 'Категорії тем' },
         focus_pack: { en: 'Focus Pack', ru: 'Focus Pack', uk: 'Фокус Пак' },
         color_gallery: { en: 'Color Gallery', ru: 'Color Gallery', uk: 'Галерея Кольорів' },
+        gradient_style: { en: 'Gradient Style', ru: 'Gradient Style', uk: 'Градієнтний Стиль' },
         theme_installed: { en: 'Theme installed:', ru: 'Тема установлена:', uk: 'Тема встановлена:' },
         red: { en: 'Red', ru: 'Красная', uk: 'Червона' },
         green: { en: 'Green', ru: 'Зелёная', uk: 'Зелена' },
@@ -102,10 +103,16 @@
 
     // Додавання компонента в меню налаштувань
     try {
-        Lampa.SettingsApi.addComponent({
+        Lampa.SettingsApi.add({
             component: 'my_themes',
             name: t('my_themes'),
-            icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" focusable="false" aria-hidden="true" width="24" height="24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" fill="currentColor"/></svg>'
+            icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" focusable="false" aria-hidden="true" width="24" height="24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z" fill="currentColor"/></svg>',
+            type: 'static',
+            onRender: function (element) {
+                setTimeout(function () {
+                    $('.settings-param > div:contains("' + t('my_themes') + '")').parent().insertAfter($('.settings-folder'));
+                }, 0);
+            }
         });
         console.log('Settings component added:', $('.settings-component__icon').length, $('.settings-component__icon').html());
         console.log('Settings menu HTML:', $('.settings').html());
@@ -160,15 +167,17 @@
         }
 
         var scroll = new Lampa.Scroll({ mask: true, over: true, step: 250 });
-        var html = $('<div class="info layer--width"><div class="info__left"><div class="info__title"></div><div class="info__title-original"></div><div class="info__create"></div></div><div class="info__right"></div></div>');
+        var html = $('<div class="info layer--width"><div class="info__left"><div class="info__title"></div><div class="info__title-original"></div><div class="info__create"></div></div><div class="info__right"><div id="stantion_filtr"></div></div></div>');
         var infoRight = html.find('.info__right');
+        var stantionFiltr = infoRight.find('#stantion_filtr');
         var body = $('<div class="my_themes category-full"><div class="scroll__body"></div></div>');
         var scrollBody = body.find('.scroll__body');
         var last;
         var items = [];
         var categories = [
             { title: t('focus_pack'), url: 'https://bylampa.github.io/themes/categories/stroke.json' },
-            { title: t('color_gallery'), url: 'https://bylampa.github.io/themes/categories/color_gallery.json' }
+            { title: t('color_gallery'), url: 'https://bylampa.github.io/themes/categories/color_gallery.json' },
+            { title: t('gradient_style'), url: 'https://bylampa.github.io/themes/categories/gradient_style.json' }
         ];
 
         this.create = function () {
@@ -204,21 +213,11 @@
                         card.addClass('card--loaded');
                     };
                     img.onerror = function () {
-                        img.src = 'data:image/svg+xml;base64,' + btoa(
-                            '<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150">' +
-                            '<rect fill="#444" width="150" height="150"/>' +
-                            '<text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#fff" font-size="20">No Image</text>' +
-                            '</svg>'
-                        );
+                        img.src = './img/img_broken.svg';
                     };
                     var imageUrl = item.logo || '';
                     if (!imageUrl) {
-                        img.src = 'data:image/svg+xml;base64,' + btoa(
-                            '<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150">' +
-                            '<rect fill="#444" width="150" height="150"/>' +
-                            '<text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#fff" font-size="20">No Image</text>' +
-                            '</svg>'
-                        );
+                        img.src = './img/img_broken.svg';
                     } else {
                         img.src = imageUrl;
                     }
@@ -267,6 +266,7 @@
                                     var themeLink = $('<link rel="stylesheet" href="' + item.css + '">');
                                     $('head').append(themeLink);
                                     localStorage.setItem('selectedTheme', item.css);
+                                    console.log('Theme installed:', item.css);
                                     $('.card__quality').remove();
                                     var installedButton = document.createElement('div');
                                     installedButton.innerText = t('install');
@@ -306,15 +306,15 @@
                                     $('.card__quality').remove();
                                     updateFocusStyle();
                                     if (localStorage.getItem('myBackground')) {
-                                        Lampa.Storage.set('myBackground', Lampa.Storage.get('myBackground'));
+                                        Lampa.Storage.set('background', localStorage.getItem('myBackground'));
                                         localStorage.removeItem('myBackground');
                                     }
                                     if (localStorage.getItem('myGlassStyle')) {
-                                        Lampa.Storage.set('glass_style', Lampa.Storage.get('myGlassStyle'));
+                                        Lampa.Storage.set('glass_style', localStorage.getItem('myGlassStyle'));
                                         localStorage.removeItem('myGlassStyle');
                                     }
                                     if (localStorage.getItem('myBlackStyle')) {
-                                        Lampa.Storage.set('black_style', Lampa.Storage.get('myBlackStyle'));
+                                        Lampa.Storage.set('black_style', localStorage.getItem('myBlackStyle'));
                                         localStorage.removeItem('myBlackStyle');
                                     }
                                     Lampa.Controller.toggle('content');
@@ -329,6 +329,7 @@
                 scrollBody.append('<div id="spacer" style="height: 25em;"></div>');
                 console.log('Cards appended:', items.length);
                 console.log('Scroll body exists:', scrollBody.length);
+                console.log('Stantion filtr exists:', stantionFiltr.length);
                 scroll.render().find('.scroll__content').empty().append(body);
                 console.log('Body appended to DOM:', body.parent().length);
                 setTimeout(function () {
@@ -336,7 +337,9 @@
                     console.log('Scroll content HTML:', scroll.render().find('.scroll__content').html());
                     console.log('my_themes HTML:', $('.my_themes.category-full').html());
                     console.log('Scroll body HTML:', scrollBody.html());
-                }, 1000);
+                    console.log('Button category exists:', $('#button_category').length);
+                    console.log('Stantion filtr HTML:', stantionFiltr.html());
+                }, 1200);
             } catch (e) {
                 console.log('Error in append:', e);
             }
@@ -345,6 +348,8 @@
         this.build = function (data) {
             try {
                 console.log('Received data:', data);
+                Lampa.Background.change('');
+                Lampa.Template.add('info_tvtv', '<div></div>');
                 Lampa.Template.add('button_category', '<div id="stantion_filtr"><div id="button_category">' +
                     '<style>' +
                     '@media screen and (max-width: 2560px) {' +
@@ -396,9 +401,11 @@
                     '<span>' + t('theme_categories') + '</span>' +
                     '</div></div></div>');
                 html.empty();
+                Lampa.Background.change('');
+                Lampa.Template.add('info_tvtv', '<div></div>');
                 var button = Lampa.Template.get('button_category');
-                infoRight.empty().append(button);
-                var categoryButton = infoRight.find('.view--category');
+                stantionFiltr.append(button);
+                var categoryButton = stantionFiltr.find('.view--category');
                 categoryButton.addClass('selector').on('hover:focus', function () {
                     $('.selector').removeClass('focus');
                     $(this).addClass('focus');
@@ -412,6 +419,8 @@
                 this.activity.toggle();
                 console.log('Icon check:', $('.settings-component__icon svg').length, $('.settings-component__icon').html());
                 console.log('Final HTML:', html.html());
+                console.log('Button category exists:', $('#button_category').length);
+                console.log('Stantion filtr HTML:', stantionFiltr.html());
             } catch (e) {
                 console.log('Error in build:', e);
             }
@@ -444,13 +453,13 @@
         this.start = function () {
             try {
                 console.log('Cards:', scroll.render().find('.card').length);
-                console.log('Category button:', infoRight.find('.view--category').length);
+                console.log('Category button:', stantionFiltr.find('.view--category').length);
                 console.log('Scroll body exists:', body.find('.scroll__body').length);
                 Lampa.Controller.add('content', {
                     toggle: function () {
                         $('.selector').removeClass('focus');
-                        if (infoRight.find('.view--category').length > 0) {
-                            var categoryButton = infoRight.find('.view--category')[0];
+                        if (stantionFiltr.find('.view--category').length > 0) {
+                            var categoryButton = stantionFiltr.find('.view--category')[0];
                             Navigator.focus(categoryButton);
                             $(categoryButton).addClass('focus');
                             console.log('Focused category button');
@@ -500,8 +509,8 @@
                                 console.log('Moved up, focused:', focused);
                             }
                         } else {
-                            if (infoRight.find('.view--category').length > 0 && !infoRight.find('.view--category').hasClass('focus')) {
-                                var categoryButton = infoRight.find('.view--category')[0];
+                            if (stantionFiltr.find('.view--category').length > 0 && !stantionFiltr.find('.view--category').hasClass('focus')) {
+                                var categoryButton = stantionFiltr.find('.view--category')[0];
                                 Navigator.focus(categoryButton);
                                 $('.selector').removeClass('focus');
                                 $(categoryButton).addClass('focus');
@@ -521,7 +530,7 @@
                                 $(focused).addClass('focus');
                                 console.log('Moved down, focused:', focused);
                             }
-                        } else if (infoRight.find('.view--category').hasClass('focus')) {
+                        } else if (stantionFiltr.find('.view--category').hasClass('focus')) {
                             if (scroll.render().find('.card').length > 0) {
                                 var firstCard = scroll.render().find('.card')[0];
                                 Navigator.focus(firstCard);
@@ -563,9 +572,20 @@
     Lampa.Component.add('my_themes', ThemesComponent);
 
     Lampa.Storage.listener.follow('app', function (e) {
-        if (e.name === 'egg' && Lampa.Activity.active().component !== 'my_themes') {
-            $('link[rel="stylesheet"][href^="https://bylampa.github.io/themes/css/"]').remove();
-            updateFocusStyle();
+        if (e.name === 'activity' && Lampa.Activity.active().component !== 'my_themes') {
+            setTimeout(function () {
+                $('#button_category').remove();
+            }, 0);
+        }
+    });
+
+    Lampa.Listener.follow('app', function (e) {
+        if (e.name === 'appready') {
+            if (Lampa.Manifest.origin !== 'bylampa') {
+                Lampa.Noty.show('Ошибка доступа');
+                return;
+            }
+            Lampa.Platform.tv();
         }
     });
 })();
