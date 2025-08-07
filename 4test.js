@@ -1,793 +1,982 @@
-(function () {
-    'use strict';
+(function() {
+    // Логування ініціалізації плагіну
+    console.log("[Lampa Safe Styles] Кастомізована версія з інтеграцією через Lampa.SettingsApi");
 
-    // Глобальний кеш для зображень
-    var imageCache = {};
-    var MAX_CACHE_SIZE = 100;
-    var isFirstLoad = true; // Флаг для першого відображення
+    // Кеш елементів
+    var elementsCache = new Map();
+    var stylesApplied = false;
 
-    // Функція для додавання до кешу з обмеженням розміру
-    function addToCache(cache, key, value) {
-        if (Object.keys(cache).length >= MAX_CACHE_SIZE) {
-            delete cache[Object.keys(cache)[0]];
+    // Налаштування за замовчуванням
+    var defaultSettings = {
+        colors: {
+            darkBg: '#141414',
+            darkerBg: '#1a1a1a',
+            menuBg: '#181818',
+            accentColor: '#c22222',
+            voteBackground: '#c22222'
+        },
+        radii: {
+            cardRadius: '1.4em',
+            menuRadius: '1.2em',
+            voteBorderRadius: '0em 0.5em 0em 0.5em'
+        },
+        opacity: {
+            navigationBar: 0.3,
+            bookmarksLayer: 0.3,
+            cardMoreBox: 0.3
+        },
+        fonts: {
+            titleSize: '2.5em',
+            ratingWeight: 'bold',
+            voteFontSize: '1.5em'
+        },
+        shadows: {
+            modalShadow: '0 4px 12px rgba(0, 0, 0, 0.5)'
+        },
+        animations: {
+            advancedAnimation: true
+        },
+        mobile: {
+            centerAlignDetails: true,
+            maxImageWidth: '10em'
+        },
+        vote: {
+            votePosition: 'top-right'
         }
-        cache[key] = value;
-    }
+    };
 
-    // Компонент для відображення інформації
-    function create() {
-        var html;
-        var timer;
-        var network = new Lampa.Reguest();
-        var loaded = {};
-        var isDestroyed = false;
-        var logo_timer;
+    // Поточні налаштування
+    var settings = JSON.parse(JSON.stringify(defaultSettings));
 
-        this.create = function () {
-            if (isDestroyed) return;
-            html = $("<div class=\"new-interface-info\">\n            <div class=\"new-interface-info__body\">\n                <div class=\"new-interface-info__head\"></div>\n                <div class=\"new-interface-info__title\"></div>\n                <div class=\"new-interface-info__details\"></div>\n            </div>\n        </div>");
-        };
-
-        this.update = function (data) {
-            if (isDestroyed || !html) return;
-
-            var logoSetting = Lampa.Storage.get('logo_start') || 'logo_on';
-            
-            if (logoSetting === 'logo_on') {
-                var type = data.name ? 'tv' : 'movie';
-                var url = Lampa.TMDB.api(type + '/' + data.id + '/images?api_key=' + Lampa.TMDB.key());
-
-                network.silent(url, function (images) {
-                    if (isDestroyed || !html) return;
-
-                    var bestLogo = null;
-                    
-                    if (images.logos && images.logos.length > 0) {
-                        var bestRussianLogo = null;
-                        var bestEnglishLogo = null;
-                        var bestOtherLogo = null;
-
-                        images.logos.forEach(function (logo) {
-                            if (logo.iso_639_1 === 'ru') {
-                                if (!bestRussianLogo || logo.vote_average > bestRussianLogo.vote_average) {
-                                    bestRussianLogo = logo;
-                                }
-                            } else if (logo.iso_639_1 === 'en') {
-                                if (!bestEnglishLogo || logo.vote_average > bestEnglishLogo.vote_average) {
-                                    bestEnglishLogo = logo;
-                                }
-                            } else if (!bestOtherLogo || logo.vote_average > bestOtherLogo.vote_average) {
-                                bestOtherLogo = logo;
-                            }
-                        });
-
-                        bestLogo = bestRussianLogo || bestEnglishLogo || bestOtherLogo;
-                    }
-                    
-                    this.applyLogo(data, bestLogo);
-                }.bind(this), function () {
-                    if (!isDestroyed && html) {
-                        var titleElement = html.find('.new-interface-info__title');
-                        if (titleElement.length) {
-                            titleElement.text(data.title);
+    // Завантаження налаштувань з localStorage
+    function loadSettings() {
+        var savedSettings = localStorage.getItem('lampa_safe_styles_settings');
+        if (savedSettings) {
+            try {
+                var parsed = JSON.parse(savedSettings);
+                Object.keys(settings).forEach(function(category) {
+                    Object.keys(settings[category]).forEach(function(key) {
+                        if (parsed[category] && parsed[category][key]) {
+                            settings[category][key] = parsed[category][key];
                         }
-                    }
-                });
-            } else if (!isDestroyed && html) {
-                var titleElement = html.find('.new-interface-info__title');
-                if (titleElement.length) {
-                    titleElement.text(data.title);
-                }
-            }
-
-            if (!isDestroyed && html) {
-                Lampa.Background.change(Lampa.Api.img(data.backdrop_path, 'w200'));
-                this.load(data);
-            }
-        };
-
-        this.applyLogo = function (data, logo) {
-            if (isDestroyed || !html) return;
-
-            var titleElement = html.find('.new-interface-info__title');
-            if (!titleElement.length) return;
-
-            clearTimeout(logo_timer);
-
-            if (!logo || !logo.file_path) {
-                logo_timer = setTimeout(function () {
-                    if (isDestroyed || !html) return;
-                    titleElement.text(data.title);
-                }, 1000);
-                return;
-            }
-
-            var imageUrl = Lampa.TMDB.image("/t/p/w500" + logo.file_path);
-
-            if (titleElement.data('current-logo') === imageUrl) return;
-            titleElement.data('current-logo', imageUrl);
-
-            logo_timer = setTimeout(function () {
-                if (isDestroyed || !html) return;
-
-                if (imageCache[imageUrl]) {
-                    var cachedLogo = $(imageCache[imageUrl]);
-                    if (isFirstLoad) {
-                        cachedLogo.css('opacity', 1);
-                        titleElement.html(cachedLogo);
-                    } else {
-                        cachedLogo.css('opacity', 0);
-                        titleElement.html(cachedLogo);
-                        setTimeout(function () {
-                            cachedLogo.css('opacity', 1);
-                        }, 10);
-                    }
-                    return;
-                }
-
-                var tempImg = new Image();
-                tempImg.src = imageUrl;
-
-                tempImg.onload = function () {
-                    if (isDestroyed || !html) return;
-                    
-                    var logoHtml = '<img class="new-interface-logo" ' +
-                                   'src="' + imageUrl + '" ' +
-                                   'alt="' + data.title.replace(/"/g, '&quot;') + '" ' +
-                                   'loading="eager" ' +
-                                   'style="opacity: ' + (isFirstLoad ? '1' : '0') + ';" ' +
-                                   'onerror="this.remove(); this.parentElement.textContent=\'' + data.title.replace(/"/g, '&quot;') + '\'" />';
-                    
-                    addToCache(imageCache, imageUrl, logoHtml);
-                    titleElement.html(logoHtml);
-
-                    if (!isFirstLoad) {
-                        setTimeout(function () {
-                            var logoImg = titleElement.find('.new-interface-logo');
-                            if (logoImg.length) {
-                                logoImg.css('opacity', 1);
-                            }
-                        }, 10);
-                    }
-                };
-
-                tempImg.onerror = function () {
-                    if (isDestroyed || !html) return;
-                    titleElement.text(data.title);
-                };
-            }, isFirstLoad ? 0 : 500);
-        };
-
-        this.draw = function (data) {
-            if (isDestroyed || !html) return;
-
-            // Валідація року випуску
-            var releaseDate = data.release_date || data.first_air_date || '';
-            var create = '';
-            if (releaseDate && typeof releaseDate === 'string' && releaseDate.match(/^\d{4}/)) {
-                create = releaseDate.slice(0, 4);
-            } else {
-                create = '0000';
-                console.log("[New Interface] Некоректна дата випуску:", releaseDate);
-            }
-
-            var vote = parseFloat((data.vote_average || 0) + '').toFixed(1);
-            var head = [];
-            var details = [];
-            var countries = Lampa.Api.sources.tmdb.parseCountries(data);
-            var pg = Lampa.Api.sources.tmdb.parsePG(data);
-            
-            if (create !== '0000') {
-                head.push('<span>' + create + '</span>');
-            } else {
-                console.log("[New Interface] Рік не додано до head через значення:", create);
-            }
-            if (countries.length > 0) head.push(countries.join(', '));
-            if (vote > 0) details.push('<div class="full-start__rate"><div>' + vote + '</div><div>TMDB</div></div>');
-            if (data.number_of_episodes && data.number_of_episodes > 0) {
-                details.push('<span class="full-start__pg">Епізодів ' + data.number_of_episodes + '</span>');
-            }
-            
-            if (data.runtime) details.push(Lampa.Utils.secondsToTime(data.runtime * 60, true));
-            if (pg) details.push('<span class="full-start__pg" style="font-size: 0.9em;">' + pg + '</span>');
-            
-            // Логування для діагностики
-            console.log("[New Interface] Вміст head:", head);
-            console.log("[New Interface] Вміст details:", details);
-
-            html.find('.new-interface-info__head').empty().append(head.join(', '));
-            html.find('.new-interface-info__details').html(details.join('<span class="new-interface-info__split">&#9679;</span>'));
-        };
-
-        this.load = function (data) {
-            if (isDestroyed) return;
-            var _this = this;
-
-            clearTimeout(timer);
-            var url = Lampa.TMDB.api((data.name ? 'tv' : 'movie') + '/' + data.id + '?api_key=' + Lampa.TMDB.key() + '&append_to_response=content_ratings,release_dates&language=' + Lampa.Storage.get('language'));
-            if (loaded[url]) return this.draw(loaded[url]);
-            timer = setTimeout(function () {
-                if (isDestroyed) return;
-                network.clear();
-                network.timeout(5000);
-                network.silent(url, function (movie) {
-                    if (isDestroyed) return;
-                    loaded[url] = movie;
-                    _this.draw(movie);
-                }, function () {
-                    console.log("[New Interface] Помилка завантаження даних для:", url);
-                });
-            }, 1000);
-        };
-
-        this.render = function () {
-            return isDestroyed ? null : html;
-        };
-
-        this.empty = function () {};
-
-        this.destroy = function () {
-            isDestroyed = true;
-            clearTimeout(logo_timer);
-            if (html) {
-                html.remove();
-                html = null;
-            }
-            loaded = {};
-            if (network) {
-                network.clear();
-            }
-            clearTimeout(timer);
-        };
-    }
-
-    // Основний компонент інтерфейсу
-    function component(object) {
-        var network = new Lampa.Reguest();
-        var scroll = new Lampa.Scroll({
-            mask: true,
-            over: true,
-            scroll_by_item: true
-        });
-        var items = [];
-        var html = $('<div class="new-interface"><img class="full-start__background"></div>');
-        if (object.title === 'Спорт') {
-            html.attr('data-sport', 'true');
-        }
-        var active = 0;
-        var newlampa = Lampa.Manifest.app_digital >= 166;
-        var info;
-        var lezydata;
-        var viewall = Lampa.Storage.field('card_views_type') == 'view' || Lampa.Storage.field('navigation_type') == 'mouse';
-        var background_img = html.find('.full-start__background');
-        var background_last = '';
-        var background_timer;
-        var cardOrientation = Lampa.Storage.get('card_orientation') || 'wide';
-
-        this.create = function () {};
-
-        this.empty = function () {
-            var button;
-
-            if (object.source == 'tmdb') {
-                button = $('<div class="empty__footer"><div class="simple-button selector">' + Lampa.Lang.translate('change_source_on_cub') + '</div></div>');
-                button.find('.selector').on('hover:enter', function () {
-                    Lampa.Storage.set('source', 'cub');
-                    Lampa.Activity.replace({
-                        source: 'cub'
                     });
                 });
+            } catch (e) {
+                console.log("[Lampa Safe Styles] Помилка завантаження налаштувань:", e);
             }
-
-            var empty = new Lampa.Empty();
-            html.append(empty.render(button));
-            this.start = empty.start;
-            this.activity.loader(false);
-            this.activity.toggle();
-        };
-
-        this.loadNext = function () {
-            var _this = this;
-
-            if (this.next && !this.next_wait && items.length) {
-                this.next_wait = true;
-                this.next(function (new_data) {
-                    _this.next_wait = false;
-                    new_data.forEach(_this.append.bind(_this));
-                    Lampa.Layer.visible(items[active + 1].render(true));
-                }, function () {
-                    _this.next_wait = false;
-                });
-            }
-        };
-
-        this.push = function () {};
-
-        this.build = function (data) {
-            var _this2 = this;
-
-            lezydata = data;
-            info = new create(object);
-            info.create();
-            scroll.minus(info.render());
-            data.slice(0, viewall ? data.length : 2).forEach(this.append.bind(this));
-            html.append(info.render());
-            html.append(scroll.render());
-
-            // Застосовуємо орієнтацію карток
-            var cardOrientation = Lampa.Storage.get('card_orientation') || 'wide';
-            if (cardOrientation === 'vertical') {
-                html.addClass('vertical-cards');
-            } else {
-                html.removeClass('vertical-cards');
-            }
-
-            if (newlampa) {
-                Lampa.Layer.update(html);
-                Lampa.Layer.visible(scroll.render(true));
-                scroll.onEnd = this.loadNext.bind(this);
-
-                scroll.onWheel = function (step) {
-                    if (!Lampa.Controller.own(_this2)) _this2.start();
-                    if (step > 0) _this2.down(); else if (active > 0) _this2.up();
-                };
-            }
-
-            this.activity.loader(false);
-            this.activity.toggle();
-            isFirstLoad = false;
-        };
-
-        this.background = function (elem) {
-            var new_background = Lampa.Api.img(elem.backdrop_path, 'w1280');
-            clearTimeout(background_timer);
-            if (new_background == background_last) return;
-            
-            if (isFirstLoad) {
-                background_last = new_background;
-                background_img[0].src = background_last;
-                background_img.addClass('loaded');
-            } else {
-                background_timer = setTimeout(function () {
-                    background_img.removeClass('loaded');
-
-                    background_img[0].onload = function () {
-                        background_img.addClass('loaded');
-                    };
-
-                    background_img[0].onerror = function () {
-                        background_img.removeClass('loaded');
-                    };
-
-                    background_last = new_background;
-                    setTimeout(function () {
-                        background_img[0].src = background_last;
-                    }, 300);
-                }, 500);
-            }
-        };
-
-        this.append = function (element) {
-            var _this3 = this;
-
-            if (element.ready) return;
-            element.ready = true;
-            var item = new Lampa.InteractionLine(element, {
-                url: element.url,
-                card_small: true,
-                cardClass: element.cardClass,
-                genres: object.genres,
-                object: object,
-                card_wide: cardOrientation === 'wide',
-                nomore: element.nomore
-            });
-            item.create();
-            item.onDown = this.down.bind(this);
-            item.onUp = this.up.bind(this);
-            item.onBack = this.back.bind(this);
-
-            item.onToggle = function () {
-                active = items.indexOf(item);
-            };
-
-            if (this.onMore) item.onMore = this.onMore.bind(this);
-
-            item.onFocus = function (elem) {
-                info.update(elem);
-                _this3.background(elem);
-            };
-
-            item.onHover = function (elem) {
-                info.update(elem);
-                _this3.background(elem);
-            };
-
-            item.onFocusMore = info.empty.bind(info);
-            scroll.append(item.render());
-            items.push(item);
-        };
-
-        this.back = function () {
-            Lampa.Activity.backward();
-        };
-
-        this.down = function () {
-            active++;
-            active = Math.min(active, items.length - 1);
-            if (!viewall) lezydata.slice(0, active + 2).forEach(this.append.bind(this));
-            items[active].toggle();
-            scroll.update(items[active].render());
-        };
-
-        this.up = function () {
-            active--;
-
-            if (active < 0) {
-                active = 0;
-                Lampa.Controller.toggle('head');
-            } else {
-                items[active].toggle();
-                scroll.update(items[active].render());
-            }
-        };
-
-        this.start = function () {
-            var _this4 = this;
-
-            Lampa.Controller.add('content', {
-                link: this,
-                toggle: function toggle() {
-                    if (_this4.activity.canRefresh()) return false;
-
-                    if (items.length) {
-                        items[active].toggle();
-                    }
-                },
-                update: function update() {},
-                left: function left() {
-                    if (Navigator.canmove('left')) Navigator.move('left'); else Lampa.Controller.toggle('menu');
-                },
-                right: function right() {
-                    Navigator.move('right');
-                },
-                up: function up() {
-                    if (Navigator.canmove('up')) Navigator.move('up'); else Lampa.Controller.toggle('head');
-                },
-                down: function down() {
-                    if (Navigator.canmove('down')) Navigator.move('down');
-                },
-                back: this.back
-            });
-            Lampa.Controller.toggle('content');
-        };
-
-        this.refresh = function () {
-            this.activity.loader(true);
-            this.activity.need_refresh = true;
-        };
-
-        this.pause = function () {};
-
-        this.stop = function () {};
-
-        this.render = function () {
-            return html;
-        };
-
-        this.destroy = function () {
-            network.clear();
-            Lampa.Arrays.destroy(items);
-            scroll.destroy();
-            if (info) info.destroy();
-            html.remove();
-            items = null;
-            network = null;
-            lezydata = null;
-        };
+        }
     }
 
-    // Запуск плагіну
-    function startPlugin() {
-        window.plugin_interface_ready = true;
-        var old_interface = Lampa.InteractionMain;
-        var new_interface = component;
+    // Збереження налаштувань
+    function saveSettings() {
+        try {
+            localStorage.setItem('lampa_safe_styles_settings', JSON.stringify(settings));
+        } catch (e) {
+            console.log("[Lampa Safe Styles] Помилка збереження налаштувань:", e);
+        }
+    }
 
-        Lampa.InteractionMain = function (object) {
-            var use = new_interface;
-            if (window.innerWidth < 767) use = old_interface;
-            if (Lampa.Manifest.app_digital < 153) use = old_interface;
-            if (object.title === 'Избранное') {
-                use = old_interface;
-            }
-            if (object.title === 'Спорт') {
-                use = old_interface;
-            }
-            if (object.title === 'NUMParser') {
-                use = old_interface;
-            }
-            return new use(object);
-        };
+    // Валідація HEX-коду кольору
+    function isValidHexColor(color) {
+        return /^#[0-9A-Fa-f]{6}$/.test(color);
+    }
 
-        // Додавання налаштувань для стильного інтерфейсу
-        if (typeof Lampa.SettingsApi !== 'undefined') {
-            Lampa.SettingsApi.addComponent({
-                component: 'styleinter',
-                name: Lampa.Lang.translate('Стильный интерфейс'),
-                icon: '<svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">' +
-                      '<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m3 16 5-7 6 6.5m6.5 2.5L16 13l-4.286 6M14 10h.01M4 19h16a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1Z"/>' +
-                      '</svg>'
+    // Валідація значення em
+    function isValidEm(value) {
+        return /^\d*\.?\d+em$/.test(value) || /^\d*\.?\d+em\s\d*\.?\d+em\s\d*\.?\d+em\s\d*\.?\d+em$/.test(value);
+    }
+
+    // Валідація позиції оцінки
+    function isValidVotePosition(value) {
+        return ['top-right', 'top-left', 'bottom-right', 'bottom-left'].indexOf(value) !== -1;
+    }
+
+    // Оновлення CSS-перемінних
+    function updateCSSVariables() {
+        var root = document.documentElement;
+        root.style.setProperty('--dark-bg', settings.colors.darkBg);
+        root.style.setProperty('--darker-bg', settings.colors.darkerBg);
+        root.style.setProperty('--menu-bg', settings.colors.menuBg);
+        root.style.setProperty('--accent-color', settings.colors.accentColor);
+        root.style.setProperty('--card-radius', settings.radii.cardRadius);
+        root.style.setProperty('--menu-radius', settings.radii.menuRadius);
+        root.style.setProperty('--vote-background', settings.colors.voteBackground);
+        root.style.setProperty('--vote-border-radius', settings.radii.voteBorderRadius);
+    }
+
+    // Додавання стилів до елементів
+    function safeAddStyleToElements(selector, styles) {
+        if (!elementsCache.has(selector)) {
+            elementsCache.set(selector, {
+                elements: document.querySelectorAll(selector),
+                styled: false
             });
+        }
 
-            // Налаштування відображення логотипів
-            Lampa.SettingsApi.addParam({
-                component: "styleinter",
-                param: {
-                    name: "logo_start",
-                    type: "select",
-                    values: { 
-                        "logo_on": "Включить логотипы", 
-                        "logo_off": "Выключить логотипы"
-                    },
-                    default: "logo_on"
-                },
-                field: {
-                    name: "Отображение логотипов",
-                    description: "Управление отображением логотипов в стильном интерфейсе"
-                }
-            });
+        var cacheEntry = elementsCache.get(selector);
+        if (cacheEntry.styled) return;
 
-            // Налаштування орієнтації карток
-            Lampa.SettingsApi.addParam({
-                component: "styleinter",
-                param: {
-                    name: "card_orientation",
-                    type: "select",
-                    values: { 
-                        "wide": "Широкие карточки", 
-                        "vertical": "Вертикальные карточки"
-                    },
-                    default: "wide"
-                },
-                field: {
-                    name: "Ориентация карточек",
-                    description: "Выберите между широкими и вертикальными карточками"
+        cacheEntry.elements.forEach(function(el) {
+            if (el && !el.dataset.lampaStyled) {
+                Object.keys(styles).forEach(function(property) {
+                    el.style.setProperty(property, styles[property], 'important');
+                });
+                el.dataset.lampaStyled = 'true';
+            }
+        });
+
+        cacheEntry.styled = true;
+    }
+
+    // Застосування базових стилів
+    function applyStyles() {
+        if (stylesApplied) return;
+
+        if (!document.body.dataset.lampaStyled) {
+            document.body.style.setProperty('background', settings.colors.darkBg, 'important');
+            document.body.dataset.lampaStyled = 'true';
+        }
+
+        stylesApplied = true;
+    }
+
+    // Додавання CSS-стилів
+    function addCardStyles() {
+        var styleId = 'lampa-safe-css';
+        var style = document.getElementById(styleId);
+        if (style) style.remove();
+
+        var positionStyles = '';
+        switch (settings.vote.votePosition) {
+            case 'top-right':
+                positionStyles = 'top: 0; right: 0em; bottom: auto; left: auto;';
+                break;
+            case 'top-left':
+                positionStyles = 'top: 0; left: 0em; bottom: auto; right: auto;';
+                break;
+            case 'bottom-right':
+                positionStyles = 'bottom: 0; right: 0em; top: auto; left: auto;';
+                break;
+            case 'bottom-left':
+                positionStyles = 'bottom: 0; left: 0em; top: auto; right: auto;';
+                break;
+        }
+
+        var fullCSS = ':root {' +
+            '--dark-bg: ' + settings.colors.darkBg + ';' +
+            '--darker-bg: ' + settings.colors.darkerBg + ';' +
+            '--menu-bg: ' + settings.colors.menuBg + ';' +
+            '--accent-color: ' + settings.colors.accentColor + ';' +
+            '--card-radius: ' + settings.radii.cardRadius + ';' +
+            '--menu-radius: ' + settings.radii.menuRadius + ';' +
+            '--vote-background: ' + settings.colors.voteBackground + ';' +
+            '--vote-border-radius: ' + settings.radii.voteBorderRadius + ';' +
+        '}' +
+        '.card.focus .card__view::after,' +
+        '.card.hover .card__view::after {' +
+            'content: "";' +
+            'position: absolute;' +
+            'top: -0.3em;' +
+            'left: -0.3em;' +
+            'right: -0.3em;' +
+            'bottom: -0.3em;' +
+            'border: 0.3em solid var(--accent-color);' +
+            'border-radius: var(--card-radius);' +
+            'z-index: -1;' +
+            'pointer-events: none;' +
+            'background-color: var(--accent-color);' +
+        '}' +
+        '.settings-param.focus {' +
+            'color: #fff;' +
+            'border-radius: var(--menu-radius);' +
+            'background: var(--accent-color);' +
+        '}' +
+        '.simple-button.focus {' +
+            'color: #fff;' +
+            'background: var(--accent-color);' +
+        '}' +
+        '.head__action {' +
+            'opacity: 0.80;' +
+        '}' +
+        '.full-start__rate > div:first-child {' +
+            'color: #1ed5a9;' +
+            'font-weight: ' + settings.fonts.ratingWeight + ';' +
+            'background: none;' +
+        '}' +
+        '.torrent-serial.focus,' +
+        '.torrent-file.focus {' +
+            'background: var(--accent-color);' +
+        '}' +
+        '.torrent-item.focus::after {' +
+            'content: "";' +
+            'position: absolute;' +
+            'top: -0.5em;' +
+            'left: -0.5em;' +
+            'right: -0.5em;' +
+            'bottom: -0.5em;' +
+            'border: 0.3em solid var(--accent-color);' +
+            'border-radius: 0.7em;' +
+            'z-index: -1;' +
+            'background: var(--accent-color);' +
+        '}' +
+        '.tag-count.focus,' +
+        '.full-person.focus,' +
+        '.full-review.focus {' +
+            'color: #fff;' +
+            'background: var(--accent-color);' +
+        '}' +
+        '.navigation-bar__body {' +
+            'background: rgba(0, 0, 0, ' + settings.opacity.navigationBar + ');' +
+        '}' +
+        '.console {' +
+            'background: var(--dark-bg);' +
+        '}' +
+        '.bookmarks-folder__layer {' +
+            'background: rgba(0, 0, 0, ' + settings.opacity.bookmarksLayer + ');' +
+        '}' +
+        '.selector__body, .modal-layer {' +
+            'background-color: var(--dark-bg);' +
+        '}' +
+        '.menu__item.focus,' +
+        '.menu__item.traverse,' +
+        '.menu__item.hover {' +
+            'color: #fff;' +
+            'background: var(--accent-color);' +
+        '}' +
+        '.card__marker > span {' +
+            'max-width: 11em;' +
+        '}' +
+        '.menu__item.focus .menu__ico path[fill],' +
+        '.menu__item.focus .menu__ico rect[fill],' +
+        '.menu__item.focus .menu__ico circle[fill],' +
+        '.menu__item.traverse .menu__ico path[fill],' +
+        '.menu__item.traverse .menu__ico rect[fill],' +
+        '.menu__item.traverse .menu__ico circle[fill],' +
+        '.menu__item.hover .menu__ico path[fill],' +
+        '.menu__item.hover .menu__ico rect[fill],' +
+        '.menu__item.hover .menu__ico circle[fill] {' +
+            'fill: #ffffff;' +
+        '}' +
+        '.online.focus {' +
+            'box-shadow: 0 0 0 0.2em var(--accent-color);' +
+            'background: var(--accent-color);' +
+        '}' +
+        '.menu__item.focus .menu__ico [stroke],' +
+        '.menu__item.traverse .menu__ico [stroke],' +
+        '.menu__item.hover .menu__ico [stroke] {' +
+            'stroke: #ffffff;' +
+        '}' +
+        '.noty {' +
+            'color: #ffffff;' +
+        '}' +
+        '.head__action.focus {' +
+            'background: var(--accent-color);' +
+            'color: #fff;' +
+        '}' +
+        '.selector:hover {' +
+            'opacity: 0.8;' +
+        '}' +
+        '.online-prestige.focus::after {' +
+            'border: solid .3em var(--accent-color) !important;' +
+            'background-color: #871818;' +
+        '}' +
+        '.full-episode.focus::after,' +
+        '.card-episode.focus .full-episode::after {' +
+            'border: 0.3em solid var(--accent-color);' +
+        '}' +
+        '.wrap__left {' +
+            'box-shadow: 15px 0px 20px 0px var(--dark-bg) !important;' +
+        '}' +
+        '.card-more.focus .card-more__box::after {' +
+            'border: 0.3em solid var(--accent-color);' +
+        '}' +
+        '.card__type {' +
+            'background: var(--accent-color) !important;' +
+        '}' +
+        '.new-interface .card.card--wide+.card-more .card-more__box {' +
+            'background: rgba(0, 0, 0, ' + settings.opacity.cardMoreBox + ');' +
+        '}' +
+        '.helper {' +
+            'background: var(--accent-color);' +
+        '}' +
+        '.extensions__item,' +
+        '.extensions__block-add {' +
+            'background-color: var(--menu-bg);' +
+        '}' +
+        '.extensions__item.focus:after,' +
+        '.extensions__block-empty.focus:after,' +
+        '.extensions__block-add.focus:after {' +
+            'border: 0.3em solid var(--accent-color);' +
+        '}' +
+        '.settings-input--free,' +
+        '.settings-input__content,' +
+        '.extensions {' +
+            'background-color: var(--dark-bg);' +
+        '}' +
+        '.modal__content {' +
+            'background-color: var(--darker-bg) !important;' +
+            'max-height: 90vh;' +
+            'overflow: hidden;' +
+            'box-shadow: ' + settings.shadows.modalShadow + ' !important;' +
+        '}' +
+        '.settings__content,' +
+        '.selectbox__content {' +
+            'position: fixed;' +
+            'right: -100%;' +
+            'display: flex;' +
+            'background: var(--darker-bg);' +
+            'top: 1em;' +
+            'left: 98%;' +
+            'max-height: calc(100vh - 2em);' +
+            'border-radius: var(--menu-radius);' +
+            'padding: 0.5em;' +
+            'transform: translateX(100%);' +
+            'transition: transform 0.3s ease;' +
+            'overflow-y: auto;' +
+            'box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;' +
+        '}' +
+        '.card-more__box {' +
+            'background: rgba(0, 0, 0, ' + settings.opacity.cardMoreBox + ');' +
+        '}' +
+        '.items-line__more.focus {' +
+            'background-color: var(--accent-color);' +
+            'color: #fff;' +
+        '}' +
+        '.settings__title,' +
+        '.selectbox__title {' +
+            'font-size: ' + settings.fonts.titleSize + ';' +
+            'font-weight: 300;' +
+            'text-align: center;' +
+        '}' +
+        '.scroll--mask {' +
+            '-webkit-mask-image: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, rgb(255, 255, 255) 8%, rgb(255, 255, 255) 92%, rgba(255, 255, 255, 0) 100%);' +
+            'mask-image: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, rgb(255, 255, 255) 8%, rgb(255, 255, 255) 92%, rgba(255, 255, 255, 0) 100%);' +
+        '}' +
+        '.full-start__button.focus {' +
+            'color: white !important;' +
+            'background: var(--accent-color) !important;' +
+        '}' +
+        '.menu__item {' +
+            'border-radius: 0em 15em 14em 0em;' +
+        '}' +
+        '.menu__list {' +
+            'padding-left: 0;' +
+        '}' +
+        (settings.animations.advancedAnimation ? '' : 
+        'body.advanced--animation .head .head__action.focus,' +
+        'body.advanced--animation .head .head__action.hover,' +
+        'body.advanced--animation .menu .menu__item.focus,' +
+        'body.advanced--animation .menu .menu__item.hover,' +
+        'body.advanced--animation .full-start__button.focus,' +
+        'body.advanced--animation .full-start__button.hover,' +
+        'body.advanced--animation .simple-button.focus,' +
+        'body.advanced--animation .simple-button.hover,' +
+        'body.advanced--animation .full-descr__tag.focus,' +
+        'body.advanced--animation .full-descr__tag.hover,' +
+        'body.advanced--animation .tag-count.focus,' +
+        'body.advanced--animation .tag-count.hover,' +
+        'body.advanced--animation .full-review.focus,' +
+        'body.advanced--animation .full-review.hover,' +
+        'body.advanced--animation .full-review-add.focus,' +
+        'body.advanced--animation .full-review-add.hover {' +
+            'animation: none !important;' +
+        '}') +
+        '.full-review-add.focus::after {' +
+            'border: 0.3em solid var(--accent-color);' +
+        '}' +
+        '.explorer__left {' +
+            'display: none;' +
+        '}' +
+        '.explorer__files {' +
+            'width: 100%;' +
+        '}' +
+        '.notification-item {' +
+            'border: 2px solid var(--accent-color) !important;' +
+        '}' +
+        '.notification-date {' +
+            'background: var(--accent-color) !important;' +
+        '}' +
+        '.card__quality {' +
+            'color: #fff;' +
+            'background: var(--accent-color) !important;' +
+        '}' +
+        '.modal {' +
+            'position: fixed;' +
+            'top: 0;' +
+            'left: 0;' +
+            'right: 0;' +
+            'bottom: 0;' +
+            'align-items: center;' +
+        '}' +
+        '.noty__body {' +
+            'box-shadow: 0 -2px 6px rgb(22 22 22 / 50%);' +
+            'background: var(--accent-color);' +
+        '}' +
+        '.card__title {' +
+            'text-align: center;' +
+            'font-size: 1.2em;' +
+            'line-height: 1.1;' +
+        '}' +
+        '.background__one.visible, .background__two.visible {' +
+            'opacity: 0;' +
+        '}' +
+        '.card__age {' +
+            'text-align: center;' +
+            'color: #ffffff7a;' +
+        '}' +
+        'body {' +
+            'margin: 1 !important;' +
+        '}' +
+        '.card__vote {' +
+            'position: absolute;' +
+            positionStyles +
+            'background: var(--vote-background);' +
+            'color: #ffffff;' +
+            'font-size: ' + settings.fonts.voteFontSize + ';' +
+            'font-weight: 700;' +
+            'padding: 0.5em;' +
+            'border-radius: var(--vote-border-radius);' +
+            'display: flex;' +
+            'flex-direction: column;' +
+            'align-items: center;' +
+        '}' +
+        '.selectbox-item.focus {' +
+            'color: #fff;' +
+            'border-radius: var(--menu-radius);' +
+            'background: var(--accent-color);' +
+        '}' +
+        '.settings-folder.focus {' +
+            'color: #fff;' +
+            'border-radius: var(--menu-radius);' +
+            'background: var(--accent-color);' +
+        '}' +
+        'body.glass--style.platform--browser .card .card__icons-inner,' +
+        'body.glass--style.platform--browser .card .card__marker,' +
+        'body.glass--style.platform--browser .card .card__vote,' +
+        'body.glass--style.platform--browser .card .card-watched,' +
+        'body.glass--style.platform--nw .card .card__icons-inner,' +
+        'body.glass--style.platform--nw .card .card__marker,' +
+        'body.glass--style.platform--nw .card .card__vote,' +
+        'body.glass--style.platform--nw .card .card-watched,' +
+        'body.glass--style.platform--apple .card .card__icons-inner,' +
+        'body.glass--style.platform--apple .card .card__marker,' +
+        'body.glass--style.platform--apple .card .card__vote,' +
+        'body.glass--style.platform--apple .card .card-watched {' +
+            'background-color: rgba(0, 0, 0, 0.3);' +
+            '-webkit-backdrop-filter: blur(1em);' +
+            'backdrop-filter: none;' +
+            'background: var(--accent-color);' +
+        '}' +
+        '@media screen and (max-width: 480px) {' +
+            '.settings__content,' +
+            '.selectbox__content {' +
+                'left: 0 !important;' +
+                'top: unset !important;' +
+                'border-top-left-radius: 2em !important;' +
+                'border-top-right-radius: 2em !important;' +
+            '}' +
+            '.ru-title-full,' +
+            '.ru-title-full:hover {' +
+                'max-width: none !important;' +
+                'text-align: center !important;' +
+            '}' +
+            '.full-start-new__body {' +
+                'text-align: center !important;' +
+            '}' +
+            '.full-start-new__rate-line {' +
+                'padding-top: 0.5em !important;' +
+                'display: flex;' +
+                'justify-content: center;' +
+                'margin-bottom: 0em;' +
+            '}' +
+            '.full-start-new__tagline {' +
+                'margin-bottom: 0.5em !important;' +
+                'margin-top: 0.5em !important;' +
+            '}' +
+            '.full-start-new__title img {' +
+                'object-fit: contain;' +
+                'max-width: ' + settings.mobile.maxImageWidth + ' !important;' +
+                'max-height: 5em !important;' +
+            '}' +
+            '.selectbox.animate .selectbox__content,' +
+            '.settings.animate .settings__content {' +
+                'background: var(--darker-bg);' +
+            '}' +
+        '}' +
+        '@media screen and (max-width: 580px) {' +
+            '.full-descr__text {' +
+                'text-align: justify;' +
+            '}' +
+            '.items-line__head {' +
+                'justify-content: ' + (settings.mobile.centerAlignDetails ? 'center' : 'flex-start') + ' !important;' +
+            '}' +
+            '.full-descr__details {' +
+                'justify-content: ' + (settings.mobile.centerAlignDetails ? 'center' : 'flex-start') + ' !important;' +
+            '}' +
+        '}' +
+        '@media screen and (max-width: 480px) {' +
+            '.full-start-new__details > span:nth-of-type(7) {' +
+                'display: block;' +
+                'order: 2;' +
+                'opacity: 40%;' +
+            '}' +
+            '.full-descr__tags {' +
+                'justify-content: ' + (settings.mobile.centerAlignDetails ? 'center' : 'flex-start') + ' !important;' +
+            '}' +
+            '.items-line__more {' +
+                'display: none;' +
+            '}' +
+            '.full-descr__info-body {' +
+                'justify-content: ' + (settings.mobile.centerAlignDetails ? 'center' : 'flex-start') + ' !important;' +
+                'display: flex;' +
+            '}' +
+            '.full-descr__details > * {' +
+                'text-align: center;' +
+            '}' +
+        '}' +
+        '@media screen and (max-width: 580px) {' +
+            '.full-start-new__buttons {' +
+                'overflow: auto;' +
+                'display: flex !important;' +
+                'justify-content: ' + (settings.mobile.centerAlignDetails ? 'center' : 'flex-start') + ' !important;' +
+                'flex-wrap: wrap !important;' +
+                'max-width: 100% !important;' +
+                'margin: 0.5em auto !important;' +
+            '}' +
+        '}' +
+        '@media screen and (max-width: 767px) {' +
+            '.full-start-new__details {' +
+                'display: flex !important;' +
+                'justify-content: ' + (settings.mobile.centerAlignDetails ? 'center' : 'flex-start') + ' !important;' +
+                'flex-wrap: wrap !important;' +
+                'max-width: 100% !important;' +
+                'margin: 0.5em auto !important;' +
+            '}' +
+        '}' +
+        '@media screen and (max-width: 480px) {' +
+            '.full-start-new__reactions {' +
+                'display: flex !important;' +
+                'justify-content: ' + (settings.mobile.centerAlignDetails ? 'center' : 'flex-start') + ' !important;' +
+                'flex-wrap: wrap !important;' +
+                'max-width: 100% !important;' +
+                'margin: 0.5em auto !important;' +
+            '}' +
+        '}';
+
+        var style = document.createElement('style');
+        style.id = styleId;
+        style.innerHTML = fullCSS;
+        document.head.appendChild(style);
+    }
+
+    // Інтеграція з меню Lampa через Lampa.SettingsApi
+    function integrateWithLampaSettings() {
+        // Перевірка наявності Lampa та Lampa.SettingsApi
+        if (typeof Lampa === 'undefined' || !Lampa.SettingsApi) {
+            console.log("[Lampa Safe Styles] Lampa.SettingsApi недоступне");
+            return;
+        }
+
+        // Очікування ініціалізації Lampa.SettingsApi
+        if (typeof Lampa.SettingsApi.addComponent !== 'function') {
+            console.log("[Lampa Safe Styles] Очікування ініціалізації Lampa.SettingsApi...");
+            Lampa.Listener.follow('app', function(e) {
+                if (e.type === 'ready' && typeof Lampa.SettingsApi.addComponent === 'function') {
+                    console.log("[Lampa Safe Styles] Lampa.SettingsApi ініціалізовано");
+                    addSettingsComponent();
                 }
             });
         } else {
-            console.log("[New Interface] Lampa.SettingsApi недоступне");
-        }
-
-        // Функція для обробки вертикальних карток
-        function handleVerticalCards() {
-            var isVerticalCards = Lampa.Storage.get('card_orientation') === 'vertical';
-            
-            if (!isVerticalCards) return;
-
-            var css = $('style#fix_size_css');
-
-            if (!css.length) {
-                css = $('<style type="text/css" id="fix_size_css"></style>');
-                css.appendTo('head');
-            }
-
-            var platform_screen = Lampa.Platform.screen;
-
-            Lampa.Platform.screen = function (need) {
-                if (need === 'tv') {
-                    try {
-                        var stack = new Error().stack.split('\n');
-                        var offset = stack[0] === 'Error' ? 1 : 0;
-
-                        if (/^( *at +)?create\$i/.test(stack[1 + offset]) && /^( *at +)?component(\/this)?\.append/.test(stack[2 + offset])) {
-                            return false;
-                        }
-                    } catch (e) {}
-                }
-
-                return platform_screen(need);
-            };
-
-            var layer_update = Lampa.Layer.update;
-
-            var timer;
-            $(window).on('resize', function () {
-                clearTimeout(timer);
-                timer = setTimeout(function () {
-                    Lampa.Layer.update();
-                }, 150);
-            });
-            Lampa.Layer.update();
-        }
-
-        // Додавання стилів
-        Lampa.Template.add('new_interface_style', '<style>' +
-            '.new-interface .card--small.card--wide {' +
-                'width: 15.65em;' +
-            '}' +
-            '.full-start__pg, .full-start__status {' +
-                'font-size: 0.9em;' +
-            '}' +
-            '.full-start-new__rate-line .full-start__pg {' +
-                'font-size: 0.9em;' +
-            '}' +
-            '.new-interface-info {' +
-                'position: relative;' +
-                'padding: 1.5em;' +
-                'height: calc(89vh - 12.7em);' +
-            '}' +
-            '.card--small.card--wide .card__view {' +
-                'padding-bottom: 47%;' +
-            '}' +
-            '.card-episode {' +
-                'width: 15.65em;' +
-            '}' +
-            '.full-episode__img {' +
-                'padding-bottom: 47%;' +
-            '}' +
-            '.full-episode__num {' +
-                'margin-bottom: 0.2em;' +
-            '}' +
-            '.full-episode__date {' +
-                'margin-top: 0.4em;' +
-            '}' +
-            '.full-episode__name {' +
-                'font-size: 1.1em;' +
-            '}' +
-            '.new-interface-info__body {' +
-                'width: 80%;' +
-                'padding-top: 1.1em;' +
-            '}' +
-            '.new-interface-info__head {' +
-                'color: rgba(255, 255, 255, 0.6);' +
-                'margin-bottom: 0em;' +
-                'font-size: 1.3em;' +
-                'min-height: 1em;' +
-                'display: block !important;' + // Забезпечуємо видимість
-                'opacity: 1 !important;' + // Запобігаємо приховуванню
-            '}' +
-            '.new-interface-info__head span {' +
-                'color: #fff;' +
-                'font-weight: 600;' + // Виділяємо рік
-            '}' +
-            '.new-interface-info__title {' +
-                'font-size: 4em;' +
-                'margin-top: 0.1em;' +
-                'font-weight: 800;' +
-                '-o-text-overflow: ".";' +
-                'text-overflow: ".";' +
-                'margin-bottom: 0em;' +
-                'overflow: hidden;' +
-                'display: -webkit-box;' +
-                '-webkit-line-clamp: 3;' +
-                'line-clamp: 3;' +
-                '-webkit-box-orient: vertical;' +
-                'margin-left: -0.03em;' +
-                'line-height: 1;' +
-                'text-shadow: 2px 3px 1px #00000040;' +
-                'max-width: 9em;' +
-                'text-transform: uppercase;' +
-                'letter-spacing: -2px;' +
-                'word-spacing: 5px;' +
-            '}' +
-            '.new-interface-logo {' +
-                'margin-top: 0.3em;' +
-                'margin-bottom: 0.3em;' +
-                'max-width: 7em;' +
-                'max-height: 3em;' +
-                'object-fit: contain;' +
-                'width: auto;' +
-                'height: auto;' +
-                'min-height: 1em;' +
-                'opacity: 0;' +
-                'transition: opacity 0.5s ease;' +
-                'filter: drop-shadow(0 0 0.6px rgba(255, 255, 255, 0.4));' +
-            '}' +
-            '.new-interface:not([data-sport="true"]) .card__promo {' +
-                'display: none;' +
-            '}' +
-            '.new-interface-logo.loaded {' +
-                'opacity: 1;' +
-            '}' +
-            '.new-interface-info__details {' +
-                'margin-bottom: 1.6em;' +
-                'display: flex;' +
-                'align-items: center;' +
-                'flex-wrap: wrap;' +
-                'min-height: 1.9em;' +
-                'font-size: 1.3em;' +
-            '}' +
-            '.new-interface-info__split {' +
-                'margin: 0 1em;' +
-                'font-size: 0.7em;' +
-            '}' +
-            '.new-interface .card-more__box {' +
-                'padding-bottom: 95%;' +
-            '}' +
-            '.new-interface .full-start__background {' +
-                'height: 108%;' +
-                'top: -6em;' +
-            '}' +
-            '.new-interface .full-start__rate {' +
-                'font-size: 1.3em;' +
-                'margin-right: 0;' +
-            '}' +
-            '.new-interface .card.card--wide+.card-more .card-more__box {' +
-                'padding-bottom: 66%;' +
-            '}' +
-            '.new-interface .card.card--wide .card-watched {' +
-                'display: none !important;' +
-            '}' +
-            /* Стилі для рейтингу в широких картках */
-            '.new-interface:not(.vertical-cards) .card__vote {' +
-                'font-size: 1.4em;' +
-            '}' +
-            /* Стилі для рейтингу в вертикальних картках */
-            '.new-interface.vertical-cards .card__vote {' +
-                'font-size: 1.2em;' +
-            '}' +
-            'body.light--version .new-interface-info__body {' +
-                'width: 69%;' +
-                'padding-top: 1.5em;' +
-            '}' +
-            'body.light--version .new-interface-info {' +
-                'height: 25.3em;' +
-            '}' +
-            'body.advanced--animation:not(.no--animation) .new-interface .card--small.card--wide.focus .card__view {' +
-                'animation: animation-card-focus 0.2s;' +
-            '}' +
-            'body.advanced--animation:not(.no--animation) .new-interface .card--small.card--wide.animate-trigger-enter .card__view {' +
-                'animation: animation-trigger-enter 0.2s forwards;' +
-            '}' +
-            /* Стилі для вертикальних карток */
-            '.new-interface.vertical-cards .new-interface-info {' +
-                'height: calc(80.5vh - 13.3em);' +
-                'padding: 1.5em;' +
-            '}' +
-            '.new-interface.vertical-cards .card--small {' +
-                'width: 8em;' +
-                'height: auto;' +
-            '}' +
-            '.new-interface.vertical-cards .card--small .card__view {' +
-                'width: 100%;' +
-                'height: auto;' +
-                'aspect-ratio: 2/3;' +
-            '}' +
-            '.new-interface.vertical-cards .card--small.card--wide {' +
-                'width: 14em;' +
-            '}' +
-            '.new-interface.vertical-cards .card-more__box {' +
-                'padding-bottom: 110%;' +
-            '}' +
-            '.new-interface.vertical-cards .card-episode__footer .card__imgbox {' +
-                'max-width: 2.7em;' +
-            '}' +
-            '.new-interface.vertical-cards .card__title {' +
-                'font-size: 1em;' +
-            '}' +
-            '.new-interface.vertical-cards .card__age {' +
-                'font-size: 0.7em;' +
-            '}' +
-        '</style>');
-        $('body').append(Lampa.Template.get('new_interface_style', {}, true));
-
-        // Обробник зміни налаштувань
-        Lampa.Storage.listener.follow('change', function (e) {
-            if (e.name === 'card_orientation') {
-                var orientation = Lampa.Storage.get('card_orientation') || 'wide';
-                if (orientation === 'vertical') {
-                    handleVerticalCards();
-                } else {
-                    $('style#fix_size_css').remove();
-                }
-                if (Lampa.Activity.restart) Lampa.Activity.restart();
-            }
-        });
-
-        // Ініціалізація обробки вертикальних карток при старті
-        if (Lampa.Storage.get('card_orientation') === 'vertical') {
-            handleVerticalCards();
+            addSettingsComponent();
         }
     }
 
-    if (!window.plugin_interface_ready) startPlugin();
+    // Додавання компонента налаштувань
+    function addSettingsComponent() {
+        Lampa.SettingsApi.addComponent({
+            component: 'lampa_safe_styles',
+            name: 'Lampa Safe Styles',
+            icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" focusable="false" aria-hidden="true">' +
+                  '<path d="M 491.522 428.593 L 427.586 428.593 L 399.361 397.117 L 481.281 397.117 L 481.281 145.313 L 30.721 145.313 L 30.721 397.117 L 292.833 397.117 L 314.433 428.593 L 20.48 428.593 C 9.179 428.593 0 419.183 0 407.607 L 0 103.346 C 0 91.642 9.179 82.362 20.48 82.362 L 491.522 82.362 C 502.818 82.362 512 91.642 512 103.346 L 512 407.607 C 512 419.183 502.818 428.593 491.522 428.593 Z M 427.041 500.036 C 413.25 511.314 390.56 505.805 376.194 487.542 L 230.819 275.968 C 216.48 257.706 216.548 261.248 230.303 249.837 C 244.066 238.459 240.708 237.706 255.037 255.837 L 425.954 446.462 C 440.289 464.625 440.801 488.659 427.041 500.036 Z M 389.665 474.757 C 389.665 474.757 387.554 477.183 380.449 482.986 C 391.105 500.756 412 497.544 412 497.544 C 392.162 485.544 389.665 474.757 389.665 474.757 Z M 136.581 196.92 C 164.868 197.083 168.383 204.166 177.63 233.216 C 194.626 279.281 271.361 221.182 223.809 201.084 C 176.219 180.986 108.127 196.723 136.581 196.92 Z M 322.145 22.788 C 313.313 29.476 312.32 39.51 312.32 39.51 L 309.056 61.378 L 202.91 61.378 L 199.62 39.543 C 199.62 39.543 198.685 29.509 189.857 22.788 C 180.901 16.066 173.98 10.329 180.901 9.444 C 187.744 8.491 251.328 9.246 256.001 9.444 C 260.671 9.246 324.224 8.491 331.072 9.444 C 337.986 10.296 331.072 16.035 322.145 22.788 Z" style="fill: currentColor; transform-box: fill-box; transform-origin: 50% 50%;" transform="matrix(-1, 0, 0, -1, 0.000057, 0.000065)"></path>' +
+                  '</svg>'
+        });
+
+        // Додавання параметрів кольорів
+        Lampa.SettingsApi.addParam({
+            component: 'lampa_safe_styles',
+            param: {
+                name: 'dark_bg',
+                type: 'input',
+                default: settings.colors.darkBg,
+                onChange: function(value) {
+                    if (isValidHexColor(value)) {
+                        settings.colors.darkBg = value;
+                        saveSettings();
+                        updateCSSVariables();
+                        applyStyles();
+                        addCardStyles();
+                    }
+                }
+            },
+            field: {
+                name: 'Основний фон',
+                description: 'Колір основного фону'
+            }
+        });
+
+        Lampa.SettingsApi.addParam({
+            component: 'lampa_safe_styles',
+            param: {
+                name: 'darker_bg',
+                type: 'input',
+                default: settings.colors.darkerBg,
+                onChange: function(value) {
+                    if (isValidHexColor(value)) {
+                        settings.colors.darkerBg = value;
+                        saveSettings();
+                        updateCSSVariables();
+                        applyStyles();
+                        addCardStyles();
+                    }
+                }
+            },
+            field: {
+                name: 'Додатковий фон',
+                description: 'Колір додаткового фону'
+            }
+        });
+
+        Lampa.SettingsApi.addParam({
+            component: 'lampa_safe_styles',
+            param: {
+                name: 'menu_bg',
+                type: 'input',
+                default: settings.colors.menuBg,
+                onChange: function(value) {
+                    if (isValidHexColor(value)) {
+                        settings.colors.menuBg = value;
+                        saveSettings();
+                        updateCSSVariables();
+                        applyStyles();
+                        addCardStyles();
+                    }
+                }
+            },
+            field: {
+                name: 'Фон меню',
+                description: 'Колір фону меню'
+            }
+        });
+
+        Lampa.SettingsApi.addParam({
+            component: 'lampa_safe_styles',
+            param: {
+                name: 'accent_color',
+                type: 'input',
+                default: settings.colors.accentColor,
+                onChange: function(value) {
+                    if (isValidHexColor(value)) {
+                        settings.colors.accentColor = value;
+                        saveSettings();
+                        updateCSSVariables();
+                        applyStyles();
+                        addCardStyles();
+                    }
+                }
+            },
+            field: {
+                name: 'Акцентний колір',
+                description: 'Колір акцентних елементів'
+            }
+        });
+
+        Lampa.SettingsApi.addParam({
+            component: 'lampa_safe_styles',
+            param: {
+                name: 'vote_background',
+                type: 'input',
+                default: settings.colors.voteBackground,
+                onChange: function(value) {
+                    if (isValidHexColor(value)) {
+                        settings.colors.voteBackground = value;
+                        saveSettings();
+                        updateCSSVariables();
+                        addCardStyles();
+                    }
+                }
+            },
+            field: {
+                name: 'Фон оцінки',
+                description: 'Колір фону оцінки'
+            }
+        });
+
+        // Додавання параметрів радіусів
+        Lampa.SettingsApi.addParam({
+            component: 'lampa_safe_styles',
+            param: {
+                name: 'card_radius',
+                type: 'input',
+                default: settings.radii.cardRadius,
+                onChange: function(value) {
+                    if (isValidEm(value)) {
+                        settings.radii.cardRadius = value;
+                        saveSettings();
+                        updateCSSVariables();
+                        addCardStyles();
+                    }
+                }
+            },
+            field: {
+                name: 'Радіус карток',
+                description: 'Радіус кутів карток'
+            }
+        });
+
+        Lampa.SettingsApi.addParam({
+            component: 'lampa_safe_styles',
+            param: {
+                name: 'menu_radius',
+                type: 'input',
+                default: settings.radii.menuRadius,
+                onChange: function(value) {
+                    if (isValidEm(value)) {
+                        settings.radii.menuRadius = value;
+                        saveSettings();
+                        updateCSSVariables();
+                        addCardStyles();
+                    }
+                }
+            },
+            field: {
+                name: 'Радіус меню',
+                description: 'Радіус кутів меню'
+            }
+        });
+
+        Lampa.SettingsApi.addParam({
+            component: 'lampa_safe_styles',
+            param: {
+                name: 'vote_border_radius',
+                type: 'input',
+                default: settings.radii.voteBorderRadius,
+                onChange: function(value) {
+                    if (isValidEm(value)) {
+                        settings.radii.voteBorderRadius = value;
+                        saveSettings();
+                        updateCSSVariables();
+                        addCardStyles();
+                    }
+                }
+            },
+            field: {
+                name: 'Радіус бордера оцінки',
+                description: 'Радіус кутів оцінки'
+            }
+        });
+
+        // Додавання параметрів прозорості
+        Lampa.SettingsApi.addParam({
+            component: 'lampa_safe_styles',
+            param: {
+                name: 'navigation_bar',
+                type: 'input',
+                default: settings.opacity.navigationBar,
+                onChange: function(value) {
+                    var num = parseFloat(value);
+                    if (!isNaN(num) && num >= 0 && num <= 1) {
+                        settings.opacity.navigationBar = num;
+                        saveSettings();
+                        addCardStyles();
+                    }
+                }
+            },
+            field: {
+                name: 'Панель навігації',
+                description: 'Прозорість панелі навігації'
+            }
+        });
+
+        Lampa.SettingsApi.addParam({
+            component: 'lampa_safe_styles',
+            param: {
+                name: 'bookmarks_layer',
+                type: 'input',
+                default: settings.opacity.bookmarksLayer,
+                onChange: function(value) {
+                    var num = parseFloat(value);
+                    if (!isNaN(num) && num >= 0 && num <= 1) {
+                        settings.opacity.bookmarksLayer = num;
+                        saveSettings();
+                        addCardStyles();
+                    }
+                }
+            },
+            field: {
+                name: 'Шар закладок',
+                description: 'Прозорість шару закладок'
+            }
+        });
+
+        Lampa.SettingsApi.addParam({
+            component: 'lampa_safe_styles',
+            param: {
+                name: 'card_more_box',
+                type: 'input',
+                default: settings.opacity.cardMoreBox,
+                onChange: function(value) {
+                    var num = parseFloat(value);
+                    if (!isNaN(num) && num >= 0 && num <= 1) {
+                        settings.opacity.cardMoreBox = num;
+                        saveSettings();
+                        addCardStyles();
+                    }
+                }
+            },
+            field: {
+                name: 'Блок карток',
+                description: 'Прозорість блоку карток'
+            }
+        });
+
+        // Додавання параметрів оцінки
+        Lampa.SettingsApi.addParam({
+            component: 'lampa_safe_styles',
+            param: {
+                name: 'vote_font_size',
+                type: 'input',
+                default: settings.fonts.voteFontSize,
+                onChange: function(value) {
+                    if (isValidEm(value)) {
+                        settings.fonts.voteFontSize = value;
+                        saveSettings();
+                        addCardStyles();
+                    }
+                }
+            },
+            field: {
+                name: 'Розмір шрифту оцінки',
+                description: 'Розмір шрифту для оцінки'
+            }
+        });
+
+        Lampa.SettingsApi.addParam({
+            component: 'lampa_safe_styles',
+            param: {
+                name: 'vote_position',
+                type: 'select',
+                values: {
+                    'top-right': 'Верхній правий',
+                    'top-left': 'Верхній лівий',
+                    'bottom-right': 'Нижній правий',
+                    'bottom-left': 'Нижній лівий'
+                },
+                default: settings.vote.votePosition,
+                onChange: function(value) {
+                    if (isValidVotePosition(value)) {
+                        settings.vote.votePosition = value;
+                        saveSettings();
+                        addCardStyles();
+                    }
+                }
+            },
+            field: {
+                name: 'Позиція оцінки',
+                description: 'Розташування оцінки на картці'
+            }
+        });
+
+        // Додавання кнопки скидання налаштувань
+        Lampa.SettingsApi.addParam({
+            component: 'lampa_safe_styles',
+            param: {
+                name: 'reset',
+                type: 'trigger',
+                onChange: function() {
+                    settings = JSON.parse(JSON.stringify(defaultSettings));
+                    saveSettings();
+                    updateCSSVariables();
+                    applyStyles();
+                    addCardStyles();
+                    console.log("[Lampa Safe Styles] Налаштування скинуто");
+                }
+            },
+            field: {
+                name: 'Скинути налаштування',
+                description: 'Відновити налаштування за замовчуванням'
+            }
+        });
+
+        // Додавання кнопки заводських налаштувань
+        Lampa.SettingsApi.addParam({
+            component: 'lampa_safe_styles',
+            param: {
+                name: 'factory_reset',
+                type: 'trigger',
+                onChange: function() {
+                    settings = JSON.parse(JSON.stringify(defaultSettings));
+                    saveSettings();
+                    updateCSSVariables();
+                    applyStyles();
+                    addCardStyles();
+                    console.log("[Lampa Safe Styles] Заводські налаштування відновлено");
+                }
+            },
+            field: {
+                name: 'Заводські налаштування',
+                description: 'Відновити заводські налаштування'
+            }
+        });
+    }
+
+    // Оптимізований спостерігач за DOM
+    var observer = new MutationObserver(function() {
+        if (!stylesApplied) {
+            requestAnimationFrame(applyStyles);
+        }
+    });
+
+    // Ініціалізація
+    function init() {
+        loadSettings();
+        updateCSSVariables();
+        applyStyles();
+        addCardStyles();
+        integrateWithLampaSettings();
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['class']
+        });
+
+        var backupInterval = setInterval(function() {
+            if (!stylesApplied) applyStyles();
+        }, 30000);
+
+        window.stopLampaSafeStyles = function() {
+            clearInterval(backupInterval);
+            observer.disconnect();
+
+            var style = document.getElementById('lampa-safe-css');
+            if (style) style.remove();
+
+            document.querySelectorAll('[data-lampa-styled]').forEach(function(el) {
+                el.removeAttribute('data-lampa-styled');
+            });
+
+            elementsCache.clear();
+            stylesApplied = false;
+
+            console.log("[Lampa Safe Styles] Плагін зупинено");
+        };
+    }
+
+    // Запуск
+    if (document.readyState === 'complete') {
+        init();
+    } else {
+        window.addEventListener('load', init);
+    }
 })();
