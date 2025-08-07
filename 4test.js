@@ -11,11 +11,12 @@ Lampa.Lang.add({
 Lampa.SettingsApi.addComponent({
     component: 'my_themes',
     name: Lampa.Lang.translate('my_themes'),
-    icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" focusable="false" aria-hidden="true"><path d="M 491.522 428.593 L 427.586 428.593 L 399.361 397.117 L 481.281 397.117 L 481.281 145.313 L 30.721 145.313 L 30.721 397.117 L 292.833 397.117 L 314.433 428.593 L 20.48 428.593 C 9.179 428.593 0 419.183 0 407.607 L 0 103.346 C 0 91.642 9.179 82.362 20.48 82.362 L 491.522 82.362 C 502.818 82.362 512 91.642 512 103.346 L 512 407.607 C 512 419.183 502.818 428.593 491.522 428.593 Z M 427.041 500.036 C 413.25 511.314 390.56 505.805 376.194 487.542 L 230.819 275.968 C 216.48 257.706 216.548 261.248 230.303 249.837 C 244.066 238.459 240.708 237.706 255.037 255.837 L 425.954 446.462 C 440.289 464.625 440.801 488.659 427.041 500.036 Z M 389.665 474.757 C 389.665 474.757 387.554 477.183 380.449 482.986 C 391.105 500.756 412 497.544 412 497.544 C 392.162 485.544 389.665 474.757 389.665 474.757 Z M 136.581 196.92 C 164.868 197.083 168.383 204.166 177.63 233.216 C 194.626 279.281 271.361 221.182 223.809 201.084 C 176.219 180.986 108.127 196.723 136.581 196.92 Z M 322.145 22.788 C 313.313 29.476 312.32 39.51 312.32 39.51 L 309.056 61.378 L 202.91 61.378 L 199.62 39.543 C 199.62 39.543 198.685 29.509 189.857 22.788 C 180.901 16.066 173.98 10.329 180.901 9.444 C 187.744 8.491 251.328 9.246 256.001 9.444 C 260.671 9.246 324.224 8.491 331.072 9.444 C 337.986 10.296 331.072 16.035 322.145 22.788 Z" style="fill: currentColor; transform-box: fill-box; transform-origin: 50% 50%;" transform="matrix(-1, 0, 0, -1, 0.000057, 0.000065)"></path></svg>'
+    icon: '<i class="fa fa-paint-brush" style="font-size: 20px;"></i>' // Font-awesome іконка
 });
 
 // Функція для конвертації HSL у RGB
 function hslToRgb(h, s, l) {
+    console.log('[MyThemes] Конвертація HSL у RGB: h=', h, 's=', s, 'l=', l);
     s = s / 100;
     l = l / 100;
     var c = (1 - Math.abs(2 * l - 1)) * s;
@@ -46,6 +47,7 @@ function hslToRgb(h, s, l) {
 
 // Функція для конвертації RGB у HSL
 function rgbToHsl(r, g, b) {
+    console.log('[MyThemes] Конвертація RGB у HSL: r=', r, 'g=', g, 'b=', b);
     r = r / 255;
     g = g / 255;
     b = b / 255;
@@ -72,7 +74,13 @@ function rgbToHsl(r, g, b) {
 
 // Функція для створення інтерфейсу вибору кольору
 function createColorPicker(content) {
-    console.log('[MyThemes] Починаємо створення інтерфейсу вибору кольору');
+    console.log('[MyThemes] Починаємо створення інтерфейсу вибору кольору, content=', content);
+
+    // Перевіряємо, чи передано content
+    if (!content) {
+        console.error('[MyThemes] Помилка: content не передано в onRender');
+        return;
+    }
 
     // Очищаємо вміст
     content.innerHTML = '';
@@ -86,7 +94,9 @@ function createColorPicker(content) {
     container.style.margin = '0 auto';
     container.style.color = '#fff';
     container.style.display = 'block';
+    container.style.position = 'relative';
     container.style.zIndex = '1000';
+    container.style.visibility = 'visible';
 
     // Ініціалізація значень кольору (Hue: 0–360, Alpha: 0–100)
     var values = { hue: 0, alpha: 100 };
@@ -147,6 +157,8 @@ function createColorPicker(content) {
     hexInput.style.width = '100%';
     hexInput.style.padding = '5px';
     hexInput.style.borderRadius = '5px';
+    hexInput.style.background = '#fff';
+    hexInput.style.color = '#000';
 
     // Обробник для HEX-коду
     hexInput.oninput = function() {
@@ -217,9 +229,9 @@ function createColorPicker(content) {
 Lampa.SettingsApi.addComponent({
     component: 'my_themes',
     name: Lampa.Lang.translate('my_themes'),
-    icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" focusable="false" aria-hidden="true"><path d="M 491.522 428.593 L 427.586 428.593 L 399.361 rogation: 50% 50%;" transform="matrix(-1, 0, 0, -1, 0.000057, 0.000065)"></path></svg>',
+    icon: '<i class="fa fa-paint-brush" style="font-size: 20px;"></i>',
     onRender: function(content) {
-        console.log('[MyThemes] Викликано onRender для my_themes');
+        console.log('[MyThemes] Викликано onRender для my_themes, content=', content);
         createColorPicker(content);
     }
 });
