@@ -470,46 +470,64 @@
      * Створення компонента налаштувань для вибору кольору
      */
     function createThemeSettings() {
-        Lampa.SettingsApi.addComponent({
-            component: 'my_themes',
-            name: Lampa.Lang.translate('my_themes') || 'Теми',
-            icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" focusable="false" aria-hidden="true"><path d="M 491.522 428.593 L 427.586 428.593 L 399.361 397.117 L 481.281 397.117 L 481.281 145.313 L 30.721 145.313 L 30.721 397.117 L 292.833 397.117 L 314.433 428.593 L 20.48 428.593 C 9.179 428.593 0 419.183 0 407.607 L 0 103.346 C 0 91.642 9.179 82.362 20.48 82.362 L 491.522 82.362 C 502.818 82.362 512 91.642 512 103.346 L 512 407.607 C 512 419.183 502.818 428.593 491.522 428.593 Z M 427.041 500.036 C 413.25 511.314 390.56 505.805 376.194 487.542 L 230.819 275.968 C 216.48 257.706 216.548 261.248 230.303 249.837 C 244.066 238.459 240.708 237.706 255.037 255.837 L 425.954 446.462 C 440.289 464.625 440.801 488.659 427.041 500.036 Z M 389.665 474.757 C 389.665 474.757 387.554 477.183 380.449 482.986 C 391.105 500.756 412 497.544 412 497.544 C 392.162 485.544 389.665 474.757 389.665 474.757 Z M 136.581 196.92 C 164.868 197.083 168.383 204.166 177.63 233.216 C 194.626 279.281 271.361 221.182 223.809 201.084 C 176.219 180.986 108.127 196.723 136.581 196.92 Z M 322.145 22.788 C 313.313 29.476 312.32 39.51 312.32 39.51 L 309.056 61.378 L 202.91 61.378 L 199.62 39.543 C 199.62 39.543 198.685 29.509 189.857 22.788 C 180.901 16.066 173.98 10.329 180.901 9.444 C 187.744 8.491 251.328 9.246 256.001 9.444 C 260.671 9.246 324.224 8.491 331.072 9.444 C 337.986 10.296 331.072 16.035 322.145 22.788 Z" style="fill: currentColor; transform-box: fill-box; transform-origin: 50% 50%;" transform="matrix(-1, 0, 0, -1, 0.000057, 0.000065)"></path></svg>'
-        });
+        // Додавання компонента в меню
+        try {
+            Lampa.SettingsApi.addComponent({
+                component: 'my_themes',
+                name: Lampa.Lang.translate('my_themes') || 'Теми',
+                icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" focusable="false" aria-hidden="true"><path d="M 491.522 428.593 L 427.586 428.593 L 399.361 397.117 L 481.281 397.117 L 481.281 145.313 L 30.721 145.313 L 30.721 397.117 L 292.833 397.117 L 314.433 428.593 L 20.48 428.593 C 9.179 428.593 0 419.183 0 407.607 L 0 103.346 C 0 91.642 9.179 82.362 20.48 82.362 L 491.522 82.362 C 502.818 82.362 512 91.642 512 103.346 L 512 407.607 C 512 419.183 502.818 428.593 491.522 428.593 Z M 427.041 500.036 C 413.25 511.314 390.56 505.805 376.194 487.542 L 230.819 275.968 C 216.48 257.706 216.548 261.248 230.303 249.837 C 244.066 238.459 240.708 237.706 255.037 255.837 L 425.954 446.462 C 440.289 464.625 440.801 488.659 427.041 500.036 Z M 389.665 474.757 C 389.665 474.757 387.554 477.183 380.449 482.986 C 391.105 500.756 412 497.544 412 497.544 C 392.162 485.544 389.665 474.757 389.665 474.757 Z M 136.581 196.92 C 164.868 197.083 168.383 204.166 177.63 233.216 C 194.626 279.281 271.361 221.182 223.809 201.084 C 176.219 180.986 108.127 196.723 136.581 196.92 Z M 322.145 22.788 C 313.313 29.476 312.32 39.51 312.32 39.51 L 309.056 61.378 L 202.91 61.378 L 199.62 39.543 C 199.62 39.543 198.685 29.509 189.857 22.788 C 180.901 16.066 173.98 10.329 180.901 9.444 C 187.744 8.491 251.328 9.246 256.001 9.444 C 260.671 9.246 324.224 8.491 331.072 9.444 C 337.986 10.296 331.072 16.035 322.145 22.788 Z" style="fill: currentColor; transform-box: fill-box; transform-origin: 50% 50%;" transform="matrix(-1, 0, 0, -1, 0.000057, 0.000065)"></path></svg>'
+            });
+            console.log("[Lampa Safe Styles] Компонент my_themes успішно додано");
+        } catch (e) {
+            console.error("[Lampa Safe Styles] Помилка при додаванні компонента:", e);
+        }
 
-        Lampa.SettingsApi.addParam({
-            component: 'my_themes',
-            name: 'theme_color',
-            type: 'custom',
-            renderer: function() {
-                var container = document.createElement('div');
-                container.style.padding = '1em';
-                container.style.textAlign = 'center';
+        // Додавання параметра з перевіркою
+        try {
+            Lampa.SettingsApi.addParam({
+                component: 'my_themes',
+                param: {
+                    name: 'theme_color',
+                    type: 'input',
+                    value: currentAccentColor,
+                    renderer: function(value, element) {
+                        var container = document.createElement('div');
+                        container.style.padding = '1em';
+                        container.style.textAlign = 'center';
 
-                var label = document.createElement('label');
-                label.innerHTML = Lampa.Lang.translate('select_theme_color') || 'Виберіть колір теми:';
-                label.style.display = 'block';
-                label.style.marginBottom = '0.5em';
-                label.style.fontSize = '1.2em';
-                container.appendChild(label);
+                        var label = document.createElement('label');
+                        label.innerHTML = Lampa.Lang.translate('select_theme_color') || 'Виберіть колір теми:';
+                        label.style.display = 'block';
+                        label.style.marginBottom = '0.5em';
+                        label.style.fontSize = '1.2em';
+                        container.appendChild(label);
 
-                var colorPicker = document.createElement('input');
-                colorPicker.type = 'color';
-                colorPicker.value = currentAccentColor;
-                colorPicker.style.width = '100px';
-                colorPicker.style.height = '50px';
-                colorPicker.style.border = 'none';
-                colorPicker.style.borderRadius = '5px';
-                colorPicker.style.cursor = 'pointer';
+                        var colorPicker = document.createElement('input');
+                        colorPicker.type = 'color';
+                        colorPicker.value = value || currentAccentColor;
+                        colorPicker.style.width = '100px';
+                        colorPicker.style.height = '50px';
+                        colorPicker.style.border = 'none';
+                        colorPicker.style.borderRadius = '5px';
+                        colorPicker.style.cursor = 'pointer';
 
-                colorPicker.addEventListener('change', function() {
-                    updateThemeColor(this.value);
-                    Lampa.SettingsApi.redraw();
-                });
+                        colorPicker.addEventListener('change', function() {
+                            updateThemeColor(this.value);
+                            Lampa.Storage.set('theme_color', this.value);
+                            if (typeof Lampa.SettingsApi.redraw === 'function') {
+                                Lampa.SettingsApi.redraw();
+                            }
+                        });
 
-                container.appendChild(colorPicker);
-                return container;
-            }
-        });
+                        container.appendChild(colorPicker);
+                        return container;
+                    }
+                }
+            });
+            console.log("[Lampa Safe Styles] Параметр theme_color успішно додано");
+        } catch (e) {
+            console.error("[Lampa Safe Styles] Помилка при додаванні параметра:", e);
+        }
     }
 
     /**
