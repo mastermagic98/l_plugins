@@ -75,10 +75,14 @@
                 '.settings, .settings__content { background: rgba(0, 0, 0, 0.8) !important; }' +
                 '.settings-component__icon svg { display: block !important; width: 24px; height: 24px; }' +
                 '.info__left { margin-bottom: 1em; }' +
+                '.wrap__content.layer--height.layer--width { width: 100% !important; min-height: 100vh !important; }' +
+                '.activitys.layer--width, .activity.layer--width { width: 100% !important; }' +
+                '.info.layer--width { width: 100% !important; height: auto !important; }' +
+                '.scroll.scroll--mask.scroll--over.layer--wheight { width: 100% !important; height: 100% !important; }' +
+                '.scroll__content { width: 100% !important; height: 100% !important; padding: 1.5em 0 !important; }' +
+                '.scroll__body { width: 100%; display: flex; flex-wrap: wrap; justify-content: center; padding: 1em; }' +
                 '.my_themes.category-full { margin-top: 4em; width: 100% !important; min-height: 100vh !important; display: flex; flex-wrap: wrap; justify-content: center; }' +
-                '.scroll { height: 100% !important; width: 100% !important; }' +
-                '.scroll__content { height: 100% !important; width: 100% !important; }' +
-                '.themes__body { width: 100%; display: flex; flex-wrap: wrap; justify-content: center; padding: 1em; }'
+                '#spacer { height: 25em; }'
             );
             console.log('Focus color updated:', focusColor);
         }, 100);
@@ -156,10 +160,10 @@
         }
 
         var scroll = new Lampa.Scroll({ mask: true, over: true, step: 250 });
-        var html = $('<div class="info layer--width"></div>');
-        var info = $('<div class="info__left"><div class="info__title"></div><div class="info__title-original"></div><div class="info__create"></div></div>');
-        var body = $('<div class="my_themes category-full"><div class="themes__body"></div></div>');
-        var themesBody = body.find('.themes__body');
+        var html = $('<div class="info layer--width"><div class="info__left"><div class="info__title"></div><div class="info__title-original"></div><div class="info__create"></div></div><div class="info__right"></div></div>');
+        var infoRight = html.find('.info__right');
+        var body = $('<div class="my_themes category-full"><div class="scroll__body"></div></div>');
+        var scrollBody = body.find('.scroll__body');
         var last;
         var items = [];
         var categories = [
@@ -186,13 +190,13 @@
         this.append = function (data) {
             try {
                 console.log('Appending data:', data);
-                themesBody.empty();
+                scrollBody.empty();
                 data.forEach(function (item) {
                     console.log('Processing item:', item.title);
                     item.title = normalizeTitle(item.title);
                     var card = Lampa.Template.get('card', { title: t(item.title), release_year: '' });
-                    card.addClass('card--collection selector');
-                    card.find('.card__img').css({ cursor: 'pointer', backgroundColor: '#353535a6' });
+                    card.addClass('card--collection selector layer--visible layer--render');
+                    card.find('.card__img').css({ cursor: 'pointer', backgroundColor: 'rgba(53, 53, 53, 0.65)' });
                     card.css({ textAlign: 'center' });
 
                     var img = card.find('.card__img')[0];
@@ -319,19 +323,20 @@
                         });
                     });
 
-                    themesBody.append(card);
+                    scrollBody.append(card);
                     items.push(card);
                 });
+                scrollBody.append('<div id="spacer" style="height: 25em;"></div>');
                 console.log('Cards appended:', items.length);
-                console.log('Themes body exists:', themesBody.length);
+                console.log('Scroll body exists:', scrollBody.length);
                 scroll.render().find('.scroll__content').empty().append(body);
                 console.log('Body appended to DOM:', body.parent().length);
                 setTimeout(function () {
                     console.log('Cards in DOM:', scroll.render().find('.card').length);
                     console.log('Scroll content HTML:', scroll.render().find('.scroll__content').html());
                     console.log('my_themes HTML:', $('.my_themes.category-full').html());
-                    console.log('Themes body HTML:', themesBody.html());
-                }, 800);
+                    console.log('Scroll body HTML:', scrollBody.html());
+                }, 1000);
             } catch (e) {
                 console.log('Error in append:', e);
             }
@@ -340,22 +345,23 @@
         this.build = function (data) {
             try {
                 console.log('Received data:', data);
-                Lampa.Template.add('button_category', '<div id="button_category">' +
+                Lampa.Template.add('button_category', '<div id="stantion_filtr"><div id="button_category">' +
                     '<style>' +
                     '@media screen and (max-width: 2560px) {' +
-                    '.themes .card--collection { width: 14.2% !important; margin-top: 1em !important; margin-right: 1em; }' +
+                    '.themes .card--collection { width: 14.2% !important; margin-right: 1em; }' +
                     '.my_themes .selector.focus { background: var(--focus-color, rgba(255, 255, 255, 0.2)) !important; }' +
                     '.my_themes .card.focus, .my_themes .card--collection.focus { background: none !important; outline: none !important; border: none !important; }' +
                     '.settings, .settings__content { background: rgba(0, 0, 0, 0.8) !important; }' +
                     '.settings-component__icon svg { display: block !important; width: 24px; height: 24px; }' +
-                    '.scroll { height: 100% !important; width: 100% !important; }' +
-                    '.scroll__content { height: 100% !important; width: 100% !important; padding: 1.5em 0 !important; box-shadow: none !important; background: none !important; }' +
-                    '.themes__body { width: 100%; display: flex; flex-wrap: wrap; justify-content: center; padding: 1em; }' +
+                    '.scroll.scroll--mask.scroll--over.layer--wheight { width: 100% !important; height: 100% !important; }' +
+                    '.scroll__content { width: 100% !important; height: 100% !important; padding: 1.5em 0 !important; box-shadow: none !important; background: none !important; }' +
+                    '.scroll__body { width: 100%; display: flex; flex-wrap: wrap; justify-content: center; padding: 1em; }' +
                     '.scroll__content::before, .scroll__content::after { display: none !important; }' +
-                    '.info { height: auto !important; margin-bottom: 0.5em !important; }' +
+                    '.info.layer--width { width: 100% !important; height: 9em !important; margin-bottom: 0.5em !important; }' +
                     '.info__left { float: none; width: 100%; display: flex; justify-content: flex-end; }' +
-                    '.info__title, .info__title-original, .info__create { display: none; }' +
-                    '.info__right { display: none !important; }' +
+                    '.info__title, .info__title-original { font-size: 1.2em; display: none; }' +
+                    '.info__create { display: none; }' +
+                    '.info__right { display: contents !important; }' +
                     '.layer--wheight { box-shadow: none !important; background: none !important; }' +
                     '.layer--wheight::before, .layer--wheight::after { display: none !important; }' +
                     '.layer--width, .scroll { box-shadow: none !important; background: none !important; }' +
@@ -366,32 +372,21 @@
                     '.view--category { display: flex; align-items: center; margin: 0.5em 0; }' +
                     '.view--category svg { margin-right: 0.3em; }' +
                     '.my_themes.category-full { margin-top: 4em; width: 100% !important; min-height: 100vh !important; display: flex; flex-wrap: wrap; justify-content: center; }' +
+                    '#spacer { height: 25em; }' +
                     '}' +
-                    '@media screen and (max-width: 385px), (max-width: 580px) {' +
-                    '.themes .card--collection { width: 33.3% !important; margin-top: 1em !important; margin-right: 1em; }' +
-                    '.my_themes .selector.focus { background: var(--focus-color, rgba(255, 255, 255, 0.2)) !important; }' +
-                    '.my_themes .card.focus, .my_themes .card--collection.focus { background: none !important; outline: none !important; border: none !important; }' +
-                    '.settings, .settings__content { background: rgba(0, 0, 0, 0.8) !important; }' +
-                    '.settings-component__icon svg { display: block !important; width: 24px; height: 24px; }' +
-                    '.scroll { height: 100% !important; width: 100% !important; }' +
-                    '.scroll__content { height: 100% !important; width: 100% !important; box-shadow: none !important; background: none !important; }' +
-                    '.themes__body { width: 100%; display: flex; flex-wrap: wrap; justify-content: center; padding: 1em; }' +
-                    '.scroll__content::before, .scroll__content::after { display: none !important; }' +
-                    '.info__right { display: none !important; }' +
-                    '.layer--wheight { box-shadow: none !important; background: none !important; }' +
-                    '.layer--wheight::before, .layer--wheight::after { display: none !important; }' +
-                    '.layer--width, .scroll { box-shadow: none !important; background: none !important; }' +
-                    '.settings::before, .settings::after, .settings__content::before, .settings__content::after, .layer--width::before, .layer--width::after, .scroll::before, .scroll::after { display: none !important; }' +
-                    '.settings-folders, .settings-folder, .settings-param { box-shadow: none !important; background: none !important; }' +
-                    '.settings-folders::before, .settings-folders::after, .settings-folder::before, .settings-folder::after, .settings-param::before, .settings-param::after { display: none !important; }' +
-                    '.full-start__button { width: fit-content !important; margin: 0.5em 0; font-size: 1.3em; background-color: rgba(0, 0, 0, 0.3); padding: 0.3em 1em; display: flex; border-radius: 1em; align-items: center; height: 2.8em; }' +
-                    '.view--category { display: flex; align-items: center; margin: 0.5em 0; }' +
-                    '.view--category svg { margin-right: 0.3em; }' +
-                    '.my_themes.category-full { margin-top: 4em; width: 100% !important; min-height: 100vh !important; display: flex; flex-wrap: wrap; justify-content: center; }' +
+                    '@media screen and (max-width: 385px) {' +
+                    '.themes .card--collection { width: 33.3% !important; margin-right: 1em; }' +
+                    '.info__right { display: contents !important; }' +
+                    '.my_themes.category-full { margin-top: 4em; width: 100% !important; min-height: 100vh !important; }' +
+                    '}' +
+                    '@media screen and (max-width: 580px) {' +
+                    '.themes .card--collection { width: 25% !important; margin-right: 1em; }' +
+                    '.info__right { display: contents !important; }' +
+                    '.my_themes.category-full { margin-top: 4em; width: 100% !important; min-height: 100vh !important; }' +
                     '}' +
                     '</style>' +
                     '<div class="full-start__button selector view--category">' +
-                    '<svg style="enable-background:new 0 0 24 24;" version="1.1" viewBox="0 0 24 24" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">' +
+                    '<svg style="enable-background:new 0 0 512 512;" version="1.1" viewBox="0 0 24 24" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">' +
                     '<g id="info"/>' +
                     '<g id="icons"><g id="menu">' +
                     '<path d="M20,10H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h16c1.1,0,2-0.9,2-2C22,10.9,21.1,10,20,10z" fill="currentColor"/>' +
@@ -399,19 +394,18 @@
                     '<path d="M16,16H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h12c1.1,0,2-0.9,2-2C18,16.9,17.1,16,16,16z" fill="currentColor"/>' +
                     '</g></g></svg>' +
                     '<span>' + t('theme_categories') + '</span>' +
-                    '</div></div>');
+                    '</div></div></div>');
                 html.empty();
                 var button = Lampa.Template.get('button_category');
-                info.empty().prepend(button);
-                var categoryButton = info.find('.view--category');
+                infoRight.empty().append(button);
+                var categoryButton = infoRight.find('.view--category');
                 categoryButton.addClass('selector').on('hover:focus', function () {
                     $('.selector').removeClass('focus');
                     $(this).addClass('focus');
                     Lampa.Controller.toggle('content');
                     console.log('Category button focused');
                 }).on('hover:enter', self.selectGroup.bind(self));
-                scroll.render().addClass('layer--wheight').data('mheight', info);
-                html.append(info);
+                scroll.render().addClass('layer--wheight').data('mheight', html);
                 html.append(scroll.render());
                 this.append(data);
                 this.activity.loader(false);
@@ -450,13 +444,13 @@
         this.start = function () {
             try {
                 console.log('Cards:', scroll.render().find('.card').length);
-                console.log('Category button:', info.find('.view--category').length);
-                console.log('Themes body exists:', body.find('.themes__body').length);
+                console.log('Category button:', infoRight.find('.view--category').length);
+                console.log('Scroll body exists:', body.find('.scroll__body').length);
                 Lampa.Controller.add('content', {
                     toggle: function () {
                         $('.selector').removeClass('focus');
-                        if (info.find('.view--category').length > 0) {
-                            var categoryButton = info.find('.view--category')[0];
+                        if (infoRight.find('.view--category').length > 0) {
+                            var categoryButton = infoRight.find('.view--category')[0];
                             Navigator.focus(categoryButton);
                             $(categoryButton).addClass('focus');
                             console.log('Focused category button');
@@ -506,8 +500,8 @@
                                 console.log('Moved up, focused:', focused);
                             }
                         } else {
-                            if (info.find('.view--category').length > 0 && !info.find('.view--category').hasClass('focus')) {
-                                var categoryButton = info.find('.view--category')[0];
+                            if (infoRight.find('.view--category').length > 0 && !infoRight.find('.view--category').hasClass('focus')) {
+                                var categoryButton = infoRight.find('.view--category')[0];
                                 Navigator.focus(categoryButton);
                                 $('.selector').removeClass('focus');
                                 $(categoryButton).addClass('focus');
@@ -527,7 +521,7 @@
                                 $(focused).addClass('focus');
                                 console.log('Moved down, focused:', focused);
                             }
-                        } else if (info.find('.view--category').hasClass('focus')) {
+                        } else if (infoRight.find('.view--category').hasClass('focus')) {
                             if (scroll.render().find('.card').length > 0) {
                                 var firstCard = scroll.render().find('.card')[0];
                                 Navigator.focus(firstCard);
@@ -555,13 +549,11 @@
         this.destroy = function () {
             try {
                 scroll.destroy();
-                if (info) info.remove();
                 html.remove();
                 body.remove();
                 items = null;
                 html = null;
                 body = null;
-                info = null;
             } catch (e) {
                 console.log('Error in destroy:', e);
             }
