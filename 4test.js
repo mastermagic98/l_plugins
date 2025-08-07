@@ -1,5 +1,5 @@
 (function() {
-    console.log("[Lampa Safe Styles] Кастомізована версія з налаштуваннями оцінки та іконкою");
+    console.log("[Lampa Safe Styles] Кастомізована версія з виправленням помилки API");
 
     // Кеш елементів
     var elementsCache = new Map();
@@ -82,7 +82,7 @@
 
     // Валідація значення em
     function isValidEm(value) {
-        return /^\d*\.?\d+em$/.test(value);
+        return /^\d*\.?\d+em$/.test(value) || /^\d*\.?\d+em\s\d*\.?\d+em\s\d*\.?\d+em\s\d*\.?\d+em$/.test(value);
     }
 
     // Валідація позиції оцінки
@@ -647,11 +647,28 @@
 
     // Інтеграція з меню Lampa
     function integrateWithLampaSettings() {
-        if (typeof Lampa === 'undefined') {
+        // Перевірка наявності Lampa та Lampa.Settings
+        if (typeof Lampa === 'undefined' || !Lampa.Settings) {
             console.log("[Lampa Safe Styles] Lampa API недоступне");
             return;
         }
 
+        // Використання Lampa.Listener для очікування ініціалізації
+        if (typeof Lampa.Settings.addCategory !== 'function') {
+            console.log("[Lampa Safe Styles] Очікування ініціалізації Lampa.Settings.addCategory...");
+            Lampa.Listener.follow('app', function(e) {
+                if (e.type === 'ready' && typeof Lampa.Settings.addCategory === 'function') {
+                    console.log("[Lampa Safe Styles] Lampa.Settings.addCategory ініціалізовано");
+                    addSettingsCategory();
+                }
+            });
+        } else {
+            addSettingsCategory();
+        }
+    }
+
+    // Додавання категорії налаштувань
+    function addSettingsCategory() {
         Lampa.Settings.addCategory({
             id: 'lampa_safe_styles',
             name: 'Lampa Safe Styles',
@@ -777,7 +794,7 @@
                             type: 'input',
                             default: settings.radii.voteBorderRadius,
                             onChange: function(value) {
-                                if (isValidEm(value) || /^\d*\.?\d+em\s\d*\.?\d+em\s\d*\.?\d+em\s\d*\.?\d+em$/.test(value)) {
+                                if (isValidEm(value)) {
                                     settings.radii.voteBorderRadius = value;
                                     saveSettings();
                                     updateCSSVariables();
