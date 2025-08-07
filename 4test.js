@@ -1,12 +1,15 @@
-// Реєстрація компонента в Lampa
+// Реєстрація компонента в меню налаштувань Lampa
 Lampa.SettingsApi.addComponent({
     component: 'my_themes',
     name: Lampa.Lang.translate('my_themes'),
-    icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" focusable="false" aria-hidden="true"><path d="M256 48C141.6 48 48 141.6 48 256s93.6 208 208 208 208-93.6 208-208S370.4 48 256 48zm0 384c-97.2 0-176-78.8-176-176S158.8 80 256 80s176 78.8 176 176-78.8 176-176 176zm0-80c-53 0-96-43-96-96s43-96 96-96 96 43 96 96-43 96-96 96zm0-160c-35.3 0-64 28.7-64 64s28.7 64 64 64 64-28.7 64-64-28.7-64-64-64z" style="fill: currentColor;"></path></svg>'
+    icon: '<span style="font-size: 20px;">🖌️</span>' // Використовуємо емодзі як іконку
 });
 
 // Функція для створення інтерфейсу вибору кольору
-function createColorPicker() {
+function createColorPicker(content) {
+    // Очищаємо вміст для уникнення дублювання
+    content.innerHTML = '';
+
     // Створюємо контейнер для повзунків та поля введення
     var container = document.createElement('div');
     container.style.padding = '20px';
@@ -14,6 +17,10 @@ function createColorPicker() {
     container.style.borderRadius = '10px';
     container.style.maxWidth = '400px';
     container.style.margin = '0 auto';
+    container.style.color = '#fff';
+
+    // Ініціалізація значень кольору
+    var values = { red: 255, green: 255, blue: 255, alpha: 100 };
 
     // Створюємо повзунки для RGB та Alpha
     var sliders = [
@@ -23,23 +30,23 @@ function createColorPicker() {
         { label: 'Прозорість', id: 'alpha', max: 100 }
     ];
 
-    var values = { red: 255, green: 255, blue: 255, alpha: 100 };
-
     sliders.forEach(function(slider) {
+        // Створюємо мітку для повзунка
         var label = document.createElement('label');
         label.textContent = slider.label + ': ';
-        label.style.color = '#fff';
         label.style.display = 'block';
         label.style.margin = '10px 0 5px';
 
+        // Створюємо повзунок
         var input = document.createElement('input');
         input.type = 'range';
-        input.min = 0;
-        input.max = slider.max;
-        input.value = values[slider.id];
-        input.id = slider.id;
+        input.min = '0';
+        input.max = slider.max.toString();
+        input.value = values[slider.id].toString();
+        input.id = 'color_' + slider.id; // Унікальний ID
         input.style.width = '100%';
 
+        // Обробник події для оновлення теми
         input.oninput = function() {
             values[slider.id] = parseInt(this.value);
             updateTheme();
@@ -52,7 +59,6 @@ function createColorPicker() {
     // Створюємо поле для введення HEX-коду
     var hexLabel = document.createElement('label');
     hexLabel.textContent = 'HEX-код: ';
-    hexLabel.style.color = '#fff';
     hexLabel.style.display = 'block';
     hexLabel.style.margin = '10px 0 5px';
 
@@ -63,6 +69,7 @@ function createColorPicker() {
     hexInput.style.padding = '5px';
     hexInput.style.borderRadius = '5px';
 
+    // Обробник для HEX-введення
     hexInput.oninput = function() {
         var hex = this.value.replace('#', '');
         if (hex.length === 6) {
@@ -73,9 +80,9 @@ function createColorPicker() {
                 values.red = r;
                 values.green = g;
                 values.blue = b;
-                document.getElementById('red').value = r;
-                document.getElementById('green').value = g;
-                document.getElementById('blue').value = b;
+                document.getElementById('color_red').value = r;
+                document.getElementById('color_green').value = g;
+                document.getElementById('color_blue').value = b;
                 updateTheme();
             }
         }
@@ -90,11 +97,11 @@ function createColorPicker() {
         var hex = '#' + ((1 << 24) + (values.red << 16) + (values.green << 8) + values.blue).toString(16).slice(1);
         hexInput.value = hex;
 
-        // Оновлюємо основний фон або елементи Lampa
+        // Оновлюємо стилі Lampa
         var style = document.createElement('style');
         style.id = 'custom-theme';
         style.textContent = '.lampa .background--fill, .lampa .selector { background-color: ' + rgba + ' !important; }';
-        
+
         var oldStyle = document.getElementById('custom-theme');
         if (oldStyle) oldStyle.remove();
         document.head.appendChild(style);
@@ -115,22 +122,23 @@ function createColorPicker() {
         values.green = savedTheme.green;
         values.blue = savedTheme.blue;
         values.alpha = savedTheme.alpha;
-        document.getElementById('red').value = savedTheme.red;
-        document.getElementById('green').value = savedTheme.green;
-        document.getElementById('blue').value = savedTheme.blue;
-        document.getElementById('alpha').value = savedTheme.alpha;
+        document.getElementById('color_red').value = savedTheme.red;
+        document.getElementById('color_green').value = savedTheme.green;
+        document.getElementById('color_blue').value = savedTheme.blue;
+        document.getElementById('color_alpha').value = savedTheme.alpha;
         updateTheme();
     }
 
-    return container;
+    // Додаємо контейнер до вмісту
+    content.appendChild(container);
 }
 
-// Додаємо компонент до меню налаштувань
+// Додаємо обробник для рендерингу компонента
 Lampa.SettingsApi.addComponent({
     component: 'my_themes',
     name: Lampa.Lang.translate('my_themes'),
+    icon: '<span style="font-size: 20px;">🖌️</span>',
     onRender: function(content) {
-        content.innerHTML = '';
-        content.appendChild(createColorPicker());
+        createColorPicker(content);
     }
 });
