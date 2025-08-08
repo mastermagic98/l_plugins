@@ -229,26 +229,28 @@
         // Універсальна функція для додавання параметрів
         function safeAddParam(config) {
             if (typeof Lampa.SettingsApi.addParam !== 'function') {
-                console.log('Lampa.SettingsApi.addParam недоступний для параметра: ' + config.name);
+                console.log('Lampa.SettingsApi.addParam недоступний для параметра: ' + config.param.name);
                 return;
             }
 
             try {
-                console.log('Додаємо параметр:', config.name);
+                console.log('Додаємо параметр:', config.param.name);
                 Lampa.SettingsApi.addParam({
-                    component: config.component || 'lampa_safe_styles',
-                    name: config.name,
-                    title: config.title,
-                    type: config.type,
-                    default: config.default
+                    param: {
+                        component: config.component || 'lampa_safe_styles',
+                        name: config.param.name,
+                        title: config.param.title,
+                        type: config.param.type,
+                        default: config.param.default
+                    }
                 });
-                console.log('Параметр ' + config.name + ' успішно додано');
+                console.log('Параметр ' + config.param.name + ' успішно додано');
                 if (typeof Lampa.SettingsApi.getParam === 'function') {
-                    var param = Lampa.SettingsApi.getParam(config.name);
-                    console.log('Перевірка параметра ' + config.name + ':', param);
+                    var param = Lampa.SettingsApi.getParam(config.param.name);
+                    console.log('Перевірка параметра ' + config.param.name + ':', param);
                 }
             } catch (e) {
-                console.error('Помилка додавання параметра ' + config.name + ':', e.message);
+                console.error('Помилка додавання параметра ' + config.param.name + ':', e.message);
             }
         }
 
@@ -256,170 +258,212 @@
         setTimeout(function() {
             safeAddParam({
                 component: 'lampa_safe_styles',
-                name: 'dark_bg',
-                title: 'Темний фон',
-                type: 'input',
-                default: Lampa.Storage.get('lss_dark_bg', paramDefaults.lss_dark_bg)
+                param: {
+                    name: 'dark_bg',
+                    title: 'Темний фон',
+                    type: 'input',
+                    default: Lampa.Storage.get('lss_dark_bg', paramDefaults.lss_dark_bg)
+                }
             });
 
             safeAddParam({
                 component: 'lampa_safe_styles',
-                name: 'darker_bg',
-                title: 'Темніший фон',
-                type: 'input',
-                default: Lampa.Storage.get('lss_darker_bg', paramDefaults.lss_darker_bg)
+                param: {
+                    name: 'darker_bg',
+                    title: 'Темніший фон',
+                    type: 'input',
+                    default: Lampa.Storage.get('lss_darker_bg', paramDefaults.lss_darker_bg)
+                }
             });
 
             safeAddParam({
                 component: 'lampa_safe_styles',
-                name: 'menu_bg',
-                title: 'Фон меню',
-                type: 'input',
-                default: Lampa.Storage.get('lss_menu_bg', paramDefaults.lss_menu_bg)
+                param: {
+                    name: 'menu_bg',
+                    title: 'Фон меню',
+                    type: 'input',
+                    default: Lampa.Storage.get('lss_menu_bg', paramDefaults.lss_menu_bg)
+                }
             });
 
             safeAddParam({
                 component: 'lampa_safe_styles',
-                name: 'accent_color',
-                title: 'Акцентний колір',
-                type: 'input',
-                default: Lampa.Storage.get('lss_accent_color', paramDefaults.lss_accent_color)
+                param: {
+                    name: 'accent_color',
+                    title: 'Акцентний колір',
+                    type: 'input',
+                    default: Lampa.Storage.get('lss_accent_color', paramDefaults.lss_accent_color)
+                }
             });
 
             safeAddParam({
                 component: 'lampa_safe_styles',
-                name: 'vote_background',
-                title: 'Фон оцінки',
-                type: 'input',
-                default: Lampa.Storage.get('lss_vote_background', paramDefaults.lss_vote_background)
+                param: {
+                    name: 'vote_background',
+                    title: 'Фон оцінки',
+                    type: 'input',
+                    default: Lampa.Storage.get('lss_vote_background', paramDefaults.lss_vote_background)
+                }
             });
 
             safeAddParam({
                 component: 'lampa_safe_styles',
-                name: 'card_radius',
-                title: 'Радіус картки',
-                type: 'input',
-                default: Lampa.Storage.get('lss_card_radius', paramDefaults.lss_card_radius)
+                param: {
+                    name: 'card_radius',
+                    title: 'Радіус картки',
+                    type: 'input',
+                    default: Lampa.Storage.get('lss_card_radius', paramDefaults.lss_card_radius)
+                }
             });
 
             safeAddParam({
                 component: 'lampa_safe_styles',
-                name: 'menu_radius',
-                title: 'Радіус меню',
-                type: 'input',
-                default: Lampa.Storage.get('lss_menu_radius', paramDefaults.lss_menu_radius)
+                param: {
+                    name: 'menu_radius',
+                    title: 'Радіус меню',
+                    type: 'input',
+                    default: Lampa.Storage.get('lss_menu_radius', paramDefaults.lss_menu_radius)
+                }
             });
 
             safeAddParam({
                 component: 'lampa_safe_styles',
-                name: 'vote_border_radius',
-                title: 'Радіус оцінки',
-                type: 'input',
-                default: Lampa.Storage.get('lss_vote_border_radius', paramDefaults.lss_vote_border_radius)
+                param: {
+                    name: 'vote_border_radius',
+                    title: 'Радіус оцінки',
+                    type: 'input',
+                    default: Lampa.Storage.get('lss_vote_border_radius', paramDefaults.lss_vote_border_radius)
+                }
             });
 
             safeAddParam({
                 component: 'lampa_safe_styles',
-                name: 'navigation_bar',
-                title: 'Прозорість панелі навігації',
-                type: 'input',
-                default: Lampa.Storage.get('lss_navigation_bar', paramDefaults.lss_navigation_bar)
+                param: {
+                    name: 'navigation_bar',
+                    title: 'Прозорість панелі навігації',
+                    type: 'input',
+                    default: Lampa.Storage.get('lss_navigation_bar', paramDefaults.lss_navigation_bar)
+                }
             });
 
             safeAddParam({
                 component: 'lampa_safe_styles',
-                name: 'bookmarks_layer',
-                title: 'Прозорість закладок',
-                type: 'input',
-                default: Lampa.Storage.get('lss_bookmarks_layer', paramDefaults.lss_bookmarks_layer)
+                param: {
+                    name: 'bookmarks_layer',
+                    title: 'Прозорість закладок',
+                    type: 'input',
+                    default: Lampa.Storage.get('lss_bookmarks_layer', paramDefaults.lss_bookmarks_layer)
+                }
             });
 
             safeAddParam({
                 component: 'lampa_safe_styles',
-                name: 'card_more_box',
-                title: 'Прозорість блоку "Більше"',
-                type: 'input',
-                default: Lampa.Storage.get('lss_card_more_box', paramDefaults.lss_card_more_box)
+                param: {
+                    name: 'card_more_box',
+                    title: 'Прозорість блоку "Більше"',
+                    type: 'input',
+                    default: Lampa.Storage.get('lss_card_more_box', paramDefaults.lss_card_more_box)
+                }
             });
 
             safeAddParam({
                 component: 'lampa_safe_styles',
-                name: 'title_size',
-                title: 'Розмір заголовка',
-                type: 'input',
-                default: Lampa.Storage.get('lss_title_size', paramDefaults.lss_title_size)
+                param: {
+                    name: 'title_size',
+                    title: 'Розмір заголовка',
+                    type: 'input',
+                    default: Lampa.Storage.get('lss_title_size', paramDefaults.lss_title_size)
+                }
             });
 
             safeAddParam({
                 component: 'lampa_safe_styles',
-                name: 'rating_weight',
-                title: 'Вага шрифту оцінки',
-                type: 'select',
-                default: Lampa.Storage.get('lss_rating_weight', paramDefaults.lss_rating_weight)
+                param: {
+                    name: 'rating_weight',
+                    title: 'Вага шрифту оцінки',
+                    type: 'select',
+                    default: Lampa.Storage.get('lss_rating_weight', paramDefaults.lss_rating_weight)
+                }
             });
 
             safeAddParam({
                 component: 'lampa_safe_styles',
-                name: 'vote_font_size',
-                title: 'Розмір шрифту оцінки',
-                type: 'input',
-                default: Lampa.Storage.get('lss_vote_font_size', paramDefaults.lss_vote_font_size)
+                param: {
+                    name: 'vote_font_size',
+                    title: 'Розмір шрифту оцінки',
+                    type: 'input',
+                    default: Lampa.Storage.get('lss_vote_font_size', paramDefaults.lss_vote_font_size)
+                }
             });
 
             safeAddParam({
                 component: 'lampa_safe_styles',
-                name: 'modal_shadow',
-                title: 'Тінь модального вікна',
-                type: 'input',
-                default: Lampa.Storage.get('lss_modal_shadow', paramDefaults.lss_modal_shadow)
+                param: {
+                    name: 'modal_shadow',
+                    title: 'Тінь модального вікна',
+                    type: 'input',
+                    default: Lampa.Storage.get('lss_modal_shadow', paramDefaults.lss_modal_shadow)
+                }
             });
 
             safeAddParam({
                 component: 'lampa_safe_styles',
-                name: 'advanced_animation',
-                title: 'Увімкнути анімації',
-                type: 'toggle',
-                default: Lampa.Storage.get('lss_advanced_animation', paramDefaults.lss_advanced_animation)
+                param: {
+                    name: 'advanced_animation',
+                    title: 'Увімкнути анімації',
+                    type: 'toggle',
+                    default: Lampa.Storage.get('lss_advanced_animation', paramDefaults.lss_advanced_animation)
+                }
             });
 
             safeAddParam({
                 component: 'lampa_safe_styles',
-                name: 'center_align_details',
-                title: 'Центрувати деталі',
-                type: 'toggle',
-                default: Lampa.Storage.get('lss_center_align_details', paramDefaults.lss_center_align_details)
+                param: {
+                    name: 'center_align_details',
+                    title: 'Центрувати деталі',
+                    type: 'toggle',
+                    default: Lampa.Storage.get('lss_center_align_details', paramDefaults.lss_center_align_details)
+                }
             });
 
             safeAddParam({
                 component: 'lampa_safe_styles',
-                name: 'max_image_width',
-                title: 'Максимальна ширина зображення',
-                type: 'input',
-                default: Lampa.Storage.get('lss_max_image_width', paramDefaults.lss_max_image_width)
+                param: {
+                    name: 'max_image_width',
+                    title: 'Максимальна ширина зображення',
+                    type: 'input',
+                    default: Lampa.Storage.get('lss_max_image_width', paramDefaults.lss_max_image_width)
+                }
             });
 
             safeAddParam({
                 component: 'lampa_safe_styles',
-                name: 'vote_position',
-                title: 'Позиція оцінки',
-                type: 'select',
-                default: Lampa.Storage.get('lss_vote_position', paramDefaults.lss_vote_position)
+                param: {
+                    name: 'vote_position',
+                    title: 'Позиція оцінки',
+                    type: 'select',
+                    default: Lampa.Storage.get('lss_vote_position', paramDefaults.lss_vote_position)
+                }
             });
 
             safeAddParam({
                 component: 'lampa_safe_styles',
-                name: 'reset_default',
-                title: 'Скинути налаштування',
-                type: 'trigger',
-                default: null
+                param: {
+                    name: 'reset_default',
+                    title: 'Скинути налаштування',
+                    type: 'trigger',
+                    default: null
+                }
             });
 
             safeAddParam({
                 component: 'lampa_safe_styles',
-                name: 'reset_factory',
-                title: 'Заводські налаштування',
-                type: 'trigger',
-                default: null
+                param: {
+                    name: 'reset_factory',
+                    title: 'Заводські налаштування',
+                    type: 'trigger',
+                    default: null
+                }
             });
         }, 100);
     }
