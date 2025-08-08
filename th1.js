@@ -4,11 +4,12 @@
     // Основний об'єкт плагіна
     var SafeStyle = {
         name: 'safe_style',
-        version: '2.2.2',
+        version: '2.2.3',
         settings: {
             theme: 'custom_color',
-            custom_color: '#141414', // Початковий колір (темно-сірий)
-            enabled: true // Стан плагіна (увімкнено/вимкнено)
+            custom_color: '#c22222', // Початковий колір (Червоний)
+            enabled: true, // Стан плагіна (увімкнено/вимкнено)
+            show_all_buttons: false // Показувати всі кнопки як full-start__button
         }
     };
 
@@ -21,7 +22,7 @@
         if (!SafeStyle.settings.enabled || theme === 'default') return;
 
         // Використовуємо переданий колір або збережений, якщо тема "custom_color"
-        var selectedColor = (theme === 'custom_color') ? (color || SafeStyle.settings.custom_color || '#141414') : '#141414';
+        var selectedColor = (theme === 'custom_color') ? (color || SafeStyle.settings.custom_color || '#c22222') : '#c22222';
 
         // Код SVG для лоадера з обраним кольором
         var svgCode = encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="135" height="140" fill="' + selectedColor + '">' +
@@ -141,6 +142,15 @@
         // Встановлюємо стиль
         style.html(dynamicTheme);
         $('head').append(style);
+    }
+
+    // Функція для управління класами кнопок
+    function updateButtonStyles() {
+        if (SafeStyle.settings.show_all_buttons) {
+            $('.view--online.lampac--button').addClass('full-start__button selector');
+        } else {
+            $('.view--online.lampac--button').removeClass('full-start__button selector');
+        }
     }
 
     // Додавання шаблонів та базових стилів
@@ -520,15 +530,17 @@
         $('head').append(style);
 
         // Додаємо новий компонент у меню налаштувань
-        Lampa.SettingsApi.addComponent({
-            component: 'safe_style',
-            name: Lampa.Lang.translate('Safe Style'),
-            icon: `
-            <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0a9 9 0 0 0 9-9 9 9 0 0 0-.5-3.5M5.6 7.6l4.5 4.5M10.1 7.6l4.5 4.5"/>
-            </svg>
-            `
-        });
+        if (Lampa.SettingsApi) {
+            Lampa.SettingsApi.addComponent({
+                component: 'safe_style',
+                name: Lampa.Lang.translate('Safe Style'),
+                icon: `
+                <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0a9 9 0 0 0 9-9 9 9 0 0 0-.5-3.5M5.6 7.6l4.5 4.5M10.1 7.6l4.5 4.5"/>
+                </svg>
+                `
+            });
+        }
 
         // Функція для оновлення видимості параметра "Колір теми"
         function updateColorVisibility(theme) {
@@ -541,82 +553,104 @@
         }
 
         // Додаємо параметри до компонента safe_style
-        Lampa.SettingsApi.addParam({
-            component: 'safe_style',
-            param: {
-                name: 'safe_style_theme',
-                type: 'select',
-                values: {
-                    custom_color: 'Користувацька',
-                    default: 'LAMPA'
+        if (Lampa.SettingsApi) {
+            Lampa.SettingsApi.addParam({
+                component: 'safe_style',
+                param: {
+                    name: 'safe_style_theme',
+                    type: 'select',
+                    values: {
+                        custom_color: 'Користувацька',
+                        default: 'LAMPA'
+                    },
+                    default: 'custom_color'
                 },
-                default: 'custom_color'
-            },
-            field: {
-                name: Lampa.Lang.translate('Тема'),
-                description: 'Виберіть тему для інтерфейсу'
-            },
-            onChange: function(value) {
-                SafeStyle.settings.theme = value;
-                Lampa.Storage.set('safe_style_theme', value);
-                Lampa.Settings.update();
-                applyTheme(value);
-                updateColorVisibility(value);
-            }
-        });
-
-        Lampa.SettingsApi.addParam({
-            component: 'safe_style',
-            param: {
-                name: 'safe_style_color',
-                type: 'select',
-                values: {
-                    '#141414': 'Темно-сірий',
-                    '#ff4d4d': 'Червоний',
-                    '#ffeb3b': 'Жовтий',
-                    '#4d7cff': 'Синій',
-                    '#a64dff': 'Пурпурний',
-                    '#ff9f4d': 'Помаранчевий',
-                    '#3da18d': 'М’ятний',
-                    '#4caf50': 'Зелений',
-                    '#ff69b4': 'Рожевий',
-                    '#6a1b9a': 'Фіолетовий',
-                    '#26a69a': 'Бірюзовий'
+                field: {
+                    name: Lampa.Lang.translate('Тема'),
+                    description: 'Виберіть тему для інтерфейсу'
                 },
-                default: '#141414'
-            },
-            field: {
-                name: Lampa.Lang.translate('Колір теми'),
-                description: 'Виберіть колір для користувацької теми'
-            },
-            onChange: function(value) {
-                SafeStyle.settings.custom_color = value;
-                Lampa.Storage.set('safe_style_color', value);
-                Lampa.Settings.update();
-                if (SafeStyle.settings.theme === 'custom_color') {
-                    applyTheme('custom_color', value);
+                onChange: function(value) {
+                    SafeStyle.settings.theme = value;
+                    Lampa.Storage.set('safe_style_theme', value);
+                    Lampa.Settings.update();
+                    applyTheme(value);
+                    updateColorVisibility(value);
                 }
-            }
-        });
+            });
 
-        Lampa.SettingsApi.addParam({
-            component: 'safe_style',
-            param: {
-                name: 'safe_style_enabled',
-                type: 'toggle',
-                default: true
-            },
-            field: {
-                name: Lampa.Lang.translate('Увімкнути плагін'),
-                description: 'Увімкнути або вимкнути плагін тем'
-            },
-            onChange: function(value) {
-                SafeStyle.settings.enabled = value;
-                Lampa.Storage.set('safe_style_enabled', value);
-                Lampa.Settings.update();
-                applyTheme(SafeStyle.settings.theme);
-            }
-        });
+            Lampa.SettingsApi.addParam({
+                component: 'safe_style',
+                param: {
+                    name: 'safe_style_color',
+                    type: 'select',
+                    values: {
+                        '#c22222': 'Червоний',
+                        '#b0b0b0': 'Світло-сірий',
+                        '#ffeb3b': 'Жовтий',
+                        '#4d7cff': 'Синій',
+                        '#a64dff': 'Пурпурний',
+                        '#ff9f4d': 'Помаранчевий',
+                        '#3da18d': 'М’ятний',
+                        '#4caf50': 'Зелений',
+                        '#ff69b4': 'Рожевий',
+                        '#6a1b9a': 'Фіолетовий',
+                        '#26a69a': 'Бірюзовий'
+                    },
+                    default: '#c22222'
+                },
+                field: {
+                    name: Lampa.Lang.translate('Колір теми'),
+                    description: 'Виберіть колір для користувацької теми'
+                },
+                onChange: function(value) {
+                    SafeStyle.settings.custom_color = value;
+                    Lampa.Storage.set('safe_style_color', value);
+                    Lampa.Settings.update();
+                    if (SafeStyle.settings.theme === 'custom_color') {
+                        applyTheme('custom_color', value);
+                    }
+                }
+            });
+
+            Lampa.SettingsApi.addParam({
+                component: 'safe_style',
+                param: {
+                    name: 'safe_style_show_all_buttons',
+                    type: 'toggle',
+                    default: false
+                },
+                field: {
+                    name: Lampa.Lang.translate('Показувати всі кнопки'),
+                    description: 'Додає стиль повноекранних кнопок до всіх онлайн-кнопок'
+                },
+                onChange: function(value) {
+                    SafeStyle.settings.show_all_buttons = value;
+                    Lampa.Storage.set('safe_style_show_all_buttons', value);
+                    Lampa.Settings.update();
+                    updateButtonStyles();
+                }
+            });
+
+            Lampa.SettingsApi.addParam({
+                component: 'safe_style',
+                param: {
+                    name: 'safe_style_enabled',
+                    type: 'toggle',
+                    default: true
+                },
+                field: {
+                    name: Lampa.Lang.translate('Увімкнути плагін'),
+                    description: 'Увімкнути або вимкнути плагін тем'
+                },
+                onChange: function(value) {
+                    SafeStyle.settings.enabled = value;
+                    Lampa.Storage.set('safe_style_enabled', value);
+                    Lampa.Settings.update();
+                    applyTheme(SafeStyle.settings.theme);
+                    updateButtonStyles();
+                }
+            });
+        }
 
         // Ініціалізація видимості параметра "Колір теми" при відкритті налаштувань
         Lampa.Settings.listener.follow('open', function(e) {
@@ -624,6 +658,9 @@
                 updateColorVisibility(SafeStyle.settings.theme);
             }
         });
+
+        // Застосовуємо стилі кнопок
+        updateButtonStyles();
     }
 
     // Ініціалізація плагіна
@@ -631,14 +668,17 @@
         if (e.type === 'ready') {
             // Завантажуємо збережені налаштування
             SafeStyle.settings.theme = Lampa.Storage.get('safe_style_theme', 'custom_color');
-            SafeStyle.settings.custom_color = Lampa.Storage.get('safe_style_color', '#141414');
+            SafeStyle.settings.custom_color = Lampa.Storage.get('safe_style_color', '#c22222');
             SafeStyle.settings.enabled = Lampa.Storage.get('safe_style_enabled', true);
+            SafeStyle.settings.show_all_buttons = Lampa.Storage.get('safe_style_show_all_buttons', false);
 
-            // Застосовуємо шаблони та стилі
-            AddIn();
-
-            // Застосовуємо збережену тему
-            applyTheme(SafeStyle.settings.theme);
+            // Застосовуємо шаблони та стилі з затримкою
+            setTimeout(function() {
+                if (Lampa.SettingsApi) {
+                    AddIn();
+                    applyTheme(SafeStyle.settings.theme);
+                }
+            }, 100);
         }
     });
 })();
