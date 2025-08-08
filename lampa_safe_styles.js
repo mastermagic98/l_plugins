@@ -212,6 +212,7 @@
         }
 
         // Додавання компонента
+        console.log('Додаємо компонент: lampa_safe_styles');
         Lampa.SettingsApi.addComponent({
             component: 'lampa_safe_styles',
             name: 'Lampa Safe Styles',
@@ -231,7 +232,6 @@
                 Lampa.SettingsApi.addParam({
                     param: {
                         component: config.component || 'lampa_safe_styles',
-                        category: config.category || 'general',
                         name: config.param.name,
                         title: config.param.title || config.param.name,
                         type: config.param.type,
@@ -247,10 +247,9 @@
             }
         }
 
-        // Додавання параметрів
+        // Додавання параметрів (без категорій)
         safeAddParam({
             component: 'lampa_safe_styles',
-            category: 'colors',
             param: {
                 name: 'dark_bg',
                 title: 'Темний фон',
@@ -272,7 +271,6 @@
 
         safeAddParam({
             component: 'lampa_safe_styles',
-            category: 'colors',
             param: {
                 name: 'darker_bg',
                 title: 'Темніший фон',
@@ -294,7 +292,6 @@
 
         safeAddParam({
             component: 'lampa_safe_styles',
-            category: 'colors',
             param: {
                 name: 'menu_bg',
                 title: 'Фон меню',
@@ -316,7 +313,6 @@
 
         safeAddParam({
             component: 'lampa_safe_styles',
-            category: 'colors',
             param: {
                 name: 'accent_color',
                 title: 'Акцентний колір',
@@ -338,7 +334,6 @@
 
         safeAddParam({
             component: 'lampa_safe_styles',
-            category: 'colors',
             param: {
                 name: 'vote_background',
                 title: 'Фон оцінки',
@@ -360,7 +355,6 @@
 
         safeAddParam({
             component: 'lampa_safe_styles',
-            category: 'radii',
             param: {
                 name: 'card_radius',
                 title: 'Радіус картки',
@@ -382,7 +376,6 @@
 
         safeAddParam({
             component: 'lampa_safe_styles',
-            category: 'radii',
             param: {
                 name: 'menu_radius',
                 title: 'Радіус меню',
@@ -404,7 +397,6 @@
 
         safeAddParam({
             component: 'lampa_safe_styles',
-            category: 'radii',
             param: {
                 name: 'vote_border_radius',
                 title: 'Радіус оцінки',
@@ -426,7 +418,6 @@
 
         safeAddParam({
             component: 'lampa_safe_styles',
-            category: 'opacity',
             param: {
                 name: 'navigation_bar',
                 title: 'Прозорість панелі навігації',
@@ -448,7 +439,6 @@
 
         safeAddParam({
             component: 'lampa_safe_styles',
-            category: 'opacity',
             param: {
                 name: 'bookmarks_layer',
                 title: 'Прозорість закладок',
@@ -470,7 +460,6 @@
 
         safeAddParam({
             component: 'lampa_safe_styles',
-            category: 'opacity',
             param: {
                 name: 'card_more_box',
                 title: 'Прозорість блоку "Більше"',
@@ -492,7 +481,6 @@
 
         safeAddParam({
             component: 'lampa_safe_styles',
-            category: 'fonts',
             param: {
                 name: 'title_size',
                 title: 'Розмір заголовка',
@@ -514,7 +502,6 @@
 
         safeAddParam({
             component: 'lampa_safe_styles',
-            category: 'fonts',
             param: {
                 name: 'rating_weight',
                 title: 'Вага шрифту оцінки',
@@ -539,7 +526,6 @@
 
         safeAddParam({
             component: 'lampa_safe_styles',
-            category: 'fonts',
             param: {
                 name: 'vote_font_size',
                 title: 'Розмір шрифту оцінки',
@@ -561,7 +547,6 @@
 
         safeAddParam({
             component: 'lampa_safe_styles',
-            category: 'shadows',
             param: {
                 name: 'modal_shadow',
                 title: 'Тінь модального вікна',
@@ -583,7 +568,6 @@
 
         safeAddParam({
             component: 'lampa_safe_styles',
-            category: 'animations',
             param: {
                 name: 'advanced_animation',
                 title: 'Увімкнути анімації',
@@ -599,7 +583,6 @@
 
         safeAddParam({
             component: 'lampa_safe_styles',
-            category: 'mobile',
             param: {
                 name: 'center_align_details',
                 title: 'Центрувати деталі',
@@ -615,7 +598,6 @@
 
         safeAddParam({
             component: 'lampa_safe_styles',
-            category: 'mobile',
             param: {
                 name: 'max_image_width',
                 title: 'Максимальна ширина зображення',
@@ -637,7 +619,6 @@
 
         safeAddParam({
             component: 'lampa_safe_styles',
-            category: 'vote',
             param: {
                 name: 'vote_position',
                 title: 'Позиція оцінки',
@@ -664,7 +645,6 @@
 
         safeAddParam({
             component: 'lampa_safe_styles',
-            category: 'actions',
             param: {
                 name: 'reset_default',
                 title: 'Скинути налаштування',
@@ -675,7 +655,6 @@
 
         safeAddParam({
             component: 'lampa_safe_styles',
-            category: 'actions',
             param: {
                 name: 'reset_factory',
                 title: 'Заводські налаштування',
@@ -695,6 +674,7 @@
         if (typeof Lampa.SettingsApi.addComponent !== 'function') {
             Lampa.Listener.follow('app', function(e) {
                 if (e.type === 'ready' && typeof Lampa.SettingsApi.addComponent === 'function') {
+                    console.log('Спроба додати компонент після події ready');
                     addSettingsComponent();
                 }
             });
@@ -712,6 +692,7 @@
         if (typeof Lampa !== 'undefined' && Lampa.Listener) {
             Lampa.Listener.follow('app', function(e) {
                 if (e.type === 'ready') {
+                    console.log('Подія app:ready, викликаємо integrateWithLampaSettings');
                     integrateWithLampaSettings();
                 }
             });
