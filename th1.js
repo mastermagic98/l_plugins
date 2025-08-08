@@ -2,9 +2,9 @@
     'use strict';
 
     // Основний об'єкт плагіна
-    var naruzhe_themes = {
-        name: 'naruzhe_themes',
-        version: '2.1.9',
+    var SafeStyle = {
+        name: 'safe_style',
+        version: '2.2.0',
         settings: {
             theme: 'custom_color',
             custom_color: '#3da18d', // Початковий колір (м'ятний)
@@ -18,10 +18,10 @@
         $('#interface_mod_theme').remove();
 
         // Якщо плагін відключений або вибрано "default", скидаємо стилі
-        if (!naruzhe_themes.settings.enabled || theme === 'default') return;
+        if (!SafeStyle.settings.enabled || theme === 'default') return;
 
         // Використовуємо переданий колір або збережений, якщо тема "custom_color"
-        var selectedColor = (theme === 'custom_color') ? (color || naruzhe_themes.settings.custom_color || '#3da18d') : '#3da18d';
+        var selectedColor = (theme === 'custom_color') ? (color || SafeStyle.settings.custom_color || '#3da18d') : '#3da18d';
 
         // Код SVG для лоадера з обраним кольором
         var svgCode = encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="135" height="140" fill="' + selectedColor + '">' +
@@ -505,6 +505,14 @@
                 .card-episode.hover {
                     transform: scale(1.02);
                 }
+                /* Приховуємо параметр "Колір теми" за замовчуванням */
+                div[data-name="safe_style_color"] {
+                    display: none;
+                }
+                /* Показуємо "Колір теми", якщо обрана Користувацька */
+                div[data-name="safe_style_color"].visible {
+                    display: block;
+                }
             </style>
         `;
 
@@ -513,8 +521,8 @@
 
         // Додаємо новий компонент у меню налаштувань
         Lampa.SettingsApi.addComponent({
-            component: 'naruzhe_themes',
-            name: Lampa.Lang.translate('Теми Naruzhe'),
+            component: 'safe_style',
+            name: Lampa.Lang.translate('Safe Style'),
             icon: `
             <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0a9 9 0 0 0 9-9 9 9 0 0 0-.5-3.5M5.6 7.6l4.5 4.5M10.1 7.6l4.5 4.5"/>
@@ -522,11 +530,21 @@
             `
         });
 
-        // Додаємо параметри до компонента naruzhe_themes
+        // Функція для оновлення видимості параметра "Колір теми"
+        function updateColorVisibility(theme) {
+            var colorParam = $('div[data-name="safe_style_color"]');
+            if (theme === 'custom_color') {
+                colorParam.addClass('visible');
+            } else {
+                colorParam.removeClass('visible');
+            }
+        }
+
+        // Додаємо параметри до компонента safe_style
         Lampa.SettingsApi.addParam({
-            component: 'naruzhe_themes',
+            component: 'safe_style',
             param: {
-                name: 'naruzhe_themes_theme',
+                name: 'safe_style_theme',
                 type: 'select',
                 values: {
                     custom_color: 'Користувацька',
@@ -539,17 +557,18 @@
                 description: 'Виберіть тему для інтерфейсу'
             },
             onChange: function(value) {
-                naruzhe_themes.settings.theme = value;
-                Lampa.Storage.set('naruzhe_themes_theme', value);
+                SafeStyle.settings.theme = value;
+                Lampa.Storage.set('safe_style_theme', value);
                 Lampa.Settings.update();
                 applyTheme(value);
+                updateColorVisibility(value);
             }
         });
 
         Lampa.SettingsApi.addParam({
-            component: 'naruzhe_themes',
+            component: 'safe_style',
             param: {
-                name: 'naruzhe_themes_color',
+                name: 'safe_style_color',
                 type: 'select',
                 values: {
                     '#ff4d4d': 'Червоний',
@@ -566,19 +585,19 @@
                 description: 'Виберіть колір для користувацької теми'
             },
             onChange: function(value) {
-                naruzhe_themes.settings.custom_color = value;
-                Lampa.Storage.set('naruzhe_themes_color', value);
+                SafeStyle.settings.custom_color = value;
+                Lampa.Storage.set('safe_style_color', value);
                 Lampa.Settings.update();
-                if (naruzhe_themes.settings.theme === 'custom_color') {
+                if (SafeStyle.settings.theme === 'custom_color') {
                     applyTheme('custom_color', value);
                 }
             }
         });
 
         Lampa.SettingsApi.addParam({
-            component: 'naruzhe_themes',
+            component: 'safe_style',
             param: {
-                name: 'naruzhe_themes_enabled',
+                name: 'safe_style_enabled',
                 type: 'toggle',
                 default: true
             },
@@ -587,10 +606,17 @@
                 description: 'Увімкнути або вимкнути плагін тем'
             },
             onChange: function(value) {
-                naruzhe_themes.settings.enabled = value;
-                Lampa.Storage.set('naruzhe_themes_enabled', value);
+                SafeStyle.settings.enabled = value;
+                Lampa.Storage.set('safe_style_enabled', value);
                 Lampa.Settings.update();
-                applyTheme(naruzhe_themes.settings.theme);
+                applyTheme(SafeStyle.settings.theme);
+            }
+        });
+
+        // Ініціалізація видимості параметра "Колір теми" при відкритті налаштувань
+        Lampa.Settings.listener.follow('open', function(e) {
+            if (e.name === 'safe_style') {
+                updateColorVisibility(SafeStyle.settings.theme);
             }
         });
     }
@@ -599,15 +625,15 @@
     Lampa.Listener.follow('app', function(e) {
         if (e.type === 'ready') {
             // Завантажуємо збережені налаштування
-            naruzhe_themes.settings.theme = Lampa.Storage.get('naruzhe_themes_theme', 'custom_color');
-            naruzhe_themes.settings.custom_color = Lampa.Storage.get('naruzhe_themes_color', '#3da18d');
-            naruzhe_themes.settings.enabled = Lampa.Storage.get('naruzhe_themes_enabled', true);
+            SafeStyle.settings.theme = Lampa.Storage.get('safe_style_theme', 'custom_color');
+            SafeStyle.settings.custom_color = Lampa.Storage.get('safe_style_color', '#3da18d');
+            SafeStyle.settings.enabled = Lampa.Storage.get('safe_style_enabled', true);
 
             // Застосовуємо шаблони та стилі
             AddIn();
 
             // Застосовуємо збережену тему
-            applyTheme(naruzhe_themes.settings.theme);
+            applyTheme(SafeStyle.settings.theme);
         }
     });
 })();
