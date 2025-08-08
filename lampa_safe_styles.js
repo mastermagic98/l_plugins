@@ -207,6 +207,7 @@
     // Додавання компонента налаштувань
     function addSettingsComponent() {
         if (typeof Lampa === 'undefined' || !Lampa.SettingsApi || typeof Lampa.SettingsApi.addComponent !== 'function') {
+            console.log('Lampa.SettingsApi.addComponent недоступний');
             return;
         }
 
@@ -219,405 +220,475 @@
         });
 
         // Універсальна функція для додавання параметрів
-        function safeAddParam(param) {
-            if (typeof Lampa.SettingsApi.addParam !== 'function') return;
+        function safeAddParam(config) {
+            if (typeof Lampa.SettingsApi.addParam !== 'function') {
+                console.log('Lampa.SettingsApi.addParam недоступний для параметра: ' + config.param.name);
+                return;
+            }
 
             try {
+                console.log('Додаємо параметр:', config.param.name);
                 Lampa.SettingsApi.addParam({
-                    component: param.component || 'lampa_safe_styles',
-                    category: param.category || 'general',
-                    name: param.name,
-                    title: param.title || param.name,
-                    type: param.type,
-                    default: param.default,
-                    placeholder: param.placeholder || '',
-                    values: param.values || {},
-                    onChange: param.onChange || function() {},
-                    action: param.action || function() {}
+                    param: {
+                        component: config.component || 'lampa_safe_styles',
+                        category: config.category || 'general',
+                        name: config.param.name,
+                        title: config.param.title || config.param.name,
+                        type: config.param.type,
+                        default: config.param.default,
+                        placeholder: config.param.placeholder || '',
+                        values: config.param.values || {},
+                        onChange: config.param.onChange || function() {},
+                        action: config.param.action || function() {}
+                    }
                 });
             } catch (e) {
-                console.error('Помилка додавання параметра ' + param.name + ':', e.message);
+                console.error('Помилка додавання параметра ' + config.param.name + ':', e.message);
             }
         }
 
         // Додавання параметрів
         safeAddParam({
+            component: 'lampa_safe_styles',
             category: 'colors',
-            name: 'dark_bg',
-            title: 'Темний фон',
-            type: 'input',
-            placeholder: '#141414',
-            default: Lampa.Storage.get('lss_dark_bg', paramDefaults.lss_dark_bg),
-            onChange: function(value) {
-                if (isValidHexColor(value)) {
-                    Lampa.Storage.set('lss_dark_bg', value);
-                    updateCSSVariables();
-                    applyStyles();
-                } else {
-                    Lampa.Storage.set('lss_dark_bg', paramDefaults.lss_dark_bg);
-                    Lampa.Noty.show('Невалідний HEX-код кольору. Скинуто до значення за замовчуванням.');
+            param: {
+                name: 'dark_bg',
+                title: 'Темний фон',
+                type: 'input',
+                placeholder: '#141414',
+                default: Lampa.Storage.get('lss_dark_bg', paramDefaults.lss_dark_bg),
+                onChange: function(value) {
+                    if (isValidHexColor(value)) {
+                        Lampa.Storage.set('lss_dark_bg', value);
+                        updateCSSVariables();
+                        applyStyles();
+                    } else {
+                        Lampa.Storage.set('lss_dark_bg', paramDefaults.lss_dark_bg);
+                        Lampa.Noty.show('Невалідний HEX-код кольору. Скинуто до значення за замовчуванням.');
+                    }
                 }
             }
         });
 
         safeAddParam({
+            component: 'lampa_safe_styles',
             category: 'colors',
-            name: 'darker_bg',
-            title: 'Темніший фон',
-            type: 'input',
-            placeholder: '#1a1a1a',
-            default: Lampa.Storage.get('lss_darker_bg', paramDefaults.lss_darker_bg),
-            onChange: function(value) {
-                if (isValidHexColor(value)) {
-                    Lampa.Storage.set('lss_darker_bg', value);
-                    updateCSSVariables();
-                    applyStyles();
-                } else {
-                    Lampa.Storage.set('lss_darker_bg', paramDefaults.lss_darker_bg);
-                    Lampa.Noty.show('Невалідний HEX-код кольору. Скинуто до значення за замовчуванням.');
+            param: {
+                name: 'darker_bg',
+                title: 'Темніший фон',
+                type: 'input',
+                placeholder: '#1a1a1a',
+                default: Lampa.Storage.get('lss_darker_bg', paramDefaults.lss_darker_bg),
+                onChange: function(value) {
+                    if (isValidHexColor(value)) {
+                        Lampa.Storage.set('lss_darker_bg', value);
+                        updateCSSVariables();
+                        applyStyles();
+                    } else {
+                        Lampa.Storage.set('lss_darker_bg', paramDefaults.lss_darker_bg);
+                        Lampa.Noty.show('Невалідний HEX-код кольору. Скинуто до значення за замовчуванням.');
+                    }
                 }
             }
         });
 
         safeAddParam({
+            component: 'lampa_safe_styles',
             category: 'colors',
-            name: 'menu_bg',
-            title: 'Фон меню',
-            type: 'input',
-            placeholder: '#181818',
-            default: Lampa.Storage.get('lss_menu_bg', paramDefaults.lss_menu_bg),
-            onChange: function(value) {
-                if (isValidHexColor(value)) {
-                    Lampa.Storage.set('lss_menu_bg', value);
-                    updateCSSVariables();
-                    applyStyles();
-                } else {
-                    Lampa.Storage.set('lss_menu_bg', paramDefaults.lss_menu_bg);
-                    Lampa.Noty.show('Невалідний HEX-код кольору. Скинуто до значення за замовчуванням.');
+            param: {
+                name: 'menu_bg',
+                title: 'Фон меню',
+                type: 'input',
+                placeholder: '#181818',
+                default: Lampa.Storage.get('lss_menu_bg', paramDefaults.lss_menu_bg),
+                onChange: function(value) {
+                    if (isValidHexColor(value)) {
+                        Lampa.Storage.set('lss_menu_bg', value);
+                        updateCSSVariables();
+                        applyStyles();
+                    } else {
+                        Lampa.Storage.set('lss_menu_bg', paramDefaults.lss_menu_bg);
+                        Lampa.Noty.show('Невалідний HEX-код кольору. Скинуто до значення за замовчуванням.');
+                    }
                 }
             }
         });
 
         safeAddParam({
+            component: 'lampa_safe_styles',
             category: 'colors',
-            name: 'accent_color',
-            title: 'Акцентний колір',
-            type: 'input',
-            placeholder: '#c22222',
-            default: Lampa.Storage.get('lss_accent_color', paramDefaults.lss_accent_color),
-            onChange: function(value) {
-                if (isValidHexColor(value)) {
-                    Lampa.Storage.set('lss_accent_color', value);
-                    updateCSSVariables();
-                    applyStyles();
-                } else {
-                    Lampa.Storage.set('lss_accent_color', paramDefaults.lss_accent_color);
-                    Lampa.Noty.show('Невалідний HEX-код кольору. Скинуто до значення за замовчуванням.');
+            param: {
+                name: 'accent_color',
+                title: 'Акцентний колір',
+                type: 'input',
+                placeholder: '#c22222',
+                default: Lampa.Storage.get('lss_accent_color', paramDefaults.lss_accent_color),
+                onChange: function(value) {
+                    if (isValidHexColor(value)) {
+                        Lampa.Storage.set('lss_accent_color', value);
+                        updateCSSVariables();
+                        applyStyles();
+                    } else {
+                        Lampa.Storage.set('lss_accent_color', paramDefaults.lss_accent_color);
+                        Lampa.Noty.show('Невалідний HEX-код кольору. Скинуто до значення за замовчуванням.');
+                    }
                 }
             }
         });
 
         safeAddParam({
+            component: 'lampa_safe_styles',
             category: 'colors',
-            name: 'vote_background',
-            title: 'Фон оцінки',
-            type: 'input',
-            placeholder: '#c22222',
-            default: Lampa.Storage.get('lss_vote_background', paramDefaults.lss_vote_background),
-            onChange: function(value) {
-                if (isValidHexColor(value)) {
-                    Lampa.Storage.set('lss_vote_background', value);
-                    updateCSSVariables();
-                    applyStyles();
-                } else {
-                    Lampa.Storage.set('lss_vote_background', paramDefaults.lss_vote_background);
-                    Lampa.Noty.show('Невалідний HEX-код кольору. Скинуто до значення за замовчуванням.');
+            param: {
+                name: 'vote_background',
+                title: 'Фон оцінки',
+                type: 'input',
+                placeholder: '#c22222',
+                default: Lampa.Storage.get('lss_vote_background', paramDefaults.lss_vote_background),
+                onChange: function(value) {
+                    if (isValidHexColor(value)) {
+                        Lampa.Storage.set('lss_vote_background', value);
+                        updateCSSVariables();
+                        applyStyles();
+                    } else {
+                        Lampa.Storage.set('lss_vote_background', paramDefaults.lss_vote_background);
+                        Lampa.Noty.show('Невалідний HEX-код кольору. Скинуто до значення за замовчуванням.');
+                    }
                 }
             }
         });
 
         safeAddParam({
+            component: 'lampa_safe_styles',
             category: 'radii',
-            name: 'card_radius',
-            title: 'Радіус картки',
-            type: 'input',
-            placeholder: '1.4em',
-            default: Lampa.Storage.get('lss_card_radius', paramDefaults.lss_card_radius),
-            onChange: function(value) {
-                if (isValidEm(value)) {
-                    Lampa.Storage.set('lss_card_radius', value);
-                    updateCSSVariables();
-                    applyStyles();
-                } else {
-                    Lampa.Storage.set('lss_card_radius', paramDefaults.lss_card_radius);
-                    Lampa.Noty.show('Невалідне значення радіусу. Скинуто до значення за замовчуванням.');
+            param: {
+                name: 'card_radius',
+                title: 'Радіус картки',
+                type: 'input',
+                placeholder: '1.4em',
+                default: Lampa.Storage.get('lss_card_radius', paramDefaults.lss_card_radius),
+                onChange: function(value) {
+                    if (isValidEm(value)) {
+                        Lampa.Storage.set('lss_card_radius', value);
+                        updateCSSVariables();
+                        applyStyles();
+                    } else {
+                        Lampa.Storage.set('lss_card_radius', paramDefaults.lss_card_radius);
+                        Lampa.Noty.show('Невалідне значення радіусу. Скинуто до значення за замовчуванням.');
+                    }
                 }
             }
         });
 
         safeAddParam({
+            component: 'lampa_safe_styles',
             category: 'radii',
-            name: 'menu_radius',
-            title: 'Радіус меню',
-            type: 'input',
-            placeholder: '1.2em',
-            default: Lampa.Storage.get('lss_menu_radius', paramDefaults.lss_menu_radius),
-            onChange: function(value) {
-                if (isValidEm(value)) {
-                    Lampa.Storage.set('lss_menu_radius', value);
-                    updateCSSVariables();
-                    applyStyles();
-                } else {
-                    Lampa.Storage.set('lss_menu_radius', paramDefaults.lss_menu_radius);
-                    Lampa.Noty.show('Невалідне значення радіусу. Скинуто до значення за замовчуванням.');
+            param: {
+                name: 'menu_radius',
+                title: 'Радіус меню',
+                type: 'input',
+                placeholder: '1.2em',
+                default: Lampa.Storage.get('lss_menu_radius', paramDefaults.lss_menu_radius),
+                onChange: function(value) {
+                    if (isValidEm(value)) {
+                        Lampa.Storage.set('lss_menu_radius', value);
+                        updateCSSVariables();
+                        applyStyles();
+                    } else {
+                        Lampa.Storage.set('lss_menu_radius', paramDefaults.lss_menu_radius);
+                        Lampa.Noty.show('Невалідне значення радіусу. Скинуто до значення за замовчуванням.');
+                    }
                 }
             }
         });
 
         safeAddParam({
+            component: 'lampa_safe_styles',
             category: 'radii',
-            name: 'vote_border_radius',
-            title: 'Радіус оцінки',
-            type: 'input',
-            placeholder: '0em 0.5em 0em 0.5em',
-            default: Lampa.Storage.get('lss_vote_border_radius', paramDefaults.lss_vote_border_radius),
-            onChange: function(value) {
-                if (isValidEm(value)) {
-                    Lampa.Storage.set('lss_vote_border_radius', value);
-                    updateCSSVariables();
-                    applyStyles();
-                } else {
-                    Lampa.Storage.set('lss_vote_border_radius', paramDefaults.lss_vote_border_radius);
-                    Lampa.Noty.show('Невалідне значення радіусу. Скинуто до значення за замовчуванням.');
+            param: {
+                name: 'vote_border_radius',
+                title: 'Радіус оцінки',
+                type: 'input',
+                placeholder: '0em 0.5em 0em 0.5em',
+                default: Lampa.Storage.get('lss_vote_border_radius', paramDefaults.lss_vote_border_radius),
+                onChange: function(value) {
+                    if (isValidEm(value)) {
+                        Lampa.Storage.set('lss_vote_border_radius', value);
+                        updateCSSVariables();
+                        applyStyles();
+                    } else {
+                        Lampa.Storage.set('lss_vote_border_radius', paramDefaults.lss_vote_border_radius);
+                        Lampa.Noty.show('Невалідне значення радіусу. Скинуто до значення за замовчуванням.');
+                    }
                 }
             }
         });
 
         safeAddParam({
+            component: 'lampa_safe_styles',
             category: 'opacity',
-            name: 'navigation_bar',
-            title: 'Прозорість панелі навігації',
-            type: 'input',
-            placeholder: '0.3',
-            default: Lampa.Storage.get('lss_navigation_bar', paramDefaults.lss_navigation_bar),
-            onChange: function(value) {
-                if (isValidOpacity(value)) {
-                    Lampa.Storage.set('lss_navigation_bar', parseFloat(value));
-                    updateCSSVariables();
-                    applyStyles();
-                } else {
-                    Lampa.Storage.set('lss_navigation_bar', paramDefaults.lss_navigation_bar);
-                    Lampa.Noty.show('Невалідне значення прозорості. Скинуто до значення за замовчуванням.');
+            param: {
+                name: 'navigation_bar',
+                title: 'Прозорість панелі навігації',
+                type: 'input',
+                placeholder: '0.3',
+                default: Lampa.Storage.get('lss_navigation_bar', paramDefaults.lss_navigation_bar),
+                onChange: function(value) {
+                    if (isValidOpacity(value)) {
+                        Lampa.Storage.set('lss_navigation_bar', parseFloat(value));
+                        updateCSSVariables();
+                        applyStyles();
+                    } else {
+                        Lampa.Storage.set('lss_navigation_bar', paramDefaults.lss_navigation_bar);
+                        Lampa.Noty.show('Невалідне значення прозорості. Скинуто до значення за замовчуванням.');
+                    }
                 }
             }
         });
 
         safeAddParam({
+            component: 'lampa_safe_styles',
             category: 'opacity',
-            name: 'bookmarks_layer',
-            title: 'Прозорість закладок',
-            type: 'input',
-            placeholder: '0.3',
-            default: Lampa.Storage.get('lss_bookmarks_layer', paramDefaults.lss_bookmarks_layer),
-            onChange: function(value) {
-                if (isValidOpacity(value)) {
-                    Lampa.Storage.set('lss_bookmarks_layer', parseFloat(value));
-                    updateCSSVariables();
-                    applyStyles();
-                } else {
-                    Lampa.Storage.set('lss_bookmarks_layer', paramDefaults.lss_bookmarks_layer);
-                    Lampa.Noty.show('Невалідне значення прозорості. Скинуто до значення за замовчуванням.');
+            param: {
+                name: 'bookmarks_layer',
+                title: 'Прозорість закладок',
+                type: 'input',
+                placeholder: '0.3',
+                default: Lampa.Storage.get('lss_bookmarks_layer', paramDefaults.lss_bookmarks_layer),
+                onChange: function(value) {
+                    if (isValidOpacity(value)) {
+                        Lampa.Storage.set('lss_bookmarks_layer', parseFloat(value));
+                        updateCSSVariables();
+                        applyStyles();
+                    } else {
+                        Lampa.Storage.set('lss_bookmarks_layer', paramDefaults.lss_bookmarks_layer);
+                        Lampa.Noty.show('Невалідне значення прозорості. Скинуто до значення за замовчуванням.');
+                    }
                 }
             }
         });
 
         safeAddParam({
+            component: 'lampa_safe_styles',
             category: 'opacity',
-            name: 'card_more_box',
-            title: 'Прозорість блоку "Більше"',
-            type: 'input',
-            placeholder: '0.3',
-            default: Lampa.Storage.get('lss_card_more_box', paramDefaults.lss_card_more_box),
-            onChange: function(value) {
-                if (isValidOpacity(value)) {
-                    Lampa.Storage.set('lss_card_more_box', parseFloat(value));
-                    updateCSSVariables();
-                    applyStyles();
-                } else {
-                    Lampa.Storage.set('lss_card_more_box', paramDefaults.lss_card_more_box);
-                    Lampa.Noty.show('Невалідне значення прозорості. Скинуто до значення за замовчуванням.');
+            param: {
+                name: 'card_more_box',
+                title: 'Прозорість блоку "Більше"',
+                type: 'input',
+                placeholder: '0.3',
+                default: Lampa.Storage.get('lss_card_more_box', paramDefaults.lss_card_more_box),
+                onChange: function(value) {
+                    if (isValidOpacity(value)) {
+                        Lampa.Storage.set('lss_card_more_box', parseFloat(value));
+                        updateCSSVariables();
+                        applyStyles();
+                    } else {
+                        Lampa.Storage.set('lss_card_more_box', paramDefaults.lss_card_more_box);
+                        Lampa.Noty.show('Невалідне значення прозорості. Скинуто до значення за замовчуванням.');
+                    }
                 }
             }
         });
 
         safeAddParam({
+            component: 'lampa_safe_styles',
             category: 'fonts',
-            name: 'title_size',
-            title: 'Розмір заголовка',
-            type: 'input',
-            placeholder: '2.5em',
-            default: Lampa.Storage.get('lss_title_size', paramDefaults.lss_title_size),
-            onChange: function(value) {
-                if (isValidEm(value)) {
-                    Lampa.Storage.set('lss_title_size', value);
-                    updateCSSVariables();
-                    applyStyles();
-                } else {
-                    Lampa.Storage.set('lss_title_size', paramDefaults.lss_title_size);
-                    Lampa.Noty.show('Невалідне значення розміру шрифту. Скинуто до значення за замовчуванням.');
+            param: {
+                name: 'title_size',
+                title: 'Розмір заголовка',
+                type: 'input',
+                placeholder: '2.5em',
+                default: Lampa.Storage.get('lss_title_size', paramDefaults.lss_title_size),
+                onChange: function(value) {
+                    if (isValidEm(value)) {
+                        Lampa.Storage.set('lss_title_size', value);
+                        updateCSSVariables();
+                        applyStyles();
+                    } else {
+                        Lampa.Storage.set('lss_title_size', paramDefaults.lss_title_size);
+                        Lampa.Noty.show('Невалідне значення розміру шрифту. Скинуто до значення за замовчуванням.');
+                    }
                 }
             }
         });
 
         safeAddParam({
+            component: 'lampa_safe_styles',
             category: 'fonts',
-            name: 'rating_weight',
-            title: 'Вага шрифту оцінки',
-            type: 'select',
-            values: {
-                'normal': 'Нормальний',
-                'bold': 'Жирний'
-            },
-            default: Lampa.Storage.get('lss_rating_weight', paramDefaults.lss_rating_weight),
-            onChange: function(value) {
-                if (isValidFontWeight(value)) {
-                    Lampa.Storage.set('lss_rating_weight', value);
-                    updateCSSVariables();
-                    applyStyles();
-                } else {
-                    Lampa.Storage.set('lss_rating_weight', paramDefaults.lss_rating_weight);
-                    Lampa.Noty.show('Невалідне значення ваги шрифту. Скинуто до значення за замовчуванням.');
+            param: {
+                name: 'rating_weight',
+                title: 'Вага шрифту оцінки',
+                type: 'select',
+                values: {
+                    'normal': 'Нормальний',
+                    'bold': 'Жирний'
+                },
+                default: Lampa.Storage.get('lss_rating_weight', paramDefaults.lss_rating_weight),
+                onChange: function(value) {
+                    if (isValidFontWeight(value)) {
+                        Lampa.Storage.set('lss_rating_weight', value);
+                        updateCSSVariables();
+                        applyStyles();
+                    } else {
+                        Lampa.Storage.set('lss_rating_weight', paramDefaults.lss_rating_weight);
+                        Lampa.Noty.show('Невалідне значення ваги шрифту. Скинуто до значення за замовчуванням.');
+                    }
                 }
             }
         });
 
         safeAddParam({
+            component: 'lampa_safe_styles',
             category: 'fonts',
-            name: 'vote_font_size',
-            title: 'Розмір шрифту оцінки',
-            type: 'input',
-            placeholder: '1.5em',
-            default: Lampa.Storage.get('lss_vote_font_size', paramDefaults.lss_vote_font_size),
-            onChange: function(value) {
-                if (isValidEm(value)) {
-                    Lampa.Storage.set('lss_vote_font_size', value);
-                    updateCSSVariables();
-                    applyStyles();
-                } else {
-                    Lampa.Storage.set('lss_vote_font_size', paramDefaults.lss_vote_font_size);
-                    Lampa.Noty.show('Невалідне значення розміру шрифту. Скинуто до значення за замовчуванням.');
+            param: {
+                name: 'vote_font_size',
+                title: 'Розмір шрифту оцінки',
+                type: 'input',
+                placeholder: '1.5em',
+                default: Lampa.Storage.get('lss_vote_font_size', paramDefaults.lss_vote_font_size),
+                onChange: function(value) {
+                    if (isValidEm(value)) {
+                        Lampa.Storage.set('lss_vote_font_size', value);
+                        updateCSSVariables();
+                        applyStyles();
+                    } else {
+                        Lampa.Storage.set('lss_vote_font_size', paramDefaults.lss_vote_font_size);
+                        Lampa.Noty.show('Невалідне значення розміру шрифту. Скинуто до значення за замовчуванням.');
+                    }
                 }
             }
         });
 
         safeAddParam({
+            component: 'lampa_safe_styles',
             category: 'shadows',
-            name: 'modal_shadow',
-            title: 'Тінь модального вікна',
-            type: 'input',
-            placeholder: '0 4px 12px rgba(0, 0, 0, 0.5)',
-            default: Lampa.Storage.get('lss_modal_shadow', paramDefaults.lss_modal_shadow),
-            onChange: function(value) {
-                if (isValidShadow(value)) {
-                    Lampa.Storage.set('lss_modal_shadow', value);
-                    updateCSSVariables();
-                    applyStyles();
-                } else {
-                    Lampa.Storage.set('lss_modal_shadow', paramDefaults.lss_modal_shadow);
-                    Lampa.Noty.show('Невалідне значення тіні. Скинуто до значення за замовчуванням.');
+            param: {
+                name: 'modal_shadow',
+                title: 'Тінь модального вікна',
+                type: 'input',
+                placeholder: '0 4px 12px rgba(0, 0, 0, 0.5)',
+                default: Lampa.Storage.get('lss_modal_shadow', paramDefaults.lss_modal_shadow),
+                onChange: function(value) {
+                    if (isValidShadow(value)) {
+                        Lampa.Storage.set('lss_modal_shadow', value);
+                        updateCSSVariables();
+                        applyStyles();
+                    } else {
+                        Lampa.Storage.set('lss_modal_shadow', paramDefaults.lss_modal_shadow);
+                        Lampa.Noty.show('Невалідне значення тіні. Скинуто до значення за замовчуванням.');
+                    }
                 }
             }
         });
 
         safeAddParam({
+            component: 'lampa_safe_styles',
             category: 'animations',
-            name: 'advanced_animation',
-            title: 'Увімкнути анімації',
-            type: 'toggle',
-            default: Lampa.Storage.get('lss_advanced_animation', paramDefaults.lss_advanced_animation),
-            onChange: function(value) {
-                Lampa.Storage.set('lss_advanced_animation', value);
-                updateCSSVariables();
-                applyStyles();
-            }
-        });
-
-        safeAddParam({
-            category: 'mobile',
-            name: 'center_align_details',
-            title: 'Центрувати деталі',
-            type: 'toggle',
-            default: Lampa.Storage.get('lss_center_align_details', paramDefaults.lss_center_align_details),
-            onChange: function(value) {
-                Lampa.Storage.set('lss_center_align_details', value);
-                updateCSSVariables();
-                applyStyles();
-            }
-        });
-
-        safeAddParam({
-            category: 'mobile',
-            name: 'max_image_width',
-            title: 'Максимальна ширина зображення',
-            type: 'input',
-            placeholder: '10em',
-            default: Lampa.Storage.get('lss_max_image_width', paramDefaults.lss_max_image_width),
-            onChange: function(value) {
-                if (isValidEm(value)) {
-                    Lampa.Storage.set('lss_max_image_width', value);
+            param: {
+                name: 'advanced_animation',
+                title: 'Увімкнути анімації',
+                type: 'toggle',
+                default: Lampa.Storage.get('lss_advanced_animation', paramDefaults.lss_advanced_animation),
+                onChange: function(value) {
+                    Lampa.Storage.set('lss_advanced_animation', value);
                     updateCSSVariables();
                     applyStyles();
-                } else {
-                    Lampa.Storage.set('lss_max_image_width', paramDefaults.lss_max_image_width);
-                    Lampa.Noty.show('Невалідне значення ширини зображення. Скинуто до значення за замовчуванням.');
                 }
             }
         });
 
         safeAddParam({
+            component: 'lampa_safe_styles',
+            category: 'mobile',
+            param: {
+                name: 'center_align_details',
+                title: 'Центрувати деталі',
+                type: 'toggle',
+                default: Lampa.Storage.get('lss_center_align_details', paramDefaults.lss_center_align_details),
+                onChange: function(value) {
+                    Lampa.Storage.set('lss_center_align_details', value);
+                    updateCSSVariables();
+                    applyStyles();
+                }
+            }
+        });
+
+        safeAddParam({
+            component: 'lampa_safe_styles',
+            category: 'mobile',
+            param: {
+                name: 'max_image_width',
+                title: 'Максимальна ширина зображення',
+                type: 'input',
+                placeholder: '10em',
+                default: Lampa.Storage.get('lss_max_image_width', paramDefaults.lss_max_image_width),
+                onChange: function(value) {
+                    if (isValidEm(value)) {
+                        Lampa.Storage.set('lss_max_image_width', value);
+                        updateCSSVariables();
+                        applyStyles();
+                    } else {
+                        Lampa.Storage.set('lss_max_image_width', paramDefaults.lss_max_image_width);
+                        Lampa.Noty.show('Невалідне значення ширини зображення. Скинуто до значення за замовчуванням.');
+                    }
+                }
+            }
+        });
+
+        safeAddParam({
+            component: 'lampa_safe_styles',
             category: 'vote',
-            name: 'vote_position',
-            title: 'Позиція оцінки',
-            type: 'select',
-            values: {
-                'top-right': 'Верхній правий',
-                'top-left': 'Верхній лівий',
-                'bottom-right': 'Нижній правий',
-                'bottom-left': 'Нижній лівий'
-            },
-            default: Lampa.Storage.get('lss_vote_position', paramDefaults.lss_vote_position),
-            onChange: function(value) {
-                if (isValidVotePosition(value)) {
-                    Lampa.Storage.set('lss_vote_position', value);
-                    updateCSSVariables();
-                    applyStyles();
-                } else {
-                    Lampa.Storage.set('lss_vote_position', paramDefaults.lss_vote_position);
-                    Lampa.Noty.show('Невалідне значення позиції оцінки. Скинуто до значення за замовчуванням.');
+            param: {
+                name: 'vote_position',
+                title: 'Позиція оцінки',
+                type: 'select',
+                values: {
+                    'top-right': 'Верхній правий',
+                    'top-left': 'Верхній лівий',
+                    'bottom-right': 'Нижній правий',
+                    'bottom-left': 'Нижній лівий'
+                },
+                default: Lampa.Storage.get('lss_vote_position', paramDefaults.lss_vote_position),
+                onChange: function(value) {
+                    if (isValidVotePosition(value)) {
+                        Lampa.Storage.set('lss_vote_position', value);
+                        updateCSSVariables();
+                        applyStyles();
+                    } else {
+                        Lampa.Storage.set('lss_vote_position', paramDefaults.lss_vote_position);
+                        Lampa.Noty.show('Невалідне значення позиції оцінки. Скинуто до значення за замовчуванням.');
+                    }
                 }
             }
         });
 
         safeAddParam({
+            component: 'lampa_safe_styles',
             category: 'actions',
-            name: 'reset_default',
-            title: 'Скинути налаштування',
-            type: 'trigger',
-            action: resetToDefaultSettings
+            param: {
+                name: 'reset_default',
+                title: 'Скинути налаштування',
+                type: 'trigger',
+                action: resetToDefaultSettings
+            }
         });
 
         safeAddParam({
+            component: 'lampa_safe_styles',
             category: 'actions',
-            name: 'reset_factory',
-            title: 'Заводські налаштування',
-            type: 'trigger',
-            action: resetToFactorySettings
+            param: {
+                name: 'reset_factory',
+                title: 'Заводські налаштування',
+                type: 'trigger',
+                action: resetToFactorySettings
+            }
         });
     }
 
     // Функція інтеграції з налаштуваннями Lampa
     function integrateWithLampaSettings() {
         if (typeof Lampa === 'undefined' || !Lampa.SettingsApi) {
+            console.log('Lampa.SettingsApi недоступний');
             return;
         }
 
