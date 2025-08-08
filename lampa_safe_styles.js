@@ -516,6 +516,10 @@
                 return;
             }
         }
+
+        // Додавання параметрів одразу після компонента
+        console.log('Додаємо параметри після компонента');
+        addSettingsParams();
     }
 
     // Функція інтеграції з налаштуваннями Lampa
@@ -529,16 +533,17 @@
             Lampa.Listener.follow('app', function(e) {
                 if (e.type === 'ready') {
                     console.log('Спроба додати компонент після події ready');
-                    setTimeout(addSettingsComponent, 1000);
+                    addSettingsComponent();
                 }
             });
             return;
         }
 
-        // Додавання компонента з затримкою
-        setTimeout(addSettingsComponent, 1000);
+        // Додавання компонента та параметрів негайно
+        console.log('Викликаємо addSettingsComponent негайно');
+        addSettingsComponent();
 
-        // Використання Lampa.Settings.listener для параметрів
+        // Запасний варіант: додавання параметрів при відкритті
         if (typeof Lampa.Settings !== 'undefined' && Lampa.Settings.listener) {
             Lampa.Settings.listener.follow('open', function(e) {
                 console.log('Подія settings:open, e.name:', e.name);
