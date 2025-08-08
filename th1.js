@@ -4,7 +4,7 @@
     // Основний об'єкт плагіна
     var naruzhe_themes = {
         name: 'naruzhe_themes',
-        version: '2.1.3',
+        version: '2.1.4',
         settings: {
             theme: 'custom_color',
             custom_color: '#3da18d', // Початковий колір (аналог mint_dark)
@@ -511,58 +511,54 @@
         // Додаємо базові стилі
         $('head').append(style);
 
-        // Додаємо налаштування до компонента interface
-        Lampa.SettingsApi.addParam({
-            component: 'interface',
-            name: 'naruzhe_themes',
-            type: 'select',
-            field: {
-                name: 'Тема Naruzhe',
-                values: {
-                    custom_color: 'Користувацька',
-                    default: 'Без теми'
-                },
-                default: naruzhe_themes.settings.theme
-            },
-            onChange: function(value) {
-                naruzhe_themes.settings.theme = value;
-                Lampa.Storage.set('naruzhe_themes_theme', value);
-                applyTheme(value);
-                Lampa.SettingsApi.render();
-            }
-        });
+        // Додаємо налаштування через слухач події
+        Lampa.Listener.follow('settings_param', function(e) {
+            if (e.name === 'interface') {
+                e.body.push({
+                    title: 'Тема Naruzhe',
+                    subtitle: 'Виберіть тему для інтерфейсу',
+                    type: 'select',
+                    name: 'naruzhe_themes',
+                    value: naruzhe_themes.settings.theme,
+                    values: {
+                        custom_color: 'Користувацька',
+                        default: 'Без теми'
+                    },
+                    onChange: function(value) {
+                        naruzhe_themes.settings.theme = value;
+                        Lampa.Storage.set('naruzhe_themes_theme', value);
+                        applyTheme(value);
+                    }
+                });
 
-        Lampa.SettingsApi.addParam({
-            component: 'interface',
-            name: 'naruzhe_themes_color',
-            type: 'input',
-            field: {
-                name: 'Колір теми Naruzhe',
-                type: 'color',
-                default: naruzhe_themes.settings.custom_color
-            },
-            onChange: function(value) {
-                naruzhe_themes.settings.custom_color = value;
-                Lampa.Storage.set('naruzhe_themes_color', value);
-                if (naruzhe_themes.settings.theme === 'custom_color') {
-                    applyTheme('custom_color', value);
-                }
-            }
-        });
+                e.body.push({
+                    title: 'Колір теми Naruzhe',
+                    subtitle: 'Виберіть колір для користувацької теми',
+                    type: 'input',
+                    name: 'naruzhe_themes_color',
+                    value: naruzhe_themes.settings.custom_color,
+                    input_type: 'color',
+                    onChange: function(value) {
+                        naruzhe_themes.settings.custom_color = value;
+                        Lampa.Storage.set('naruzhe_themes_color', value);
+                        if (naruzhe_themes.settings.theme === 'custom_color') {
+                            applyTheme('custom_color', value);
+                        }
+                    }
+                });
 
-        Lampa.SettingsApi.addParam({
-            component: 'interface',
-            name: 'naruzhe_themes_enabled',
-            type: 'toggle',
-            field: {
-                name: 'Увімкнути плагін Naruzhe',
-                default: naruzhe_themes.settings.enabled
-            },
-            onChange: function(value) {
-                naruzhe_themes.settings.enabled = value;
-                Lampa.Storage.set('naruzhe_themes_enabled', value);
-                applyTheme(naruzhe_themes.settings.theme);
-                Lampa.SettingsApi.render();
+                e.body.push({
+                    title: 'Увімкнути плагін Naruzhe',
+                    subtitle: 'Увімкнути або вимкнути плагін тем',
+                    type: 'toggle',
+                    name: 'naruzhe_themes_enabled',
+                    value: naruzhe_themes.settings.enabled,
+                    onChange: function(value) {
+                        naruzhe_themes.settings.enabled = value;
+                        Lampa.Storage.set('naruzhe_themes_enabled', value);
+                        applyTheme(naruzhe_themes.settings.theme);
+                    }
+                });
             }
         });
     }
