@@ -4,10 +4,10 @@
     // Основний об'єкт плагіна
     var naruzhe_themes = {
         name: 'naruzhe_themes',
-        version: '2.1.5',
+        version: '2.1.6',
         settings: {
             theme: 'custom_color',
-            custom_color: '#3da18d', // Початковий колір (аналог mint_dark)
+            custom_color: '#3da18d', // Початковий колір (м'ятний)
             enabled: true // Стан плагіна (увімкнено/вимкнено)
         }
     };
@@ -545,10 +545,16 @@
                 e.body.push({
                     title: 'Колір теми',
                     subtitle: 'Виберіть колір для користувацької теми',
-                    type: 'input',
+                    type: 'select',
                     name: 'naruzhe_themes_color',
                     value: naruzhe_themes.settings.custom_color,
-                    input_type: 'color',
+                    values: {
+                        '#3da18d': 'М’ятний',
+                        '#ff4d4d': 'Червоний',
+                        '#4d7cff': 'Синій',
+                        '#a64dff': 'Пурпурний',
+                        '#ff9f4d': 'Помаранчевий'
+                    },
                     onChange: function(value) {
                         naruzhe_themes.settings.custom_color = value;
                         Lampa.Storage.set('naruzhe_themes_color', value);
