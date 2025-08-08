@@ -4,10 +4,10 @@
     // Основний об'єкт плагіна
     var SafeStyle = {
         name: 'safe_style',
-        version: '2.2.0',
+        version: '2.2.1',
         settings: {
             theme: 'custom_color',
-            custom_color: '#3da18d', // Початковий колір (м'ятний)
+            custom_color: '#141414', // Початковий колір (темно-сірий)
             enabled: true // Стан плагіна (увімкнено/вимкнено)
         }
     };
@@ -21,7 +21,7 @@
         if (!SafeStyle.settings.enabled || theme === 'default') return;
 
         // Використовуємо переданий колір або збережений, якщо тема "custom_color"
-        var selectedColor = (theme === 'custom_color') ? (color || SafeStyle.settings.custom_color || '#3da18d') : '#3da18d';
+        var selectedColor = (theme === 'custom_color') ? (color || SafeStyle.settings.custom_color || '#141414') : '#141414';
 
         // Код SVG для лоадера з обраним кольором
         var svgCode = encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="135" height="140" fill="' + selectedColor + '">' +
@@ -569,20 +569,13 @@
             component: 'safe_style',
             param: {
                 name: 'safe_style_color',
-                type: 'select',
-                values: {
-                    '#ff4d4d': 'Червоний',
-                    '#ffeb3b': 'Жовтий',
-                    '#4d7cff': 'Синій',
-                    '#a64dff': 'Пурпурний',
-                    '#ff9f4d': 'Помаранчевий',
-                    '#3da18d': 'М’ятний'
-                },
-                default: '#3da18d'
+                type: 'input',
+                input_type: 'color',
+                default: '#141414'
             },
             field: {
                 name: Lampa.Lang.translate('Колір теми'),
-                description: 'Виберіть колір для користувацької теми'
+                description: 'Виберіть колір для користувацької теми. Рекомендовані відтінки: Червоний (#ff4d4d), Жовтий (#ffeb3b), Синій (#4d7cff), Пурпурний (#a64dff), Помаранчевий (#ff9f4d), М’ятний (#3da18d), Зелений (#4caf50), Рожевий (#ff69b4), Фіолетовий (#6a1b9a), Бірюзовий (#26a69a)'
             },
             onChange: function(value) {
                 SafeStyle.settings.custom_color = value;
@@ -626,7 +619,7 @@
         if (e.type === 'ready') {
             // Завантажуємо збережені налаштування
             SafeStyle.settings.theme = Lampa.Storage.get('safe_style_theme', 'custom_color');
-            SafeStyle.settings.custom_color = Lampa.Storage.get('safe_style_color', '#3da18d');
+            SafeStyle.settings.custom_color = Lampa.Storage.get('safe_style_color', '#141414');
             SafeStyle.settings.enabled = Lampa.Storage.get('safe_style_enabled', true);
 
             // Застосовуємо шаблони та стилі
