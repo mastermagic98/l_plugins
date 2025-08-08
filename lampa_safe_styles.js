@@ -169,6 +169,7 @@
         });
         updateCSSVariables();
         applyStyles();
+        updateDOMParams();
         Lampa.Noty.show('Налаштування скинуто до заводських.');
     }
 
@@ -201,7 +202,125 @@
         });
         updateCSSVariables();
         applyStyles();
+        updateDOMParams();
         Lampa.Noty.show('Налаштування скинуто до стандартних.');
+    }
+
+    // Функція вимкнення плагіну
+    function disablePlugin() {
+        var folderElement = document.querySelector('[data-component="lampa_safe_styles"]');
+        if (folderElement) {
+            folderElement.remove();
+            console.log('Плагін lampa_safe_styles видалено з DOM');
+        }
+        // Скидання всіх стилів до стандартних
+        var root = document.documentElement;
+        Object.keys(paramDefaults).forEach(function(key) {
+            root.style.removeProperty('--' + key.replace('lss_', ''));
+        });
+        document.body.removeAttribute('data-lampa-styled');
+        stylesApplied = false;
+        Lampa.Noty.show('Плагін вимкнено.');
+    }
+
+    // Функція оновлення значень у DOM
+    function updateDOMParams() {
+        var darkBgInput = document.querySelector('.settings-param[data-name="dark_bg"] input');
+        if (darkBgInput) {
+            darkBgInput.value = Lampa.Storage.get('lss_dark_bg', paramDefaults.lss_dark_bg);
+        }
+
+        var animationStatus = document.querySelector('.settings-param[data-name="advanced_animation"] .settings-param__status');
+        if (animationStatus) {
+            var isEnabled = Lampa.Storage.get('lss_advanced_animation', paramDefaults.lss_advanced_animation);
+            animationStatus.className = 'settings-param__status ' + (isEnabled ? 'active' : '');
+        }
+
+        var darkerBgInput = document.querySelector('.settings-param[data-name="darker_bg"] input');
+        if (darkerBgInput) {
+            darkerBgInput.value = Lampa.Storage.get('lss_darker_bg', paramDefaults.lss_darker_bg);
+        }
+
+        var menuBgInput = document.querySelector('.settings-param[data-name="menu_bg"] input');
+        if (menuBgInput) {
+            menuBgInput.value = Lampa.Storage.get('lss_menu_bg', paramDefaults.lss_menu_bg);
+        }
+
+        var accentColorInput = document.querySelector('.settings-param[data-name="accent_color"] input');
+        if (accentColorInput) {
+            accentColorInput.value = Lampa.Storage.get('lss_accent_color', paramDefaults.lss_accent_color);
+        }
+
+        var voteBgInput = document.querySelector('.settings-param[data-name="vote_background"] input');
+        if (voteBgInput) {
+            voteBgInput.value = Lampa.Storage.get('lss_vote_background', paramDefaults.lss_vote_background);
+        }
+
+        var cardRadiusInput = document.querySelector('.settings-param[data-name="card_radius"] input');
+        if (cardRadiusInput) {
+            cardRadiusInput.value = Lampa.Storage.get('lss_card_radius', paramDefaults.lss_card_radius);
+        }
+
+        var menuRadiusInput = document.querySelector('.settings-param[data-name="menu_radius"] input');
+        if (menuRadiusInput) {
+            menuRadiusInput.value = Lampa.Storage.get('lss_menu_radius', paramDefaults.lss_menu_radius);
+        }
+
+        var voteRadiusInput = document.querySelector('.settings-param[data-name="vote_border_radius"] input');
+        if (voteRadiusInput) {
+            voteRadiusInput.value = Lampa.Storage.get('lss_vote_border_radius', paramDefaults.lss_vote_border_radius);
+        }
+
+        var navBarInput = document.querySelector('.settings-param[data-name="navigation_bar"] input');
+        if (navBarInput) {
+            navBarInput.value = Lampa.Storage.get('lss_navigation_bar', paramDefaults.lss_navigation_bar);
+        }
+
+        var bookmarksInput = document.querySelector('.settings-param[data-name="bookmarks_layer"] input');
+        if (bookmarksInput) {
+            bookmarksInput.value = Lampa.Storage.get('lss_bookmarks_layer', paramDefaults.lss_bookmarks_layer);
+        }
+
+        var cardMoreInput = document.querySelector('.settings-param[data-name="card_more_box"] input');
+        if (cardMoreInput) {
+            cardMoreInput.value = Lampa.Storage.get('lss_card_more_box', paramDefaults.lss_card_more_box);
+        }
+
+        var titleSizeInput = document.querySelector('.settings-param[data-name="title_size"] input');
+        if (titleSizeInput) {
+            titleSizeInput.value = Lampa.Storage.get('lss_title_size', paramDefaults.lss_title_size);
+        }
+
+        var ratingWeightSelect = document.querySelector('.settings-param[data-name="rating_weight"] select');
+        if (ratingWeightSelect) {
+            ratingWeightSelect.value = Lampa.Storage.get('lss_rating_weight', paramDefaults.lss_rating_weight);
+        }
+
+        var voteFontSizeInput = document.querySelector('.settings-param[data-name="vote_font_size"] input');
+        if (voteFontSizeInput) {
+            voteFontSizeInput.value = Lampa.Storage.get('lss_vote_font_size', paramDefaults.lss_vote_font_size);
+        }
+
+        var modalShadowInput = document.querySelector('.settings-param[data-name="modal_shadow"] input');
+        if (modalShadowInput) {
+            modalShadowInput.value = Lampa.Storage.get('lss_modal_shadow', paramDefaults.lss_modal_shadow);
+        }
+
+        var centerAlignStatus = document.querySelector('.settings-param[data-name="center_align_details"] .settings-param__status');
+        if (centerAlignStatus) {
+            var isEnabled = Lampa.Storage.get('lss_center_align_details', paramDefaults.lss_center_align_details);
+            centerAlignStatus.className = 'settings-param__status ' + (isEnabled ? 'active' : '');
+        }
+
+        var maxImageWidthInput = document.querySelector('.settings-param[data-name="max_image_width"] input');
+        if (maxImageWidthInput) {
+            maxImageWidthInput.value = Lampa.Storage.get('lss_max_image_width', paramDefaults.lss_max_image_width);
+        }
+
+        var votePositionSelect = document.querySelector('.settings-param[data-name="vote_position"] select');
+        if (votePositionSelect) {
+            votePositionSelect.value = Lampa.Storage.get('lss_vote_position', paramDefaults.lss_vote_position);
+        }
     }
 
     // Додавання компонента налаштувань через API
@@ -251,6 +370,7 @@
             folderElement.innerHTML = '<div class="settings-folder__icon"></div><div class="settings-folder__name">Lampa Safe Styles</div>';
             settingsContainer.appendChild(folderElement);
         }
+        folderElement.style.width = '100%';
         console.log('Перевірка DOM елемента lampa_safe_styles:', folderElement);
 
         // Додавання параметра: Темний фон (input)
@@ -258,53 +378,291 @@
         darkBgParam.className = 'settings-param selector';
         darkBgParam.setAttribute('data-name', 'dark_bg');
         darkBgParam.setAttribute('data-type', 'input');
-        darkBgParam.innerHTML = '<div class="settings-param__name">Темний фон</div><div class="settings-param__value"><input type="text" value="' + Lampa.Storage.get('lss_dark_bg', paramDefaults.lss_dark_bg) + '"></div>';
+        darkBgParam.style.width = '100%';
+        darkBgParam.innerHTML = '<div class="settings-param__name">Темний фон</div><div class="settings-param__value" style="width: 50%;"><input type="text" value="' + Lampa.Storage.get('lss_dark_bg', paramDefaults.lss_dark_bg) + '" style="width: 100%; max-width: 120px;"></div>';
         folderElement.appendChild(darkBgParam);
 
-        // Обробник для input
-        var darkBgInput = darkBgParam.querySelector('input');
-        darkBgInput.addEventListener('change', function(e) {
-            var value = e.target.value;
-            if (isValidHexColor(value)) {
-                Lampa.Storage.set('lss_dark_bg', value);
-                updateCSSVariables();
-                Lampa.Noty.show('Темний фон оновлено: ' + value);
-            } else {
-                Lampa.Noty.show('Невалідний HEX-код кольору');
-                e.target.value = Lampa.Storage.get('lss_dark_bg', paramDefaults.lss_dark_bg);
-            }
-        });
+        // Додавання параметра: Темніший фон (input)
+        var darkerBgParam = document.createElement('div');
+        darkerBgParam.className = 'settings-param selector';
+        darkerBgParam.setAttribute('data-name', 'darker_bg');
+        darkerBgParam.setAttribute('data-type', 'input');
+        darkerBgParam.style.width = '100%';
+        darkerBgParam.innerHTML = '<div class="settings-param__name">Темніший фон</div><div class="settings-param__value" style="width: 50%;"><input type="text" value="' + Lampa.Storage.get('lss_darker_bg', paramDefaults.lss_darker_bg) + '" style="width: 100%; max-width: 120px;"></div>';
+        folderElement.appendChild(darkerBgParam);
+
+        // Додавання параметра: Фон меню (input)
+        var menuBgParam = document.createElement('div');
+        menuBgParam.className = 'settings-param selector';
+        menuBgParam.setAttribute('data-name', 'menu_bg');
+        menuBgParam.setAttribute('data-type', 'input');
+        menuBgParam.style.width = '100%';
+        menuBgParam.innerHTML = '<div class="settings-param__name">Фон меню</div><div class="settings-param__value" style="width: 50%;"><input type="text" value="' + Lampa.Storage.get('lss_menu_bg', paramDefaults.lss_menu_bg) + '" style="width: 100%; max-width: 120px;"></div>';
+        folderElement.appendChild(menuBgParam);
+
+        // Додавання параметра: Акцентний колір (input)
+        var accentColorParam = document.createElement('div');
+        accentColorParam.className = 'settings-param selector';
+        accentColorParam.setAttribute('data-name', 'accent_color');
+        accentColorParam.setAttribute('data-type', 'input');
+        accentColorParam.style.width = '100%';
+        accentColorParam.innerHTML = '<div class="settings-param__name">Акцентний колір</div><div class="settings-param__value" style="width: 50%;"><input type="text" value="' + Lampa.Storage.get('lss_accent_color', paramDefaults.lss_accent_color) + '" style="width: 100%; max-width: 120px;"></div>';
+        folderElement.appendChild(accentColorParam);
+
+        // Додавання параметра: Фон оцінки (input)
+        var voteBgParam = document.createElement('div');
+        voteBgParam.className = 'settings-param selector';
+        voteBgParam.setAttribute('data-name', 'vote_background');
+        voteBgParam.setAttribute('data-type', 'input');
+        voteBgParam.style.width = '100%';
+        voteBgParam.innerHTML = '<div class="settings-param__name">Фон оцінки</div><div class="settings-param__value" style="width: 50%;"><input type="text" value="' + Lampa.Storage.get('lss_vote_background', paramDefaults.lss_vote_background) + '" style="width: 100%; max-width: 120px;"></div>';
+        folderElement.appendChild(voteBgParam);
+
+        // Додавання параметра: Радіус картки (input)
+        var cardRadiusParam = document.createElement('div');
+        cardRadiusParam.className = 'settings-param selector';
+        cardRadiusParam.setAttribute('data-name', 'card_radius');
+        cardRadiusParam.setAttribute('data-type', 'input');
+        cardRadiusParam.style.width = '100%';
+        cardRadiusParam.innerHTML = '<div class="settings-param__name">Радіус картки</div><div class="settings-param__value" style="width: 50%;"><input type="text" value="' + Lampa.Storage.get('lss_card_radius', paramDefaults.lss_card_radius) + '" style="width: 100%; max-width: 120px;"></div>';
+        folderElement.appendChild(cardRadiusParam);
+
+        // Додавання параметра: Радіус меню (input)
+        var menuRadiusParam = document.createElement('div');
+        menuRadiusParam.className = 'settings-param selector';
+        menuRadiusParam.setAttribute('data-name', 'menu_radius');
+        menuRadiusParam.setAttribute('data-type', 'input');
+        menuRadiusParam.style.width = '100%';
+        menuRadiusParam.innerHTML = '<div class="settings-param__name">Радіус меню</div><div class="settings-param__value" style="width: 50%;"><input type="text" value="' + Lampa.Storage.get('lss_menu_radius', paramDefaults.lss_menu_radius) + '" style="width: 100%; max-width: 120px;"></div>';
+        folderElement.appendChild(menuRadiusParam);
+
+        // Додавання параметра: Радіус оцінки (input)
+        var voteRadiusParam = document.createElement('div');
+        voteRadiusParam.className = 'settings-param selector';
+        voteRadiusParam.setAttribute('data-name', 'vote_border_radius');
+        voteRadiusParam.setAttribute('data-type', 'input');
+        voteRadiusParam.style.width = '100%';
+        voteRadiusParam.innerHTML = '<div class="settings-param__name">Радіус оцінки</div><div class="settings-param__value" style="width: 50%;"><input type="text" value="' + Lampa.Storage.get('lss_vote_border_radius', paramDefaults.lss_vote_border_radius) + '" style="width: 100%; max-width: 120px;"></div>';
+        folderElement.appendChild(voteRadiusParam);
+
+        // Додавання параметра: Прозорість панелі навігації (input)
+        var navBarParam = document.createElement('div');
+        navBarParam.className = 'settings-param selector';
+        navBarParam.setAttribute('data-name', 'navigation_bar');
+        navBarParam.setAttribute('data-type', 'input');
+        navBarParam.style.width = '100%';
+        navBarParam.innerHTML = '<div class="settings-param__name">Прозорість панелі навігації</div><div class="settings-param__value" style="width: 50%;"><input type="text" value="' + Lampa.Storage.get('lss_navigation_bar', paramDefaults.lss_navigation_bar) + '" style="width: 100%; max-width: 120px;"></div>';
+        folderElement.appendChild(navBarParam);
+
+        // Додавання параметра: Прозорість закладок (input)
+        var bookmarksParam = document.createElement('div');
+        bookmarksParam.className = 'settings-param selector';
+        bookmarksParam.setAttribute('data-name', 'bookmarks_layer');
+        bookmarksParam.setAttribute('data-type', 'input');
+        bookmarksParam.style.width = '100%';
+        bookmarksParam.innerHTML = '<div class="settings-param__name">Прозорість закладок</div><div class="settings-param__value" style="width: 50%;"><input type="text" value="' + Lampa.Storage.get('lss_bookmarks_layer', paramDefaults.lss_bookmarks_layer) + '" style="width: 100%; max-width: 120px;"></div>';
+        folderElement.appendChild(bookmarksParam);
+
+        // Додавання параметра: Прозорість блоку "Більше" (input)
+        var cardMoreParam = document.createElement('div');
+        cardMoreParam.className = 'settings-param selector';
+        cardMoreParam.setAttribute('data-name', 'card_more_box');
+        cardMoreParam.setAttribute('data-type', 'input');
+        cardMoreParam.style.width = '100%';
+        cardMoreParam.innerHTML = '<div class="settings-param__name">Прозорість блоку "Більше"</div><div class="settings-param__value" style="width: 50%;"><input type="text" value="' + Lampa.Storage.get('lss_card_more_box', paramDefaults.lss_card_more_box) + '" style="width: 100%; max-width: 120px;"></div>';
+        folderElement.appendChild(cardMoreParam);
+
+        // Додавання параметра: Розмір заголовка (input)
+        var titleSizeParam = document.createElement('div');
+        titleSizeParam.className = 'settings-param selector';
+        titleSizeParam.setAttribute('data-name', 'title_size');
+        titleSizeParam.setAttribute('data-type', 'input');
+        titleSizeParam.style.width = '100%';
+        titleSizeParam.innerHTML = '<div class="settings-param__name">Розмір заголовка</div><div class="settings-param__value" style="width: 50%;"><input type="text" value="' + Lampa.Storage.get('lss_title_size', paramDefaults.lss_title_size) + '" style="width: 100%; max-width: 120px;"></div>';
+        folderElement.appendChild(titleSizeParam);
+
+        // Додавання параметра: Вага шрифту оцінки (select)
+        var ratingWeightParam = document.createElement('div');
+        ratingWeightParam.className = 'settings-param selector';
+        ratingWeightParam.setAttribute('data-name', 'rating_weight');
+        ratingWeightParam.setAttribute('data-type', 'select');
+        ratingWeightParam.style.width = '100%';
+        ratingWeightParam.innerHTML = '<div class="settings-param__name">Вага шрифту оцінки</div><div class="settings-param__value" style="width: 50%;"><select style="width: 100%; max-width: 120px;"><option value="normal">Normal</option><option value="bold">Bold</option></select></div>';
+        folderElement.appendChild(ratingWeightParam);
+        var ratingWeightSelect = ratingWeightParam.querySelector('select');
+        ratingWeightSelect.value = Lampa.Storage.get('lss_rating_weight', paramDefaults.lss_rating_weight);
+
+        // Додавання параметра: Розмір шрифту оцінки (input)
+        var voteFontSizeParam = document.createElement('div');
+        voteFontSizeParam.className = 'settings-param selector';
+        voteFontSizeParam.setAttribute('data-name', 'vote_font_size');
+        voteFontSizeParam.setAttribute('data-type', 'input');
+        voteFontSizeParam.style.width = '100%';
+        voteFontSizeParam.innerHTML = '<div class="settings-param__name">Розмір шрифту оцінки</div><div class="settings-param__value" style="width: 50%;"><input type="text" value="' + Lampa.Storage.get('lss_vote_font_size', paramDefaults.lss_vote_font_size) + '" style="width: 100%; max-width: 120px;"></div>';
+        folderElement.appendChild(voteFontSizeParam);
+
+        // Додавання параметра: Тінь модального вікна (input)
+        var modalShadowParam = document.createElement('div');
+        modalShadowParam.className = 'settings-param selector';
+        modalShadowParam.setAttribute('data-name', 'modal_shadow');
+        modalShadowParam.setAttribute('data-type', 'input');
+        modalShadowParam.style.width = '100%';
+        modalShadowParam.innerHTML = '<div class="settings-param__name">Тінь модального вікна</div><div class="settings-param__value" style="width: 50%;"><input type="text" value="' + Lampa.Storage.get('lss_modal_shadow', paramDefaults.lss_modal_shadow) + '" style="width: 100%; max-width: 120px;"></div>';
+        folderElement.appendChild(modalShadowParam);
 
         // Додавання параметра: Увімкнути анімації (toggle)
         var animationParam = document.createElement('div');
         animationParam.className = 'settings-param selector';
         animationParam.setAttribute('data-name', 'advanced_animation');
         animationParam.setAttribute('data-type', 'toggle');
+        animationParam.style.width = '100%';
         var isAnimationEnabled = Lampa.Storage.get('lss_advanced_animation', paramDefaults.lss_advanced_animation);
-        animationParam.innerHTML = '<div class="settings-param__name">Увімкнути анімації</div><div class="settings-param__value"><div class="settings-param__status ' + (isAnimationEnabled ? 'active' : '') + '"></div></div>';
+        animationParam.innerHTML = '<div class="settings-param__name">Увімкнути анімації</div><div class="settings-param__value" style="width: 50%;"><div class="settings-param__status ' + (isAnimationEnabled ? 'active' : '') + '" style="width: 40px; height: 20px; border-radius: 10px; background: ' + (isAnimationEnabled ? '#c22222' : '#666') + '; transition: background 0.3s;"><div class="settings-param__status-circle" style="width: 16px; height: 16px; border-radius: 50%; background: #fff; position: absolute; top: 2px; left: ' + (isAnimationEnabled ? '22px' : '2px') + '; transition: left 0.3s;"></div></div></div>';
         folderElement.appendChild(animationParam);
 
-        // Обробник для toggle
-        animationParam.addEventListener('click', function() {
-            var status = animationParam.querySelector('.settings-param__status');
-            var currentValue = Lampa.Storage.get('lss_advanced_animation', paramDefaults.lss_advanced_animation);
-            Lampa.Storage.set('lss_advanced_animation', !currentValue);
-            status.className = 'settings-param__status ' + (!currentValue ? 'active' : '');
-            updateCSSVariables();
-            Lampa.Noty.show('Анімації ' + (!currentValue ? 'увімкнено' : 'вимкнено'));
-        });
+        // Додавання параметра: Центрувати деталі (toggle)
+        var centerAlignParam = document.createElement('div');
+        centerAlignParam.className = 'settings-param selector';
+        centerAlignParam.setAttribute('data-name', 'center_align_details');
+        centerAlignParam.setAttribute('data-type', 'toggle');
+        centerAlignParam.style.width = '100%';
+        var isCenterAlignEnabled = Lampa.Storage.get('lss_center_align_details', paramDefaults.lss_center_align_details);
+        centerAlignParam.innerHTML = '<div class="settings-param__name">Центрувати деталі</div><div class="settings-param__value" style="width: 50%;"><div class="settings-param__status ' + (isCenterAlignEnabled ? 'active' : '') + '" style="width: 40px; height: 20px; border-radius: 10px; background: ' + (isCenterAlignEnabled ? '#c22222' : '#666') + '; transition: background 0.3s;"><div class="settings-param__status-circle" style="width: 16px; height: 16px; border-radius: 50%; background: #fff; position: absolute; top: 2px; left: ' + (isCenterAlignEnabled ? '22px' : '2px') + '; transition: left 0.3s;"></div></div></div>';
+        folderElement.appendChild(centerAlignParam);
+
+        // Додавання параметра: Максимальна ширина зображення (input)
+        var maxImageWidthParam = document.createElement('div');
+        maxImageWidthParam.className = 'settings-param selector';
+        maxImageWidthParam.setAttribute('data-name', 'max_image_width');
+        maxImageWidthParam.setAttribute('data-type', 'input');
+        maxImageWidthParam.style.width = '100%';
+        maxImageWidthParam.innerHTML = '<div class="settings-param__name">Максимальна ширина зображення</div><div class="settings-param__value" style="width: 50%;"><input type="text" value="' + Lampa.Storage.get('lss_max_image_width', paramDefaults.lss_max_image_width) + '" style="width: 100%; max-width: 120px;"></div>';
+        folderElement.appendChild(maxImageWidthParam);
+
+        // Додавання параметра: Позиція оцінки (select)
+        var votePositionParam = document.createElement('div');
+        votePositionParam.className = 'settings-param selector';
+        votePositionParam.setAttribute('data-name', 'vote_position');
+        votePositionParam.setAttribute('data-type', 'select');
+        votePositionParam.style.width = '100%';
+        votePositionParam.innerHTML = '<div class="settings-param__name">Позиція оцінки</div><div class="settings-param__value" style="width: 50%;"><select style="width: 100%; max-width: 120px;"><option value="top-right">Верх-право</option><option value="top-left">Верх-ліво</option><option value="bottom-right">Низ-право</option><option value="bottom-left">Низ-ліво</option></select></div>';
+        folderElement.appendChild(votePositionParam);
+        var votePositionSelect = votePositionParam.querySelector('select');
+        votePositionSelect.value = Lampa.Storage.get('lss_vote_position', paramDefaults.lss_vote_position);
 
         // Додавання параметра: Скинути налаштування (trigger)
-        var resetParam = document.createElement('div');
-        resetParam.className = 'settings-param selector';
-        resetParam.setAttribute('data-name', 'reset_default');
-        resetParam.setAttribute('data-type', 'trigger');
-        resetParam.innerHTML = '<div class="settings-param__name">Скинути налаштування</div>';
-        folderElement.appendChild(resetParam);
+        var resetDefaultParam = document.createElement('div');
+        resetDefaultParam.className = 'settings-param selector';
+        resetDefaultParam.setAttribute('data-name', 'reset_default');
+        resetDefaultParam.setAttribute('data-type', 'trigger');
+        resetDefaultParam.style.width = '100%';
+        resetDefaultParam.innerHTML = '<div class="settings-param__name">Скинути налаштування</div>';
+        folderElement.appendChild(resetDefaultParam);
 
-        // Обробник для trigger
-        resetParam.addEventListener('click', function() {
-            resetToDefaultSettings();
+        // Додавання параметра: Вимкнути плагін (trigger)
+        var disablePluginParam = document.createElement('div');
+        disablePluginParam.className = 'settings-param selector';
+        disablePluginParam.setAttribute('data-name', 'disable_plugin');
+        disablePluginParam.setAttribute('data-type', 'trigger');
+        disablePluginParam.style.width = '100%';
+        disablePluginParam.innerHTML = '<div class="settings-param__name">Вимкнути плагін</div>';
+        folderElement.appendChild(disablePluginParam);
+
+        // Додавання обробників подій через делегування
+        folderElement.addEventListener('click', function(e) {
+            var target = e.target.closest('.settings-param');
+            if (!target) return;
+
+            var paramName = target.getAttribute('data-name');
+            var paramType = target.getAttribute('data-type');
+
+            if (paramType === 'trigger') {
+                if (paramName === 'reset_default') {
+                    resetToDefaultSettings();
+                } else if (paramName === 'disable_plugin') {
+                    disablePlugin();
+                }
+            } else if (paramType === 'toggle') {
+                if (paramName === 'advanced_animation' || paramName === 'center_align_details') {
+                    var status = target.querySelector('.settings-param__status');
+                    var currentValue = Lampa.Storage.get('lss_' + paramName, paramDefaults['lss_' + paramName]);
+                    Lampa.Storage.set('lss_' + paramName, !currentValue);
+                    status.style.background = !currentValue ? '#c22222' : '#666';
+                    status.querySelector('.settings-param__status-circle').style.left = !currentValue ? '22px' : '2px';
+                    status.className = 'settings-param__status ' + (!currentValue ? 'active' : '');
+                    updateCSSVariables();
+                    Lampa.Noty.show((paramName === 'advanced_animation' ? 'Анімації' : 'Центрування деталей') + ' ' + (!currentValue ? 'увімкнено' : 'вимкнено'));
+                }
+            }
+        });
+
+        folderElement.addEventListener('change', function(e) {
+            var target = e.target.closest('input, select');
+            if (!target) return;
+
+            var param = target.closest('.settings-param');
+            var paramName = param.getAttribute('data-name');
+            var value = target.value;
+
+            if (paramName === 'dark_bg' || paramName === 'darker_bg' || paramName === 'menu_bg' || 
+                paramName === 'accent_color' || paramName === 'vote_background') {
+                if (isValidHexColor(value)) {
+                    Lampa.Storage.set('lss_' + paramName, value);
+                    updateCSSVariables();
+                    Lampa.Noty.show(param.querySelector('.settings-param__name').textContent + ' оновлено: ' + value);
+                } else {
+                    Lampa.Noty.show('Невалідний HEX-код кольору');
+                    target.value = Lampa.Storage.get('lss_' + paramName, paramDefaults['lss_' + paramName]);
+                }
+            } else if (paramName === 'card_radius' || paramName === 'menu_radius' || 
+                       paramName === 'vote_border_radius' || paramName === 'title_size' || 
+                       paramName === 'vote_font_size' || paramName === 'max_image_width') {
+                if (isValidEm(value)) {
+                    Lampa.Storage.set('lss_' + paramName, value);
+                    updateCSSVariables();
+                    Lampa.Noty.show(param.querySelector('.settings-param__name').textContent + ' оновлено: ' + value);
+                } else {
+                    Lampa.Noty.show('Невалідне значення (наприклад, 1.4em)');
+                    target.value = Lampa.Storage.get('lss_' + paramName, paramDefaults['lss_' + paramName]);
+                }
+            } else if (paramName === 'navigation_bar' || paramName === 'bookmarks_layer' || 
+                       paramName === 'card_more_box') {
+                if (isValidOpacity(value)) {
+                    Lampa.Storage.set('lss_' + paramName, parseFloat(value));
+                    updateCSSVariables();
+                    Lampa.Noty.show(param.querySelector('.settings-param__name').textContent + ' оновлено: ' + value);
+                } else {
+                    Lampa.Noty.show('Невалідне значення (0–1)');
+                    target.value = Lampa.Storage.get('lss_' + paramName, paramDefaults['lss_' + paramName]);
+                }
+            } else if (paramName === 'modal_shadow') {
+                if (isValidShadow(value)) {
+                    Lampa.Storage.set('lss_' + paramName, value);
+                    updateCSSVariables();
+                    Lampa.Noty.show(param.querySelector('.settings-param__name').textContent + ' оновлено: ' + value);
+                } else {
+                    Lampa.Noty.show('Невалідне значення тіні');
+                    target.value = Lampa.Storage.get('lss_' + paramName, paramDefaults['lss_' + paramName]);
+                }
+            } else if (paramName === 'rating_weight') {
+                if (isValidFontWeight(value)) {
+                    Lampa.Storage.set('lss_' + paramName, value);
+                    updateCSSVariables();
+                    Lampa.Noty.show(param.querySelector('.settings-param__name').textContent + ' оновлено: ' + value);
+                } else {
+                    Lampa.Noty.show('Невалідне значення (normal/bold)');
+                    target.value = Lampa.Storage.get('lss_' + paramName, paramDefaults['lss_' + paramName]);
+                }
+            } else if (paramName === 'vote_position') {
+                if (isValidVotePosition(value)) {
+                    Lampa.Storage.set('lss_' + paramName, value);
+                    updateCSSVariables();
+                    Lampa.Noty.show(param.querySelector('.settings-param__name').textContent + ' оновлено: ' + value);
+                } else {
+                    Lampa.Noty.show('Невалідна позиція');
+                    target.value = Lampa.Storage.get('lss_' + paramName, paramDefaults['lss_' + paramName]);
+                }
+            }
         });
 
         // Логування всіх створених елементів
