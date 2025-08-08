@@ -4,7 +4,7 @@
     // Основний об'єкт плагіна
     var SafeStyle = {
         name: 'safe_style',
-        version: '2.2.1',
+        version: '2.2.2',
         settings: {
             theme: 'custom_color',
             custom_color: '#141414', // Початковий колір (темно-сірий)
@@ -569,13 +569,25 @@
             component: 'safe_style',
             param: {
                 name: 'safe_style_color',
-                type: 'input',
-                input_type: 'color',
+                type: 'select',
+                values: {
+                    '#141414': 'Темно-сірий',
+                    '#ff4d4d': 'Червоний',
+                    '#ffeb3b': 'Жовтий',
+                    '#4d7cff': 'Синій',
+                    '#a64dff': 'Пурпурний',
+                    '#ff9f4d': 'Помаранчевий',
+                    '#3da18d': 'М’ятний',
+                    '#4caf50': 'Зелений',
+                    '#ff69b4': 'Рожевий',
+                    '#6a1b9a': 'Фіолетовий',
+                    '#26a69a': 'Бірюзовий'
+                },
                 default: '#141414'
             },
             field: {
                 name: Lampa.Lang.translate('Колір теми'),
-                description: 'Виберіть колір для користувацької теми. Рекомендовані відтінки: Червоний (#ff4d4d), Жовтий (#ffeb3b), Синій (#4d7cff), Пурпурний (#a64dff), Помаранчевий (#ff9f4d), М’ятний (#3da18d), Зелений (#4caf50), Рожевий (#ff69b4), Фіолетовий (#6a1b9a), Бірюзовий (#26a69a)'
+                description: 'Виберіть колір для користувацької теми'
             },
             onChange: function(value) {
                 SafeStyle.settings.custom_color = value;
