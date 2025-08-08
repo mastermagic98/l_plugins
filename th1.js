@@ -4,7 +4,7 @@
     // Основний об'єкт плагіна
     var naruzhe_themes = {
         name: 'naruzhe_themes',
-        version: '2.1.4',
+        version: '2.1.5',
         settings: {
             theme: 'custom_color',
             custom_color: '#3da18d', // Початковий колір (аналог mint_dark)
@@ -511,14 +511,25 @@
         // Додаємо базові стилі
         $('head').append(style);
 
-        // Додаємо налаштування через слухач події
+        // Додаємо новий компонент у меню налаштувань
+        Lampa.SettingsApi.addComponent({
+            component: 'naruzhe_themes',
+            name: Lampa.Lang.translate('Теми Naruzhe'),
+            icon: `
+            <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0a9 9 0 0 0 9-9 9 9 0 0 0-.5-3.5M5.6 7.6l4.5 4.5M10.1 7.6l4.5 4.5"/>
+            </svg>
+            `
+        });
+
+        // Додаємо налаштування до компонента naruzhe_themes
         Lampa.Listener.follow('settings_param', function(e) {
-            if (e.name === 'interface') {
+            if (e.name === 'naruzhe_themes') {
                 e.body.push({
-                    title: 'Тема Naruzhe',
+                    title: 'Тема',
                     subtitle: 'Виберіть тему для інтерфейсу',
                     type: 'select',
-                    name: 'naruzhe_themes',
+                    name: 'naruzhe_themes_theme',
                     value: naruzhe_themes.settings.theme,
                     values: {
                         custom_color: 'Користувацька',
@@ -532,7 +543,7 @@
                 });
 
                 e.body.push({
-                    title: 'Колір теми Naruzhe',
+                    title: 'Колір теми',
                     subtitle: 'Виберіть колір для користувацької теми',
                     type: 'input',
                     name: 'naruzhe_themes_color',
@@ -548,7 +559,7 @@
                 });
 
                 e.body.push({
-                    title: 'Увімкнути плагін Naruzhe',
+                    title: 'Увімкнути плагін',
                     subtitle: 'Увімкнути або вимкнути плагін тем',
                     type: 'toggle',
                     name: 'naruzhe_themes_enabled',
