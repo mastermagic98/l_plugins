@@ -224,6 +224,11 @@
         if (typeof Lampa.SettingsApi.getComponent === 'function') {
             var component = Lampa.SettingsApi.getComponent('lampa_safe_styles');
             console.log('Компонент lampa_safe_styles:', component);
+            if (!component) {
+                console.log('Компонент lampa_safe_styles не знайдено, повторна спроба через 500 мс');
+                setTimeout(addSettingsComponent, 500);
+                return;
+            }
         }
 
         // Універсальна функція для додавання параметрів
@@ -238,6 +243,7 @@
                 Lampa.SettingsApi.addParam({
                     param: {
                         component: config.component || 'lampa_safe_styles',
+                        category: 'Lampa Safe Styles',
                         name: config.param.name,
                         title: config.param.title,
                         type: config.param.type,
@@ -465,7 +471,7 @@
                     default: null
                 }
             });
-        }, 100);
+        }, 500);
     }
 
     // Функція інтеграції з налаштуваннями Lampa
