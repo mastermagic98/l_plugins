@@ -216,7 +216,7 @@
         Lampa.SettingsApi.addComponent({
             component: 'lampa_safe_styles',
             name: 'Lampa Safe Styles',
-            icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l-.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>',
+            icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l-.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v-.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>',
             order: 100
         });
 
@@ -239,15 +239,21 @@
             }
 
             try {
+                // Реєстрація параметра в Lampa.Storage
+                var storageKey = 'lss_' + config.param.name;
+                if (Lampa.Storage.get(storageKey) === null) {
+                    Lampa.Storage.set(storageKey, config.param.default);
+                }
+
                 console.log('Додаємо параметр:', config.param.name);
                 Lampa.SettingsApi.addParam({
                     param: {
                         component: config.component || 'lampa_safe_styles',
-                        category: 'Lampa Safe Styles',
                         name: config.param.name,
                         title: config.param.title,
                         type: config.param.type,
-                        default: config.param.default
+                        default: config.param.default,
+                        index: config.param.index || 0
                     }
                 });
                 console.log('Параметр ' + config.param.name + ' успішно додано');
@@ -262,13 +268,16 @@
 
         // Додавання параметрів із затримкою для асинхронної ініціалізації
         setTimeout(function() {
+            var paramIndex = 0;
+
             safeAddParam({
                 component: 'lampa_safe_styles',
                 param: {
                     name: 'dark_bg',
                     title: 'Темний фон',
                     type: 'input',
-                    default: Lampa.Storage.get('lss_dark_bg', paramDefaults.lss_dark_bg)
+                    default: Lampa.Storage.get('lss_dark_bg', paramDefaults.lss_dark_bg),
+                    index: paramIndex++
                 }
             });
 
@@ -278,7 +287,8 @@
                     name: 'darker_bg',
                     title: 'Темніший фон',
                     type: 'input',
-                    default: Lampa.Storage.get('lss_darker_bg', paramDefaults.lss_darker_bg)
+                    default: Lampa.Storage.get('lss_darker_bg', paramDefaults.lss_darker_bg),
+                    index: paramIndex++
                 }
             });
 
@@ -288,7 +298,8 @@
                     name: 'menu_bg',
                     title: 'Фон меню',
                     type: 'input',
-                    default: Lampa.Storage.get('lss_menu_bg', paramDefaults.lss_menu_bg)
+                    default: Lampa.Storage.get('lss_menu_bg', paramDefaults.lss_menu_bg),
+                    index: paramIndex++
                 }
             });
 
@@ -298,7 +309,8 @@
                     name: 'accent_color',
                     title: 'Акцентний колір',
                     type: 'input',
-                    default: Lampa.Storage.get('lss_accent_color', paramDefaults.lss_accent_color)
+                    default: Lampa.Storage.get('lss_accent_color', paramDefaults.lss_accent_color),
+                    index: paramIndex++
                 }
             });
 
@@ -308,7 +320,8 @@
                     name: 'vote_background',
                     title: 'Фон оцінки',
                     type: 'input',
-                    default: Lampa.Storage.get('lss_vote_background', paramDefaults.lss_vote_background)
+                    default: Lampa.Storage.get('lss_vote_background', paramDefaults.lss_vote_background),
+                    index: paramIndex++
                 }
             });
 
@@ -318,7 +331,8 @@
                     name: 'card_radius',
                     title: 'Радіус картки',
                     type: 'input',
-                    default: Lampa.Storage.get('lss_card_radius', paramDefaults.lss_card_radius)
+                    default: Lampa.Storage.get('lss_card_radius', paramDefaults.lss_card_radius),
+                    index: paramIndex++
                 }
             });
 
@@ -328,7 +342,8 @@
                     name: 'menu_radius',
                     title: 'Радіус меню',
                     type: 'input',
-                    default: Lampa.Storage.get('lss_menu_radius', paramDefaults.lss_menu_radius)
+                    default: Lampa.Storage.get('lss_menu_radius', paramDefaults.lss_menu_radius),
+                    index: paramIndex++
                 }
             });
 
@@ -338,7 +353,8 @@
                     name: 'vote_border_radius',
                     title: 'Радіус оцінки',
                     type: 'input',
-                    default: Lampa.Storage.get('lss_vote_border_radius', paramDefaults.lss_vote_border_radius)
+                    default: Lampa.Storage.get('lss_vote_border_radius', paramDefaults.lss_vote_border_radius),
+                    index: paramIndex++
                 }
             });
 
@@ -348,7 +364,8 @@
                     name: 'navigation_bar',
                     title: 'Прозорість панелі навігації',
                     type: 'input',
-                    default: Lampa.Storage.get('lss_navigation_bar', paramDefaults.lss_navigation_bar)
+                    default: Lampa.Storage.get('lss_navigation_bar', paramDefaults.lss_navigation_bar),
+                    index: paramIndex++
                 }
             });
 
@@ -358,7 +375,8 @@
                     name: 'bookmarks_layer',
                     title: 'Прозорість закладок',
                     type: 'input',
-                    default: Lampa.Storage.get('lss_bookmarks_layer', paramDefaults.lss_bookmarks_layer)
+                    default: Lampa.Storage.get('lss_bookmarks_layer', paramDefaults.lss_bookmarks_layer),
+                    index: paramIndex++
                 }
             });
 
@@ -368,7 +386,8 @@
                     name: 'card_more_box',
                     title: 'Прозорість блоку "Більше"',
                     type: 'input',
-                    default: Lampa.Storage.get('lss_card_more_box', paramDefaults.lss_card_more_box)
+                    default: Lampa.Storage.get('lss_card_more_box', paramDefaults.lss_card_more_box),
+                    index: paramIndex++
                 }
             });
 
@@ -378,7 +397,8 @@
                     name: 'title_size',
                     title: 'Розмір заголовка',
                     type: 'input',
-                    default: Lampa.Storage.get('lss_title_size', paramDefaults.lss_title_size)
+                    default: Lampa.Storage.get('lss_title_size', paramDefaults.lss_title_size),
+                    index: paramIndex++
                 }
             });
 
@@ -388,7 +408,8 @@
                     name: 'rating_weight',
                     title: 'Вага шрифту оцінки',
                     type: 'select',
-                    default: Lampa.Storage.get('lss_rating_weight', paramDefaults.lss_rating_weight)
+                    default: Lampa.Storage.get('lss_rating_weight', paramDefaults.lss_rating_weight),
+                    index: paramIndex++
                 }
             });
 
@@ -398,7 +419,8 @@
                     name: 'vote_font_size',
                     title: 'Розмір шрифту оцінки',
                     type: 'input',
-                    default: Lampa.Storage.get('lss_vote_font_size', paramDefaults.lss_vote_font_size)
+                    default: Lampa.Storage.get('lss_vote_font_size', paramDefaults.lss_vote_font_size),
+                    index: paramIndex++
                 }
             });
 
@@ -408,7 +430,8 @@
                     name: 'modal_shadow',
                     title: 'Тінь модального вікна',
                     type: 'input',
-                    default: Lampa.Storage.get('lss_modal_shadow', paramDefaults.lss_modal_shadow)
+                    default: Lampa.Storage.get('lss_modal_shadow', paramDefaults.lss_modal_shadow),
+                    index: paramIndex++
                 }
             });
 
@@ -418,7 +441,8 @@
                     name: 'advanced_animation',
                     title: 'Увімкнути анімації',
                     type: 'toggle',
-                    default: Lampa.Storage.get('lss_advanced_animation', paramDefaults.lss_advanced_animation)
+                    default: Lampa.Storage.get('lss_advanced_animation', paramDefaults.lss_advanced_animation),
+                    index: paramIndex++
                 }
             });
 
@@ -428,7 +452,8 @@
                     name: 'center_align_details',
                     title: 'Центрувати деталі',
                     type: 'toggle',
-                    default: Lampa.Storage.get('lss_center_align_details', paramDefaults.lss_center_align_details)
+                    default: Lampa.Storage.get('lss_center_align_details', paramDefaults.lss_center_align_details),
+                    index: paramIndex++
                 }
             });
 
@@ -438,7 +463,8 @@
                     name: 'max_image_width',
                     title: 'Максимальна ширина зображення',
                     type: 'input',
-                    default: Lampa.Storage.get('lss_max_image_width', paramDefaults.lss_max_image_width)
+                    default: Lampa.Storage.get('lss_max_image_width', paramDefaults.lss_max_image_width),
+                    index: paramIndex++
                 }
             });
 
@@ -448,7 +474,8 @@
                     name: 'vote_position',
                     title: 'Позиція оцінки',
                     type: 'select',
-                    default: Lampa.Storage.get('lss_vote_position', paramDefaults.lss_vote_position)
+                    default: Lampa.Storage.get('lss_vote_position', paramDefaults.lss_vote_position),
+                    index: paramIndex++
                 }
             });
 
@@ -458,7 +485,8 @@
                     name: 'reset_default',
                     title: 'Скинути налаштування',
                     type: 'trigger',
-                    default: null
+                    default: null,
+                    index: paramIndex++
                 }
             });
 
@@ -468,10 +496,17 @@
                     name: 'reset_factory',
                     title: 'Заводські налаштування',
                     type: 'trigger',
-                    default: null
+                    default: null,
+                    index: paramIndex++
                 }
             });
-        }, 500);
+
+            // Примусове оновлення UI
+            if (typeof Lampa.SettingsApi.update === 'function') {
+                console.log('Оновлюємо UI налаштувань');
+                Lampa.SettingsApi.update();
+            }
+        }, 1000);
     }
 
     // Функція інтеграції з налаштуваннями Lampa
