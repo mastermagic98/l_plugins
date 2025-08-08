@@ -148,14 +148,14 @@
             document.body.dataset.lampaStyled = 'true';
         }
 
-        // Додавання CSS-файлу
+        // Додавання CSS-файлу з віддаленої адреси
         var styleId = 'lampa-safe-css';
         var existingStyle = document.getElementById(styleId);
         if (!existingStyle) {
             var link = document.createElement('link');
             link.id = styleId;
             link.rel = 'stylesheet';
-            link.href = './lampa_safe_styles.css'; // Шлях до CSS-файлу
+            link.href = 'https://mastermagic98.github.io/l_plugins/lampa_safe_styles.css';
             document.head.appendChild(link);
         }
 
@@ -603,6 +603,23 @@
                     integrateWithLampaSettings();
                 }
             });
+        }
+    }
+
+    // Функція інтеграції з налаштуваннями Lampa
+    function integrateWithLampaSettings() {
+        if (typeof Lampa === 'undefined' || !Lampa.SettingsApi) {
+            return;
+        }
+
+        if (typeof Lampa.SettingsApi.addComponent !== 'function') {
+            Lampa.Listener.follow('app', function(e) {
+                if (e.type === 'ready' && typeof Lampa.SettingsApi.addComponent === 'function') {
+                    addSettingsComponent();
+                }
+            });
+        } else {
+            addSettingsComponent();
         }
     }
 
