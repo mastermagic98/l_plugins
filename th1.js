@@ -4,7 +4,7 @@
     // Основний об'єкт плагіна
     var SafeStyle = {
         name: 'safe_style',
-        version: '2.2.4',
+        version: '2.2.5',
         settings: {
             theme: 'custom_color',
             custom_color: '#c22222', // Початковий колір (Червоний)
@@ -163,6 +163,30 @@
 
     // Додавання шаблонів та базових стилів
     function AddIn() {
+        // Додаємо шаблон для компонента safe_style
+        Lampa.Template.add('settings_safe_style', `
+            <div class="settings-param selector" data-type="select" data-name="safe_style_theme">
+                <div class="settings-param__name">#{Тема}</div>
+                <div class="settings-param__value"></div>
+                <div class="settings-param__descr">Виберіть тему для інтерфейсу</div>
+            </div>
+            <div class="settings-param selector" data-type="select" data-name="safe_style_color">
+                <div class="settings-param__name">#{Колір теми}</div>
+                <div class="settings-param__value"></div>
+                <div class="settings-param__descr">Виберіть колір для користувацької теми</div>
+            </div>
+            <div class="settings-param selector" data-type="toggle" data-name="safe_style_show_all_buttons">
+                <div class="settings-param__name">#{Показувати всі кнопки}</div>
+                <div class="settings-param__value"></div>
+                <div class="settings-param__descr">Показує всі кнопки в розгорнутому вигляді</div>
+            </div>
+            <div class="settings-param selector" data-type="toggle" data-name="safe_style_enabled">
+                <div class="settings-param__name">#{Увімкнути плагін}</div>
+                <div class="settings-param__value"></div>
+                <div class="settings-param__descr">Увімкнути або вимкнути плагін тем</div>
+            </div>
+        `);
+
         // Шаблон карточки, де рік перенесено вище назви
         Lampa.Template.add('card', `
             <div class="card selector layer--visible layer--render">
@@ -704,11 +728,11 @@
 
     // Функція для ініціалізації плагіна з перевіркою готовності
     function initPlugin() {
-        if (Lampa.SettingsApi) {
+        if (Lampa.SettingsApi && Lampa.Template) {
             AddIn();
             applyTheme(SafeStyle.settings.theme);
         } else {
-            // Повторюємо спробу через 100 мс, якщо SettingsApi ще не готовий
+            // Повторюємо спробу через 100 мс, якщо SettingsApi або Template ще не готові
             setTimeout(initPlugin, 100);
         }
     }
