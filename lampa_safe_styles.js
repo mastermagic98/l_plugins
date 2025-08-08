@@ -477,16 +477,21 @@
         });
 
         // Перевірка рендерингу компонента
-        var folderElement = document.querySelector('.settings-folder[data-component="lampa_safe_styles"]');
+        var folderElement = document.querySelector('[data-component="lampa_safe_styles"]');
         console.log('Перевірка DOM елемента lampa_safe_styles:', folderElement);
 
         // Примусове оновлення UI
         if (typeof Lampa.SettingsApi.update === 'function') {
             console.log('Оновлюємо UI налаштувань через SettingsApi.update');
             Lampa.SettingsApi.update();
-        } else if (typeof Lampa.Settings.render === 'function') {
+        }
+        if (typeof Lampa.Settings.render === 'function') {
             console.log('Оновлюємо UI налаштувань через Settings.render');
             Lampa.Settings.render();
+            setTimeout(function() {
+                console.log('Повторне оновлення UI через 500 мс');
+                Lampa.Settings.render();
+            }, 500);
         }
     }
 
@@ -517,7 +522,7 @@
             }
         }
 
-        // Додавання параметрів одразу після компонента
+        // Додавання параметрів
         console.log('Додаємо параметри після компонента');
         addSettingsParams();
     }
@@ -533,24 +538,20 @@
             Lampa.Listener.follow('app', function(e) {
                 if (e.type === 'ready') {
                     console.log('Спроба додати компонент після події ready');
-                    addSettingsComponent();
+                    setTimeout(addSettingsComponent, 1000);
                 }
             });
             return;
         }
 
-        // Додавання компонента та параметрів негайно
-        console.log('Викликаємо addSettingsComponent негайно');
-        addSettingsComponent();
+        // Додавання компонента з затримкою
+        console.log('Викликаємо addSettingsComponent із затримкою');
+        setTimeout(addSettingsComponent, 1000);
 
-        // Запасний варіант: додавання параметрів при відкритті
+        // Логування всіх подій settings:open
         if (typeof Lampa.Settings !== 'undefined' && Lampa.Settings.listener) {
             Lampa.Settings.listener.follow('open', function(e) {
                 console.log('Подія settings:open, e.name:', e.name);
-                if (e.name === 'lampa_safe_styles') {
-                    console.log('Відкрито lampa_safe_styles, додаємо параметри');
-                    addSettingsParams();
-                }
             });
         } else {
             console.log('Lampa.Settings.listener недоступний');
