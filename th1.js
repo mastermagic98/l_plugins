@@ -4,7 +4,7 @@
     // Основний об'єкт плагіна
     var naruzhe_themes = {
         name: 'naruzhe_themes',
-        version: '2.1.2',
+        version: '2.1.3',
         settings: {
             theme: 'custom_color',
             custom_color: '#3da18d', // Початковий колір (аналог mint_dark)
@@ -511,64 +511,59 @@
         // Додаємо базові стилі
         $('head').append(style);
 
-        // Іконка для пункту меню (SVG, закодована в base64)
-        var icon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTIgMkM2LjQ4IDIgMiA2LjQ4IDIgMTJDNi40OCAyIDEyIDIgMTIgMk0xMiAyQzE3LjUyIDIgMjIgNi40OCAyMiAxMkMyMiAxNy41MiAxNy41MiAyMiAxMiAyMkM2LjQ4IDIyIDIgMTcuNTIgMiAxMkMyIDYuNDggNi40OCAyIDEyIDJNMTEgMTJIMTNDMTMuNTUyIDEyIDE0IDEyLjQ0OCAxNCAxM1YxN0MxNCAxNy41NTIgMTMuNTUyIDE4IDEzIDE4SDE3QzE3LjU1MiAxOCAxOCAxNy41NTIgMTggMTdWMTVDMTggMTQuNDQ4IDE3LjU1MiAxNCAxNyAxNEgxM0MxMi40NDggMTQgMTIgMTMuNTUyIDEyIDEzVjExQzEyIDEwLjQ0OCAxMi40NDggMTAgMTMgMTBIMTVDMTUuNTUyIDEwIDE2IDEwLjQ0OCAxNiAxMVYxM0MxNiAxMy41NTIgMTUuNTUyIDE0IDE1IDE0SDE0QzEzLjQ0OCAxNCAxMyAxMy41NTIgMTMgMTNWMTEiIGZpbGw9IndoaXRlIi8+PC9zdmc+';
+        // Додаємо налаштування до компонента interface
+        Lampa.SettingsApi.addParam({
+            component: 'interface',
+            name: 'naruzhe_themes',
+            type: 'select',
+            field: {
+                name: 'Тема Naruzhe',
+                values: {
+                    custom_color: 'Користувацька',
+                    default: 'Без теми'
+                },
+                default: naruzhe_themes.settings.theme
+            },
+            onChange: function(value) {
+                naruzhe_themes.settings.theme = value;
+                Lampa.Storage.set('naruzhe_themes_theme', value);
+                applyTheme(value);
+                Lampa.SettingsApi.render();
+            }
+        });
 
-        // Додаємо окремий пункт меню налаштувань
-        Lampa.Settings.add({
-            component: 'naruzhe_themes',
-            name: 'Теми Naruzhe',
-            icon: icon,
-            params: [
-                {
-                    name: 'theme',
-                    type: 'select',
-                    field: {
-                        name: 'Тема',
-                        values: {
-                            custom_color: 'Користувацька',
-                            default: 'Без теми'
-                        },
-                        default: naruzhe_themes.settings.theme
-                    },
-                    onChange: function(value) {
-                        naruzhe_themes.settings.theme = value;
-                        Lampa.Storage.set('naruzhe_themes_theme', value);
-                        applyTheme(value);
-                        Lampa.Settings.render();
-                    }
-                },
-                {
-                    name: 'custom_color',
-                    type: 'input',
-                    field: {
-                        name: 'Колір теми',
-                        type: 'color',
-                        default: naruzhe_themes.settings.custom_color
-                    },
-                    onChange: function(value) {
-                        naruzhe_themes.settings.custom_color = value;
-                        Lampa.Storage.set('naruzhe_themes_color', value);
-                        if (naruzhe_themes.settings.theme === 'custom_color') {
-                            applyTheme('custom_color', value);
-                        }
-                    }
-                },
-                {
-                    name: 'enabled',
-                    type: 'toggle',
-                    field: {
-                        name: 'Увімкнути плагін',
-                        default: naruzhe_themes.settings.enabled
-                    },
-                    onChange: function(value) {
-                        naruzhe_themes.settings.enabled = value;
-                        Lampa.Storage.set('naruzhe_themes_enabled', value);
-                        applyTheme(naruzhe_themes.settings.theme);
-                        Lampa.Settings.render();
-                    }
+        Lampa.SettingsApi.addParam({
+            component: 'interface',
+            name: 'naruzhe_themes_color',
+            type: 'input',
+            field: {
+                name: 'Колір теми Naruzhe',
+                type: 'color',
+                default: naruzhe_themes.settings.custom_color
+            },
+            onChange: function(value) {
+                naruzhe_themes.settings.custom_color = value;
+                Lampa.Storage.set('naruzhe_themes_color', value);
+                if (naruzhe_themes.settings.theme === 'custom_color') {
+                    applyTheme('custom_color', value);
                 }
-            ]
+            }
+        });
+
+        Lampa.SettingsApi.addParam({
+            component: 'interface',
+            name: 'naruzhe_themes_enabled',
+            type: 'toggle',
+            field: {
+                name: 'Увімкнути плагін Naruzhe',
+                default: naruzhe_themes.settings.enabled
+            },
+            onChange: function(value) {
+                naruzhe_themes.settings.enabled = value;
+                Lampa.Storage.set('naruzhe_themes_enabled', value);
+                applyTheme(naruzhe_themes.settings.theme);
+                Lampa.SettingsApi.render();
+            }
         });
     }
 
