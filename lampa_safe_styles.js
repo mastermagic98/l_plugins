@@ -2,6 +2,7 @@
     // Кеш елементів для оптимізації
     var elementsCache = new Map();
     var stylesApplied = false;
+    var componentAdded = false;
 
     // Значення за замовчуванням для всіх параметрів
     var paramDefaults = {
@@ -227,7 +228,8 @@
                     type: config.param.type,
                     default: config.param.default,
                     index: config.param.index || 0,
-                    visible: true
+                    visible: true,
+                    group: 'lampa_safe_styles'
                 }
             });
             console.log('Параметр ' + config.param.name + ' успішно додано');
@@ -475,15 +477,24 @@
             }
         });
 
+        // Перевірка рендерингу компонента
+        var folderElement = document.querySelector('.settings-folder[data-component="lampa_safe_styles"]');
+        console.log('Перевірка DOM елемента lampa_safe_styles:', folderElement);
+
         // Примусове оновлення UI
         if (typeof Lampa.SettingsApi.update === 'function') {
-            console.log('Оновлюємо UI налаштувань');
+            console.log('Оновлюємо UI налаштувань через SettingsApi.update');
             Lampa.SettingsApi.update();
+        } else if (typeof Lampa.Settings.render === 'function') {
+            console.log('Оновлюємо UI налаштувань через Settings.render');
+            Lampa.Settings.render();
         }
     }
 
     // Додавання компонента налаштувань
     function addSettingsComponent() {
+        if (componentAdded) return;
+
         if (typeof Lampa === 'undefined' || !Lampa.SettingsApi || typeof Lampa.SettingsApi.addComponent !== 'function') {
             console.log('Lampa.SettingsApi.addComponent недоступний');
             return;
@@ -494,9 +505,11 @@
         Lampa.SettingsApi.addComponent({
             component: 'lampa_safe_styles',
             name: 'Lampa Safe Styles',
-            icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l-.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v-.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>',
+            icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l-.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>',
             order: 100
         });
+
+        componentAdded = true;
 
         // Перевірка, чи компонент додався
         if (typeof Lampa.SettingsApi.getComponent === 'function') {
@@ -504,13 +517,11 @@
             console.log('Компонент lampa_safe_styles:', component);
             if (!component) {
                 console.log('Компонент lampa_safe_styles не знайдено, повторна спроба через 500 мс');
+                componentAdded = false;
                 setTimeout(addSettingsComponent, 500);
                 return;
             }
         }
-
-        // Додавання параметрів після ініціалізації компонента
-        addSettingsParams();
     }
 
     // Функція інтеграції з налаштуваннями Lampa
@@ -527,17 +538,26 @@
                     addSettingsComponent();
                 }
             });
+            return;
+        }
+
+        // Використання Lampa.Settings.listener для синхронізації з рендерингом
+        if (typeof Lampa.Settings !== 'undefined' && Lampa.Settings.listener) {
+            Lampa.Settings.listener.follow('open', function(e) {
+                console.log('Подія settings:open, додаємо компонент і параметри');
+                addSettingsComponent();
+                if (e.name === 'lampa_safe_styles') {
+                    console.log('Відкрито lampa_safe_styles, додаємо параметри');
+                    addSettingsParams();
+                }
+            });
         } else {
-            // Використання Lampa.Settings.listener для синхронізації з рендерингом
-            if (typeof Lampa.Settings !== 'undefined' && Lampa.Settings.listener) {
-                Lampa.Settings.listener.follow('open', function(e) {
-                    console.log('Подія settings:open, додаємо компонент і параметри');
-                    addSettingsComponent();
-                });
-            } else {
-                // Запасний варіант із затримкою
-                setTimeout(addSettingsComponent, 1000);
-            }
+            // Запасний варіант із затримкою
+            console.log('Lampa.Settings.listener недоступний, використовуємо затримку');
+            setTimeout(function() {
+                addSettingsComponent();
+                addSettingsParams();
+            }, 1000);
         }
     }
 
