@@ -206,18 +206,45 @@
 
     // Додавання компонента налаштувань
     function addSettingsComponent() {
+        if (typeof Lampa === 'undefined' || !Lampa.SettingsApi || typeof Lampa.SettingsApi.addComponent !== 'function') {
+            return;
+        }
+
+        // Додавання компонента
         Lampa.SettingsApi.addComponent({
             component: 'lampa_safe_styles',
             name: 'Lampa Safe Styles',
-            icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>',
+            icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l-.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>',
             order: 100
         });
 
+        // Універсальна функція для додавання параметрів
+        function safeAddParam(param) {
+            if (typeof Lampa.SettingsApi.addParam !== 'function') return;
+
+            try {
+                Lampa.SettingsApi.addParam({
+                    component: param.component || 'lampa_safe_styles',
+                    category: param.category || 'general',
+                    name: param.name,
+                    title: param.title || param.name,
+                    type: param.type,
+                    default: param.default,
+                    placeholder: param.placeholder || '',
+                    values: param.values || {},
+                    onChange: param.onChange || function() {},
+                    action: param.action || function() {}
+                });
+            } catch (e) {
+                console.error('Помилка додавання параметра ' + param.name + ':', e.message);
+            }
+        }
+
         // Додавання параметрів
-        Lampa.SettingsApi.addParam({
-            component: 'lampa_safe_styles',
+        safeAddParam({
             category: 'colors',
             name: 'dark_bg',
+            title: 'Темний фон',
             type: 'input',
             placeholder: '#141414',
             default: Lampa.Storage.get('lss_dark_bg', paramDefaults.lss_dark_bg),
@@ -233,10 +260,10 @@
             }
         });
 
-        Lampa.SettingsApi.addParam({
-            component: 'lampa_safe_styles',
+        safeAddParam({
             category: 'colors',
             name: 'darker_bg',
+            title: 'Темніший фон',
             type: 'input',
             placeholder: '#1a1a1a',
             default: Lampa.Storage.get('lss_darker_bg', paramDefaults.lss_darker_bg),
@@ -252,10 +279,10 @@
             }
         });
 
-        Lampa.SettingsApi.addParam({
-            component: 'lampa_safe_styles',
+        safeAddParam({
             category: 'colors',
             name: 'menu_bg',
+            title: 'Фон меню',
             type: 'input',
             placeholder: '#181818',
             default: Lampa.Storage.get('lss_menu_bg', paramDefaults.lss_menu_bg),
@@ -271,10 +298,10 @@
             }
         });
 
-        Lampa.SettingsApi.addParam({
-            component: 'lampa_safe_styles',
+        safeAddParam({
             category: 'colors',
             name: 'accent_color',
+            title: 'Акцентний колір',
             type: 'input',
             placeholder: '#c22222',
             default: Lampa.Storage.get('lss_accent_color', paramDefaults.lss_accent_color),
@@ -290,10 +317,10 @@
             }
         });
 
-        Lampa.SettingsApi.addParam({
-            component: 'lampa_safe_styles',
+        safeAddParam({
             category: 'colors',
             name: 'vote_background',
+            title: 'Фон оцінки',
             type: 'input',
             placeholder: '#c22222',
             default: Lampa.Storage.get('lss_vote_background', paramDefaults.lss_vote_background),
@@ -309,10 +336,10 @@
             }
         });
 
-        Lampa.SettingsApi.addParam({
-            component: 'lampa_safe_styles',
+        safeAddParam({
             category: 'radii',
             name: 'card_radius',
+            title: 'Радіус картки',
             type: 'input',
             placeholder: '1.4em',
             default: Lampa.Storage.get('lss_card_radius', paramDefaults.lss_card_radius),
@@ -328,10 +355,10 @@
             }
         });
 
-        Lampa.SettingsApi.addParam({
-            component: 'lampa_safe_styles',
+        safeAddParam({
             category: 'radii',
             name: 'menu_radius',
+            title: 'Радіус меню',
             type: 'input',
             placeholder: '1.2em',
             default: Lampa.Storage.get('lss_menu_radius', paramDefaults.lss_menu_radius),
@@ -347,10 +374,10 @@
             }
         });
 
-        Lampa.SettingsApi.addParam({
-            component: 'lampa_safe_styles',
+        safeAddParam({
             category: 'radii',
             name: 'vote_border_radius',
+            title: 'Радіус оцінки',
             type: 'input',
             placeholder: '0em 0.5em 0em 0.5em',
             default: Lampa.Storage.get('lss_vote_border_radius', paramDefaults.lss_vote_border_radius),
@@ -366,10 +393,10 @@
             }
         });
 
-        Lampa.SettingsApi.addParam({
-            component: 'lampa_safe_styles',
+        safeAddParam({
             category: 'opacity',
             name: 'navigation_bar',
+            title: 'Прозорість панелі навігації',
             type: 'input',
             placeholder: '0.3',
             default: Lampa.Storage.get('lss_navigation_bar', paramDefaults.lss_navigation_bar),
@@ -385,10 +412,10 @@
             }
         });
 
-        Lampa.SettingsApi.addParam({
-            component: 'lampa_safe_styles',
+        safeAddParam({
             category: 'opacity',
             name: 'bookmarks_layer',
+            title: 'Прозорість закладок',
             type: 'input',
             placeholder: '0.3',
             default: Lampa.Storage.get('lss_bookmarks_layer', paramDefaults.lss_bookmarks_layer),
@@ -404,10 +431,10 @@
             }
         });
 
-        Lampa.SettingsApi.addParam({
-            component: 'lampa_safe_styles',
+        safeAddParam({
             category: 'opacity',
             name: 'card_more_box',
+            title: 'Прозорість блоку "Більше"',
             type: 'input',
             placeholder: '0.3',
             default: Lampa.Storage.get('lss_card_more_box', paramDefaults.lss_card_more_box),
@@ -423,10 +450,10 @@
             }
         });
 
-        Lampa.SettingsApi.addParam({
-            component: 'lampa_safe_styles',
+        safeAddParam({
             category: 'fonts',
             name: 'title_size',
+            title: 'Розмір заголовка',
             type: 'input',
             placeholder: '2.5em',
             default: Lampa.Storage.get('lss_title_size', paramDefaults.lss_title_size),
@@ -442,10 +469,10 @@
             }
         });
 
-        Lampa.SettingsApi.addParam({
-            component: 'lampa_safe_styles',
+        safeAddParam({
             category: 'fonts',
             name: 'rating_weight',
+            title: 'Вага шрифту оцінки',
             type: 'select',
             values: {
                 'normal': 'Нормальний',
@@ -464,10 +491,10 @@
             }
         });
 
-        Lampa.SettingsApi.addParam({
-            component: 'lampa_safe_styles',
+        safeAddParam({
             category: 'fonts',
             name: 'vote_font_size',
+            title: 'Розмір шрифту оцінки',
             type: 'input',
             placeholder: '1.5em',
             default: Lampa.Storage.get('lss_vote_font_size', paramDefaults.lss_vote_font_size),
@@ -483,10 +510,10 @@
             }
         });
 
-        Lampa.SettingsApi.addParam({
-            component: 'lampa_safe_styles',
+        safeAddParam({
             category: 'shadows',
             name: 'modal_shadow',
+            title: 'Тінь модального вікна',
             type: 'input',
             placeholder: '0 4px 12px rgba(0, 0, 0, 0.5)',
             default: Lampa.Storage.get('lss_modal_shadow', paramDefaults.lss_modal_shadow),
@@ -502,10 +529,10 @@
             }
         });
 
-        Lampa.SettingsApi.addParam({
-            component: 'lampa_safe_styles',
+        safeAddParam({
             category: 'animations',
             name: 'advanced_animation',
+            title: 'Увімкнути анімації',
             type: 'toggle',
             default: Lampa.Storage.get('lss_advanced_animation', paramDefaults.lss_advanced_animation),
             onChange: function(value) {
@@ -515,10 +542,10 @@
             }
         });
 
-        Lampa.SettingsApi.addParam({
-            component: 'lampa_safe_styles',
+        safeAddParam({
             category: 'mobile',
             name: 'center_align_details',
+            title: 'Центрувати деталі',
             type: 'toggle',
             default: Lampa.Storage.get('lss_center_align_details', paramDefaults.lss_center_align_details),
             onChange: function(value) {
@@ -528,10 +555,10 @@
             }
         });
 
-        Lampa.SettingsApi.addParam({
-            component: 'lampa_safe_styles',
+        safeAddParam({
             category: 'mobile',
             name: 'max_image_width',
+            title: 'Максимальна ширина зображення',
             type: 'input',
             placeholder: '10em',
             default: Lampa.Storage.get('lss_max_image_width', paramDefaults.lss_max_image_width),
@@ -547,10 +574,10 @@
             }
         });
 
-        Lampa.SettingsApi.addParam({
-            component: 'lampa_safe_styles',
+        safeAddParam({
             category: 'vote',
             name: 'vote_position',
+            title: 'Позиція оцінки',
             type: 'select',
             values: {
                 'top-right': 'Верхній правий',
@@ -571,39 +598,21 @@
             }
         });
 
-        // Додавання кнопок скидання
-        Lampa.SettingsApi.addParam({
-            component: 'lampa_safe_styles',
+        safeAddParam({
             category: 'actions',
             name: 'reset_default',
+            title: 'Скинути налаштування',
             type: 'trigger',
-            action: resetToDefaultSettings,
-            title: 'Скинути налаштування'
+            action: resetToDefaultSettings
         });
 
-        Lampa.SettingsApi.addParam({
-            component: 'lampa_safe_styles',
+        safeAddParam({
             category: 'actions',
             name: 'reset_factory',
+            title: 'Заводські налаштування',
             type: 'trigger',
-            action: resetToFactorySettings,
-            title: 'Заводські налаштування'
+            action: resetToFactorySettings
         });
-    }
-
-    // Функція ініціалізації плагіну
-    function init() {
-        ensureValidSettings();
-        updateCSSVariables();
-        applyStyles();
-
-        if (typeof Lampa !== 'undefined' && Lampa.Listener) {
-            Lampa.Listener.follow('app', function(e) {
-                if (e.type === 'ready') {
-                    integrateWithLampaSettings();
-                }
-            });
-        }
     }
 
     // Функція інтеграції з налаштуваннями Lampa
@@ -620,6 +629,21 @@
             });
         } else {
             addSettingsComponent();
+        }
+    }
+
+    // Функція ініціалізації плагіну
+    function init() {
+        ensureValidSettings();
+        updateCSSVariables();
+        applyStyles();
+
+        if (typeof Lampa !== 'undefined' && Lampa.Listener) {
+            Lampa.Listener.follow('app', function(e) {
+                if (e.type === 'ready') {
+                    integrateWithLampaSettings();
+                }
+            });
         }
     }
 
