@@ -4,7 +4,7 @@
     // Основний об'єкт плагіна
     var SafeStyle = {
         name: 'safe_style',
-        version: '2.2.3',
+        version: '2.2.4',
         settings: {
             theme: 'custom_color',
             custom_color: '#c22222', // Початковий колір (Червоний)
@@ -146,10 +146,18 @@
 
     // Функція для управління класами кнопок
     function updateButtonStyles() {
+        if (!SafeStyle.settings.enabled) {
+            $('.full-start-new__buttons .view--online.lampac--button').removeClass('full-start__button selector').addClass('button--priority');
+            $('.full-start-new__buttons .button--play').addClass('hide');
+            return;
+        }
+
         if (SafeStyle.settings.show_all_buttons) {
-            $('.view--online.lampac--button').addClass('full-start__button selector');
+            $('.full-start-new__buttons .view--online.lampac--button').addClass('full-start__button selector').removeClass('button--priority');
+            $('.full-start-new__buttons .button--play').removeClass('hide');
         } else {
-            $('.view--online.lampac--button').removeClass('full-start__button selector');
+            $('.full-start-new__buttons .view--online.lampac--button').removeClass('full-start__button selector').addClass('button--priority');
+            $('.full-start-new__buttons .button--play').addClass('hide');
         }
     }
 
@@ -226,22 +234,41 @@
                             <div>#{reactions_none}</div>
                         </div>
                         <div class="full-start-new__buttons">
-                            <div class="full-start__button selector button--play">
+                            <div class="full-start__button selector button--play hide">
                                 <svg width="28" height="29" viewBox="0 0 28 29" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <circle cx="14" cy="14.5" r="13" stroke="currentColor" stroke-width="2.7"/>
                                     <path d="M18.0739 13.634C18.7406 14.0189 18.7406 14.9811 18.0739 15.366L11.751 19.0166C11.0843 19.4015 10.251 18.9204 10.251 18.1506L10.251 10.8494C10.251 10.0796 11.0843 9.5985 11.751 9.9834L18.0739 13.634Z" fill="currentColor"/>
                                 </svg>
                                 <span>#{title_watch}</span>
                             </div>
-                            <div class="full-start__button view--torrent">
+                            <div class="full-start__button view--torrent selector">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50" width="50px" height="50px">
                                     <path d="M25,2C12.317,2,2,12.317,2,25s10.317,23,23,23s23-10.317,23-23S37.683,2,25,2z M40.5,30.963c-3.1,0-4.9-2.4-4.9-2.4 S34.1,35,27,35c-1.4,0-3.6-0.837-3.6-0.837l4.17,9.643C26.727,43.92,25.874,44,25,44c-2.157,0-4.222-0.377-6.155-1.039L9.237,16.851 c0,0-0.7-1.2,0.4-1.5c1.1-0.3,5.4-1.2,5.4-1.2s1.475-0.494,1.8,0.5c0.5,1.3,4.063,11.112,4.063,11.112S22.6,29,27.4,29 c4.7,0,5.9-3.437,5.7-3.937c-1.2-3-4.993-11.862-4.993-11.862s-0.6-1.1,0.8-1.4c1.4-0.3,3.8-0.7,3.8-0.7s1.105-0.163,1.6,0.8 c0.738,1.437,5.193,11.262,5.193,11.262s1.1,2.9,3.3,2.9c0.464,0,0.834-0.046,1.152-0.104c-0.082,1.635-0.348,3.221-0.817,4.722 C42.541,30.867,41.756,30.963,40.5,30.963z" fill="currentColor"/>
                                 </svg>
                                 <span>#{full_torrents}</span>
                             </div>
+                            <div class="full-start__button selector view--online lampac--button" data-subtitle="Lampac v1.4.9">
+                                <svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 392.697 392.697" xml:space="preserve">
+                                    <path d="M21.837,83.419l36.496,16.678L227.72,19.886c1.229-0.592,2.002-1.846,1.98-3.209c-0.021-1.365-0.834-2.592-2.082-3.145
+                                        L197.766,0.3c-0.903-0.4-1.933-0.4-2.837,0L21.873,77.036c-1.259,0.559-2.073,1.803-2.081,3.18
+                                        C19.784,81.593,20.584,82.847,21.837,83.419z" fill="currentColor"/>
+                                    <path d="M185.689,177.261l-64.988-30.01v91.617c0,0.856-0.44,1.655-1.167,2.114c-0.406,0.257-0.869,0.386-1.333,0.386
+                                        c-0.368,0-0.736-0.082-1.079-0.244l-68.874-32.625c-0.869-0.416-1.421-1.293-1.421-2.256v-92.229L6.804,95.5
+                                        c-1.083-0.496-2.344-0.406-3.347,0.238c-1.002,0.645-1.608,1.754-1.608,2.944v208.744c0,1.371,0.799,2.615,2.045,3.185
+                                        l178.886,81.768c0.464,0.211,0.96,0.315,1.455,0.315c0.661,0,1.318-0.188,1.892-0.555c1.002-0.645,1.608-1.754,1.608-2.945
+                                        V180.445C187.735,179.076,186.936,177.831,185.689,177.261z" fill="currentColor"/>
+                                    <path d="M389.24,95.74c-1.002-0.644-2.264-0.732-3.347-0.238l-178.876,81.76c-1.246,0.57-2.045,1.814-2.045,3.185v208.751
+                                        c0,1.191,0.606,2.302,1.608,2.945c0.572,0.367,1.23,0.555,1.892,0.555c0.495,0,0.991-0.104,1.455-0.315l178.876-81.768
+                                        c1.246-0.568,2.045-1.813,2.045-3.185V98.685C390.849,97.494,390.242,96.384,389.24,95.74z" fill="currentColor"/>
+                                    <path d="M372.915,80.216c-0.009-1.377-0.823-2.621-2.082-3.18l-60.182-26.681c-0.938-0.418-2.013-0.399-2.938,0.045
+                                        l-173.755,82.992l60.933,29.117c0.462,0.211,0.958,0.316,1.455,0.316s0.993-0.105,1.455-0.316l173.066-79.092
+                                        C372.122,82.847,372.923,81.593,372.915,80.216z" fill="currentColor"/>
+                                </svg>
+                                <span>#{title_online}</span>
+                            </div>
                             <div class="full-start__button selector view--trailer">
                                 <svg height="70" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"></path>
+                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"/>
                                 </svg>
                                 <span>#{full_trailers}</span>
                             </div>
@@ -258,7 +285,7 @@
                                 </svg>
                                 <span>#{title_reactions}</span>
                             </div>
-                            <div class="full-start__button selector button--subscribe hide">
+                            <div class="full-start__button selector button--subscribe">
                                 <svg width="25" height="30" viewBox="0 0 25 30" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M6.01892 24C6.27423 27.3562 9.07836 30 12.5 30C15.9216 30 18.7257 27.3562 18.981 24H15.9645C15.7219 25.6961 14.2632 27 12.5 27C10.7367 27 9.27804 25.6961 9.03542 24H6.01892Z" fill="currentColor"/>
                                     <path d="M3.81972 14.5957V10.2679C3.81972 5.41336 7.7181 1.5 12.5 1.5C17.2819 1.5 21.1803 5.41336 21.1803 10.2679V14.5957C21.1803 15.8462 21.5399 17.0709 22.2168 18.1213L23.0727 19.4494C24.2077 21.2106 22.9392 23.5 20.9098 23.5H4.09021C2.06084 23.5 0.792282 21.2106 1.9273 19.4494L2.78317 18.1213C3.46012 17.0709 3.81972 15.8462 3.81972 14.5957Z" stroke="currentColor" stroke-width="2.5"/>
@@ -540,6 +567,11 @@
                 </svg>
                 `
             });
+
+            // Оновлюємо меню налаштувань
+            if (Lampa.Settings && Lampa.Settings.update) {
+                Lampa.Settings.update();
+            }
         }
 
         // Функція для оновлення видимості параметра "Колір теми"
@@ -621,7 +653,7 @@
                 },
                 field: {
                     name: Lampa.Lang.translate('Показувати всі кнопки'),
-                    description: 'Додає стиль повноекранних кнопок до всіх онлайн-кнопок'
+                    description: 'Показує всі кнопки в розгорнутому вигляді'
                 },
                 onChange: function(value) {
                     SafeStyle.settings.show_all_buttons = value;
@@ -659,8 +691,26 @@
             }
         });
 
+        // Оновлення стилів кнопок при завантаженні сторінки детального перегляду
+        Lampa.Listener.follow('full', function(e) {
+            if (e.type === 'open') {
+                setTimeout(updateButtonStyles, 0);
+            }
+        });
+
         // Застосовуємо стилі кнопок
         updateButtonStyles();
+    }
+
+    // Функція для ініціалізації плагіна з перевіркою готовності
+    function initPlugin() {
+        if (Lampa.SettingsApi) {
+            AddIn();
+            applyTheme(SafeStyle.settings.theme);
+        } else {
+            // Повторюємо спробу через 100 мс, якщо SettingsApi ще не готовий
+            setTimeout(initPlugin, 100);
+        }
     }
 
     // Ініціалізація плагіна
@@ -672,13 +722,8 @@
             SafeStyle.settings.enabled = Lampa.Storage.get('safe_style_enabled', true);
             SafeStyle.settings.show_all_buttons = Lampa.Storage.get('safe_style_show_all_buttons', false);
 
-            // Застосовуємо шаблони та стилі з затримкою
-            setTimeout(function() {
-                if (Lampa.SettingsApi) {
-                    AddIn();
-                    applyTheme(SafeStyle.settings.theme);
-                }
-            }, 100);
+            // Ініціалізуємо плагін
+            initPlugin();
         }
     });
 })();
