@@ -4,7 +4,7 @@
     // Основний об'єкт плагіна
     var naruzhe_themes = {
         name: 'naruzhe_themes',
-        version: '2.1.8',
+        version: '2.1.9',
         settings: {
             theme: 'custom_color',
             custom_color: '#3da18d', // Початковий колір (м'ятний)
@@ -20,8 +20,8 @@
         // Якщо плагін відключений або вибрано "default", скидаємо стилі
         if (!naruzhe_themes.settings.enabled || theme === 'default') return;
 
-        // Використовуємо переданий колір або збережений
-        var selectedColor = color || naruzhe_themes.settings.custom_color || '#3da18d';
+        // Використовуємо переданий колір або збережений, якщо тема "custom_color"
+        var selectedColor = (theme === 'custom_color') ? (color || naruzhe_themes.settings.custom_color || '#3da18d') : '#3da18d';
 
         // Код SVG для лоадера з обраним кольором
         var svgCode = encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="135" height="140" fill="' + selectedColor + '">' +
@@ -543,45 +543,37 @@
                 Lampa.Storage.set('naruzhe_themes_theme', value);
                 Lampa.Settings.update();
                 applyTheme(value);
-                updateColorParam();
             }
         });
 
-        // Функція для оновлення параметра кольору
-        function updateColorParam() {
-            // Видаляємо попередній параметр кольору, якщо він існує
-            $('div[data-name=naruzhe_themes_color]').remove();
-
-            // Додаємо параметр кольору лише якщо обрана користувацька тема
-            if (naruzhe_themes.settings.theme === 'custom_color') {
-                Lampa.SettingsApi.addParam({
-                    component: 'naruzhe_themes',
-                    param: {
-                        name: 'naruzhe_themes_color',
-                        type: 'select',
-                        values: {
-                            '#ff4d4d': 'Червоний',
-                            '#ffeb3b': 'Жовтий',
-                            '#4d7cff': 'Синій',
-                            '#a64dff': 'Пурпурний',
-                            '#ff9f4d': 'Помаранчевий',
-                            '#3da18d': 'М’ятний'
-                        },
-                        default: naruzhe_themes.settings.custom_color || '#3da18d'
-                    },
-                    field: {
-                        name: Lampa.Lang.translate('Колір теми'),
-                        description: 'Виберіть колір для користувацької теми'
-                    },
-                    onChange: function(value) {
-                        naruzhe_themes.settings.custom_color = value;
-                        Lampa.Storage.set('naruzhe_themes_color', value);
-                        Lampa.Settings.update();
-                        applyTheme('custom_color', value);
-                    }
-                });
+        Lampa.SettingsApi.addParam({
+            component: 'naruzhe_themes',
+            param: {
+                name: 'naruzhe_themes_color',
+                type: 'select',
+                values: {
+                    '#ff4d4d': 'Червоний',
+                    '#ffeb3b': 'Жовтий',
+                    '#4d7cff': 'Синій',
+                    '#a64dff': 'Пурпурний',
+                    '#ff9f4d': 'Помаранчевий',
+                    '#3da18d': 'М’ятний'
+                },
+                default: '#3da18d'
+            },
+            field: {
+                name: Lampa.Lang.translate('Колір теми'),
+                description: 'Виберіть колір для користувацької теми'
+            },
+            onChange: function(value) {
+                naruzhe_themes.settings.custom_color = value;
+                Lampa.Storage.set('naruzhe_themes_color', value);
+                Lampa.Settings.update();
+                if (naruzhe_themes.settings.theme === 'custom_color') {
+                    applyTheme('custom_color', value);
+                }
             }
-        }
+        });
 
         Lampa.SettingsApi.addParam({
             component: 'naruzhe_themes',
@@ -599,13 +591,6 @@
                 Lampa.Storage.set('naruzhe_themes_enabled', value);
                 Lampa.Settings.update();
                 applyTheme(naruzhe_themes.settings.theme);
-            }
-        });
-
-        // Переконуємося, що параметри відображаються
-        Lampa.Settings.listener.follow('open', function(e) {
-            if (e.name === 'naruzhe_themes') {
-                updateColorParam();
             }
         });
     }
