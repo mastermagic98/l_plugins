@@ -1,32 +1,63 @@
 (function () {
-    'use strict';
+    const replacements = {
+        "checkPremium\\(\\) \\{": "checkPremium() { return 1;",
+        "this.add = function \\(\\) \\{": "this.add = function () { return;",
+        "full-start__button selector button--subscribe": "full-start__button selector button--subscribe hide",
+        "\\[[^\\n\\r]+/plugin/vast'": "['{localhost}/vast.js']"
+    };
 
-    function patchLampa() {
-        // Патч checkPremium
-        if (Lampa.Account && typeof Lampa.Account.checkPremium === 'function') {
-            Lampa.Account.checkPremium = function () { return 1; };
+    // Функція заміни рядків у тексті за replacements
+    function applyReplacements(text) {
+        for (const pattern in replacements) {
+            const re = new RegExp(pattern, 'g');
+            text = text.replace(re, replacements[pattern]);
         }
-
-        // Патч this.add (для прикладу у Player або іншому модулі)
-        if (Lampa.Player && typeof Lampa.Player.add === 'function') {
-            Lampa.Player.add = function () { return; };
-        }
-
-        // Приховуємо кнопку
-        let btn = document.querySelector('.full-start__button.selector.button--subscribe');
-        if (btn) btn.classList.add('hide');
-
-        // Заміна шляху vast
-        if (Lampa.Params && Lampa.Params.vast) {
-            Lampa.Params.vast = '{localhost}/vast.js';
-        }
-
-        console.log('[PremiumPatch] Патчі застосовані');
+        return text;
     }
 
-    if (window.Lampa) {
-        patchLampa();
-    } else {
-        document.addEventListener('lampa-ready', patchLampa);
+    // Перехоплення fetch, щоб замінити код Lampa на льоту
+    const originalFetch = window.fetch;
+    window.fetch = async function(resource, options) {
+        const response = await originalFetch.call(this, resource, options);
+
+        // Якщо це js-файл Lampa (можна адаптувати під конкретний URL)
+        if (typeof resource === 'string' && resource.includes('lampa') && resource.endsWith('.js')) {
+            const text = await response.text();
+            const replacedText = applyReplacements(text);
+
+            // Повертаємо змінений Response із заміненим кодом
+            return new Response(replacedText, {
+                status: response.status,
+                statusText: response.statusText,
+                headers: response.headers
+            });
+        }
+
+        return response;
+    };
+
+    // Очистка кешу IndexedDB, localStorage і перезавантаження
+    function clearCacheAndReload() {
+        if ('indexedDB' in window) {
+            indexedDB.databases().then(dbs => {
+                dbs.forEach(db => {
+                    if (db.name && db.name.startsWith('lampa')) {
+                        indexedDB.deleteDatabase(db.name);
+                    }
+                });
+            });
+        }
+        try {
+            localStorage.clear();
+            sessionStorage.clear();
+        } catch(e) {
+            console.warn('Cannot clear storage:', e);
+        }
+        setTimeout(() => location.reload(true), 500);
     }
+
+    // Почекати завантаження Lampa, потім очистити кеш і перезавантажити
+    document.addEventListener('lampa-ready', () => {
+        clearCacheAndReload();
+    });
 })();
