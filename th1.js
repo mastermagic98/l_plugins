@@ -8,8 +8,7 @@
         settings: {
             theme: 'custom_color',
             custom_color: '#c22222', // Початковий колір (Червоний)
-            enabled: true, // Стан плагіна (увімкнено/вимкнено)
-            show_all_buttons: false // Показувати всі кнопки як full-start__button
+            enabled: true // Стан плагіна (увімкнено/вимкнено)
         }
     };
 
@@ -102,7 +101,7 @@
             .card-episode.focus .full-episode::after,
             .items-cards .selector.focus::after,
             .card-more.focus .card-more__box::after,
-            .card-episode.focus .full-episode::after,
+            .card-episode.focus . full-episode::after,
             .card-episode.hover .full-episode::after,
             .card.focus .card__view::after,
             .card.hover .card__view::after,
@@ -144,23 +143,6 @@
         $('head').append(style);
     }
 
-    // Функція для управління класами кнопок
-    function updateButtonStyles() {
-        if (!SafeStyle.settings.enabled) {
-            $('.full-start-new__buttons .view--online.lampac--button').removeClass('full-start__button selector').addClass('button--priority');
-            $('.full-start-new__buttons .button--play').addClass('hide');
-            return;
-        }
-
-        if (SafeStyle.settings.show_all_buttons) {
-            $('.full-start-new__buttons .view--online.lampac--button').addClass('full-start__button selector').removeClass('button--priority');
-            $('.full-start-new__buttons .button--play').removeClass('hide');
-        } else {
-            $('.full-start-new__buttons .view--online.lampac--button').removeClass('full-start__button selector').addClass('button--priority');
-            $('.full-start-new__buttons .button--play').addClass('hide');
-        }
-    }
-
     // Додавання шаблонів та базових стилів
     function AddIn() {
         // Додаємо шаблон для компонента safe_style
@@ -174,11 +156,6 @@
                 <div class="settings-param__name">#{Колір теми}</div>
                 <div class="settings-param__value"></div>
                 <div class="settings-param__descr">Виберіть колір для користувацької теми</div>
-            </div>
-            <div class="settings-param selector" data-type="toggle" data-name="safe_style_show_all_buttons">
-                <div class="settings-param__name">#{Показувати всі кнопки}</div>
-                <div class="settings-param__value"></div>
-                <div class="settings-param__descr">Показує всі кнопки в розгорнутому вигляді</div>
             </div>
             <div class="settings-param selector" data-type="toggle" data-name="safe_style_enabled">
                 <div class="settings-param__name">#{Увімкнути плагін}</div>
@@ -671,25 +648,6 @@
             Lampa.SettingsApi.addParam({
                 component: 'safe_style',
                 param: {
-                    name: 'safe_style_show_all_buttons',
-                    type: 'toggle',
-                    default: false
-                },
-                field: {
-                    name: Lampa.Lang.translate('Показувати всі кнопки'),
-                    description: 'Показує всі кнопки в розгорнутому вигляді'
-                },
-                onChange: function(value) {
-                    SafeStyle.settings.show_all_buttons = value;
-                    Lampa.Storage.set('safe_style_show_all_buttons', value);
-                    Lampa.Settings.update();
-                    updateButtonStyles();
-                }
-            });
-
-            Lampa.SettingsApi.addParam({
-                component: 'safe_style',
-                param: {
                     name: 'safe_style_enabled',
                     type: 'toggle',
                     default: true
@@ -703,7 +661,6 @@
                     Lampa.Storage.set('safe_style_enabled', value);
                     Lampa.Settings.update();
                     applyTheme(SafeStyle.settings.theme);
-                    updateButtonStyles();
                 }
             });
         }
@@ -714,16 +671,6 @@
                 updateColorVisibility(SafeStyle.settings.theme);
             }
         });
-
-        // Оновлення стилів кнопок при завантаженні сторінки детального перегляду
-        Lampa.Listener.follow('full', function(e) {
-            if (e.type === 'open') {
-                setTimeout(updateButtonStyles, 0);
-            }
-        });
-
-        // Застосовуємо стилі кнопок
-        updateButtonStyles();
     }
 
     // Функція для ініціалізації плагіна з перевіркою готовності
@@ -744,7 +691,6 @@
             SafeStyle.settings.theme = Lampa.Storage.get('safe_style_theme', 'custom_color');
             SafeStyle.settings.custom_color = Lampa.Storage.get('safe_style_color', '#c22222');
             SafeStyle.settings.enabled = Lampa.Storage.get('safe_style_enabled', true);
-            SafeStyle.settings.show_all_buttons = Lampa.Storage.get('safe_style_show_all_buttons', false);
 
             // Ініціалізуємо плагін
             initPlugin();
