@@ -4,7 +4,7 @@
     // Основний об'єкт плагіна
     var SafeStyle = {
         name: 'safe_style',
-        version: '2.2.4',
+        version: '2.2.5',
         settings: {
             theme: 'custom_color',
             custom_color: '#c22222', // Початковий колір (Червоний)
@@ -151,6 +151,7 @@
             $('.view--online.lampac--button').addClass('full-start__button selector');
         } else {
             $('.view--online.lampac--button').removeClass('full-start__button selector');
+            $('.view--online.lampac--button').css('display', ''); // Забезпечуємо видимість кнопок
         }
     }
 
@@ -201,7 +202,7 @@
             </div>
         `);
 
-        // Шаблон карточки фільму/серіалу (без секції оцінок)
+        // Шаблон карточки фільму/серіалу (з поверненням рейтингу TMDB)
         Lampa.Template.add('full_start_new', `
             <div class="full-start-new">
                 <div class="full-start-new__body">
@@ -215,6 +216,9 @@
                         <div class="full-start-new__title">{title}</div>
                         <div class="full-start__title-original">{original_title}</div>
                         <div class="full-start-new__tagline full--tagline">{tagline}</div>
+                        <div class="full-start-new__rate-line">
+                            <div class="full-start__rate rate--tmdb"><div>{rating}</div><div class="source--name">TMDB</div></div>
+                        </div>
                         <div class="full-start-new__details"></div>
                         <div class="full-start-new__reactions">
                             <div>#{reactions_none}</div>
@@ -272,7 +276,7 @@
             </div>
         `);
 
-        // Базові стилі (видалено стилі для оцінок)
+        // Базові стилі (без стилів для рейтингу)
         var style = `
             <style>
                 .selectbox-item__checkbox {
