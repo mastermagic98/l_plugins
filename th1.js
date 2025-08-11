@@ -4,7 +4,7 @@
     // Основний об'єкт плагіна
     var SafeStyle = {
         name: 'safe_style',
-        version: '2.2.3',
+        version: '2.2.4',
         settings: {
             theme: 'custom_color',
             custom_color: '#c22222', // Початковий колір (Червоний)
@@ -33,7 +33,7 @@
             '<animate attributeName="y" begin="0.2s" calcMode="linear" dur="1s" repeatCount="indefinite" values="100;40;100" keyTimes="0;0.5;1"/></rect>' +
             '<rect width="10" height="40" x="40" y="100" rx="6"><animate attributeName="height" begin="0.4s" calcMode="linear" dur="1s" repeatCount="indefinite" values="40;100;40" keyTimes="0;0.5;1"/>' +
             '<animate attributeName="y" begin="0.4s" calcMode="linear" dur="1s" repeatCount="indefinite" values="100;40;100" keyTimes="0;0.5;1"/></rect>' +
-            '<rect width="10" height="40" x="60" y=" Bye-bye!100" rx="6"><animate attributeName="height" begin="0.6s" calcMode="linear" dur="1s" repeatCount="indefinite" values="40;100;40" keyTimes="0;0.5;1"/>' +
+            '<rect width="10" height="40" x="60" y="100" rx="6"><animate attributeName="height" begin="0.6s" calcMode="linear" dur="1s" repeatCount="indefinite" values="40;100;40" keyTimes="0;0.5;1"/>' +
             '<animate attributeName="y" begin="0.6s" calcMode="linear" dur="1s" repeatCount="indefinite" values="100;40;100" keyTimes="0;0.5;1"/></rect>' +
             '<rect width="10" height="40" x="80" y="100" rx="6"><animate attributeName="height" begin="0.8s" calcMode="linear" dur="1s" repeatCount="indefinite" values="40;100;40" keyTimes="0;0.5;1"/>' +
             '<animate attributeName="y" begin="0.8s" calcMode="linear" dur="1s" repeatCount="indefinite" values="100;40;100" keyTimes="0;0.5;1"/></rect>' +
@@ -201,7 +201,7 @@
             </div>
         `);
 
-        // Шаблон карточки фільму/серіалу
+        // Шаблон карточки фільму/серіалу (без секції оцінок)
         Lampa.Template.add('full_start_new', `
             <div class="full-start-new">
                 <div class="full-start-new__body">
@@ -215,13 +215,6 @@
                         <div class="full-start-new__title">{title}</div>
                         <div class="full-start__title-original">{original_title}</div>
                         <div class="full-start-new__tagline full--tagline">{tagline}</div>
-                        <div class="full-start-new__rate-line">
-                            <div class="full-start__rate rate--tmdb"><div>{rating}</div><div class="source--name">TMDB</div></div>
-                            <div class="full-start__rate rate--imdb hide"><div></div><div class="source--name">IMDb</div></div>
-                            <div class="full-start__rate rate--kp hide"><div></div><div class="source--name">Кинопоиск</div></div>
-                            <div class="full-start__pg hide"></div>
-                            <div class="full-start__status hide"></div>
-                        </div>
                         <div class="full-start-new__details"></div>
                         <div class="full-start-new__reactions">
                             <div>#{reactions_none}</div>
@@ -236,7 +229,7 @@
                             </div>
                             <div class="full-start__button view--torrent">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50" width="50px" height="50px">
-                                    <path d="M25,2C12.317,2,2,12.317,2,25s10.317,23,23,23s23-10.317,23-23S37.683,2,25,2z M40.5,30.963c-3.1,0-4.9-2.4-4.9-2.4 S34.1,35,27,35c-1.4,0-3.6-0.837-3.6-0.837l4.17,9.643C26.727,43.92,25.874,44,25,44c-2.157,0-4.227-0.377-6.155-1.039L9.237,16.851 c0,0-0.7-1.2,0.4-1.5c1.1-0.3,5.4-1.2,5.4-1.2s1.475-0.494,1.8,0.5c0.5,1.3,4.063,11.112,4.063,11.112S22.6,29,27.4,29 c4.7,0,5.9-3.437,5.7-3.937c-1.2-3-4.993-11.862-4.993-11.862s-0.6-1.1,0.8-1.4c1.4-0.3,3.8-0.7,3.8-0.7s1.105-0.163,1.6,0.8 c0.738,1.437,5.193,11.262,5.193,11.262s1.1,2.9,3.3,2.9c0.464,0,0.834-0.046,1.152-0.104c-0.082,1.635-0.348,3.221-0.817,4.722 C42.541,30.867,41.756,30.963,40.5,30.963z" fill="currentColor"/>
+                                    <path d="M25,2C12.317,2,2,12.317,2,25s10.317,23,23,23s23-10.317,23-23S37.683,2,25,2z M40.5,30.963c-3.1,0-4.9-2.4-4.9-2.4 S34.1,35,27,35c-1.4,0-3.6-0.837-3.6-0.837l4.17,9.643C26.727,43.92,25.874,44,25,44c-2.157,0-4.222-0.377-6.155-1.039L9.237,16.851 c0,0-0.7-1.2,0.4-1.5c1.1-0.3,5.4-1.2,5.4-1.2s1.475-0.494,1.8,0.5c0.5,1.3,4.063,11.112,4.063,11.112S22.6,29,27.4,29 c4.7,0,5.9-3.437,5.7-3.937c-1.2-3-4.993-11.862-4.993-11.862s-0.6-1.1,0.8-1.4c1.4-0.3,3.8-0.7,3.8-0.7s1.105-0.163,1.6,0.8 c0.738,1.437,5.193,11.262,5.193,11.262s1.1,2.9,3.3,2.9c0.464,0,0.834-0.046,1.152-0.104c-0.082,1.635-0.348,3.221-0.817,4.722 C42.541,30.867,41.756,30.963,40.5,30.963z" fill="currentColor"/>
                                 </svg>
                                 <span>#{full_torrents}</span>
                             </div>
@@ -254,7 +247,7 @@
                             </div>
                             <div class="full-start__button selector button--reaction">
                                 <svg width="38" height="34" viewBox="0 0 38 34" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M37.208 10.9742C37.1364 10.8013 37.0314 10.6441 36.899 10.5117C36.7666 10.3794 36.6095 10.2744 36.4365 10.2028L12.0658 0.108375C11.7166 -0.0361828 11.3242 -0.0361227 10.9749 0.108542C10.6257 0.253206 10.3482 0.530634 10.2034 0.879836L0.108666 25.2507C0.0369593 25.4236 3.37953e-05 25.609 2.3187e-08 25.7962C- emotionally3.37489e-05 25.9834 0.0368249 26.1688 0.108469 26.3418C0.180114 26.5147 0.28514 26.6719 0.417545 26.8042C0.54995 26.9366 0.707139 27.0416 0.880127 27.1131L17.2452 33.8917C17.5945 34.0361 17.9869 34.0361 18.3362 33.8917L29.6574 29.2017C29.8304 29.1301 29.9875 29.0251 30.1199 28.8928C30.2523 28.7604 30.3573 28.6032 30.4289 28.4303L37.2078 12.065C37.2795 11.8921 37.3164 11.7068 37.3164 11.5196C37.3165 11.3325 37.2796 11.1471 37.208 10.9742ZM20.425 29.9407L21.8784 26.4316L25.3873 27.885L20.425 29.9407ZM28.3407 26.0222L21.6524 23.252C21.3031 23.1075 20.9107 23.1076 20.5615 23.2523C20.2123 23.3969 19.9348 23.6743 19.79 24.0235L17.0194 30.7123L3.28783 25.0247L12.2918 3.28773L34.0286 12.2912L28.3407 26.0222Z" fill="currentColor"/>
+                                    <path d="M37.208 10.9742C37.1364 10.8013 37.0314 10.6441 36.899 10.5117C36.7666 10.3794 36.6095 10.2744 36.4365 10.2028L12.0658 0.108375C11.7166 -0.0361828 11.3242 -0.0361227 10.9749 0.108542C10.6257 0.253206 10.3482 0.530634 10.2034 0.879836L0.108666 25.2507C0.0369593 25.4236 3.37953e-05 25.609 2.3187e-08 25.7962C-3.37489e-05 25.9834 0.0368249 26.1688 0.108469 26.3418C0.180114 26.5147 0.28514 26.6719 0.417545 26.8042C0.54995 26.9366 0.707139 27.0416 0.880127 27.1131L17.2452 33.8917C17.5945 34.0361 17.9869 34.0361 18.3362 33.8917L29.6574 29.2017C29.8304 29.1301 29.9875 29.0251 30.1199 28.8928C30.2523 28.7604 30.3573 28.6032 30.4289 28.4303L37.2078 12.065C37.2795 11.8921 37.3164 11.7068 37.3164 11.5196C37.3165 11.3325 37.2796 11.1471 37.208 10.9742ZM20.425 29.9407L21.8784 26.4316L25.3873 27.885L20.425 29.9407ZM28.3407 26.0222L21.6524 23.252C21.3031 23.1075 20.9107 23.1076 20.5615 23.2523C20.2123 23.3969 19.9348 23.6743 19.79 24.0235L17.0194 30.7123L3.28783 25.0247L12.2918 3.28773L34.0286 12.2912L28.3407 26.0222Z" fill="currentColor"/>
                                     <path d="M25.3493 16.976L24.258 14.3423L16.959 17.3666L15.7196 14.375L13.0859 15.4659L15.4161 21.0916L25.3493 16.976Z" fill="currentColor"/>
                                 </svg>
                                 <span>#{title_reactions}</span>
@@ -279,7 +272,7 @@
             </div>
         `);
 
-        // Базові стилі
+        // Базові стилі (видалено стилі для оцінок)
         var style = `
             <style>
                 .selectbox-item__checkbox {
@@ -287,21 +280,6 @@
                 }
                 .selectbox-item--checked .selectbox-item__checkbox {
                     background: #ccc;
-                }
-                .full-start-new__rate-line .full-start__pg {
-                    font-size: 1em;
-                    background: #fff;
-                    color: #000;
-                }
-                .full-start__rate {
-                    border-radius: 0.25em;
-                    padding: 0.3em;
-                    background-color: rgba(0, 0, 0, 0.3);
-                }
-                .full-start__pg, .full-start__status {
-                    font-size: 1em;
-                    background: #fff;
-                    color: #000;
                 }
                 .card__title {
                     height: 3.6em;
@@ -636,15 +614,19 @@
                 component: 'safe_style',
                 param: {
                     name: 'safe_style_show_all_buttons',
-                    type: 'toggle',
-                    default: false
+                    type: 'select',
+                    values: {
+                        true: 'Так',
+                        false: 'Ні'
+                    },
+                    default: 'false'
                 },
                 field: {
                     name: Lampa.Lang.translate('Показувати всі кнопки'),
                     description: 'Додає стиль повноекранних кнопок до всіх онлайн-кнопок'
                 },
                 onChange: function(value) {
-                    SafeStyle.settings.show_all_buttons = value;
+                    SafeStyle.settings.show_all_buttons = value === 'true';
                     Lampa.Storage.set('safe_style_show_all_buttons', value);
                     Lampa.Settings.update();
                     updateButtonStyles();
@@ -690,7 +672,7 @@
             SafeStyle.settings.theme = Lampa.Storage.get('safe_style_theme', 'custom_color');
             SafeStyle.settings.custom_color = Lampa.Storage.get('safe_style_color', '#c22222');
             SafeStyle.settings.enabled = Lampa.Storage.get('safe_style_enabled', true);
-            SafeStyle.settings.show_all_buttons = Lampa.Storage.get('safe_style_show_all_buttons', false);
+            SafeStyle.settings.show_all_buttons = Lampa.Storage.get('safe_style_show_all_buttons', 'false') === 'true';
             SafeStyle.settings.button_styles_enabled = Lampa.Storage.get('safe_style_button_styles_enabled', true);
 
             // Застосовуємо шаблони та стилі з затримкою
