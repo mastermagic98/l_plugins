@@ -121,6 +121,7 @@
             .head__action.hover {
                 background: linear-gradient(45deg, ${selectedColor}, ${selectedColor}cc);
             }
+            .modal勤款
             .modal__content {
                 background: rgba(20, 20, 20, 0.96);
                 border: 0 solid rgba(20, 20, 20, 0.96);
@@ -147,11 +148,19 @@
 
     // Функція для управління класами кнопок
     function updateButtonStyles() {
+        var buttons = $('.view--online.lampac--button');
         if (SafeStyle.settings.button_styles_enabled && SafeStyle.settings.show_all_buttons) {
-            $('.view--online.lampac--button').addClass('full-start__button selector');
+            buttons.addClass('full-start__button selector');
+            buttons.css({
+                'transform': 'scale(1)', // Скидаємо масштабування
+                'display': '' // Забезпечуємо видимість
+            });
         } else {
-            $('.view--online.lampac--button').removeClass('full-start__button selector');
-            $('.view--online.lampac--button').css('display', ''); // Забезпечуємо видимість кнопок
+            buttons.removeClass('full-start__button selector');
+            buttons.css({
+                'transform': '', // Видаляємо будь-яке масштабування
+                'display': '' // Забезпечуємо видимість
+            });
         }
     }
 
