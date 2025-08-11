@@ -4,7 +4,7 @@
     // Основний об'єкт плагіна
     var SafeStyle = {
         name: 'safe_style',
-        version: '2.2.5',
+        version: '2.2.2',
         settings: {
             theme: 'custom_color',
             custom_color: '#c22222', // Початковий колір (Червоний)
@@ -271,7 +271,7 @@
                                 </svg>
                                 <span>#{full_torrents}</span>
                             </div>
-                            <div class="full-start__button selector view--online lampac--button" data-subtitle="Lampac v1.4.9">
+                            <div class="full-start__button selector view--online lampac--button button--priority" data-subtitle="Lampac v1.4.9">
                                 <svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 392.697 392.697" xml:space="preserve">
                                     <path d="M21.837,83.419l36.496,16.678L227.72,19.886c1.229-0.592,2.002-1.846,1.98-3.209c-0.021-1.365-0.834-2.592-2.082-3.145
                                         L197.766,0.3c-0.903-0.4-1.933-0.4-2.837,0L21.873,77.036c-1.259,0.559-2.073,1.803-2.081,3.18
