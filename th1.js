@@ -9,7 +9,6 @@
             theme: 'custom_color',
             custom_color: '#c22222', // Початковий колір (Червоний)
             enabled: true, // Стан плагіна (увімкнено/вимкнено)
-            show_all_buttons: false, // Показувати всі кнопки як full-start__button
             button_styles_enabled: true // Стан управління стилями кнопок
         }
     };
@@ -121,7 +120,6 @@
             .head__action.hover {
                 background: linear-gradient(45deg, ${selectedColor}, ${selectedColor}cc);
             }
-            .modal勤款
             .modal__content {
                 background: rgba(20, 20, 20, 0.96);
                 border: 0 solid rgba(20, 20, 20, 0.96);
@@ -144,24 +142,6 @@
         // Встановлюємо стиль
         style.html(dynamicTheme);
         $('head').append(style);
-    }
-
-    // Функція для управління класами кнопок
-    function updateButtonStyles() {
-        var buttons = $('.view--online.lampac--button');
-        if (SafeStyle.settings.button_styles_enabled && SafeStyle.settings.show_all_buttons) {
-            buttons.addClass('full-start__button selector');
-            buttons.css({
-                'transform': 'scale(1)', // Скидаємо масштабування
-                'display': '' // Забезпечуємо видимість
-            });
-        } else {
-            buttons.removeClass('full-start__button selector');
-            buttons.css({
-                'transform': '', // Видаляємо будь-яке масштабування
-                'display': '' // Забезпечуємо видимість
-            });
-        }
     }
 
     // Додавання шаблонів та базових стилів
@@ -254,7 +234,7 @@
                             </div>
                             <div class="full-start__button selector button--book">
                                 <svg width="21" height="32" viewBox="0 0 21 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M2 1.5H19C19.2761 1.5 19.5 1.72386 19.5 2V27.9618C19.5 28.3756 19.0261 28.6103 18.697 28.3595L12.6212 23.7303C11.3682 22.7757 9.63183 22.7757 8.37885 23.7303L2.30302 28.3595C1.9739 28.6103 1.5 28.3756 1.5 27.9618V2C1.5 1.72386 1.72386 1.5 2 1.5Z" stroke="currentColor" stroke-width="2.5"/>
+                                    <path d="M2 1.5H19C19.2761 1.5 19.5 1.72386 19.5 2V27.9618C19.5 28.3756 19.0261 28.6103 18.697 28.3595L12.6212 23.7303C11.3682 22.7757 9.63183 22.7757 8.3975 23.7303L2.30302 28.3595C1.9739 28.6103 1.5 28.3756 1.5 27.9618V2C1.5 1.72386 1.72386 1.5 2 1.5Z" stroke="currentColor" stroke-width="2.5"/>
                                 </svg>
                                 <span>#{settings_input_links}</span>
                             </div>
@@ -619,30 +599,6 @@
                     SafeStyle.settings.button_styles_enabled = value;
                     Lampa.Storage.set('safe_style_button_styles_enabled', value);
                     Lampa.Settings.update();
-                    updateButtonStyles();
-                }
-            });
-
-            Lampa.SettingsApi.addParam({
-                component: 'safe_style',
-                param: {
-                    name: 'safe_style_show_all_buttons',
-                    type: 'select',
-                    values: {
-                        true: 'Так',
-                        false: 'Ні'
-                    },
-                    default: 'false'
-                },
-                field: {
-                    name: Lampa.Lang.translate('Показувати всі кнопки'),
-                    description: 'Додає стиль повноекранних кнопок до всіх онлайн-кнопок'
-                },
-                onChange: function(value) {
-                    SafeStyle.settings.show_all_buttons = value === 'true';
-                    Lampa.Storage.set('safe_style_show_all_buttons', value);
-                    Lampa.Settings.update();
-                    updateButtonStyles();
                 }
             });
 
@@ -662,7 +618,6 @@
                     Lampa.Storage.set('safe_style_enabled', value);
                     Lampa.Settings.update();
                     applyTheme(SafeStyle.settings.theme);
-                    updateButtonStyles();
                 }
             });
         }
@@ -673,9 +628,6 @@
                 updateColorVisibility(SafeStyle.settings.theme);
             }
         });
-
-        // Застосовуємо стилі кнопок
-        updateButtonStyles();
     }
 
     // Ініціалізація плагіна
@@ -685,7 +637,6 @@
             SafeStyle.settings.theme = Lampa.Storage.get('safe_style_theme', 'custom_color');
             SafeStyle.settings.custom_color = Lampa.Storage.get('safe_style_color', '#c22222');
             SafeStyle.settings.enabled = Lampa.Storage.get('safe_style_enabled', true);
-            SafeStyle.settings.show_all_buttons = Lampa.Storage.get('safe_style_show_all_buttons', 'false') === 'true';
             SafeStyle.settings.button_styles_enabled = Lampa.Storage.get('safe_style_button_styles_enabled', true);
 
             // Застосовуємо шаблони та стилі з затримкою
