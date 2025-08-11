@@ -1,262 +1,987 @@
+// Анонімна функція для ізоляції простору імен
 (function() {
     'use strict';
-    
-    Lampa.Lang.add({
-        maxsm_themes: {
-            ru: "Темы оформления",
-            en: "Interface themes",
-            uk: "Теми оформлення",
-            be: "Тэмы афармлення",
-            zh: "主题",
-            pt: "Temas",
-            bg: "Теми",
-            he: "ערכות נושא",
-            cs: "Témata"
+
+    // Встановлення платформи для Lampa (TV-режим)
+    Lampa.Platform.tv();
+
+    // Основний об'єкт плагіна для управління темами
+    var SafeStyle = {
+        name: 'safe_style',
+        version: '2.2.5',
+        settings: {
+            theme: 'custom_color', // Тема за замовчуванням
+            custom_color: '#c22222', // Початковий колір (Червоний)
+            enabled: true, // Стан плагіна (увімкнено/вимкнено)
+            button_styles_enabled: true // Стан управління стилями кнопок
+        }
+    };
+
+    // Функція для створення компонента тем
+    function ThemesComponent(params) {
+        var self = this,
+            scroll = new Lampa.Scroll({
+                mask: true,
+                over: true,
+                step: 250
+            }),
+            items = [],
+            html = $('<div class="my_themes category-full"></div>'),
+            active,
+            last,
+            categories = [
+                { title: 'Установлена', url: '' },
+                { title: 'Color Gallery', url: '' }
+            ];
+
+        // Метод створення компонента
+        this.create = function() {
+            scroll.render().addClass('layer--wheight');
+            Lampa.Request.change('');
+            self.activity = new Lampa.Activity();
+            html.append(self.activity.render());
+            self.activity.loader(false);
+            self.activity.toggle();
+            self.build();
+        };
+
+        // Метод додавання елементів (тем)
+        this.append = function(data) {
+            data.forEach(function(element) {
+                var card = Lampa.Template.get('card', {
+                    title: element.title,
+                    release_year: ''
+                });
+                card.addClass('card--collection');
+                card.find('.card__img').css({
+                    cursor: 'pointer',
+                    'background-color': '#353535a6'
+                });
+                card.css({
+                    'text-align': 'center'
+                });
+
+                var img = card.find('.card__img')[0];
+                img.onload = function() {
+                    card.addClass('card--loaded');
+                };
+                img.onerror = function() {
+                    img.src = './img/img_broken.svg';
+                };
+                img.src = element.css || '';
+                $('.info__title').text(element.title);
+
+                // Додавання кнопки "Установить"
+                function addInstallButton() {
+                    var button = document.createElement('div');
+                    button.innerText = 'Установить';
+                    button.classList.add('card__quality');
+                    card.find('.card__view').append(button);
+                    $(button).css({
+                        position: 'absolute',
+                        left: '-3%',
+                        bottom: '0.3em',
+                        padding: '0.4em 0.4em',
+                        background: '#353535a6',
+                        color: '#ffe216',
+                        fontSize: '0.8em',
+                        WebkitBorderRadius: '0.3em',
+                        MozBorderRadius: '0.3em',
+                        borderRadius: '0.3em',
+                        textTransform: 'uppercase'
+                    });
+                }
+
+                // Перевірка, чи тема встановлена
+                var selectedTheme = localStorage.getItem('selectedTheme');
+                if (selectedTheme && element.css === selectedTheme) {
+                    addInstallButton();
+                }
+
+                // Обробник наведення для відображення інформації
+                card.on('hover:enter', function() {
+                    last = card[0];
+                    scroll.collectionSet(card, true);
+                    active.find('.info__title').text(element.title);
+                });
+
+                // Обробник вибору для встановлення або видалення теми
+                card.on('hover:focus', function() {
+                    var menu = [];
+                    menu.push({
+                        title: 'Установить'
+                    });
+                    menu.push({
+                        title: 'Удалить'
+                    });
+                    Lampa.Select.show({
+                        title: '',
+                        items: menu,
+                        onBack: function() {
+                            Lampa.Controller.toggle('content');
+                        },
+                        onSelect: function(item) {
+                            if (item.title === 'Установить') {
+                                $('link[rel="stylesheet"][href^="./"]').remove();
+                                var link = $('<link rel="stylesheet" href="' + element.css + '">');
+                                $('head').append(link);
+                                localStorage.setItem('selectedTheme', element.css);
+                                console.log('Тема встановлена:', element.css);
+                                $('.card__quality').remove();
+                                addInstallButton();
+
+                                // Застосування стилів із SafeStyle
+                                applyTheme(SafeStyle.settings.theme, SafeStyle.settings.custom_color);
+
+                                // Оновлення налаштувань фону
+                                if (Lampa.Storage.get('myBackground') === true) {
+                                    var background = Lampa.Storage.get('myBackground');
+                                    Lampa.Storage.set('background', background);
+                                    Lampa.Storage.set('myBackground', 'Empty');
+                                }
+                                if (Lampa.Storage.get('myGlassStyle') === true) {
+                                    var glass = Lampa.Storage.get('myGlassStyle');
+                                    Lampa.Storage.set('glass_style', glass);
+                                    Lampa.Storage.set('myGlassStyle', 'Empty');
+                                }
+                                if (Lampa.Storage.get('myBlackStyle') === true) {
+                                    var black = Lampa.Storage.get('myBlackStyle');
+                                    Lampa.Storage.set('black_style', black);
+                                    Lampa.Storage.set('myBlackStyle', 'Empty');
+                                }
+                                Lampa.Controller.toggle('content');
+                            } else if (item.title === 'Удалить') {
+                                $('link[rel="stylesheet"][href^="./"]').remove();
+                                localStorage.removeItem('selectedTheme');
+                                $('.card__quality').remove();
+                                if (localStorage.getItem('myBackground')) {
+                                    Lampa.Storage.set('background', Lampa.Storage.get('myBackground'));
+                                    localStorage.removeItem('myBackground');
+                                }
+                                if (localStorage.getItem('myGlassStyle')) {
+                                    Lampa.Storage.set('glass_style', Lampa.Storage.get('myGlassStyle'));
+                                    localStorage.removeItem('myGlassStyle');
+                                }
+                                if (localStorage.getItem('myBlackStyle')) {
+                                    Lampa.Storage.set('black_style', Lampa.Storage.get('myBlackStyle'));
+                                    localStorage.removeItem('myBlackStyle');
+                                }
+                                Lampa.Controller.toggle('content');
+                            }
+                        }
+                    });
+                });
+
+                html.append(card);
+                items.push(card);
+            });
+        };
+
+        // Метод побудови компонента
+        this.build = function() {
+            Lampa.Request.change('');
+            Lampa.Template.add('button_category', '<div id="button_category"><div class="full-start__button selector view--category"><svg style="enable-background:new 0 0 512 512;" version="1.1" viewBox="0 0 24 24" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g id="info"/><g id="icons"><g id="menu"><path d="M20,10H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h16c1.1,0,2-0.9,2-2C22,10.9,21.1,10,20,10z" fill="currentColor"/><path d="M4,8h12c1.1,0,2-0.9,2-2c0-1.1-0.9-2-2-2H4C2.9,4,2,4.9,2,6C2,7.1,2.9,8,4,8z" fill="currentColor"/><path d="M16,16H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h12c1.1,0,2-0.9,2-2C18,16.9,17.1,16,16,16z" fill="currentColor"/></g></g></svg> <span>Категории тем</span></div></div>');
+            Lampa.Template.add('info_tvtv', '<div class="info layer--width"><div class="info__left"><div class="info__title"></div><div class="info__title-original"></div><div class="info__create"></div></div><div class="info__right"> <div id="stantion_filtr"></div></div></div>');
+            active = Lampa.Template.get('info_tvtv');
+            active.find('#stantion_filtr').append(Lampa.Template.get('button_category'));
+            active.find('.view--category').on('hover:focus', function() {
+                self.selectGroup();
+            });
+            scroll.render().addClass('mheight').data('mheight', active);
+            html.append(active.append());
+            html.append(scroll.render());
+            self.append(categories);
+            scroll.append(html);
+            self.activity.loader(false);
+            self.activity.toggle();
+        };
+
+        // Метод вибору категорії тем
+        this.selectGroup = function() {
+            Lampa.Select.show({
+                title: 'Категории тем',
+                items: categories,
+                onSelect: function(item) {
+                    Lampa.Activity.push({
+                        url: item.url,
+                        title: item.title,
+                        component: 'themes',
+                        page: 1
+                    });
+                    Lampa.Storage.set('themesCurrent', JSON.stringify(Lampa.Activity.get()));
+                },
+                onBack: function() {
+                    Lampa.Controller.toggle('content');
+                }
+            });
+        };
+
+        // Метод активації компонента
+        this.toggle = function() {
+            Lampa.Controller.add('content', {
+                toggle: function() {
+                    Lampa.Controller.enabled(scroll.render());
+                    Lampa.Controller.focus(last || true, scroll.render());
+                },
+                left: function() {
+                    if (Navigator.canmove('left')) {
+                        Navigator.move('left');
+                    } else {
+                        Lampa.Controller.toggle('menu');
+                    }
+                },
+                right: function() {
+                    if (Navigator.canmove('right')) {
+                        Navigator.move('right');
+                    } else {
+                        self.selectGroup();
+                    }
+                },
+                up: function() {
+                    if (Navigator.canmove('up')) {
+                        Navigator.move('up');
+                    } else {
+                        if (!active.find('.view--category').hasClass('focus')) {
+                            Lampa.Controller.enabled(active);
+                            Navigator.move('right');
+                        } else {
+                            Lampa.Controller.toggle('head');
+                        }
+                    }
+                },
+                down: function() {
+                    if (Navigator.canmove('down')) {
+                        Navigator.move('down');
+                    } else if (active.find('.view--category').hasClass('focus')) {
+                        Lampa.Controller.toggle('content');
+                    }
+                },
+                back: function() {
+                    Lampa.Activity.backward();
+                }
+            });
+            Lampa.Controller.toggle('content');
+        };
+
+        // Метод паузи (порожній)
+        this.pause = function() {};
+
+        // Метод зупинки (порожній)
+        this.stop = function() {};
+
+        // Метод рендерингу компонента
+        this.render = function() {
+            return html;
+        };
+
+        // Метод знищення компонента
+        this.destroy = function() {
+            scroll.destroy();
+            if (active) active.remove();
+            html.remove();
+            items = null;
+            html = null;
+            active = null;
+        };
+    }
+
+    // Функція для застосування теми
+    function applyTheme(theme, color) {
+        // Видаляємо попередні стилі теми
+        $('#interface_mod_theme').remove();
+
+        // Якщо плагін відключений або вибрано "default", скидаємо стилі
+        if (!SafeStyle.settings.enabled || theme === 'default') return;
+
+        // Використовуємо переданий колір або збережений
+        var selectedColor = (theme === 'custom_color') ? (color || SafeStyle.settings.custom_color || '#c22222') : '#c22222';
+
+        // Код SVG для лоадера з обраним кольором
+        var svgCode = encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="135" height="140" fill="' + selectedColor + '">' +
+            '<rect width="10" height="40" y="100" rx="6"><animate attributeName="height" begin="0s" calcMode="linear" dur="1s" repeatCount="indefinite" values="40;100;40" keyTimes="0;0.5;1"/>' +
+            '<animate attributeName="y" begin="0s" calcMode="linear" dur="1s" repeatCount="indefinite" values="100;40;100" keyTimes="0;0.5;1"/></rect>' +
+            '<rect width="10" height="40" x="20" y="100" rx="6"><animate attributeName="height" begin="0.2s" calcMode="linear" dur="1s" repeatCount="indefinite" values="40;100;40" keyTimes="0;0.5;1"/>' +
+            '<animate attributeName="y" begin="0.2s" calcMode="linear" dur="1s" repeatCount="indefinite" values="100;40;100" keyTimes="0;0.5;1"/></rect>' +
+            '<rect width="10" height="40" x="40" y="100" rx="6"><animate attributeName="height" begin="0.4s" calcMode="linear" dur="1s" repeatCount="indefinite" values="40;100;40" keyTimes="0;0.5;1"/>' +
+            '<animate attributeName="y" begin="0.4s" calcMode="linear" dur="1s" repeatCount="indefinite" values="100;40;100" keyTimes="0;0.5;1"/></rect>' +
+            '<rect width="10" height="40" x="60" y="100" rx="6"><animate attributeName="height" begin="0.6s" calcMode="linear" dur="1s" repeatCount="indefinite" values="40;100;40" keyTimes="0;0.5;1"/>' +
+            '<animate attributeName="y" begin="0.6s" calcMode="linear" dur="1s" repeatCount="indefinite" values="100;40;100" keyTimes="0;0.5;1"/></rect>' +
+            '<rect width="10" height="40" x="80" y="100" rx="6"><animate attributeName="height" begin="0.8s" calcMode="linear" dur="1s" repeatCount="indefinite" values="40;100;40" keyTimes="0;0.5;1"/>' +
+            '<animate attributeName="y" begin="0.8s" calcMode="linear" dur="1s" repeatCount="indefinite" values="100;40;100" keyTimes="0;0.5;1"/></rect>' +
+            '<rect width="10" height="40" x="100" y="100" rx="6"><animate attributeName="height" begin="1s" calcMode="linear" dur="1s" repeatCount="indefinite" values="40;100;40" keyTimes="0;0.5;1"/>' +
+            '<animate attributeName="y" begin="1s" calcMode="linear" dur="1s" repeatCount="indefinite" values="100;40;100" keyTimes="0;0.5;1"/></rect>' +
+            '<rect width="10" height="40" x="120" y="100" rx="6"><animate attributeName="height" begin="1.2s" calcMode="linear" dur="1s" repeatCount="indefinite" values="40;100;40" keyTimes="0;0.5;1"/>' +
+            '<animate attributeName="y" begin="1.2s" calcMode="linear" dur="1s" repeatCount="indefinite" values="100;40;100" keyTimes="0;0.5;1"/></rect></svg>');
+
+        // Створюємо новий стиль
+        var style = $('<style id="interface_mod_theme"></style>');
+
+        // Динамічний стиль на основі вибраного кольору
+        var dynamicTheme = `
+            .navigation-bar__body {
+                background: rgba(20, 20, 20, 0.96);
+            }
+            .card__quality, .card--tv .card__type {
+                background: linear-gradient(to right, ${selectedColor}dd, ${selectedColor}99);
+            }
+            .screensaver__preload {
+                background: url("data:image/svg+xml,${svgCode}") no-repeat 50% 50%;
+            }
+            .activity__loader {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                display: none;
+                background: url("data:image/svg+xml,${svgCode}") no-repeat 50% 50%;
+            }
+            body {
+                background: linear-gradient(135deg, #1a1a1a, ${selectedColor}33);
+                color: #ffffff;
+            }
+            .company-start.icon--broken .company-start__icon,
+            .explorer-card__head-img > img,
+            .bookmarks-folder__layer,
+            .card-more__box,
+            .card__img {
+                background-color: #2a2a2a;
+            }
+            .search-source.focus,
+            .simple-button.focus,
+            .menu__item.focus,
+            .menu__item.traverse,
+            .menu__item.hover,
+            .full-start__button.focus,
+            .full-descr__tag.focus,
+            .player-panel .button.focus,
+            .full-person.selector.focus,
+            .tag-count.selector.focus {
+                background: linear-gradient(to right, ${selectedColor}, ${selectedColor}cc);
+                color: #fff;
+                box-shadow: 0 0 0.4em ${selectedColor}33;
+                border-radius: 0.5em;
+            }
+            .selectbox-item.focus,
+            .settings-folder.focus,
+            .settings-param.focus {
+                background: linear-gradient(to right, ${selectedColor}, ${selectedColor}cc);
+                color: #fff;
+                box-shadow: 0 0 0.4em ${selectedColor}33;
+                border-radius: 0.5em 0 0 0.5em;
+            }
+            .full-episode.focus::after,
+            .card-episode.focus .full-episode::after,
+            .items-cards .selector.focus::after,
+            .card-more.focus .card-more__box::after,
+            .card-episode.focus .full-episode::after,
+            .card-episode.hover .full-episode::after,
+            .card.focus .card__view::after,
+            .card.hover .card__view::after,
+            .torrent-item.focus::after,
+            .online-prestige.selector.focus::after,
+            .online-prestige--full.selector.focus::after,
+            .explorer-card__head-img.selector.focus::after,
+            .extensions__item.focus::after,
+            .extensions__block-add.focus::after {
+                border: 0.2em solid ${selectedColor};
+                box-shadow: 0 0 0.8em ${selectedColor}33;
+                border-radius: 1em;
+            }
+            .head__action.focus,
+            .head__action.hover {
+                background: linear-gradient(45deg, ${selectedColor}, ${selectedColor}cc);
+            }
+            .modal__content {
+                background: rgba(20, 20, 20, 0.96);
+                border: 0 solid rgba(20, 20, 20, 0.96);
+            }
+            .settings__content,
+            .settings-input__content,
+            .selectbox__content {
+                background: rgba(20, 20, 20, 0.96);
+            }
+            .torrent-serial {
+                background: rgba(0, 0, 0, 0.22);
+                border: 0.2em solid rgba(0, 0, 0, 0.22);
+            }
+            .torrent-serial.focus {
+                background-color: ${selectedColor}33;
+                border: 0.2em solid ${selectedColor};
+            }
+        `;
+
+        // Встановлюємо стиль
+        style.html(dynamicTheme);
+        $('head').append(style);
+    }
+
+    // Додавання шаблонів та базових стилів
+    function AddIn() {
+        // Шаблон карточки
+        Lampa.Template.add('card', `
+            <div class="card selector layer--visible layer--render">
+                <div class="card__view">
+                    <img src="./img/img_load.svg" class="card__img" />
+                    <div class="card__icons">
+                        <div class="card__icons-inner"></div>
+                    </div>
+                    <div class="card__age">{release_year}</div>
+                </div>
+                <div class="card__title">{title}</div>
+            </div>
+        `);
+
+        // Шаблон карточки епізоду
+        Lampa.Template.add('card_episode', `
+            <div class="card-episode selector layer--visible layer--render">
+                <div class="card-episode__body">
+                    <div class="full-episode">
+                        <div class="full-episode__img">
+                            <img />
+                        </div>
+                        <div class="full-episode__body">
+                            <div class="card__title">{title}</div>
+                            <div class="card__age">{release_year}</div>
+                            <div class="full-episode__num hide">{num}</div>
+                            <div class="full-episode__name">{name}</div>
+                            <div class="full-episode__date">{date}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-episode__footer hide">
+                    <div class="card__imgbox">
+                        <div class="card__view">
+                            <img class="card__img" />
+                        </div>
+                    </div>
+                    <div class="card__left">
+                        <div class="card__title">{title}</div>
+                        <div class="card__age">{release_year}</div>
+                    </div>
+                </div>
+            </div>
+        `);
+
+        // Шаблон карточки фільму/серіалу
+        Lampa.Template.add('full_start_new', `
+            <div class="full-start-new">
+                <div class="full-start-new__body">
+                    <div class="full-start-new__left">
+                        <div class="full-start-new__poster">
+                            <img class="full-start-new__img full--poster" />
+                        </div>
+                    </div>
+                    <div class="full-start-new__right">
+                        <div class="full-start-new__head"></div>
+                        <div class="full-start-new__title">{title}</div>
+                        <div class="full-start__title-original">{original_title}</div>
+                        <div class="full-start-new__tagline full--tagline">{tagline}</div>
+                        <div class="full-start-new__rate-line">
+                            <div class="full-start__rate rate--tmdb"><div>{rating}</div><div class="source--name">TMDB</div></div>
+                        </div>
+                        <div class="full-start-new__details"></div>
+                        <div class="full-start-new__reactions">
+                            <div>#{reactions_none}</div>
+                        </div>
+                        <div class="full-start-new__buttons">
+                            <div class="full-start__button selector button--play">
+                                <svg width="28" height="29" viewBox="0 0 28 29" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="14" cy="14.5" r="13" stroke="currentColor" stroke-width="2.7"/>
+                                    <path d="M18.0739 13.634C18.7406 14.0189 18.7406 14.9811 18.0739 15.366L11.751 19.0166C11.0843 19.4015 10.251 18.9204 10.251 18.1506L10.251 10.8494C10.251 10.0796 11.0843 9.5985 11.751 9.9834L18.0739 13.634Z" fill="currentColor"/>
+                                </svg>
+                                <span>#{title_watch}</span>
+                            </div>
+                            <div class="full-start__button view--torrent">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50" width="50px" height="50px">
+                                    <path d="M25,2C12.317,2,2,12.317,2,25s10.317,23,23,23s23-10.317,23-23S37.683,2,25,2z M40.5,30.963c-3.1,0-4.9-2.4-4.9-2.4 S34.1,35,27,35c-1.4,0-3.6-0.837-3.6-0.837l4.17,9.643C26.727,43.92,25.874,44,25,44c-2.157,0-4.222-0.377-6.155-1.039L9.237,16.851 c0,0-0.7-1.2,0.4-1.5c1.1-0.3,5.4-1.2,5.4-1.2s1.475-0.494,1.8,0.5c0.5,1.3,4.063,11.112,4.063,11.112S22.6,29,27.4,29 c4.7,0,5.9-3.437,5.7-3.937c-1.2-3-4.993-11.862-4.993-11.862s-0.6-1.1,0.8-1.4c1.4-0.3,3.8-0.7,3.8-0.7s1.105-0.163,1.6,0.8 c0.738,1.437,5.193,11.262,5.193,11.262s1.1,2.9,3.3,2.9c0.464,0,0.834-0.046,1.152-0.104c-0.082,1.635-0.348,3.221-0.817,4.722 C42.541,30.867,41.756,30.963,40.5,30.963z" fill="currentColor"/>
+                                </svg>
+                                <span>#{full_torrents}</span>
+                            </div>
+                            <div class="full-start__button selector view--trailer">
+                                <svg height="70" viewBox="0 0 80 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z" fill="currentColor"></path>
+                                </svg>
+                                <span>#{full_trailers}</span>
+                            </div>
+                            <div class="full-start__button selector button--book">
+                                <svg width="21" height="32" viewBox="0 0 21 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M2 1.5H19C19.2761 1.5 19.5 1.72386 19.5 2V27.9618C19.5 28.3756 19.0261 28.6103 18.697 28.3595L12.6212 23.7303C11.3682 22.7757 9.63183 22.7757 8.3975 23.7303L2.30302 28.3595C1.9739 28.6103 1.5 28.3756 1.5 27.9618V2C1.5 1.72386 1.72386 1.5 2 1.5Z" stroke="currentColor" stroke-width="2.5"/>
+                                </svg>
+                                <span>#{settings_input_links}</span>
+                            </div>
+                            <div class="full-start__button selector button--reaction">
+                                <svg width="38" height="34" viewBox="0 0 38 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M37.208 10.9742C37.1364 10.8013 37.0314 10.6441 36.899 10.5117C36.7666 10.3794 36.6095 10.2744 36.4365 10.2028L12.0658 0.108375C11.7166 -0.0361828 11.3242 -0.0361227 10.9749 0.108542C10.6257 0.253206 10.3482 0.530634 10.2034 0.879836L0.108666 25.2507C0.0369593 25.4236 3.37953e-05 25.609 2.3187e-08 25.7962C-3.37489e-05 25.9834 0.0368249 26.1688 0.108469 26.3418C0.180114 26.5147 0.28514 26.6719 0.417545 26.8042C0.54995 26.9366 0.707139 27.0416 0.880127 27.1131L17.2452 33.8917C17.5945 34.0361 17.9869 34.0361 18.3362 33.8917L29.6574 29.2017C29.8304 29.1301 29.9875 29.0251 30.1199 28.8928C30.2523 28.7604 30.3573 28.6032 30.4289 28.4303L37.2078 12.065C37.2795 11.8921 37.3164 11.7068 37.3164 11.5196C37.3165 11.3325 37.2796 11.1471 37.208 10.9742ZM20.425 29.9407L21.8784 26.4316L25.3873 27.885L20.425 29.9407ZM28.3407 26.0222L21.6524 23.252C21.3031 23.1075 20.9107 23.1076 20.5615 23.2523C20.2123 23.3969 19.9348 23.6743 19.79 24.0235L17.0194 30.7123L3.28783 25.0247L12.2918 3.28773L34.0286 12.2912L28.3407 26.0222Z" fill="currentColor"/>
+                                    <path d="M25.3493 16.976L24.258 14.3423L16.959 17.3666L15.7196 14.375L13.0859 15.4659L15.4161 21.0916L25.3493 16.976Z" fill="currentColor"/>
+                                </svg>
+                                <span>#{title_reactions}</span>
+                            </div>
+                            <div class="full-start__button selector button--subscribe hide">
+                                <svg width="25" height="30" viewBox="0 0 25 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M6.01892 24C6.27423 27.3562 9.07836 30 12.5 30C15.9216 30 18.7257 27.3562 18.981 24H15.9645C15.7219 25.6961 14.2632 27 12.5 27C10.7367 27 9.27804 25.6961 9.03542 24H6.01892Z" fill="currentColor"/>
+                                    <path d="M3.81972 14.5957V10.2679C3.81972 5.41336 7.7181 1.5 12.5 1.5C17.2819 1.5 21.1803 5.41336 21.1803 10.2679V14.5957C21.1803 15.8462 21.5399 17.0709 22.2168 18.1213L23.0727 19.4494C24.2077 21.2106 22.9392 23.5 20.9098 23.5H4.09021C2.06084 23.5 0.792282 21.2106 1.9273 19.4494L2.78317 18.1213C3.46012 17.0709 3.81972 15.8462 3.81972 14.5957Z" stroke="currentColor" stroke-width="2.5"/>
+                                </svg>
+                                <span>#{title_subscribe}</span>
+                            </div>
+                            <div class="full-start__button selector button--options">
+                                <svg width="38" height="10" viewBox="0 0 38 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="4.88968" cy="4.98563" r="4.75394" fill="currentColor"/>
+                                    <circle cx="18.9746" cy="4.98563" r="4.75394" fill="currentColor"/>
+                                    <circle cx="33.0596" cy="4.98563" r="4.75394" fill="currentColor"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `);
+
+        // Базові стилі
+        var style = `
+            <style>
+                .selectbox-item__checkbox {
+                    border-radius: 100%;
+                }
+                .selectbox-item--checked .selectbox-item__checkbox {
+                    background: #ccc;
+                }
+                .card__title {
+                    height: 3.6em;
+                    text-overflow: ellipsis;
+                    -o-text-overflow: ellipsis;
+                    text-overflow: ellipsis;
+                    -webkit-line-clamp: 3;
+                    line-clamp: 3;
+                }
+                .card__age {
+                    position: absolute;
+                    right: 0em;
+                    bottom: 0em;
+                    z-index: 10;
+                    background: rgba(0, 0, 0, 0.6);
+                    color: #ffffff;
+                    font-weight: 700;
+                    padding: 0.4em 0.6em;
+                    border-radius: 0.48em 0 0.48em 0;
+                    line-height: 1.0;
+                    font-size: 1.0em;
+                }
+                .card__vote {
+                    position: absolute;
+                    bottom: auto;
+                    right: 0em;
+                    top: 0em;
+                    background: rgba(0, 0, 0, 0.6);
+                    font-weight: 700;
+                    color: #fff;
+                    border-radius: 0 0.34em 0 0.34em;
+                    line-height: 1.0;
+                    font-size: 1.4em;
+                }
+                .card__type {
+                    position: absolute;
+                    bottom: auto;
+                    left: 0em;
+                    right: auto;
+                    top: 0em;
+                    background: rgba(0, 0, 0, 0.6);
+                    color: #fff;
+                    font-weight: 700;
+                    padding: 0.4em 0.6em;
+                    border-radius: 0.4em 0 0.4em 0;
+                    line-height: 1.0;
+                    font-size: 1.0em;
+                }
+                .card--tv .card__type {
+                    color: #fff;
+                }
+                .card__icons {
+                    position: absolute;
+                    top: 2em;
+                    left: 0;
+                    right: auto;
+                    display: flex;
+                    justify-content: center;
+                    background: rgba(0, 0, 0, 0.6);
+                    color: #fff;
+                    border-radius: 0 0.5em 0.5em 0;
+                }
+                .card__icons-inner {
+                    background: rgba(0, 0, 0, 0);
+                }
+                .card__marker {
+                    position: absolute;
+                    left: 0em;
+                    top: 4em;
+                    bottom: auto;
+                    background: rgba(0, 0, 0, 0.6);
+                    border-radius: 0 0.5em 0.5em 0;
+                    font-weight: 700;
+                    font-size: 1.0em;
+                    padding: 0.4em 0.6em;
+                    display: flex;
+                    align-items: center;
+                    line-height: 1.2;
+                    max-width: min(12em, 95%);
+                    box-sizing: border-box;
+                }
+                .card__marker > span {
+                    max-width: min(12em, 95%);
+                }
+                .card__quality {
+                    position: absolute;
+                    left: auto;
+                    right: 0em;
+                    bottom: 2.4em;
+                    padding: 0.4em 0.6em;
+                    color: #fff;
+                    font-weight: 700;
+                    font-size: 1.0em;
+                    border-radius: 0.5em 0 0 0.5em;
+                    text-transform: uppercase;
+                }
+                .items-line.items-line--type-cards + .items-line.items-line--type-cards {
+                    margin-top: 1em;
+                }
+                .card--small .card__view {
+                    margin-bottom: 2em;
+                }
+                .items-line--type-cards {
+                    min-height: 18em;
+                }
+                @media screen and (min-width: 580px) {
+                    .full-start-new {
+                        min-height: 80vh;
+                        display: flex;
+                    }
+                }
+                .full-start-new__buttons .full-start__button:not(.focus) span {
+                    display: inline;
+                }
+                @media screen and (max-width: 580px) {
+                    .full-start-new__buttons {
+                        overflow: auto;
+                    }
+                    .full-start-new__buttons .full-start__button:not(.focus) span {
+                        display: none;
+                    }
+                }
+                .full-start__background.loaded {
+                    opacity: 0.8;
+                }
+                .full-start__background.dim {
+                    opacity: 0.2;
+                }
+                .explorer__files .torrent-filter .simple-button {
+                    font-size: 1.2em;
+                    border-radius: 0.5em;
+                }
+                .extensions__item,
+                .extensions__block-add,
+                .search-source,
+                .bookmarks-folder__layer,
+                .bookmarks-folder__body,
+                .card__img,
+                .card__promo,
+                .full-episode--next .full-episode__img:after,
+                .full-episode__img img,
+                .full-episode__body,
+                .full-person__photo,
+                .card-more__box,
+                .full-start__button,
+                .simple-button,
+                .register {
+                    border-radius: 0.5em;
+                }
+                .extensions__item.focus::after,
+                .extensions__block-add.focus::after,
+                .full-episode.focus::after,
+                .full-review-add.focus::after,
+                .card-parser.focus::after,
+                .card-episode.focus .full-episode::after,
+                .card-episode.hover .full-episode::after,
+                .card.focus .card__view::after,
+                .card.hover .card__view::after,
+                .card-more.focus .card-more__box::after,
+                .register.focus::after {
+                    border-radius: 1em;
+                }
+                .search-source.focus,
+                .simple-button.focus,
+                .menu__item.focus,
+                .menu__item.traverse,
+                .menu__item.hover,
+                .full-start__button.focus,
+                .full-descr__tag.focus,
+                .player-panel .button.focus,
+                .full-person.selector.focus,
+                .tag-count.selector.focus {
+                    border-radius: 0.5em;
+                }
+                .card {
+                    transform: scale(1);
+                    transition: transform 0.3s ease;
+                }
+                .card.focus {
+                    transform: scale(1.03);
+                }
+                .torrent-item,
+                .online-prestige {
+                    transform: scale(1);
+                    transition: transform 0.3s ease;
+                }
+                .torrent-item.focus,
+                .online-prestige.focus {
+                    transform: scale(1.01);
+                }
+                .tag-count,
+                .full-person,
+                .full-episode,
+                .simple-button,
+                .full-start__button,
+                .items-cards .selector,
+                .card-more,
+                .explorer-card__head-img.selector,
+                .card-episode {
+                    transform: scale(1);
+                    transition: transform 0.3s ease;
+                }
+                .tag-count.focus,
+                .full-person.focus,
+                .full-episode.focus,
+                .simple-button.focus,
+                .full-start__button.focus,
+                .items-cards .selector.focus,
+                .card-more.focus,
+                .explorer-card__head-img.selector.focus,
+                .card-episode.focus,
+                .card-episode.hover {
+                    transform: scale(1.02);
+                }
+                div[data-name="safe_style_color"] {
+                    display: none;
+                }
+                div[data-name="safe_style_color"].visible {
+                    display: block;
+                }
+            </style>
+        `;
+
+        // Додаємо базові стилі
+        $('head').append(style);
+
+        // Додаємо новий компонент у меню налаштувань
+        if (Lampa.SettingsApi) {
+            Lampa.SettingsApi.addComponent({
+                component: 'safe_style',
+                name: Lampa.Lang.translate('Safe Style'),
+                icon: `
+                <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0a9 9 0 0 0 9-9 9 9 0 0 0-.5-3.5M5.6 7.6l4.5 4.5M10.1 7.6l4.5 4.5"/>
+                </svg>
+                `
+            });
+        }
+
+        // Функція для оновлення видимості параметра "Колір теми"
+        function updateColorVisibility(theme) {
+            var colorParam = $('div[data-name="safe_style_color"]');
+            if (theme === 'custom_color') {
+                colorParam.addClass('visible');
+            } else {
+                colorParam.removeClass('visible');
+            }
+        }
+
+        // Додаємо параметри до компонента safe_style
+        if (Lampa.SettingsApi) {
+            Lampa.SettingsApi.addParam({
+                component: 'safe_style',
+                param: {
+                    name: 'safe_style_theme',
+                    type: 'select',
+                    values: {
+                        custom_color: 'Користувацька',
+                        default: 'LAMPA'
+                    },
+                    default: 'custom_color'
+                },
+                field: {
+                    name: Lampa.Lang.translate('Тема'),
+                    description: 'Виберіть тему для інтерфейсу'
+                },
+                onChange: function(value) {
+                    SafeStyle.settings.theme = value;
+                    Lampa.Storage.set('safe_style_theme', value);
+                    Lampa.Settings.update();
+                    applyTheme(value);
+                    updateColorVisibility(value);
+                }
+            });
+
+            Lampa.SettingsApi.addParam({
+                component: 'safe_style',
+                param: {
+                    name: 'safe_style_color',
+                    type: 'select',
+                    values: {
+                        '#c22222': 'Червоний',
+                        '#b0b0b0': 'Світло-сірий',
+                        '#ffeb3b': 'Жовтий',
+                        '#4d7cff': 'Синій',
+                        '#a64dff': 'Пурпурний',
+                        '#ff9f4d': 'Помаранчевий',
+                        '#3da18d': 'М’ятний',
+                        '#4caf50': 'Зелений',
+                        '#ff69b4': 'Рожевий',
+                        '#6a1b9a': 'Фіолетовий',
+                        '#26a69a': 'Бірюзовий'
+                    },
+                    default: '#c22222'
+                },
+                field: {
+                    name: Lampa.Lang.translate('Колір теми'),
+                    description: 'Виберіть колір для користувацької теми'
+                },
+                onChange: function(value) {
+                    SafeStyle.settings.custom_color = value;
+                    Lampa.Storage.set('safe_style_color', value);
+                    Lampa.Settings.update();
+                    if (SafeStyle.settings.theme === 'custom_color') {
+                        applyTheme('custom_color', value);
+                    }
+                }
+            });
+
+            Lampa.SettingsApi.addParam({
+                component: 'safe_style',
+                param: {
+                    name: 'safe_style_button_styles_enabled',
+                    type: 'toggle',
+                    default: true
+                },
+                field: {
+                    name: Lampa.Lang.translate('Увімкнути стилі кнопок'),
+                    description: 'Увімкнути або вимкнути управління стилями кнопок'
+                },
+                onChange: function(value) {
+                    SafeStyle.settings.button_styles_enabled = value;
+                    Lampa.Storage.set('safe_style_button_styles_enabled', value);
+                    Lampa.Settings.update();
+                }
+            });
+
+            Lampa.SettingsApi.addParam({
+                component: 'safe_style',
+                param: {
+                    name: 'safe_style_enabled',
+                    type: 'toggle',
+                    default: true
+                },
+                field: {
+                    name: Lampa.Lang.translate('Увімкнути плагін'),
+                    description: 'Увімкнути або вимкнути плагін тем'
+                },
+                onChange: function(value) {
+                    SafeStyle.settings.enabled = value;
+                    Lampa.Storage.set('safe_style_enabled', value);
+                    Lampa.Settings.update();
+                    applyTheme(SafeStyle.settings.theme);
+                }
+            });
+        }
+
+        // Ініціалізація видимості параметра "Колір теми" при відкритті налаштувань
+        Lampa.Settings.listener.follow('open', function(e) {
+            if (e.name === 'safe_style') {
+                updateColorVisibility(SafeStyle.settings.theme);
+            }
+        });
+    }
+
+    // Реєстрація компонента
+    Lampa.Component.add('themes', ThemesComponent);
+
+    // Обробник для видалення непотрібних елементів при зміні компонента
+    Lampa.Settings.listener.follow('open', function(e) {
+        if (e.name === 'settings' && Lampa.Activity.get().component !== 'themes') {
+            $('link[rel="stylesheet"][href^="./"]').remove();
         }
     });
 
-    // Основной объект плагина
-    var maxsm_themes = {
-        // Название плагина
-        name: 'maxsm_themes',
-        // Версия плагина
-        version: '2.2.0',
-        // Настройки по умолчанию
-        settings: {
-            theme: 'mint_dark'
-        }
-    };
-
-    // Была ли предыдущая тема стоковая
-    var prevtheme = '';
-    // Запускаем только один раз
-    var onetime = false;
-
-    // Цвета loader'а для каждой темы
-    var loaderColors = {
-        "default": '#fff',
-        violet_blue: '#6a11cb',
-        mint_dark: '#3da18d',
-        deep_aurora: '#7e7ed9',
-        crystal_cyan: '#7ed0f9',
-        amber_noir: '#f4a261',
-        velvet_sakura: '#f6a5b0'
-    };
-
-    // Функция для применения тем
-    function applyTheme(theme) {
-        // Удаляем предыдущие стили темы
-        $('#interface_mod_theme').remove();
-
-        if (
-            prevtheme !== '' &&
-            (
-                (prevtheme === 'default' && theme !== 'default') ||
-                (prevtheme !== 'default' && theme === 'default')
-            )
-        ) {
-            window.location.reload();
+    // Ініціалізація плагіна
+    function initPlugin() {
+        // Завантаження збереженої теми
+        var selectedTheme = localStorage.getItem('selectedTheme');
+        if (selectedTheme) {
+            var link = $('<link rel="stylesheet" href="' + selectedTheme + '">');
+            $('head').append(link);
         }
 
-        prevtheme = theme;
-
-        // Если выбрано "Нет", просто удаляем стили
-        if (theme === 'default') return;
-
-        var color = loaderColors[theme] || loaderColors["default"];
-
-        var svgCode = encodeURIComponent("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"135\" height=\"140\" fill=\"".concat(color, "\"><rect width=\"10\" height=\"40\" y=\"100\" rx=\"6\"><animate attributeName=\"height\" begin=\"0s\" calcMode=\"linear\" dur=\"1s\" repeatCount=\"indefinite\" values=\"40;100;40\" keyTimes=\"0;0.5;1\"/><animate attributeName=\"y\" begin=\"0s\" calcMode=\"linear\" dur=\"1s\" repeatCount=\"indefinite\" values=\"100;40;100\" keyTimes=\"0;0.5;1\"/></rect><rect width=\"10\" height=\"40\" x=\"20\" y=\"100\" rx=\"6\"><animate attributeName=\"height\" begin=\"0.2s\" calcMode=\"linear\" dur=\"1s\" repeatCount=\"indefinite\" values=\"40;100;40\" keyTimes=\"0;0.5;1\"/><animate attributeName=\"y\" begin=\"0.2s\" calcMode=\"linear\" dur=\"1s\" repeatCount=\"indefinite\" values=\"100;40;100\" keyTimes=\"0;0.5;1\"/></rect><rect width=\"10\" height=\"40\" x=\"40\" y=\"100\" rx=\"6\"><animate attributeName=\"height\" begin=\"0.4s\" calcMode=\"linear\" dur=\"1s\" repeatCount=\"indefinite\" values=\"40;100;40\" keyTimes=\"0;0.5;1\"/><animate attributeName=\"y\" begin=\"0.4s\" calcMode=\"linear\" dur=\"1s\" repeatCount=\"indefinite\" values=\"100;40;100\" keyTimes=\"0;0.5;1\"/></rect><rect width=\"10\" height=\"40\" x=\"60\" y=\"100\" rx=\"6\"><animate attributeName=\"height\" begin=\"0.6s\" calcMode=\"linear\" dur=\"1s\" repeatCount=\"indefinite\" values=\"40;100;40\" keyTimes=\"0;0.5;1\"/><animate attributeName=\"y\" begin=\"0.6s\" calcMode=\"linear\" dur=\"1s\" repeatCount=\"indefinite\" values=\"100;40;100\" keyTimes=\"0;0.5;1\"/></rect><rect width=\"10\" height=\"40\" x=\"80\" y=\"100\" rx=\"6\"><animate attributeName=\"height\" begin=\"0.8s\" calcMode=\"linear\" dur=\"1s\" repeatCount=\"indefinite\" values=\"40;100;40\" keyTimes=\"0;0.5;1\"/><animate attributeName=\"y\" begin=\"0.8s\" calcMode=\"linear\" dur=\"1s\" repeatCount=\"indefinite\" values=\"100;40;100\" keyTimes=\"0;0.5;1\"/></rect><rect width=\"10\" height=\"40\" x=\"100\" y=\"100\" rx=\"6\"><animate attributeName=\"height\" begin=\"1s\" calcMode=\"linear\" dur=\"1s\" repeatCount=\"indefinite\" values=\"40;100;40\" keyTimes=\"0;0.5;1\"/><animate attributeName=\"y\" begin=\"1s\" calcMode=\"linear\" dur=\"1s\" repeatCount=\"indefinite\" values=\"100;40;100\" keyTimes=\"0;0.5;1\"/></rect><rect width=\"10\" height=\"40\" x=\"120\" y=\"100\" rx=\"6\"><animate attributeName=\"height\" begin=\"1.2s\" calcMode=\"linear\" dur=\"1s\" repeatCount=\"indefinite\" values=\"40;100;40\" keyTimes=\"0;0.5;1\"/><animate attributeName=\"y\" begin=\"1.2s\" calcMode=\"linear\" dur=\"1s\" repeatCount=\"indefinite\" values=\"100;40;100\" keyTimes=\"0;0.5;1\"/></rect></svg>"));
-
-
-        // Создаем новый стиль
-        var style = $('<style id="interface_mod_theme"></style>');
-
-        // Определяем стили для разных тем
-        var themes = {
-            mint_dark: "\n.navigation-bar__body\n{background: rgba(18, 32, 36, 0.96);\n}\n.card__quality,\n .card--tv .card__type {\nbackground: linear-gradient(to right, #1e6262dd, #3da18ddd);\n}\n.screensaver__preload {\nbackground:url(\"data:image/svg+xml,".concat(svgCode, "\") no-repeat 50% 50%\n}\n.activity__loader {\nposition:absolute;\ntop:0;\nleft:0;\nwidth:100%;\nheight:100%;\ndisplay:none;\nbackground:url(\"data:image/svg+xml,").concat(svgCode, "\") no-repeat 50% 50%\n \n}\nbody, .extensions\n {\nbackground: linear-gradient(135deg, #0a1b2a, #1a4036);\ncolor: #ffffff;\n}\n.company-start.icon--broken .company-start__icon,\n.explorer-card__head-img > img,\n.bookmarks-folder__layer,\n.card-more__box,\n.card__img\n,.extensions__block-add\n,.extensions__item\n {\nbackground-color: #1e2c2f;\n}\n.search-source.focus,\n.simple-button.focus,\n.menu__item.focus,\n.menu__item.traverse,\n.menu__item.hover,\n.full-start__button.focus,\n.full-descr__tag.focus,\n.player-panel .button.focus,\n.full-person.selector.focus,\n.tag-count.selector.focus,\n.full-review.focus {\nbackground: linear-gradient(to right, #1e6262, #3da18d);\ncolor: #fff;\nbox-shadow: 0 0.0em 0.4em rgba(61, 161, 141, 0.0);\n}\n.selectbox-item.focus,\n.settings-folder.focus,\n.settings-param.focus {\nbackground: linear-gradient(to right, #1e6262, #3da18d);\ncolor: #fff;\nbox-shadow: 0 0.0em 0.4em rgba(61, 161, 141, 0.0);\nborder-radius: 0.5em 0 0 0.5em;\n}\n.full-episode.focus::after,\n.card-episode.focus .full-episode::after,\n.items-cards .selector.focus::after,  \n.card-more.focus .card-more__box::after,\n.card-episode.focus .full-episode::after,\n.card-episode.hover .full-episode::after,\n.card.focus .card__view::after,\n.card.hover .card__view::after,\n.torrent-item.focus::after,\n.online-prestige.selector.focus::after,\n.online-prestige--full.selector.focus::after,\n.explorer-card__head-img.selector.focus::after,\n.extensions__item.focus::after,\n.extensions__block-add.focus::after,\n.full-review-add.focus::after {\nborder: 0.2em solid #3da18d;\nbox-shadow: 0 0 0.8em rgba(61, 161, 141, 0.0);\n}\n.head__action.focus,\n.head__action.hover {\nbackground: linear-gradient(45deg, #3da18d, #1e6262);\n}\n.modal__content {\nbackground: rgba(18, 32, 36, 0.96);\nborder: 0em solid rgba(18, 32, 36, 0.96);\n}\n.settings__content,\n.settings-input__content,\n.selectbox__content,\n.settings-input {\nbackground: rgba(18, 32, 36, 0.96);\n}\n.torrent-serial {\nbackground: rgba(0, 0, 0, 0.22);\nborder: 0.2em solid rgba(0, 0, 0, 0.22);\n}\n.torrent-serial.focus {\nbackground-color: #1a3b36cc;\nborder: 0.2em solid #3da18d;\n}\n"),
-            crystal_cyan: "\n.navigation-bar__body\n{background: rgba(10, 25, 40, 0.96);\n}\n.card__quality,\n .card--tv .card__type {\nbackground: linear-gradient(to right, #00d2ffdd, #3a8ee6dd);\n}\n.screensaver__preload {\nbackground:url(\"data:image/svg+xml,".concat(svgCode, "\") no-repeat 50% 50%\n}\n.activity__loader {\nposition:absolute;\ntop:0;\nleft:0;\nwidth:100%;\nheight:100%;\ndisplay:none;\nbackground:url(\"data:image/svg+xml,").concat(svgCode, "\") no-repeat 50% 50%\n \n}\nbody, .extensions\n {\nbackground: linear-gradient(135deg, #081822, #104059);\ncolor: #ffffff;\n}\n.company-start.icon--broken .company-start__icon,\n.explorer-card__head-img > img,\n.bookmarks-folder__layer,\n.card-more__box,\n.card__img\n,.extensions__block-add\n,.extensions__item\n {\nbackground-color: #112b3a;\n}\n.search-source.focus,\n.simple-button.focus,\n.menu__item.focus,\n.menu__item.traverse,\n.menu__item.hover,\n.full-start__button.focus,\n.full-descr__tag.focus,\n.player-panel .button.focus,\n.full-person.selector.focus,\n.tag-count.selector.focus,\n.full-review.focus {\nbackground: linear-gradient(to right, #00d2ff, #3a8ee6);\ncolor: #fff;\nbox-shadow: 0 0.0em 0.4em rgba(72, 216, 255, 0.0);\n}\n.selectbox-item.focus,\n.settings-folder.focus,\n.settings-param.focus {\nbackground: linear-gradient(to right, #00d2ff, #3a8ee6);\ncolor: #fff;\nbox-shadow: 0 0.0em 0.4em rgba(72, 216, 255, 0.0);\nborder-radius: 0.5em 0 0 0.5em;\n}\n.full-episode.focus::after,\n.card-episode.focus .full-episode::after,\n.items-cards .selector.focus::after,  \n.card-more.focus .card-more__box::after,\n.card-episode.focus .full-episode::after,\n.card-episode.hover .full-episode::after,\n.card.focus .card__view::after,\n.card.hover .card__view::after,\n.torrent-item.focus::after,\n.online-prestige.selector.focus::after,\n.online-prestige--full.selector.focus::after,\n.explorer-card__head-img.selector.focus::after,\n.extensions__item.focus::after,\n.extensions__block-add.focus::after,\n.full-review-add.focus::after {\nborder: 0.2em solid #00d2ff;\nbox-shadow: 0 0 0.8em rgba(72, 216, 255, 0.0);\n}\n.head__action.focus,\n.head__action.hover {\nbackground: linear-gradient(45deg, #00d2ff, #3a8ee6);\n}\n.modal__content {\nbackground: rgba(10, 25, 40, 0.96);\nborder: 0em solid rgba(10, 25, 40, 0.96);\n}\n.settings__content,\n.settings-input__content,\n.selectbox__content,\n.settings-input {\nbackground: rgba(10, 25, 40, 0.96);\n}\n.torrent-serial {\nbackground: rgba(0, 0, 0, 0.22);\nborder: 0.2em solid rgba(0, 0, 0, 0.22);\n}\n.torrent-serial.focus {\nbackground-color: #0c2e45cc;\nborder: 0.2em solid #00d2ff;\n}\n"),
-            deep_aurora: "\n.navigation-bar__body\n{background: rgba(18, 34, 59, 0.96);\n}\n.card__quality,\n .card--tv .card__type {\nbackground: linear-gradient(to right, #2c6fc1dd, #7e7ed9dd);\n}\n.screensaver__preload {\nbackground:url(\"data:image/svg+xml,".concat(svgCode, "\") no-repeat 50% 50%\n}\n.activity__loader {\nposition:absolute;\ntop:0;\nleft:0;\nwidth:100%;\nheight:100%;\ndisplay:none;\nbackground:url(\"data:image/svg+xml,").concat(svgCode, "\") no-repeat 50% 50%\n \n}\nbody, .extensions\n {\nbackground: linear-gradient(135deg, #1a102b, #0a1c3f);\ncolor: #ffffff;\n}\n.company-start.icon--broken .company-start__icon,\n.explorer-card__head-img > img,\n.bookmarks-folder__layer,\n.card-more__box,\n.card__img\n,.extensions__block-add\n,.extensions__item\n {\nbackground-color: #171f3a;\n}\n.search-source.focus,\n.simple-button.focus,\n.menu__item.focus,\n.menu__item.traverse,\n.menu__item.hover,\n.full-start__button.focus,\n.full-descr__tag.focus,\n.player-panel .button.focus,\n.full-person.selector.focus,\n.tag-count.selector.focus,\n.full-review.focus {\nbackground: linear-gradient(to right, #2c6fc1, #7e7ed9);\ncolor: #fff;\nbox-shadow: 0 0.0em 0.4em rgba(124, 194, 255, 0.0);\n}\n.selectbox-item.focus,\n.settings-folder.focus,\n.settings-param.focus {\nbackground: linear-gradient(to right, #2c6fc1, #7e7ed9);\ncolor: #fff;\nbox-shadow: 0 0.0em 0.4em rgba(124, 194, 255, 0.0);\nborder-radius: 0.5em 0 0 0.5em;\n}\n.full-episode.focus::after,\n.card-episode.focus .full-episode::after,\n.items-cards .selector.focus::after,  \n.card-more.focus .card-more__box::after,\n.card-episode.focus .full-episode::after,\n.card-episode.hover .full-episode::after,\n.card.focus .card__view::after,\n.card.hover .card__view::after,\n.torrent-item.focus::after,\n.online-prestige.selector.focus::after,\n.online-prestige--full.selector.focus::after,\n.explorer-card__head-img.selector.focus::after,\n.extensions__item.focus::after,\n.extensions__block-add.focus::after,\n.full-review-add.focus::after {\nborder: 0.2em solid #7e7ed9;\nbox-shadow: 0 0 0.8em rgba(124, 194, 255, 0.0);\n}\n.head__action.focus,\n.head__action.hover {\nbackground: linear-gradient(45deg, #7e7ed9, #2c6fc1);\n}\n.modal__content {\nbackground: rgba(18, 34, 59, 0.96);\nborder: 0em solid rgba(18, 34, 59, 0.96);\n}\n.settings__content,\n.settings-input__content,\n.selectbox__content,\n.settings-input {\nbackground: rgba(18, 34, 59, 0.96);\n}\n.torrent-serial {\nbackground: rgba(0, 0, 0, 0.22);\nborder: 0.2em solid rgba(0, 0, 0, 0.22);\n}\n.torrent-serial.focus {\nbackground-color: #1a102bcc;\nborder: 0.2em solid #7e7ed9;\n}\n"),
-            amber_noir: "\n.navigation-bar__body\n{background: rgba(28, 18, 10, 0.96);\n}\n.card__quality,\n .card--tv .card__type {\nbackground: linear-gradient(to right, #f4a261dd, #e76f51dd);\n}\n.screensaver__preload {\nbackground:url(\"data:image/svg+xml,".concat(svgCode, "\") no-repeat 50% 50%\n}\n.activity__loader {\nposition:absolute;\ntop:0;\nleft:0;\nwidth:100%;\nheight:100%;\ndisplay:none;\nbackground:url(\"data:image/svg+xml,").concat(svgCode, "\") no-repeat 50% 50%\n \n}\nbody, .extensions\n {\nbackground: linear-gradient(135deg, #1f0e04, #3b2a1e);\ncolor: #ffffff;\n}\n.company-start.icon--broken .company-start__icon,\n.explorer-card__head-img > img,\n.bookmarks-folder__layer,\n.card-more__box,\n.card__img\n,.extensions__block-add\n,.extensions__item\n {\nbackground-color: #2a1c11;\n}\n.search-source.focus,\n.simple-button.focus,\n.menu__item.focus,\n.menu__item.traverse,\n.menu__item.hover,\n.full-start__button.focus,\n.full-descr__tag.focus,\n.player-panel .button.focus,\n.full-person.selector.focus,\n.tag-count.selector.focus,\n.full-review.focus {\nbackground: linear-gradient(to right, #f4a261, #e76f51);\ncolor: #fff;\nbox-shadow: 0 0.0em 0.4em rgba(255, 160, 90, 0.0);\n}\n.selectbox-item.focus,\n.settings-folder.focus,\n.settings-param.focus {\nbackground: linear-gradient(to right, #f4a261, #e76f51);\ncolor: #fff;\nbox-shadow: 0 0.0em 0.4em rgba(255, 160, 90, 0.0);\nborder-radius: 0.5em 0 0 0.5em;\n}\n.full-episode.focus::after,\n.card-episode.focus .full-episode::after,\n.items-cards .selector.focus::after,  \n.card-more.focus .card-more__box::after,\n.card-episode.focus .full-episode::after,\n.card-episode.hover .full-episode::after,\n.card.focus .card__view::after,\n.card.hover .card__view::after,\n.torrent-item.focus::after,\n.online-prestige.selector.focus::after,\n.online-prestige--full.selector.focus::after,\n.explorer-card__head-img.selector.focus::after,\n.extensions__item.focus::after,\n.extensions__block-add.focus::after,\n.full-review-add.focus::after {\nborder: 0.2em solid #f4a261;\nbox-shadow: 0 0 0.8em rgba(255, 160, 90, 0.0);\n}\n.head__action.focus,\n.head__action.hover {\nbackground: linear-gradient(45deg, #f4a261, #e76f51);\n}\n.modal__content {\nbackground: rgba(28, 18, 10, 0.96);\nborder: 0em solid rgba(28, 18, 10, 0.96);\n}\n.settings__content,\n.settings-input__content,\n.selectbox__content,\n.settings-input {\nbackground: rgba(28, 18, 10, 0.96);\n}\n.torrent-serial {\nbackground: rgba(0, 0, 0, 0.22);\nborder: 0.2em solid rgba(0, 0, 0, 0.22);\n}\n.torrent-serial.focus {\nbackground-color: #3b2412cc;\nborder: 0.2em solid #f4a261;\n}\n"),
-            velvet_sakura: "\n.navigation-bar__body\n{background: rgba(56, 32, 45, 0.96);\n}\n.card__quality,\n .card--tv .card__type {\nbackground: linear-gradient(to right, #f6a5b0dd, #f9b8d3dd);\n}\n.screensaver__preload {\nbackground:url(\"data:image/svg+xml,".concat(svgCode, "\") no-repeat 50% 50%\n}\n.activity__loader {\nposition:absolute;\ntop:0;\nleft:0;\nwidth:100%;\nheight:100%;\ndisplay:none;\nbackground:url(\"data:image/svg+xml,").concat(svgCode, "\") no-repeat 50% 50%\n \n}\nbody, .extensions\n {\nbackground: linear-gradient(135deg, #4b0e2b, #7c2a57);\ncolor: #ffffff;\n}\n.company-start.icon--broken .company-start__icon,\n.explorer-card__head-img > img,\n.bookmarks-folder__layer,\n.card-more__box,\n.card__img\n,.extensions__block-add\n,.extensions__item\n {\nbackground-color: #5c0f3f;\n}\n.search-source.focus,\n.simple-button.focus,\n.menu__item.focus,\n.menu__item.traverse,\n.menu__item.hover,\n.full-start__button.focus,\n.full-descr__tag.focus,\n.player-panel .button.focus,\n.full-person.selector.focus,\n.tag-count.selector.focus,\n.full-review.focus {\nbackground: linear-gradient(to right, #f6a5b0, #f9b8d3);\ncolor: #fff;\nbox-shadow: 0 0.0em 0.4em rgba(246, 165, 176, 0.0);\n}\n.selectbox-item.focus,\n.settings-folder.focus,\n.settings-param.focus {\nbackground: linear-gradient(to right, #f6a5b0, #f9b8d3);\ncolor: #fff;\nbox-shadow: 0 0.0em 0.4em rgba(246, 165, 176, 0.0);\nborder-radius: 0.5em 0 0 0.5em;\n}\n.full-episode.focus::after,\n.card-episode.focus .full-episode::after,\n.items-cards .selector.focus::after,  \n.card-more.focus .card-more__box::after,\n.card-episode.focus .full-episode::after,\n.card-episode.hover .full-episode::after,\n.card.focus .card__view::after,\n.card.hover .card__view::after,\n.torrent-item.focus::after,\n.online-prestige.selector.focus::after,\n.online-prestige--full.selector.focus::after,\n.explorer-card__head-img.selector.focus::after,\n.extensions__item.focus::after,\n.extensions__block-add.focus::after,\n.full-review-add.focus::after {\nborder: 0.2em solid #f6a5b0;\nbox-shadow: 0 0 0.8em rgba(246, 165, 176, 0.0);\n}\n.head__action.focus,\n.head__action.hover {\nbackground: linear-gradient(45deg, #f9b8d3, #f6a5b0);\n}\n.modal__content {\nbackground: rgba(56, 32, 45, 0.96);\nborder: 0em solid rgba(56, 32, 45, 0.96);\n}\n.settings__content,\n.settings-input__content,\n.selectbox__content,\n.settings-input {\nbackground: rgba(56, 32, 45, 0.96);\n}\n.torrent-serial {\nbackground: rgba(0, 0, 0, 0.22);\nborder: 0.2em solid rgba(0, 0, 0, 0.22);\n}\n.torrent-serial.focus {\nbackground-color: #7c2a57cc;\nborder: 0.2em solid #f6a5b0;\n}\n")
-        };
-
-        // Устанавливаем стили для выбранной темы
-        style.html(themes[theme] || '');
-
-        // Добавляем стиль в head
-        $('head').append(style);
-
-        if (onetime === false) {
-            onetime = true;
-            forall();
-            removeFromSettingsMenu();
-        }
-
-    }
-
-    function removeFromSettingsMenu() {
-        // Скрываем всё, что плохо сочетается с плагином тем
-        Lampa.Settings.listener.follow('open', function(e) {
-            if (e.name == 'interface') {
-                e.body.find('[data-name="light_version"]').remove();
-                e.body.find('[data-name="background"]').remove();
-                e.body.find('[data-name="background_type"]').remove();
-                e.body.find('[data-name="card_interfice_type"]').remove();
-                e.body.find('[data-name="glass_style"]').prev('.settings-param-title').remove();
-                e.body.find('[data-name="glass_style"]').remove();
-                e.body.find('[data-name="glass_opacity"]').remove();
-                e.body.find('[data-name="card_interfice_poster"]').prev('.settings-param-title').remove();
-                e.body.find('[data-name="card_interfice_poster"]').remove();
-                e.body.find('[data-name="card_interfice_cover"]').remove();
-                e.body.find('[data-name="advanced_animation"]').remove();
-            }
-        });
-        // Настройки интерфейса под темы
-        Lampa.Storage.set('light_version', 'false');
-        Lampa.Storage.set('background', 'false');
-        Lampa.Storage.set('card_interfice_type', 'new');
-        Lampa.Storage.set('glass_style', 'false');
-        Lampa.Storage.set('card_interfice_poster', 'false');
-        Lampa.Storage.set('card_interfice_cover', 'true');
-        Lampa.Storage.set('advanced_animation', 'false');
-
-    }
-
-    // Дополнительные Шаблоны, не меняющиеся от цветовых стилей    
-    function forall() {
-        // Шаблон карточки, где год перенесен выше названия
-        Lampa.Template.add('card', "<div class=\"card selector layer--visible layer--render\">\n    <div class=\"card__view\">\n        <img src=\"./img/img_load.svg\" class=\"card__img\" />\n\n        <div class=\"card__icons\">\n            <div class=\"card__icons-inner\">\n                \n            </div>\n        </div>\n    <div class=\"card__age\">{release_year}</div>\n    </div>\n\n    <div class=\"card__title\">{title}</div>\n    </div>");
-        // Шаблон карточки выхода эпизода, выкинем футер из card_episode, год и название на карточку
-        Lampa.Template.add('card_episode', "<div class=\"card-episode selector layer--visible layer--render\">\n    <div class=\"card-episode__body\">\n        <div class=\"full-episode\">\n            <div class=\"full-episode__img\">\n                <img />\n            </div>\n\n            <div class=\"full-episode__body\">\n     <div class=\"card__title\">{title}</div>\n            <div class=\"card__age\">{release_year}</div>\n            <div class=\"full-episode__num hide\">{num}</div>\n                <div class=\"full-episode__name\">{name}</div>\n                <div class=\"full-episode__date\">{date}</div>\n            </div>\n        </div>\n    </div>\n    <div class=\"card-episode__footer hide\">\n        <div class=\"card__imgbox\">\n            <div class=\"card__view\">\n                <img class=\"card__img\" />\n            </div>\n        </div>\n\n        <div class=\"card__left\">\n            <div class=\"card__title\">{title}</div>\n            <div class=\"card__age\">{release_year}</div>\n        </div>\n    </div>\n</div>");
-        // Шаблон карточки Фильма\Сериала, переносим кнопки из кнопки "Смотреть" на верхний уровень etc.
-        Lampa.Template.add('full_start_new', "<div class=\"full-start-new\">\n\n<div class=\"full-start-new__body\">\n<div class=\"full-start-new__left\">\n<div class=\"full-start-new__poster\">\n<img class=\"full-start-new__img full--poster\" />\n</div>\n</div>\n\n<div class=\"full-start-new__right\">\n<div class=\"full-start-new__head\"></div>\n<div class=\"full-start-new__title\">{title}</div>\n<div class=\"full-start__title-original\">{original_title}</div>\n<div class=\"full-start-new__tagline full--tagline\">{tagline}</div>\n<div class=\"full-start-new__rate-line\">\n<div class=\"full-start__rate rate--tmdb\"><div>{rating}</div><div class=\"source--name\">TMDB</div></div>\n<div class=\"full-start__rate rate--imdb hide\"><div></div><div class=\"source--name\">IMDb</div></div>\n<div class=\"full-start__rate rate--kp hide\"><div></div><div class=\"source--name\">Кинопоиск</div></div>\n\n<div class=\"full-start__pg hide\"></div>\n<div class=\"full-start__status hide\"></div>\n</div>\n<div class=\"full-start-new__details\"></div>\n<div class=\"full-start-new__reactions\">\n<div>#{reactions_none}</div>\n</div>\n\n<div class=\"full-start-new__buttons\">\n<div class=\"full-start__button selector button--play\">\n<svg width=\"28\" height=\"29\" viewBox=\"0 0 28 29\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<circle cx=\"14\" cy=\"14.5\" r=\"13\" stroke=\"currentColor\" stroke-width=\"2.7\"/>\n<path d=\"M18.0739 13.634C18.7406 14.0189 18.7406 14.9811 18.0739 15.366L11.751 19.0166C11.0843 19.4015 10.251 18.9204 10.251 18.1506L10.251 10.8494C10.251 10.0796 11.0843 9.5985 11.751 9.9834L18.0739 13.634Z\" fill=\"currentColor\"/>\n</svg>\n\n<span>#{title_watch}</span>\n</div>\n\n<div class=\"full-start__button view--torrent\">\n<svg xmlns=\"http://www.w3.org/2000/svg\"  viewBox=\"0 0 50 50\" width=\"50px\" height=\"50px\">\n<path d=\"M25,2C12.317,2,2,12.317,2,25s10.317,23,23,23s23-10.317,23-23S37.683,2,25,2z M40.5,30.963c-3.1,0-4.9-2.4-4.9-2.4 S34.1,35,27,35c-1.4,0-3.6-0.837-3.6-0.837l4.17,9.643C26.727,43.92,25.874,44,25,44c-2.157,0-4.222-0.377-6.155-1.039L9.237,16.851 c0,0-0.7-1.2,0.4-1.5c1.1-0.3,5.4-1.2,5.4-1.2s1.475-0.494,1.8,0.5c0.5,1.3,4.063,11.112,4.063,11.112S22.6,29,27.4,29 c4.7,0,5.9-3.437,5.7-3.937c-1.2-3-4.993-11.862-4.993-11.862s-0.6-1.1,0.8-1.4c1.4-0.3,3.8-0.7,3.8-0.7s1.105-0.163,1.6,0.8 c0.738,1.437,5.193,11.262,5.193,11.262s1.1,2.9,3.3,2.9c0.464,0,0.834-0.046,1.152-0.104c-0.082,1.635-0.348,3.221-0.817,4.722 C42.541,30.867,41.756,30.963,40.5,30.963z\" fill=\"currentColor\"/>\n</svg>\n\n<span>#{full_torrents}</span>\n</div>\n\n<div class=\"full-start__button selector view--trailer\">\n<svg height=\"70\" viewBox=\"0 0 80 70\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M71.2555 2.08955C74.6975 3.2397 77.4083 6.62804 78.3283 10.9306C80 18.7291 80 35 80 35C80 35 80 51.2709 78.3283 59.0694C77.4083 63.372 74.6975 66.7603 71.2555 67.9104C65.0167 70 40 70 40 70C40 70 14.9833 70 8.74453 67.9104C5.3025 66.7603 2.59172 63.372 1.67172 59.0694C0 51.2709 0 35 0 35C0 35 0 18.7291 1.67172 10.9306C2.59172 6.62804 5.3025 3.2395 8.74453 2.08955C14.9833 0 40 0 40 0C40 0 65.0167 0 71.2555 2.08955ZM55.5909 35.0004L29.9773 49.5714V20.4286L55.5909 35.0004Z\" fill=\"currentColor\"></path>\n</svg>\n\n<span>#{full_trailers}</span>\n</div>\n<div class=\"full-start__button selector button--book\">\n<svg width=\"21\" height=\"32\" viewBox=\"0 0 21 32\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<path d=\"M2 1.5H19C19.2761 1.5 19.5 1.72386 19.5 2V27.9618C19.5 28.3756 19.0261 28.6103 18.697 28.3595L12.6212 23.7303C11.3682 22.7757 9.63183 22.7757 8.37885 23.7303L2.30302 28.3595C1.9739 28.6103 1.5 28.3756 1.5 27.9618V2C1.5 1.72386 1.72386 1.5 2 1.5Z\" stroke=\"currentColor\" stroke-width=\"2.5\"/>\n</svg>\n\n<span>#{settings_input_links}</span>\n</div>\n\n<div class=\"full-start__button selector button--reaction\">\n<svg width=\"38\" height=\"34\" viewBox=\"0 0 38 34\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<path d=\"M37.208 10.9742C37.1364 10.8013 37.0314 10.6441 36.899 10.5117C36.7666 10.3794 36.6095 10.2744 36.4365 10.2028L12.0658 0.108375C11.7166 -0.0361828 11.3242 -0.0361227 10.9749 0.108542C10.6257 0.253206 10.3482 0.530634 10.2034 0.879836L0.108666 25.2507C0.0369593 25.4236 3.37953e-05 25.609 2.3187e-08 25.7962C-3.37489e-05 25.9834 0.0368249 26.1688 0.108469 26.3418C0.180114 26.5147 0.28514 26.6719 0.417545 26.8042C0.54995 26.9366 0.707139 27.0416 0.880127 27.1131L17.2452 33.8917C17.5945 34.0361 17.9869 34.0361 18.3362 33.8917L29.6574 29.2017C29.8304 29.1301 29.9875 29.0251 30.1199 28.8928C30.2523 28.7604 30.3573 28.6032 30.4289 28.4303L37.2078 12.065C37.2795 11.8921 37.3164 11.7068 37.3164 11.5196C37.3165 11.3325 37.2796 11.1471 37.208 10.9742ZM20.425 29.9407L21.8784 26.4316L25.3873 27.885L20.425 29.9407ZM28.3407 26.0222L21.6524 23.252C21.3031 23.1075 20.9107 23.1076 20.5615 23.2523C20.2123 23.3969 19.9348 23.6743 19.79 24.0235L17.0194 30.7123L3.28783 25.0247L12.2918 3.28773L34.0286 12.2912L28.3407 26.0222Z\" fill=\"currentColor\"/>\n<path d=\"M25.3493 16.976L24.258 14.3423L16.959 17.3666L15.7196 14.375L13.0859 15.4659L15.4161 21.0916L25.3493 16.976Z\" fill=\"currentColor\"/>\n</svg>                \n\n<span>#{title_reactions}</span>\n</div>\n\n<div class=\"full-start__button selector button--subscribe hide\">\n<svg width=\"25\" height=\"30\" viewBox=\"0 0 25 30\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<path d=\"M6.01892 24C6.27423 27.3562 9.07836 30 12.5 30C15.9216 30 18.7257 27.3562 18.981 24H15.9645C15.7219 25.6961 14.2632 27 12.5 27C10.7367 27 9.27804 25.6961 9.03542 24H6.01892Z\" fill=\"currentColor\"/>\n<path d=\"M3.81972 14.5957V10.2679C3.81972 5.41336 7.7181 1.5 12.5 1.5C17.2819 1.5 21.1803 5.41336 21.1803 10.2679V14.5957C21.1803 15.8462 21.5399 17.0709 22.2168 18.1213L23.0727 19.4494C24.2077 21.2106 22.9392 23.5 20.9098 23.5H4.09021C2.06084 23.5 0.792282 21.2106 1.9273 19.4494L2.78317 18.1213C3.46012 17.0709 3.81972 15.8462 3.81972 14.5957Z\" stroke=\"currentColor\" stroke-width=\"2.5\"/>\n</svg>\n\n<span>#{title_subscribe}</span>\n</div>\n\n<div class=\"full-start__button selector button--options\">\n<svg width=\"38\" height=\"10\" viewBox=\"0 0 38 10\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<circle cx=\"4.88968\" cy=\"4.98563\" r=\"4.75394\" fill=\"currentColor\"/>\n<circle cx=\"18.9746\" cy=\"4.98563\" r=\"4.75394\" fill=\"currentColor\"/>\n<circle cx=\"33.0596\" cy=\"4.98563\" r=\"4.75394\" fill=\"currentColor\"/>\n</svg>\n</div>\n\n</div>\n</div>\n</div>\n</div>");
-        // Стили 
-        var style = "\n        <style id=\"interface_mod_theme_forall\">\n " +
-            // Круглые чек-боксы
-            ".selectbox-item__checkbox\n {\nborder-radius: 100%\n}\n" +
-            ".selectbox-item--checked .selectbox-item__checkbox\n {\nbackground: #ccc;\n}\n" +
-            //  Рейтинг внутри карточки
-            ".full-start-new__rate-line .full-start__pg {\n    font-size: 1em;\nbackground: #fff;\n    color: #000;\n}\n." +
-            ".full-start__rate \n{\n     border-radius: 0.25em;\n padding: 0.3em;\n background-color: rgba(0, 0, 0, 0.3);\n}\n" +
-            ".full-start__pg, .full-start__status\n {\nfont-size: 1em;\nbackground: #fff;\n    color: #000;\n}\n" +
-            // Докручиваем плашки на карточках стилями 
-            // Заголовок
-            ".card__title {\n                    height: 3.6em;\n                    text-overflow: ellipsis;\n                     -o-text-overflow: ellipsis;\n                    text-overflow: ellipsis;\n                    -webkit-line-clamp: 3;\n                    line-clamp: 3;\n                }\n " +
-            // Год
-            ".card__age {\n  position: absolute;\n  right: 0em;\n  bottom: 0em;\n  z-index: 10;\n  background: rgba(0, 0, 0, 0.6);\n  color: #ffffff;\n  font-weight: 700;\n  padding: 0.4em 0.6em;\n    -webkit-border-radius: 0.48em 0 0.48em 0;\n     -moz-border-radius: 0.48em 0 0.48em 0;\n          border-radius: 0.48em 0 0.48em 0;\nline-height: 1.0;\nfont-size: 1.0em;\n}\n " +
-            // Рейтинг
-            ".card__vote {\n  position: absolute;\n  bottom: auto; \n right: 0em;\n  top: 0em;\n  background: rgba(0, 0, 0, 0.6);\n    font-weight: 700;\n  color: #fff;\n -webkit-border-radius: 0 0.34em 0 0.34em;\n     -moz-border-radius: 0 0.34em 0 0.34em;\n          border-radius: 0 0.34em 0 0.34em;\nline-height: 1.0;\nfont-size: 1.4em;\n}\n  " +
-            // Тип (Сериал)
-            ".card__type  {\n  position: absolute;\n  bottom: auto; \n left: 0em; \nright: auto;\n  top: 0em;\n  background: rgba(0, 0, 0, 0.6);\n  color: #fff;\n  font-weight: 700;\n  padding: 0.4em 0.6em;\n  -webkit-border-radius: 0.4em 0 0.4em 0;\n     -moz-border-radius: 0.4em 0 0.4em 0;;\n          border-radius: 0.4em 0 0.4em 0;\nline-height: 1.0;\nfont-size: 1.0em;\n}\n " +
-            ".card--tv .card__type {\n  color: #fff;\n}\n" +
-            // Иконки закладок и т.д.
-            ".card__icons {\n  position: absolute;\n  top: 2em;\n  left: 0;\n  right: auto;\n  display: -webkit-box;\n  display: -webkit-flex;\n  display: -moz-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-pack: center;\n  -webkit-justify-content: center;\n     -moz-box-pack: center;\n      -ms-flex-pack: center;\n          justify-content: center;\n background: rgba(0, 0, 0, 0.6);\n  color: #fff;\n    -webkit-border-radius: 0 0.5em 0.5em 0;\n     -moz-border-radius: 0 0.5em 0.5em 0;\n          border-radius: 0 0.5em 0.5em 0;\n}\n" +
-            ".card__icons-inner {\n  background: rgba(0, 0, 0, 0); \n}\n" +
-            // Статус расширенных закладок
-            ".card__marker {\n position: absolute;\n  left: 0em;\n  top: 4em;\n  bottom: auto; \n  background: rgba(0, 0, 0, 0.6);\n  -webkit-border-radius: 0 0.5em 0.5em 0;\n     -moz-border-radius: 0 0.5em 0.5em 0;\n          border-radius: 0 0.5em 0.5em 0;\n  font-weight: 700;\n font-size: 1.0em;\n   padding: 0.4em 0.6em;\n    display: -webkit-box;\n  display: -webkit-flex;\n  display: -moz-box;\n  display: -ms-flexbox;\n  display: flex;\n  -webkit-box-align: center;\n  -webkit-align-items: center;\n     -moz-box-align: center;\n      -ms-flex-align: center;\n          align-items: center;\n  line-height: 1.2;\nmax-width: min(12em, 95%);\nbox-sizing: border-box;\n}\n" +
-            // На маленьких экранах обрезаем, на больших полностью
-            ".card__marker > span {\n max-width: min(12em, 95%);\n}\n" +
-            // отметка качества background: rgba(0, 0, 0, 0.6);\n  
-            ".card__quality {\n  position: absolute;\n  left: auto;\n right: 0em;\n  bottom: 2.4em;\n  padding: 0.4em 0.6em;\n  color: #fff;\n font-weight: 700;\n  font-size: 1.0em;\n  -webkit-border-radius: 0.5em 0 0 0.5em;\n  -moz-border-radius: 0.5em 0 0 0.5em;\n  border-radius: 0.5em 0 0 0.5em;\n  text-transform: uppercase;\n}\n" +
-            // Уменьшаем расстояние между рядами только для карточках в списках
-            ".items-line.items-line--type-cards + .items-line.items-line--type-cards  {\nmargin-top: 1em;\n}\n" +
-            // Так же широкие карты фиксим, чтобы не было отскока нижнего ряда, делаем отступ снизу
-            ".card--small .card__view {\nmargin-bottom: 2em;\n}\n" +
-            // Уменьшаем высоту после удаления футера, нужно для card_episode
-            ".items-line--type-cards {\n min-height: 18em;\n}\n" +
-            // Внутри карточки информация стремится к нижней границе экрана
-            "@media screen and (min-width: 580px) {\n.full-start-new {\nmin-height: 80vh;\ndisplay: flex\n}\n}\n" +
-            // Делаем, чтобы кнопки были большими, если экран большой, и всегда маленькими на мелеом экране
-            //".full-start-new__buttons .full-start__button:not(.focus) span {\ndisplay: inline ;\n}\n@media screen and (max-width: 580px) {\n.full-start-new__buttons {\noverflow: auto;\n}\n.full-start-new__buttons .full-start__button:not(.focus) span {\ndisplay: none;\n}\n}\n" +
-            // Постер в карточке, менее затемнен чем в стоке
-            ".full-start__background.loaded {\nopacity: 0.8;\n}\n.full-start__background.dim {\nopacity: 0.2;\n}\n" +
-            // Скругления у большого числа элементов
-            ".explorer__files .torrent-filter .simple-button {\nfont-size: 1.2em;\n-webkit-border-radius: 0.5em;\n-moz-border-radius: 0.5em;\nborder-radius: 0.5em;\n}\n" +
-            ".full-review-add,\n.full-review,\n.extensions__item,\n.extensions__block-add,\n.search-source,\n.bookmarks-folder__layer,\n.bookmarks-folder__body,\n.card__img,\n.card__promo,\n.full-episode--next .full-episode__img:after,\n.full-episode__img img,\n.full-episode__body,\n.full-person__photo,\n.card-more__box,\n.full-start__button,\n.simple-button,\n.register {\nborder-radius: 0.5em;\n}\n" +
-            ".extensions__item.focus::after,\n.extensions__block-add.focus::after,\n.full-episode.focus::after,\n.full-review-add.focus::after,\n.card-parser.focus::after,\n.card-episode.focus .full-episode::after,\n.card-episode.hover .full-episode::after,\n.card.focus .card__view::after,\n.card.hover .card__view::after,\n.card-more.focus .card-more__box::after,\n.register.focus::after {\nborder-radius: 1em;\n}\n" +
-            ".search-source.focus,\n.simple-button.focus,\n.menu__item.focus,\n.menu__item.traverse,\n.menu__item.hover,\n.full-start__button.focus,\n.full-descr__tag.focus,\n.player-panel .button.focus,\n.full-person.selector.focus,\n.tag-count.selector.focus {\nborder-radius: 0.5em;\n}\n" +
-            // Пробуем немного анимацмм
-            ".card\n{transform: scale(1);\ntransition: transform 0.3s ease;\n}\n" +
-            ".card.focus\n{transform: scale(1.03);\n}\n" +
-            ".torrent-item,\n.online-prestige\n{transform: scale(1);\ntransition: transform 0.3s ease;\n}\n" +
-            ".torrent-item.focus,\n.online-prestige.focus\n{transform: scale(1.01);\n}\n" +
-            ".extensions__item,\n.extensions__block-add,\n.full-review-add,\n.full-review,\n.tag-count,\n.full-person,\n.full-episode,\n.simple-button,\n.full-start__button,\n.items-cards .selector,\n.card-more,\n.explorer-card__head-img.selector,\n.card-episode\n{transform: scale(1);\ntransition: transform 0.3s ease;\n}\n" +
-            ".extensions__item.focus,\n.extensions__block-add.focus,\n.full-review-add.focus,\n.full-review.focus,\n.tag-count.focus,\n.full-person.focus,\n.full-episode.focus,\n.simple-button.focus,\n.full-start__button.focus,\n.items-cards .selector.focus,\n.card-more.focus,\n.explorer-card__head-img.selector.focus,\n.card-episode.focus\n{transform: scale(1.03);\n}\n" +
-            ".menu__item {\n  transition: transform 0.3s ease;\n}\n" +
-            ".menu__item.focus {\n transform: translateX(-0.2em);\n}\n" +
-            ".selectbox-item,\n.settings-folder,\n.settings-param {\n transition: transform 0.3s ease;\n}\n" +
-            ".selectbox-item.focus,\n.settings-folder.focus,\n.settings-param.focus {\n transform: translateX(0.2em);\n}\n" +
-            // Меню слева
-            ".menu__item.focus {border-radius: 0 0.5em 0.5em 0;\n}\n" +
-            ".menu__list {\npadding-left: 0em;\n}\n" +
-            "</style>\n";
-        Lampa.Template.add('card_css', style);
-        $('body').append(Lampa.Template.get('card_css', {}, true));
-    }
-
-    // Функция инициализации плагина
-    function startPlugin() {
-        // Список доступных тем
-        var availableThemes = ['mint_dark', 'deep_aurora', 'crystal_cyan', 'amber_noir', 'velvet_sakura', 'default'];
+        // Додавання параметра в налаштування
         Lampa.SettingsApi.addParam({
             component: 'interface',
             param: {
-                name: 'theme_select',
-                type: 'select',
-                values: {
-                    mint_dark: 'Mint Dark',
-                    deep_aurora: 'Deep Aurora',
-                    crystal_cyan: 'Crystal Cyan',
-                    amber_noir: 'Amber Noir',
-                    velvet_sakura: 'Velvet Sakura',
-                    default: 'LAMPA'
-                },
-                "default": 'Mint Dark'
+                name: 'my_themes',
+                type: 'trigger'
             },
             field: {
-                name: Lampa.Lang.translate('maxsm_themes'),
-                description: ''
+                name: 'Мои темы',
+                description: 'Измени палитру элементов приложения'
             },
-            onChange: function onChange(value) {
-                maxsm_themes.settings.theme = value;
-                Lampa.Settings.update();
-                applyTheme(value);
-            }
-        });
-        Lampa.Settings.listener.follow('open', function(e) {
-            if (e.name == 'interface') {
-                $("div[data-name=interface_size]").after($("div[data-name=theme_select]"));
+            onRender: function(element) {
+                setTimeout(function() {
+                    $('.settings-param > div:contains("Мои темы")').parent().insertAfter('div[data-name="interface_size"]');
+                    element.on('hover:enter hover:click', function() {
+                        setTimeout(function() {
+                            if ($('.view--category').length || $('#button_category').length) {
+                                window.history.back();
+                            }
+                        }, 50);
+                        setTimeout(function() {
+                            var currentTheme = Lampa.Storage.get('themesCurrent');
+                            if (currentTheme !== '') {
+                                var activityData = JSON.parse(JSON.stringify(currentTheme));
+                            } else {
+                                var activityData = {
+                                    url: '',
+                                    title: 'Установлена',
+                                    component: 'themes',
+                                    page: 1
+                                };
+                            }
+                            Lampa.Activity.push(activityData);
+                            Lampa.Storage.set('themesCurrent', JSON.stringify(Lampa.Activity.get()));
+                        }, 100);
+                    });
+                }, 0);
             }
         });
 
-        // Применяем настройки и проверяем, существует ли выбранная тема
-        var savedTheme = Lampa.Storage.get('theme_select', 'mint_dark');
-        if (availableThemes.indexOf(savedTheme) === -1) {
-            // Если сохраненная тема не существует, ставим по умолчанию
-            Lampa.Storage.set('theme_select', 'mint_dark');
-            savedTheme = 'mint_dark';
-        }
-        maxsm_themes.settings.theme = savedTheme;
-        applyTheme(maxsm_themes.settings.theme);
+        // Завантаження збережених налаштувань SafeStyle
+        SafeStyle.settings.theme = Lampa.Storage.get('safe_style_theme', 'custom_color');
+        SafeStyle.settings.custom_color = Lampa.Storage.get('safe_style_color', '#c22222');
+        SafeStyle.settings.enabled = Lampa.Storage.get('safe_style_enabled', true);
+        SafeStyle.settings.button_styles_enabled = Lampa.Storage.get('safe_style_button_styles_enabled', true);
+
+        // Застосування шаблонів та стилів
+        setTimeout(function() {
+            if (Lampa.SettingsApi) {
+                AddIn();
+                applyTheme(SafeStyle.settings.theme);
+            }
+        }, 100);
     }
 
-    // Ждем загрузки приложения и запускаем плагин
+    // Запуск ініціалізації при готовності програми
     if (window.appready) {
-        startPlugin();
+        initPlugin();
     } else {
-        Lampa.Listener.follow('app', function(event) {
-            if (event.type === 'ready') {
-                startPlugin();
+        Lampa.Listener.follow('app', function(e) {
+            if (e.type === 'ready') {
+                initPlugin();
             }
         });
     }
-    // Регистрация плагина в манифесте
-    Lampa.Manifest.plugins = {
-        name: 'maxsm_themes',
-        version: '2.2.0',
-        description: 'maxsm_themes'
-    };
-
-    // Экспортируем объект плагина для внешнего доступа
-    window.maxsm_themes = maxsm_themes;
 })();
