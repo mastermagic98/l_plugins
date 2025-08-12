@@ -40,23 +40,16 @@
 
         // Відкриваємо галерею тем
         function openGallery() {
-            var defaultData = {
+            var themeData = {
                 url: "https://bylampa.github.io/themes/categories/stroke.json",
                 title: "Focus Pack",
                 component: "my_themes"
             };
 
-            var savedData = Lampa.Storage.get("themesCurrent");
-            var themeData = defaultData;
+            // Зберігаємо поточний стан
+            Lampa.Storage.set("themesCurrent", JSON.stringify(themeData));
             
-            try {
-                if (savedData && savedData !== '') {
-                    themeData = JSON.parse(savedData);
-                }
-            } catch (e) {
-                console.log('Помилка завантаження тем', e);
-            }
-
+            // Відкриваємо галерею
             Lampa.Activity.push(themeData);
         }
 
@@ -81,21 +74,36 @@
                 var self = this;
                 this.activity.loader(true);
                 
+                // Виправлено: додано перевірку URL перед запитом
+                if (!this.activity.url) {
+                    this.activity.url = this.categories[0].url;
+                }
+                
                 this.request.silent(this.activity.url, function(response) {
-                    self.build(response);
-                }, function() {
+                    try {
+                        // Виправлено: перевірка відповіді
+                        if (!response || !Array.isArray(response)) {
+                            throw new Error('Invalid themes data');
+                        }
+                        self.build(response);
+                    } catch (e) {
+                        console.error('Error parsing themes:', e);
+                        self.error();
+                    }
+                }, function(error) {
+                    console.error('Error loading themes:', error);
                     self.error();
                 });
                 
                 return this.render();
             };
 
-            this.build = function(data) {
+            this.build = function(themes) {
                 Lampa.Background.change('');
 
                 // Створюємо інтерфейс
                 this.createUI();
-                this.addCards(data);
+                this.addCards(themes);
                 this.setupControls();
 
                 this.activity.loader(false);
@@ -143,8 +151,10 @@
                 var self = this;
                 
                 themes.forEach(function(theme) {
+                    if (!theme || !theme.css || !theme.logo) return;
+
                     var card = Lampa.Template.get('card', {
-                        title: theme.title,
+                        title: theme.title || 'Без назви',
                         release_year: ''
                     });
 
@@ -164,7 +174,7 @@
                     card.on('hover:focus', function() {
                         self.focused = card[0];
                         self.scroll.update(card, true);
-                        self.info.find('.info__title').text(theme.title);
+                        self.info.find('.info__title').text(theme.title || 'Без назви');
                     });
 
                     card.on('hover:enter', function() {
@@ -198,7 +208,7 @@
             this.showOptions = function(theme, card) {
                 var self = this;
                 Lampa.Select.show({
-                    title: theme.title,
+                    title: theme.title || 'Тема',
                     items: [
                         {title: 'Установити'},
                         {title: 'Видалити'}
