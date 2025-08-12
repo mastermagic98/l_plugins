@@ -1,9 +1,11 @@
 (function() {
     'use strict';
 
+    // Ініціалізація TV-версії Lampa
     Lampa.Platform.tv();
 
     function ThemeManager() {
+        // Застосовуємо збережену тему
         function applyTheme() {
             var themeUrl = localStorage.getItem("selectedTheme");
             if (themeUrl) {
@@ -11,6 +13,7 @@
             }
         }
 
+        // Додаємо пункт в налаштування
         function addToSettings() {
             Lampa.SettingsApi.addParam({
                 component: "interface",
@@ -35,23 +38,37 @@
             });
         }
 
+        // Відкриваємо галерею тем
         function openGallery() {
             var themeData = {
                 url: "https://bylampa.github.io/themes/categories/stroke.json",
                 title: "Focus Pack",
-                component: "my_themes"
+                component: "my_themes",
+                page: 1
             };
+
+            // Перевіряємо збережені дані
+            var savedData = Lampa.Storage.get("themesCurrent");
+            try {
+                if (savedData && savedData !== '') {
+                    themeData = JSON.parse(savedData);
+                }
+            } catch (e) {
+                console.log('Помилка завантаження збережених даних', e);
+            }
+
             Lampa.Storage.set("themesCurrent", JSON.stringify(themeData));
             Lampa.Activity.push(themeData);
         }
 
+        // Клас галереї тем
         function ThemesComponent(data) {
             this.activity = data;
             this.request = new Lampa.Reguest();
-            this.scroll = new Lampa.Scroll({mask: true, over: true, step: 200});
+            this.scroll = new Lampa.Scroll({mask: true, over: true, step: 250});
             this.cards = [];
             this.container = $('<div></div>');
-            this.content = $('<div class="my_themes"></div>');
+            this.content = $('<div class="my_themes category-full"></div>');
             this.info = null;
             this.focused = null;
 
@@ -72,15 +89,15 @@
                 this.request.silent(this.activity.url, function(response) {
                     try {
                         if (!response || !Array.isArray(response)) {
-                            throw new Error('Invalid themes data');
+                            throw new Error('Некоректні дані тем');
                         }
                         self.build(response);
                     } catch (e) {
-                        console.error('Error parsing themes:', e);
+                        console.error('Помилка обробки тем:', e);
                         self.error();
                     }
                 }, function(error) {
-                    console.error('Error loading themes:', error);
+                    console.error('Помилка завантаження тем:', error);
                     self.error();
                 });
                 
@@ -89,9 +106,12 @@
 
             this.build = function(themes) {
                 Lampa.Background.change('');
+
+                // Створюємо інтерфейс
                 this.createUI();
                 this.addCards(themes);
                 this.setupControls();
+
                 this.activity.loader(false);
                 this.activity.toggle();
             };
@@ -102,8 +122,8 @@
                     '<style>',
                     '.my_themes { padding: 0 2.5em; }',
                     '.my_themes .card--collection { width: 14.28% !important; margin-bottom: 1.5em; }',
-                    '.my_themes .card__img { height: 10em !important; }',
-                    '.view--category { padding: 0.5em 1em !important; font-size: 1em !important; }',
+                    '.my_themes .card__img { height: 10em !important; background-color: #353535a6; background-size: contain; }',
+                    '.view--category { padding: 0.5em 1em !important; font-size: 1em !important; margin: 0 1em; }',
                     '@media (max-width: 800px) {',
                     '  .my_themes .card--collection { width: 20% !important; }',
                     '}',
@@ -119,17 +139,18 @@
                 Lampa.Template.add('theme_button', [
                     '<div id="theme_button">',
                     styles,
-                    '<div class="selector view--category" style="margin: 0 1em;">',
+                    '<div class="selector view--category">',
                     '<svg viewBox="0 0 24 24" width="24" height="24"><path d="M20 10H4c-1.1 0-2 .9-2 2s.9 2 2 2h16c1.1 0 2-.9 2-2s-.9-2-2-2zM4 8h12c1.1 0 2-.9 2-2s-.9-2-2-2H4c-1.1 0-2 .9-2 2s.9 2 2 2zm12 8H4c-1.1 0-2 .9-2 2s.9 2 2 2h12c1.1 0 2-.9 2-2s-.9-2-2-2z"></path></svg>',
-                    '<span>Категорії</span>',
+                    '<span>Категорії тем</span>',
                     '</div>',
                     '</div>'
                 ].join(''));
 
                 Lampa.Template.add('theme_info', [
-                    '<div class="info">',
+                    '<div class="info layer--width">',
                     '<div class="info__left">',
                     '<div class="info__title"></div>',
+                    '<div class="info__title-original"></div>',
                     '</div>',
                     '<div class="info__right">',
                     '<div id="theme_filter"></div>',
@@ -146,7 +167,7 @@
                     self.showCategories();
                 });
 
-                this.scroll.render().addClass('layer--wheight');
+                this.scroll.render().addClass('layer--wheight').data("mheight", this.info);
                 this.container.append(this.info);
                 this.container.append(this.scroll.render());
             };
@@ -154,7 +175,7 @@
             this.addCards = function(themes) {
                 var self = this;
                 
-                themes.slice(0, 30).forEach(function(theme) {
+                themes.forEach(function(theme) {
                     if (!theme || !theme.css || !theme.logo) return;
 
                     var card = Lampa.Template.get('card', {
@@ -163,11 +184,7 @@
                     });
 
                     card.addClass('card--collection')
-                        .find('.card__img').css({
-                            cursor: 'pointer',
-                            'background-color': '#353535a6',
-                            'background-size': 'contain'
-                        }).end()
+                        .find('.card__img').css({cursor: 'pointer'}).end()
                         .css({'text-align': 'center'});
 
                     var img = card.find('.card__img')[0];
@@ -194,22 +211,21 @@
                 });
 
                 this.scroll.append(this.content);
-                this.content.append('<div style="height: 10em;"></div>');
+                this.content.append('<div style="height: 25em;"></div>');
             };
 
             this.markAsInstalled = function(card) {
                 card.find('.card__view').append(
                     $('<div class="card__quality">Установлена</div>').css({
                         position: 'absolute',
-                        left: '5%',
-                        bottom: '85%',
-                        padding: '0.3em 0.6em',
+                        left: '-3%',
+                        bottom: '70%',
+                        padding: '0.4em 0.4em',
                         background: '#ffe216',
                         color: '#000',
                         'font-size': '0.8em',
                         'border-radius': '0.3em',
-                        'text-transform': 'uppercase',
-                        'font-weight': 'bold'
+                        'text-transform': 'uppercase'
                     })
                 );
             };
@@ -243,6 +259,8 @@
                 $('.card__quality').remove();
                 this.markAsInstalled(card);
 
+                // Зберігаємо поточні налаштування
+                this.backupSettings();
                 Lampa.Controller.toggle('content');
             };
 
@@ -251,7 +269,29 @@
                 localStorage.removeItem('selectedTheme');
                 $('.card__quality').remove();
 
+                // Відновлюємо налаштування
+                this.restoreSettings();
                 Lampa.Controller.toggle('content');
+            };
+
+            this.backupSettings = function() {
+                ['background', 'glass_style', 'black_style'].forEach(function(setting) {
+                    if (Lampa.Storage.get(setting) === true) {
+                        Lampa.Storage.set('my' + setting.charAt(0).toUpperCase() + setting.slice(1), 
+                            Lampa.Storage.get(setting));
+                        Lampa.Storage.set(setting, "false");
+                    }
+                });
+            };
+
+            this.restoreSettings = function() {
+                ['Background', 'GlassStyle', 'BlackStyle'].forEach(function(setting) {
+                    var key = 'my' + setting;
+                    if (localStorage.getItem(key)) {
+                        Lampa.Storage.set(setting.toLowerCase(), Lampa.Storage.get(key));
+                        localStorage.removeItem(key);
+                    }
+                });
             };
 
             this.showCategories = function() {
@@ -263,8 +303,10 @@
                         Lampa.Activity.push({
                             url: category.url,
                             title: category.title,
-                            component: 'my_themes'
+                            component: 'my_themes',
+                            page: 1
                         });
+                        Lampa.Storage.set("themesCurrent", JSON.stringify(Lampa.Activity.active()));
                     },
                     onBack: function() {
                         Lampa.Controller.toggle('content');
