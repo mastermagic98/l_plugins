@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  // Ініціалізуємо TV-платформу Lampa
+  // Ініціалізуємо TV-платформу Lampa 
   Lampa.Platform.tv();
 
   (function () {
