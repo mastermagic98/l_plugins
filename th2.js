@@ -60,57 +60,57 @@
         // Видаляємо попередні стилі
         $("style#dynamic_theme_css").remove();
         
-        // Визначаємо кольори для тем із stroke.json
+        // Список тем і кольорів
         var themes = [
-          { title: "Красная", value: "theme_red", color: "#c22222" },
-          { title: "Зелёная", value: "theme_green", color: "#4caf50" },
-          { title: "Фиолетовая", value: "theme_violet", color: "#6a1b9a" },
-          { title: "Синяя", value: "theme_blue", color: "#4d7cff" },
-          { title: "Оранжевая", value: "theme_orange", color: "#ff9f4d" },
-          { title: "Розовая", value: "theme_pink", color: "#ff69b4" }
+          { value: 'theme_red', title: 'Красная', color: '#c22222' },
+          { value: 'theme_green', title: 'Зелёная', color: '#4caf50' },
+          { value: 'theme_violet', title: 'Фиолетовая', color: '#a64dff' },
+          { value: 'theme_blue', title: 'Синяя', color: '#4d7cff' },
+          { value: 'theme_orange', title: 'Оранжевая', color: '#ff9f4d' },
+          { value: 'theme_pink', title: 'Розовая', color: '#ff69b4' },
+          { value: 'dynamic_#c22222', title: 'Червоний (динамічна)', color: '#c22222' },
+          { value: 'dynamic_#b0b0b0', title: 'Світло-сірий (динамічна)', color: '#b0b0b0' },
+          { value: 'dynamic_#ffeb3b', title: 'Жовтий (динамічна)', color: '#ffeb3b' },
+          { value: 'dynamic_#4d7cff', title: 'Синій (динамічна)', color: '#4d7cff' },
+          { value: 'dynamic_#a64dff', title: 'Пурпурний (динамічна)', color: '#a64dff' },
+          { value: 'dynamic_#ff9f4d', title: 'Помаранчевий (динамічна)', color: '#ff9f4d' },
+          { value: 'dynamic_#3da18d', title: 'М’ятний (динамічна)', color: '#3da18d' },
+          { value: 'dynamic_#4caf50', title: 'Зелений (динамічна)', color: '#4caf50' },
+          { value: 'dynamic_#ff69b4', title: 'Рожевий (динамічна)', color: '#ff69b4' },
+          { value: 'dynamic_#6a1b9a', title: 'Фіолетовий (динамічна)', color: '#6a1b9a' },
+          { value: 'dynamic_#26a69a', title: 'Бірюзовий (динамічна)', color: '#26a69a' }
         ];
 
-        // Перевіряємо, чи це стандартна тема LAMPA
-        if (theme === "theme_lampa") {
+        // Якщо вибрано "LAMPA", видаляємо стилі
+        if (theme === 'lampa') {
           console.log('Застосовано стандартну тему LAMPA');
-          // Скидаємо стилі до стандартних
+          saveCurrentSettings();
           return;
         }
 
-        // Шукаємо тему або колір
+        // Знаходимо вибрану тему або колір
         var selectedTheme = themes.find(function(t) { return t.value === theme; });
-        var color;
         if (selectedTheme) {
-          color = selectedTheme.color;
-          console.log('Застосовано тему:', selectedTheme.title);
-        } else {
-          color = theme.replace('dynamic_', '');
-          console.log('Застосовано динамічний колір:', color);
+          var css = `
+            :root {
+              --accent-color: ${selectedTheme.color};
+              --button-bg: ${selectedTheme.color};
+              --button-text: #fff;
+            }
+            .selector, .button--play, .button--play:hover {
+              background-color: var(--button-bg) !important;
+              color: var(--button-text) !important;
+            }
+          `;
+          $("body").append($("<style id='dynamic_theme_css'>" + css + "</style>"));
+          console.log('Застосовано тему/колір:', selectedTheme.title);
         }
-
-        // Застосовуємо стилі
-        var css = `
-          :root {
-            --accent-color: ${color};
-            --button-bg: ${color};
-            --button-text: #fff;
-          }
-          .selector, .button--play, .button--play:hover {
-            background-color: var(--button-bg) !important;
-            color: var(--button-text) !important;
-          }
-          .button--online, .button--online:hover {
-            background-color: var(--button-bg) !important;
-            color: var(--button-text) !important;
-          }
-        `;
-        $("body").append($("<style id='dynamic_theme_css'>" + css + "</style>"));
 
         // Зберігаємо налаштування
         saveCurrentSettings();
       }
 
-      // Застосовуємо збережену тему
+      // Застосовуємо збережену тему або колір
       function applySavedTheme() {
         var savedTheme = Lampa.Storage.get('selected_theme', 'dynamic_#c22222');
         applyTheme(savedTheme);
@@ -159,7 +159,7 @@
             name: 'selected_theme',
             type: 'select',
             values: {
-              'theme_lampa': 'LAMPA',
+              'lampa': 'LAMPA',
               'theme_red': 'Красная',
               'theme_green': 'Зелёная',
               'theme_violet': 'Фиолетовая',
