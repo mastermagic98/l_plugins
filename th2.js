@@ -208,43 +208,6 @@
               Lampa.Settings.update();
             }
           });
-
-          // Параметр: Перехід до списку тем
-          Lampa.SettingsApi.addParam({
-            component: 'custom_themes',
-            param: {
-              name: 'custom_themes_list',
-              type: 'static'
-            },
-            field: {
-              name: 'Список тем',
-              description: 'Переглянути доступні теми'
-            },
-            onRender: function (element) {
-              setTimeout(function () {
-                element.on("hover:enter", function () {
-                  setTimeout(function () {
-                    if ($(".settings-param").length || $(".settings-folder").length) {
-                      window.history.back();
-                    }
-                  }, 50);
-                  
-                  setTimeout(function () {
-                    var currentTheme = Lampa.Storage.get("themesCurrent");
-                    var themeData = currentTheme ? JSON.parse(JSON.stringify(currentTheme)) : {
-                      url: "https://bylampa.github.io/themes/categories/stroke.json",
-                      title: "Focus Pack",
-                      component: "custom_themes",
-                      page: 1
-                    };
-                    
-                    Lampa.Activity.push(themeData);
-                    Lampa.Storage.set("themesCurrent", JSON.stringify(Lampa.Activity.active()));
-                  }, 100);
-                });
-              }, 0);
-            }
-          });
         }
 
         // Оновлення видимості параметра "Колір теми"
@@ -268,7 +231,7 @@
       addThemeSettings();
       applySavedTheme();
 
-      // Основний клас для роботи з темами
+      // Основний клас для роботи з темами (залишено для зворотної сумісності)
       function ThemeManager(activityData) {
         var self = this;
         var apiRequest = new Lampa.Reguest();
@@ -279,7 +242,7 @@
         var infoElement;
         var focusedCard;
         
-        // Список категорій тем
+        // Список категорій тем (залишено для зворотної сумісності)
         var categories = [
           { title: "Focus Pack", url: "https://bylampa.github.io/themes/categories/stroke.json" },
           { title: "Color Gallery", url: "https://bylampa.github.io/themes/categories/color_gallery.json" },
