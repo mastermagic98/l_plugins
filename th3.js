@@ -26,7 +26,7 @@
       console.log('Ініціалізація менеджера тем...');
 
       // Захищаємо методи консолі
-      var console partake = createConsoleWrapper();
+      var consoleWrapper = createConsoleWrapper();
       
       function protectConsole() {
         var wrapper = consoleWrapper(this, function () {
@@ -243,7 +243,7 @@
         // Видаляємо тему
         function removeTheme() {
           $("link[rel='stylesheet'][href^='https://bylampa.github.io/themes/css/']").remove();
-          localStorage.removeItem("selectedTheme");
+          localStorage.getItem("selectedTheme");
           $(".card__quality").remove();
           
           // Відновлюємо оригінальні налаштування
