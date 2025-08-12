@@ -65,6 +65,29 @@
         }
       };
 
+      // Зберігаємо поточні налаштування
+      function saveCurrentSettings() {
+        ['background', 'glass_style', 'black_style'].forEach(function (setting) {
+          if (Lampa.Storage.get(setting) === true) {
+            Lampa.Storage.set('my' + setting.charAt(0).toUpperCase() + setting.slice(1), 
+              Lampa.Storage.get(setting));
+            Lampa.Storage.set(setting, false);
+          }
+        });
+      }
+
+      // Відновлюємо оригінальні налаштування
+      function restoreOriginalSettings() {
+        ['Background', 'GlassStyle', 'BlackStyle'].forEach(function (setting) {
+          var key = 'my' + setting;
+          if (localStorage.getItem(key)) {
+            Lampa.Storage.set(setting.toLowerCase(), Lampa.Storage.get(key));
+            localStorage.removeItem(key);
+          }
+        });
+        Lampa.Storage.set('black_style', true); // Увімкнути чорний стиль при відновленні
+      }
+
       // Застосовуємо збережену тему
       function applySavedTheme() {
         if (!ThemeSettings.settings.enabled) {
@@ -92,7 +115,7 @@
           '.card__quality, .card--tv .card__type { background: linear-gradient(to right, ' + color + 'dd, ' + color + '99); }',
           '.screensaver__preload { background: url("data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' fill=\'none\'><path stroke=\'' + color + '\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zm0 0a9 9 0 0 0 9-9 9 9 0 0 0-.5-3.5M5.6 7.6l4.5 4.5M10.1 7.6l4.5 4.5\'/></svg>") no-repeat 50% 50%; }',
           '.activity__loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; background: url("data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' fill=\'none\'><path stroke=\'' + color + '\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zm0 0a9 9 0 0 0 9-9 9 9 0 0 0-.5-3.5M5.6 7.6l4.5 4.5M10.1 7.6l4.5 4.5\'/></svg>") no-repeat 50% 50%; }',
-          'body { background: #1a1a1a; color: #ffffff; }', // Видалено градієнт, встановлено темний фон
+          'body { background: #1a1a1a; color: #ffffff; }', // Темний фон
           '.company-start.icon--broken .company-start__icon, .explorer-card__head-img > img, .bookmarks-folder__layer, .card-more__box, .card__img { background-color: #2a2a2a; }',
           '.search-source.focus, .simple-button.focus, .menu__item.focus, .menu__item.traverse, .menu__item.hover, .full-start__button.focus, .full-descr__tag.focus, .player-panel .button.focus, .full-person.selector.focus, .tag-count.selector.focus { background: linear-gradient(to right, ' + color + ', ' + color + 'cc); color: #fff; box-shadow: 0 0 0.4em ' + color + '33; border-radius: 0.5em; }',
           '.menu__item.focus svg, .head__action.focus svg { fill: #fff !important; }', // Іконки не змінюють колір
@@ -100,7 +123,7 @@
           '.full-episode.focus::after, .card-episode.focus .full-episode::after, .items-cards .selector.focus::after, .card-more.focus .card-more__box::after, .card-episode.focus .full-episode::after, .card-episode.hover .full-episode::after, .card.focus .card__view::after, .card.hover .card__view::after, .torrent-item.focus::after, .online-prestige.selector.focus::after, .online-prestige--full.selector.focus::after, .explorer-card__head-img.selector.focus::after, .extensions__item.focus::after, .extensions__block-add.focus::after { border: 0.2em solid ' + color + '; box-shadow: 0 0 0.8em ' + color + '33; border-radius: 1em; }',
           '.head__action.focus, .head__action.hover { background: linear-gradient(45deg, ' + color + ', ' + color + 'cc); }',
           '.modal__content { background: #1a1a1a; border: 0 solid #1a1a1a; }', // Темний фон для модальних вікон
-          '.settings__content, .settings-input__content, .selectbox__content { background: #1a1a1a; }', // Темний фон для меню налаштувань
+          '.settings__content, .settings-input__content, .selectbox__content { background: #1a1a1a; }', // Темний фон для меню
           '.torrent-serial { background: rgba(0, 0, 0, 0.22); border: 0.2em solid rgba(0, 0, 0, 0.22); }',
           '.torrent-serial.focus { background-color: ' + color + '33; border: 0.2em solid ' + color + '; }'
         ].join('\n');
@@ -117,13 +140,13 @@
           Lampa.SettingsApi.addComponent({
             component: 'custom_themes',
             name: Lampa.Lang.translate('Custom Themes'),
-            icon: '<svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zm0 0a9 9 0 0 0 9-9 9 9 0 0 0-.5-3.5M5.6 7.6l4.5 4.5M10.1 7.6l4.5 4.5"/></svg>'
+            icon: '<svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns=" Gypsy://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zm0 0a9 9 0 0 0 9-9 9 9 0 0 0-.5-3.5M5.6 7.6l4.5 4.5M10.1 7.6l4.5 4.5"/></svg>'
           });
         }
 
         // Додаємо параметри
         if (Lampa.SettingsApi) {
-          // Параметр: Увімкнути/вимкнути плагін (Стиль Лампа/Користувацька тема)
+          // Параметр: Увімкнути/вимкнути плагін
           Lampa.SettingsApi.addParam({
             component: 'custom_themes',
             param: {
@@ -374,29 +397,6 @@
           Lampa.Controller.toggle("content");
         }
         
-        // Зберігаємо поточні налаштування
-        function saveCurrentSettings() {
-          ['background', 'glass_style', 'black_style'].forEach(function (setting) {
-            if (Lampa.Storage.get(setting) === true) {
-              Lampa.Storage.set('my' + setting.charAt(0).toUpperCase() + setting.slice(1), 
-                Lampa.Storage.get(setting));
-              Lampa.Storage.set(setting, "false");
-            }
-          });
-        }
-        
-        // Відновлюємо оригінальні налаштування
-        function restoreOriginalSettings() {
-          ['Background', 'GlassStyle', 'BlackStyle'].forEach(function (setting) {
-            var key = 'my' + setting;
-            if (localStorage.getItem(key)) {
-              Lampa.Storage.set(setting.toLowerCase(), Lampa.Storage.get(key));
-              localStorage.removeItem(key);
-            }
-          });
-          Lampa.Storage.set('black_style', true); // Увімкнути чорний стиль при відновленні
-        }
-        
         // Будуємо інтерфейс
         this.build = function (themesData) {
           Lampa.Background.change('');
@@ -494,7 +494,7 @@
               Navigator.canmove("left") ? Navigator.move('left') : Lampa.Controller.toggle('menu');
             },
             right: function () {
-              Navigator.canmove("right") ? Navigator.move("right") : self.selectCategory();
+              Navigator.canmove("right") ? Navigator.move('right') : self.selectCategory();
             },
             up: function () {
               if (Navigator.canmove('up')) {
