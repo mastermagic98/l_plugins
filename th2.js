@@ -1,372 +1,593 @@
-(function() {
-    'use strict';
+(function () {
+  'use strict';
 
-    Lampa.Platform.tv();
+  // Ініціалізуємо TV-платформу Lampa
+  Lampa.Platform.tv();
 
-    function ThemeManager() {
-        function applySavedTheme() {
-            var savedTheme = localStorage.getItem("selectedTheme");
-            if (savedTheme) {
-                $('head').append($('<link rel="stylesheet" href="' + savedTheme + '">'));
-            }
-        }
-
-        function addToSettings() {
-            Lampa.SettingsApi.addParam({
-                component: "interface",
-                param: {
-                    name: 'my_themes',
-                    type: 'static'
-                },
-                field: {
-                    name: "Мої теми",
-                    description: "Змінити оформлення додатка"
-                },
-                onRender: function(element) {
-                    setTimeout(function() {
-                        $(".settings-param > div:contains('Мої теми')").parent()
-                            .insertAfter($("div[data-name='interface_size']"));
-
-                        element.on("hover:enter", function() {
-                            openGallery();
-                        });
-                    }, 50);
-                }
-            });
-        }
-
-        function openGallery() {
-            var defaultData = {
-                url: "https://bylampa.github.io/themes/categories/stroke.json",
-                title: "Focus Pack",
-                component: "my_themes"
-            };
-
-            var savedData = Lampa.Storage.get("themesCurrent");
-            var themeData = defaultData;
-            
-            try {
-                if (savedData && savedData !== '') {
-                    themeData = JSON.parse(savedData);
-                }
-            } catch (e) {
-                console.log('Помилка завантаження тем', e);
-            }
-
-            Lampa.Activity.push(themeData);
-        }
-
-        function ThemesComponent(data) {
-            this.activity = data;
-            this.request = new Lampa.Reguest();
-            this.scroll = new Lampa.Scroll({mask: true, over: true});
-            this.cards = [];
-            this.container = $('<div></div>');
-            this.content = $('<div class="my_themes"></div>');
-            this.info = null;
-            this.focused = null;
-
-            this.categories = [
-                {title: "Focus Pack", url: "https://bylampa.github.io/themes/categories/stroke.json"},
-                {title: "Color Gallery", url: "https://bylampa.github.io/themes/categories/color_gallery.json"},
-                {title: "Gradient Style", url: "https://bylampa.github.io/themes/categories/gradient_style.json"}
-            ];
-
-            this.create = function() {
-                var self = this;
-                this.activity.loader(true);
-                
-                if (!this.activity.url) {
-                    this.activity.url = this.categories[0].url;
-                }
-                
-                this.request.silent(this.activity.url, function(response) {
-                    try {
-                        if (!response || !Array.isArray(response)) {
-                            throw new Error('Invalid themes data');
-                        }
-                        self.build(response);
-                    } catch (e) {
-                        console.error('Error parsing themes:', e);
-                        self.error();
-                    }
-                }, function(error) {
-                    console.error('Error loading themes:', error);
-                    self.error();
-                });
-                
-                return this.render();
-            };
-
-            this.build = function(themes) {
-                Lampa.Background.change('');
-
-                this.createUI();
-                this.addCards(themes);
-                this.setupControls();
-
-                this.activity.loader(false);
-                this.activity.toggle();
-            };
-
-            this.createUI = function() {
-                var styles = [
-                    '<style>',
-                    '.my_themes { padding: 0 2.5em; }',
-                    '.my_themes .card--collection { width: 14.28% !important; margin-bottom: 1.5em; }',
-                    '.my_themes .card__img { height: 10em !important; }',
-                    '.view--category { padding: 0.5em 1em !important; font-size: 1em !important; }',
-                    '@media (max-width: 800px) {',
-                    '  .my_themes .card--collection { width: 20% !important; }',
-                    '}',
-                    '@media (max-width: 600px) {',
-                    '  .my_themes .card--collection { width: 25% !important; }',
-                    '}',
-                    '@media (max-width: 400px) {',
-                    '  .my_themes .card--collection { width: 33.33% !important; }',
-                    '}',
-                    '</style>'
-                ].join('');
-
-                Lampa.Template.add('theme_button', [
-                    '<div id="theme_button">',
-                    styles,
-                    '<div class="selector view--category" style="margin: 0 1em;">',
-                    '<svg viewBox="0 0 24 24" width="24" height="24"><path d="M20 10H4c-1.1 0-2 .9-2 2s.9 2 2 2h16c1.1 0 2-.9 2-2s-.9-2-2-2zM4 8h12c1.1 0 2-.9 2-2s-.9-2-2-2H4c-1.1 0-2 .9-2 2s.9 2 2 2zm12 8H4c-1.1 0-2 .9-2 2s.9 2 2 2h12c1.1 0 2-.9 2-2s-.9-2-2-2z"></path></svg>',
-                    '<span>Категорії</span>',
-                    '</div>',
-                    '</div>'
-                ].join(''));
-
-                Lampa.Template.add('theme_info', [
-                    '<div class="info">',
-                    '<div class="info__left">',
-                    '<div class="info__title"></div>',
-                    '</div>',
-                    '<div class="info__right">',
-                    '<div id="theme_filter"></div>',
-                    '</div>',
-                    '</div>'
-                ].join(''));
-
-                var button = Lampa.Template.get('theme_button');
-                this.info = Lampa.Template.get('theme_info');
-                this.info.find('#theme_filter').append(button);
-
-                var self = this;
-                button.find('.view--category').on('hover:enter', function() {
-                    self.showCategories();
-                });
-
-                this.scroll.render().addClass('layer--wheight');
-                this.container.append(this.info);
-                this.container.append(this.scroll.render());
-            };
-
-            this.addCards = function(themes) {
-                var self = this;
-                
-                themes.slice(0, 30).forEach(function(theme) {
-                    if (!theme || !theme.css || !theme.logo) return;
-
-                    var card = Lampa.Template.get('card', {
-                        title: theme.title || 'Без назви',
-                        release_year: ''
-                    });
-
-                    card.addClass('card--collection')
-                        .find('.card__img').css({
-                            cursor: 'pointer',
-                            'background-color': '#353535a6',
-                            'background-size': 'contain'
-                        }).end()
-                        .css({'text-align': 'center'});
-
-                    var img = card.find('.card__img')[0];
-                    
-                    img.onload = function() { card.addClass('card--loaded'); };
-                    img.onerror = function() { img.src = './img/img_broken.svg'; };
-                    img.src = theme.logo;
-
-                    if (localStorage.getItem('selectedTheme') === theme.css) {
-                        self.markAsInstalled(card);
-                    }
-
-                    card.on('hover:focus', function() {
-                        self.focused = card[0];
-                        self.scroll.update(card, true);
-                        self.info.find('.info__title').text(theme.title || 'Без назви');
-                    });
-
-                    card.on('hover:enter', function() {
-                        self.showOptions(theme, card);
-                    });
-
-                    self.content.append(card);
-                    self.cards.push(card);
-                });
-
-                this.scroll.append(this.content);
-                this.content.append('<div style="height: 10em;"></div>');
-            };
-
-            this.markAsInstalled = function(card) {
-                card.find('.card__view').append(
-                    $('<div class="card__quality">Установлена</div>').css({
-                        position: 'absolute',
-                        left: '5%',
-                        bottom: '85%',
-                        padding: '0.3em 0.6em',
-                        background: '#ffe216',
-                        color: '#000',
-                        'font-size': '0.8em',
-                        'border-radius': '0.3em',
-                        'text-transform': 'uppercase',
-                        'font-weight': 'bold'
-                    })
-                );
-            };
-
-            this.showOptions = function(theme, card) {
-                var self = this;
-                Lampa.Select.show({
-                    title: theme.title || 'Тема',
-                    items: [
-                        {title: 'Установити'},
-                        {title: 'Видалити'}
-                    ],
-                    onSelect: function(item) {
-                        if (item.title === 'Установити') {
-                            self.installTheme(theme, card);
-                        } else {
-                            self.removeTheme();
-                        }
-                    },
-                    onBack: function() {
-                        Lampa.Controller.toggle('content');
-                    }
-                });
-            };
-
-            this.installTheme = function(theme, card) {
-                $('link[rel="stylesheet"][href^="https://bylampa.github.io/themes/css/"]').remove();
-                $('head').append($('<link rel="stylesheet" href="' + theme.css + '">'));
-
-                localStorage.setItem('selectedTheme', theme.css);
-                $('.card__quality').remove();
-                this.markAsInstalled(card);
-
-                Lampa.Controller.toggle('content');
-            };
-
-            this.removeTheme = function() {
-                $('link[rel="stylesheet"][href^="https://bylampa.github.io/themes/css/"]').remove();
-                localStorage.removeItem('selectedTheme');
-                $('.card__quality').remove();
-
-                Lampa.Controller.toggle('content');
-            };
-
-            this.showCategories = function() {
-                var self = this;
-                Lampa.Select.show({
-                    title: 'Категорії тем',
-                    items: this.categories,
-                    onSelect: function(category) {
-                        Lampa.Activity.push({
-                            url: category.url,
-                            title: category.title,
-                            component: 'my_themes'
-                        });
-                    },
-                    onBack: function() {
-                        Lampa.Controller.toggle('content');
-                    }
-                });
-            };
-
-            this.setupControls = function() {
-                var self = this;
-                Lampa.Controller.add('content', {
-                    toggle: function() {
-                        Lampa.Controller.collectionSet(self.scroll.render());
-                        Lampa.Controller.collectionFocus(self.focused, self.scroll.render());
-                    },
-                    left: function() {
-                        return Navigator.canmove('left') ? Navigator.move('left') : Lampa.Controller.toggle('menu');
-                    },
-                    right: function() {
-                        return Navigator.canmove('right') ? Navigator.move('right') : self.showCategories();
-                    },
-                    up: function() {
-                        if (Navigator.canmove('up')) {
-                            Navigator.move('up');
-                        } else if (!self.info.find('.view--category').hasClass('focus')) {
-                            Lampa.Controller.collectionSet(self.info);
-                            Navigator.move('right');
-                        } else {
-                            Lampa.Controller.toggle('head');
-                        }
-                    },
-                    down: function() {
-                        if (Navigator.canmove('down')) {
-                            Navigator.move('down');
-                        } else if (self.info.find('.view--category').hasClass('focus')) {
-                            Lampa.Controller.toggle('content');
-                        }
-                    },
-                    back: function() {
-                        Lampa.Activity.backward();
-                    }
-                });
-            };
-
-            this.error = function() {
-                var empty = new Lampa.Empty();
-                this.container.append(empty.render());
-                this.start = empty.start;
-                this.activity.loader(false);
-                this.activity.toggle();
-            };
-
-            this.start = function() {
-                Lampa.Controller.toggle('content');
-            };
-
-            this.render = function() {
-                return this.container;
-            };
-
-            this.pause = function() {};
-            this.stop = function() {};
-            this.destroy = function() {
-                this.request.clear();
-                this.scroll.destroy();
-                this.container.remove();
-                this.content.remove();
-            };
-        }
-
-        function init() {
-            applySavedTheme();
-            addToSettings();
-            Lampa.Component.add('my_themes', ThemesComponent);
-            
-            Lampa.Storage.listener.follow('change', function(e) {
-                if (e.name === 'activity' && Lampa.Activity.active().component !== 'my_themes') {
-                    $('#theme_button').remove();
-                }
-            });
-        }
-
-        if (window.appready) {
-            init();
-        } else {
-            Lampa.Listener.follow('app', function(e) {
-                if (e.type === 'ready') init();
-            });
-        }
+  (function () {
+    // Функція для створення обгортки консолі (захист від деобфускації)
+    function createConsoleWrapper() {
+      var isFirstCall = true;
+      return function (context, callback) {
+        var wrapper = isFirstCall ? function () {
+          if (callback) {
+            var result = callback.apply(context, arguments);
+            callback = null;
+            return result;
+          }
+        } : function () {};
+        isFirstCall = false;
+        return wrapper;
+      };
     }
 
-    new ThemeManager();
+    // Головна функція для ініціалізації менеджера тем
+    function initializeThemeManager() {
+      console.log('Ініціалізація менеджера тем...');
+
+      // Захищаємо методи консолі
+      var consoleWrapper = createConsoleWrapper();
+      
+      function protectConsole() {
+        var wrapper = consoleWrapper(this, function () {
+          function getGlobalObject() {
+            try {
+              return Function("return (function() {}.constructor('return this')());")();
+            } catch (e) {
+              return window;
+            }
+          }
+          
+          var global = getGlobalObject();
+          var consoleObj = global.console = global.console || {};
+          var methods = ['log', 'warn', 'info', 'error', 'exception', 'table', 'trace'];
+          
+          methods.forEach(function (method) {
+            var methodWrapper = consoleWrapper.constructor.prototype.bind(consoleWrapper);
+            var originalMethod = consoleObj[method] || methodWrapper;
+            methodWrapper.__proto__ = consoleWrapper.bind(consoleWrapper);
+            methodWrapper.toString = originalMethod.toString.bind(originalMethod);
+            consoleObj[method] = methodWrapper;
+          });
+        });
+        wrapper();
+      }
+      
+      protectConsole();
+
+      // Застосовуємо збережену тему (якщо вона є)
+      function applySavedTheme() {
+        var savedTheme = localStorage.getItem("selectedTheme");
+        if (savedTheme) {
+          $("body").append($("<link rel='stylesheet' href='" + savedTheme + "'>"));
+          console.log('Застосовано збережену тему:', savedTheme);
+        }
+      }
+      
+      applySavedTheme();
+
+      // Додаємо розділ тем в налаштування
+      function addThemeSettings() {
+        console.log('Додаємо налаштування тем...');
+        
+        Lampa.SettingsApi.addParam({
+          component: "interface",
+          param: {
+            name: 'my_themes',
+            type: 'static'
+          },
+          field: {
+            name: "Мої теми",
+            description: "Змінити палітру елементів додатка"
+          },
+          onRender: function (element) {
+            setTimeout(function () {
+              $(".settings-param > div:contains('Мої теми')").parent()
+                .insertAfter($("div[data-name='interface_size']"));
+              
+              element.on("hover:enter", function () {
+                setTimeout(function () {
+                  if ($(".settings-param").length || $(".settings-folder").length) {
+                    window.history.back();
+                  }
+                }, 50);
+                
+                setTimeout(function () {
+                  var currentTheme = Lampa.Storage.get("themesCurrent");
+                  var themeData = currentTheme ? JSON.parse(JSON.stringify(currentTheme)) : {
+                    url: "https://bylampa.github.io/themes/categories/stroke.json",
+                    title: "Focus Pack",
+                    component: "my_themes",
+                    page: 1
+                  };
+                  
+                  Lampa.Activity.push(themeData);
+                  Lampa.Storage.set("themesCurrent", JSON.stringify(Lampa.Activity.active()));
+                }, 100);
+              });
+            }, 0);
+          }
+        });
+      }
+      
+      addThemeSettings();
+
+      // Основний клас для роботи з темами
+      function ThemeManager(activityData) {
+        var self = this;
+        var apiRequest = new Lampa.Reguest();
+        var scroll = new Lampa.Scroll({ mask: true, over: true, step: 250 });
+        var cards = [];
+        var container = $("<div></div>");
+        var themesContainer = $("<div class='my_themes category-full'></div>");
+        var infoElement;
+        var focusedCard;
+        
+        var categories = [
+          { title: "Focus Pack", url: "https://bylampa.github.io/themes/categories/stroke.json" },
+          { title: "Color Gallery", url: "https://bylampa.github.io/themes/categories/color_gallery.json" },
+          { title: "Gradient Style", url: "https://bylampa.github.io/themes/categories/gradient_style.json" }
+        ];
+
+        function addInstalledBadge(card) {
+          var badge = $("<div class='card__quality'>Установлена</div>").css({
+            position: "absolute",
+            left: "-3%",
+            bottom: "70%",
+            padding: "0.4em 0.4em",
+            background: '#ffe216',
+            color: '#000',
+            fontSize: "0.8em",
+            borderRadius: "0.3em",
+            textTransform: "uppercase"
+          });
+          card.find('.card__view').append(badge);
+        }
+
+        this.create = function () {
+          self.activity.loader(true);
+          apiRequest.silent(activityData.url, self.build.bind(self), function () {
+            var emptyView = new Lampa.Empty();
+            container.append(emptyView.render());
+            self.start = emptyView.start;
+            self.activity.loader(false);
+            self.activity.toggle();
+          });
+          return self.render();
+        };
+
+        this.appendCards = function (themes) {
+          themes.forEach(function (theme) {
+            var card = Lampa.Template.get("card", {
+              title: theme.title,
+              release_year: ''
+            });
+            
+            card.addClass("card--collection")
+              .find(".card__img").css({ cursor: "pointer", 'background-color': "#353535a6" }).end()
+              .css({ 'text-align': 'center' });
+            
+            var cardImage = card.find(".card__img")[0];
+            
+            cardImage.onload = function () { card.addClass("card--loaded"); };
+            cardImage.onerror = function () { cardImage.src = "./img/img_broken.svg"; };
+            cardImage.src = theme.logo;
+            
+            $('.info__title').remove();
+            
+            if (localStorage.getItem("selectedTheme") === theme.css) {
+              addInstalledBadge(card);
+            }
+            
+            card.on('hover:focus', function () {
+              focusedCard = card[0];
+              scroll.update(card, true);
+              infoElement.find('.info__title').text(theme.title);
+            });
+            
+            card.on("hover:enter", function () {
+              showThemeOptions(theme);
+            });
+            
+            themesContainer.append(card);
+            cards.push(card);
+          });
+        };
+        
+        function showThemeOptions(theme) {
+          Lampa.Select.show({
+            title: '',
+            items: [{ title: "Установить" }, { title: "Удалить" }],
+            onBack: function () { Lampa.Controller.toggle('content'); },
+            onSelect: function (option) {
+              if (option.title === "Установить") {
+                installTheme(theme);
+              } else {
+                removeTheme();
+              }
+            }
+          });
+        }
+        
+        function installTheme(theme) {
+          // Видаляємо стилі SafeStyle
+          $("style#safe_style_css").remove();
+          $("link[rel='stylesheet'][href^='https://bylampa.github.io/themes/css/']").remove();
+          $("body").append($("<link rel='stylesheet' href='" + theme.css + "'>"));
+          
+          localStorage.setItem('selectedTheme', theme.css);
+          console.log("Тема установлена:", theme.css);
+          
+          $(".card__quality").remove();
+          var currentCard = cards.find(function (card) {
+            return card.find(".card__img")[0].src === theme.logo;
+          });
+          if (currentCard) {
+            addInstalledBadge(currentCard);
+          }
+          
+          saveCurrentSettings();
+          
+          Lampa.Controller.toggle("content");
+        }
+        
+        function removeTheme() {
+          $("link[rel='stylesheet'][href^='https://bylampa.github.io/themes/css/']").remove();
+          localStorage.removeItem("selectedTheme");
+          $(".card__quality").remove();
+          
+          restoreOriginalSettings();
+          
+          Lampa.Controller.toggle("content");
+        }
+        
+        function saveCurrentSettings() {
+          ['background', 'glass_style', 'black_style'].forEach(function (setting) {
+            if (Lampa.Storage.get(setting) === true) {
+              Lampa.Storage.set('my' + setting.charAt(0).toUpperCase() + setting.slice(1), 
+                Lampa.Storage.get(setting));
+              Lampa.Storage.set(setting, "false");
+            }
+          });
+        }
+        
+        function restoreOriginalSettings() {
+          ['Background', 'GlassStyle', 'BlackStyle'].forEach(function (setting) {
+            var key = 'my' + setting;
+            if (localStorage.getItem(key)) {
+              Lampa.Storage.set(setting.toLowerCase(), Lampa.Storage.get(key));
+              localStorage.removeItem(key);
+            }
+          });
+        }
+        
+        this.build = function (themesData) {
+          Lampa.Background.change('');
+          
+          Lampa.Template.add("button_category", `
+            <div id='button_category'>
+              <style>
+                .themes .card--collection { width: 14.2% !important; }
+                .scroll__content { padding: 1.5em 0 !important; }
+                .info { height: 9em !important; }
+                .info__title-original { font-size: 1.2em; }
+                @media (max-width: 385px) {
+                  .info__right { display: contents !important; }
+                  .themes .card--collection { width: 33.3% !important; }
+                }
+                @media (max-width: 580px) {
+                  .info__right { display: contents !important; }
+                  .themes .card--collection { width: 25% !important; }
+                }
+              </style>
+              <div class="full-start__button selector view--category">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M20,10H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h16c1.1,0,2-0.9,2-2C22,10.9,21.1,10,20,10z" fill="currentColor"/>
+                  <path d="M4,8h12c1.1,0,2-0.9,2-2c0-1.1-0.9-2-2-2H4C2.9,4,2,4.9,2,6C2,7.1,2.9,8,4,8z" fill="currentColor"/>
+                  <path d="M16,16H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h12c1.1,0,2-0.9,2-2C18,16.9,17.1,16,16,16z" fill="currentColor"/>
+                </svg>
+                <span>Категорії тем</span>
+              </div>
+            </div>
+          `);
+          
+          Lampa.Template.add('info_tvtv', `
+            <div class="info layer--width">
+              <div class="info__left">
+                <div class="info__title"></div>
+                <div class="info__title-original"></div>
+                <div class="info__create"></div>
+              </div>
+              <div class="info__right">
+                <div id="stantion_filtr"></div>
+              </div>
+            </div>
+          `);
+          
+          var categoryButton = Lampa.Template.get('button_category');
+          infoElement = Lampa.Template.get("info_tvtv");
+          infoElement.find("#stantion_filtr").append(categoryButton);
+          
+          infoElement.find(".view--category").on("hover:enter hover:click", function () {
+            self.selectCategory();
+          });
+          
+          scroll.render().addClass('layer--wheight').data("mheight", infoElement);
+          container.append(infoElement.append());
+          container.append(scroll.render());
+          
+          this.appendCards(themesData);
+          scroll.append(themesContainer);
+          $('.my_themes').append("<div id='spacer' style='height: 25em;'></div>");
+          
+          this.activity.loader(false);
+          this.activity.toggle();
+        };
+        
+        this.selectCategory = function () {
+          Lampa.Select.show({
+            title: "Категорії тем",
+            items: categories,
+            onSelect: function (category) {
+              Lampa.Activity.push({
+                url: category.url,
+                title: category.title,
+                component: "my_themes",
+                page: 1
+              });
+              Lampa.Storage.set("themesCurrent", JSON.stringify(Lampa.Activity.active()));
+            },
+            onBack: function () { Lampa.Controller.toggle("content"); }
+          });
+        };
+        
+        this.start = function () {
+          Lampa.Controller.add("content", {
+            toggle: function () {
+              Lampa.Controller.collectionSet(scroll.render());
+              Lampa.Controller.collectionFocus(focusedCard || false, scroll.render());
+            },
+            left: function () {
+              Navigator.canmove("left") ? Navigator.move('left') : Lampa.Controller.toggle('menu');
+            },
+            right: function () {
+              Navigator.canmove("right") ? Navigator.move("right") : self.selectCategory();
+            },
+            up: function () {
+              if (Navigator.canmove('up')) {
+                Navigator.move('up');
+              } else if (!infoElement.find('.view--category').hasClass("focus")) {
+                Lampa.Controller.collectionSet(infoElement);
+                Navigator.move("right");
+              } else {
+                Lampa.Controller.toggle("head");
+              }
+            },
+            down: function () {
+              Navigator.canmove("down") ? Navigator.move('down') 
+                : infoElement.find(".view--category").hasClass('focus') && Lampa.Controller.toggle('content');
+            },
+            back: function () { Lampa.Activity.backward(); }
+          });
+          
+          Lampa.Controller.toggle("content");
+        };
+        
+        this.pause = function () {};
+        this.stop = function () {};
+        this.render = function () { return container; };
+        this.destroy = function () {
+          apiRequest.clear();
+          scroll.destroy();
+          infoElement && infoElement.remove();
+          container.remove();
+          themesContainer.remove();
+        };
+      }
+      
+      Lampa.Component.add('my_themes', ThemeManager);
+
+      // Додаємо компонент SafeStyle
+      function SafeStyle() {
+        var settings = {
+          theme: Lampa.Storage.get('safe_style_theme', 'custom_color'),
+          custom_color: Lampa.Storage.get('safe_style_color', '#c22222'),
+          enabled: Lampa.Storage.get('safe_style_enabled', true),
+          show_all_buttons: Lampa.Storage.get('safe_style_show_all_buttons', false)
+        };
+
+        function applyTheme(theme, color) {
+          if (!settings.enabled) {
+            $("style#safe_style_css").remove();
+            return;
+          }
+
+          if (theme === 'custom_color') {
+            var selectedColor = color || settings.custom_color;
+            var css = `
+              :root {
+                --accent-color: ${selectedColor};
+                --button-bg: ${selectedColor};
+                --button-text: #fff;
+              }
+              .selector, .button--play, .button--play:hover {
+                background-color: var(--button-bg) !important;
+                color: var(--button-text) !important;
+              }
+              ${settings.show_all_buttons ? `
+              .button--online, .button--online:hover {
+                background-color: var(--button-bg) !important;
+                color: var(--button-text) !important;
+              }` : ''}
+            `;
+            $("style#safe_style_css").remove();
+            $("body").append($("<style id='safe_style_css'>" + css + "</style>"));
+            // Видаляємо теми my_themes
+            $("link[rel='stylesheet'][href^='https://bylampa.github.io/themes/css/']").remove();
+            localStorage.removeItem("selectedTheme");
+            $(".card__quality").remove();
+          } else {
+            $("style#safe_style_css").remove();
+          }
+        }
+
+        function updateButtonStyles() {
+          if (settings.enabled && settings.show_all_buttons) {
+            $(".button--online").css({
+              'background-color': settings.custom_color,
+              'color': '#fff'
+            });
+          } else {
+            $(".button--online").css({
+              'background-color': '',
+              'color': ''
+            });
+          }
+        }
+
+        function updateColorVisibility(theme) {
+          var colorParam = $('div[data-name="safe_style_color"]');
+          if (theme === 'custom_color') {
+            colorParam.addClass('visible');
+          } else {
+            colorParam.removeClass('visible');
+          }
+        }
+
+        if (Lampa.SettingsApi) {
+          Lampa.SettingsApi.addComponent({
+            component: 'safe_style',
+            name: 'Safe Style',
+            icon: `
+              <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0a9 9 0 0 0 9-9 9 9 0 0 0-.5-3.5M5.6 7.6l4.5 4.5M10.1 7.6l4.5 4.5"/>
+              </svg>
+            `
+          });
+
+          Lampa.SettingsApi.addParam({
+            component: 'safe_style',
+            param: {
+              name: 'safe_style_theme',
+              type: 'select',
+              values: {
+                custom_color: 'Користувацька',
+                default: 'LAMPA'
+              },
+              default: 'custom_color'
+            },
+            field: {
+              name: 'Тема',
+              description: 'Виберіть тему для інтерфейсу'
+            },
+            onChange: function(value) {
+              settings.theme = value;
+              Lampa.Storage.set('safe_style_theme', value);
+              Lampa.Settings.update();
+              applyTheme(value);
+              updateColorVisibility(value);
+            }
+          });
+
+          Lampa.SettingsApi.addParam({
+            component: 'safe_style',
+            param: {
+              name: 'safe_style_color',
+              type: 'select',
+              values: {
+                '#c22222': 'Червоний',
+                '#b0b0b0': 'Світло-сірий',
+                '#ffeb3b': 'Жовтий',
+                '#4d7cff': 'Синій',
+                '#a64dff': 'Пурпурний',
+                '#ff9f4d': 'Помаранчевий',
+                '#3da18d': 'М’ятний',
+                '#4caf50': 'Зелений',
+                '#ff69b4': 'Рожевий',
+                '#6a1b9a': 'Фіолетовий',
+                '#26a69a': 'Бірюзовий'
+              },
+              default: '#c22222'
+            },
+            field: {
+              name: 'Колір теми',
+              description: 'Виберіть колір для користувацької теми'
+            },
+            onChange: function(value) {
+              settings.custom_color = value;
+              Lampa.Storage.set('safe_style_color', value);
+              Lampa.Settings.update();
+              if (settings.theme === 'custom_color') {
+                applyTheme('custom_color', value);
+              }
+            }
+          });
+
+          Lampa.SettingsApi.addParam({
+            component: 'safe_style',
+            param: {
+              name: 'safe_style_show_all_buttons',
+              type: 'toggle',
+              default: false
+            },
+            field: {
+              name: 'Показувати всі кнопки',
+              description: 'Додає стиль повноекранних кнопок до всіх онлайн-кнопок'
+            },
+            onChange: function(value) {
+              settings.show_all_buttons = value;
+              Lampa.Storage.set('safe_style_show_all_buttons', value);
+              Lampa.Settings.update();
+              updateButtonStyles();
+            }
+          });
+
+          Lampa.SettingsApi.addParam({
+            component: 'safe_style',
+            param: {
+              name: 'safe_style_enabled',
+              type: 'toggle',
+              default: true
+            },
+            field: {
+              name: 'Увімкнути плагін',
+              description: 'Увімкнути або вимкнути плагін тем'
+            },
+            onChange: function(value) {
+              settings.enabled = value;
+              Lampa.Storage.set('safe_style_enabled', value);
+              Lampa.Settings.update();
+              applyTheme(settings.theme);
+              updateButtonStyles();
+            }
+          });
+        }
+
+        Lampa.Settings.listener.follow('open', function(e) {
+          if (e.name === 'safe_style') {
+            updateColorVisibility(settings.theme);
+          }
+        });
+
+        this.applyTheme = applyTheme;
+        this.updateButtonStyles = updateButtonStyles;
+      }
+
+      Lampa.Component.add('safe_style', SafeStyle);
+
+      Lampa.Storage.listener.follow("change", function (event) {
+        if (event.name === 'activity' && Lampa.Activity.active().component !== "my_themes") {
+          setTimeout(function () { $('#button_category').remove(); }, 0);
+        }
+      });
+    }
+
+    if (window.appready) {
+      initializeThemeManager();
+    } else {
+      Lampa.Listener.follow("app", function (event) {
+        if (event.type === "ready") initializeThemeManager();
+      });
+    }
+  })();
 })();
