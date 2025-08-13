@@ -85,11 +85,12 @@
             localStorage.removeItem(key);
           }
         });
-        Lampa.Storage.set('black_style', true); // Увімкнути чорний стиль при відновленні
+        Lampa.Storage.set('black_style', true); // Увімкнути чорний стиль
       }
 
       // Застосовуємо збережену тему
       function applySavedTheme() {
+        console.log('Застосовуємо збережену тему...', ThemeSettings.settings);
         if (!ThemeSettings.settings.enabled) {
           $('#custom_themes_stylesheet, #custom_themes_dynamic').remove();
           restoreOriginalSettings();
@@ -108,6 +109,7 @@
 
       // Функція для застосування динамічної теми
       function applyDynamicTheme(color) {
+        console.log('Застосовуємо динамічну тему з кольором:', color);
         $('#custom_themes_dynamic').remove();
         var style = $('<style id="custom_themes_dynamic"></style>');
         var dynamicTheme = [
@@ -129,6 +131,7 @@
         ].join('\n');
         style.html(dynamicTheme);
         $('head').append(style);
+        console.log('Стиль додано до head:', style[0].outerHTML);
       }
 
       // Додаємо компонент і параметри налаштувань
@@ -140,7 +143,7 @@
           Lampa.SettingsApi.addComponent({
             component: 'custom_themes',
             name: Lampa.Lang.translate('Custom Themes'),
-            icon: '<svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns=" Gypsy://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zm0 0a9 9 0 0 0 9-9 9 9 0 0 0-.5-3.5M5.6 7.6l4.5 4.5M10.1 7.6l4.5 4.5"/></svg>'
+            icon: '<svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zm0 0a9 9 0 0 0 9-9 9 9 0 0 0-.5-3.5M5.6 7.6l4.5 4.5M10.1 7.6l4.5 4.5"/></svg>'
           });
         }
 
@@ -159,6 +162,7 @@
               description: 'Увімкнути користувацьку тему або використовувати стиль Лампа'
             },
             onChange: function(value) {
+              console.log('Змінено custom_themes_enabled:', value);
               ThemeSettings.settings.enabled = value;
               Lampa.Storage.set('custom_themes_enabled', value);
               if (value) {
@@ -189,6 +193,7 @@
               description: 'Виберіть тему для інтерфейсу'
             },
             onChange: function(value) {
+              console.log('Змінено custom_themes_theme:', value);
               ThemeSettings.settings.theme = value;
               Lampa.Storage.set('custom_themes_theme', value);
               if (ThemeSettings.settings.enabled) {
@@ -230,6 +235,7 @@
               description: 'Виберіть колір для користувацької теми'
             },
             onChange: function(value) {
+              console.log('Змінено custom_themes_color:', value, 'enabled:', ThemeSettings.settings.enabled, 'theme:', ThemeSettings.settings.theme);
               ThemeSettings.settings.custom_color = value;
               Lampa.Storage.set('custom_themes_color', value);
               if (ThemeSettings.settings.enabled && ThemeSettings.settings.theme === 'custom_color') {
@@ -243,6 +249,7 @@
         // Оновлення видимості параметра "Колір теми"
         function updateColorVisibility(theme) {
           var colorParam = $('div[data-name="custom_themes_color"]');
+          console.log('Оновлення видимості custom_themes_color, enabled:', ThemeSettings.settings.enabled, 'theme:', theme);
           if (ThemeSettings.settings.enabled && theme === 'custom_color') {
             colorParam.addClass('visible');
           } else {
