@@ -93,12 +93,20 @@
       // Оновлення видимості параметра "Колір теми"
       function updateColorVisibility(theme) {
         console.log('Оновлення видимості custom_themes_color, enabled:', ThemeSettings.settings.enabled, 'theme:', theme);
+        // Синхронізуємо налаштування
+        ThemeSettings.settings.enabled = Lampa.Storage.get('custom_themes_enabled', false);
+        ThemeSettings.settings.theme = Lampa.Storage.get('custom_themes_theme', 'default');
+        console.log('Синхронізовані налаштування:', ThemeSettings.settings);
         var colorParam = $('div[data-name="custom_themes_color"]');
-        if (ThemeSettings.settings.enabled && theme === 'custom_color') {
-          colorParam.addClass('visible').show();
-        } else {
-          colorParam.removeClass('visible').hide();
-        }
+        console.log('Знайдено colorParam:', colorParam.length > 0 ? 'Так' : 'Ні');
+        setTimeout(function() {
+          if (ThemeSettings.settings.enabled && theme === 'custom_color') {
+            colorParam.addClass('visible').css('display', 'block');
+          } else {
+            colorParam.removeClass('visible').css('display', 'none');
+          }
+          Lampa.Settings.update(); // Примусове оновлення UI
+        }, 0);
       }
 
       // Застосовуємо збережену тему
@@ -269,6 +277,7 @@
 
         // Слухач для оновлення видимості
         Lampa.Settings.listener.follow('open', function(e) {
+          console.log('Відкрито меню налаштувань:', e.name);
           if (e.name === 'custom_themes') {
             updateColorVisibility(ThemeSettings.settings.theme);
           }
