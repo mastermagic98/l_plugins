@@ -90,6 +90,17 @@
         Lampa.Storage.set('black_style', true); // Увімкнути чорний стиль
       }
 
+      // Оновлення видимості параметра "Колір теми"
+      function updateColorVisibility(theme) {
+        console.log('Оновлення видимості custom_themes_color, enabled:', ThemeSettings.settings.enabled, 'theme:', theme);
+        var colorParam = $('div[data-name="custom_themes_color"]');
+        if (ThemeSettings.settings.enabled && theme === 'custom_color') {
+          colorParam.addClass('visible').show();
+        } else {
+          colorParam.removeClass('visible').hide();
+        }
+      }
+
       // Застосовуємо збережену тему
       function applySavedTheme() {
         console.log('Застосовуємо збережену тему...', ThemeSettings.settings);
@@ -134,7 +145,6 @@
           '.torrent-serial.focus { background-color: ' + color + '33 !important; border: 0.2em solid ' + color + ' !important; }'
         ].join('\n');
         style.html(dynamicTheme);
-        // Асинхронне додавання стилів для уникнення проблем із DOM
         setTimeout(function() {
           $('head').append(style);
           console.log('Стиль додано до head:', style[0].outerHTML);
@@ -211,8 +221,8 @@
                   applySavedTheme();
                 }
               }
-              Lampa.Settings.update();
               updateColorVisibility(value);
+              Lampa.Settings.update();
             }
           });
 
@@ -248,21 +258,10 @@
               if (ThemeSettings.settings.enabled && ThemeSettings.settings.theme === 'custom_color') {
                 applyDynamicTheme(value);
               }
-              Lampa.Settings.update();
               updateColorVisibility(ThemeSettings.settings.theme);
+              Lampa.Settings.update();
             }
           });
-        }
-
-        // Оновлення видимості параметра "Колір теми"
-        function updateColorVisibility(theme) {
-          var colorParam = $('div[data-name="custom_themes_color"]');
-          console.log('Оновлення видимості custom_themes_color, enabled:', ThemeSettings.settings.enabled, 'theme:', theme);
-          if (ThemeSettings.settings.enabled && theme === 'custom_color') {
-            colorParam.addClass('visible');
-          } else {
-            colorParam.removeClass('visible').hide(); // Явно приховуємо елемент
-          }
         }
 
         // Ініціалізуємо видимість при завантаженні
