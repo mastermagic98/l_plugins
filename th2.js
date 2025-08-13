@@ -67,6 +67,7 @@
 
       // Зберігаємо поточні налаштування
       function saveCurrentSettings() {
+        console.log('Зберігаємо поточні налаштування...');
         ['background', 'glass_style', 'black_style'].forEach(function (setting) {
           if (Lampa.Storage.get(setting) === true) {
             Lampa.Storage.set('my' + setting.charAt(0).toUpperCase() + setting.slice(1), 
@@ -78,6 +79,7 @@
 
       // Відновлюємо оригінальні налаштування
       function restoreOriginalSettings() {
+        console.log('Відновлюємо оригінальні налаштування...');
         ['Background', 'GlassStyle', 'BlackStyle'].forEach(function (setting) {
           var key = 'my' + setting;
           if (localStorage.getItem(key)) {
@@ -94,6 +96,7 @@
         if (!ThemeSettings.settings.enabled) {
           $('#custom_themes_stylesheet, #custom_themes_dynamic').remove();
           restoreOriginalSettings();
+          updateColorVisibility(ThemeSettings.settings.theme);
           return;
         }
         var savedTheme = localStorage.getItem("selectedTheme");
@@ -105,6 +108,7 @@
           applyDynamicTheme(ThemeSettings.settings.custom_color);
           Lampa.Storage.set('black_style', true); // Увімкнути чорний стиль
         }
+        updateColorVisibility(ThemeSettings.settings.theme);
       }
 
       // Функція для застосування динамічної теми
@@ -113,25 +117,28 @@
         $('#custom_themes_dynamic').remove();
         var style = $('<style id="custom_themes_dynamic"></style>');
         var dynamicTheme = [
-          '.navigation-bar__body { background: #1a1a1a; }', // Темний фон для навігації
-          '.card__quality, .card--tv .card__type { background: linear-gradient(to right, ' + color + 'dd, ' + color + '99); }',
-          '.screensaver__preload { background: url("data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' fill=\'none\'><path stroke=\'' + color + '\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zm0 0a9 9 0 0 0 9-9 9 9 0 0 0-.5-3.5M5.6 7.6l4.5 4.5M10.1 7.6l4.5 4.5\'/></svg>") no-repeat 50% 50%; }',
-          '.activity__loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; background: url("data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' fill=\'none\'><path stroke=\'' + color + '\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zm0 0a9 9 0 0 0 9-9 9 9 0 0 0-.5-3.5M5.6 7.6l4.5 4.5M10.1 7.6l4.5 4.5\'/></svg>") no-repeat 50% 50%; }',
-          'body { background: #1a1a1a; color: #ffffff; }', // Темний фон
-          '.company-start.icon--broken .company-start__icon, .explorer-card__head-img > img, .bookmarks-folder__layer, .card-more__box, .card__img { background-color: #2a2a2a; }',
-          '.search-source.focus, .simple-button.focus, .menu__item.focus, .menu__item.traverse, .menu__item.hover, .full-start__button.focus, .full-descr__tag.focus, .player-panel .button.focus, .full-person.selector.focus, .tag-count.selector.focus { background: linear-gradient(to right, ' + color + ', ' + color + 'cc); color: #fff; box-shadow: 0 0 0.4em ' + color + '33; border-radius: 0.5em; }',
-          '.menu__item.focus svg, .head__action.focus svg { fill: #fff !important; }', // Іконки не змінюють колір
-          '.selectbox-item.focus, .settings-folder.focus, .settings-param.focus { background: linear-gradient(to right, ' + color + ', ' + color + 'cc); color: #fff; box-shadow: 0 0 0.4em ' + color + '33; border-radius: 0.5em 0 0 0.5em; }',
-          '.full-episode.focus::after, .card-episode.focus .full-episode::after, .items-cards .selector.focus::after, .card-more.focus .card-more__box::after, .card-episode.focus .full-episode::after, .card-episode.hover .full-episode::after, .card.focus .card__view::after, .card.hover .card__view::after, .torrent-item.focus::after, .online-prestige.selector.focus::after, .online-prestige--full.selector.focus::after, .explorer-card__head-img.selector.focus::after, .extensions__item.focus::after, .extensions__block-add.focus::after { border: 0.2em solid ' + color + '; box-shadow: 0 0 0.8em ' + color + '33; border-radius: 1em; }',
-          '.head__action.focus, .head__action.hover { background: linear-gradient(45deg, ' + color + ', ' + color + 'cc); }',
-          '.modal__content { background: #1a1a1a; border: 0 solid #1a1a1a; }', // Темний фон для модальних вікон
-          '.settings__content, .settings-input__content, .selectbox__content { background: #1a1a1a; }', // Темний фон для меню
-          '.torrent-serial { background: rgba(0, 0, 0, 0.22); border: 0.2em solid rgba(0, 0, 0, 0.22); }',
-          '.torrent-serial.focus { background-color: ' + color + '33; border: 0.2em solid ' + color + '; }'
+          '.navigation-bar__body { background: #1a1a1a !important; }',
+          '.card__quality, .card--tv .card__type { background: linear-gradient(to right, ' + color + 'dd, ' + color + '99) !important; }',
+          '.screensaver__preload { background: url("data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' fill=\'none\'><path stroke=\'' + color + '\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zm0 0a9 9 0 0 0 9-9 9 9 0 0 0-.5-3.5M5.6 7.6l4.5 4.5M10.1 7.6l4.5 4.5\'/></svg>") no-repeat 50% 50% !important; }',
+          '.activity__loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; background: url("data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' fill=\'none\'><path stroke=\'' + color + '\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zm0 0a9 9 0 0 0 9-9 9 9 0 0 0-.5-3.5M5.6 7.6l4.5 4.5M10.1 7.6l4.5 4.5\'/></svg>") no-repeat 50% 50% !important; }',
+          'body { background: #1a1a1a !important; color: #ffffff !important; }',
+          '.company-start.icon--broken .company-start__icon, .explorer-card__head-img > img, .bookmarks-folder__layer, .card-more__box, .card__img { background-color: #2a2a2a !important; }',
+          '.search-source.focus, .simple-button.focus, .menu__item.focus, .menu__item.traverse, .menu__item.hover, .full-start__button.focus, .full-descr__tag.focus, .player-panel .button.focus, .full-person.selector.focus, .tag-count.selector.focus { background: linear-gradient(to right, ' + color + ', ' + color + 'cc) !important; color: #fff !important; box-shadow: 0 0 0.4em ' + color + '33 !important; border-radius: 0.5em !important; }',
+          '.menu__item.focus svg, .head__action.focus svg { fill: #fff !important; }',
+          '.selectbox-item.focus, .settings-folder.focus, .settings-param.focus { background: linear-gradient(to right, ' + color + ', ' + color + 'cc) !important; color: #fff !important; box-shadow: 0 0 0.4em ' + color + '33 !important; border-radius: 0.5em 0 0 0.5em !important; }',
+          '.full-episode.focus::after, .card-episode.focus .full-episode::after, .items-cards .selector.focus::after, .card-more.focus .card-more__box::after, .card-episode.focus .full-episode::after, .card-episode.hover .full-episode::after, .card.focus .card__view::after, .card.hover .card__view::after, .torrent-item.focus::after, .online-prestige.selector.focus::after, .online-prestige--full.selector.focus::after, .explorer-card__head-img.selector.focus::after, .extensions__item.focus::after, .extensions__block-add.focus::after { border: 0.2em solid ' + color + ' !important; box-shadow: 0 0 0.8em ' + color + '33 !important; border-radius: 1em !important; }',
+          '.head__action.focus, .head__action.hover { background: linear-gradient(45deg, ' + color + ', ' + color + 'cc) !important; }',
+          '.modal__content { background: #1a1a1a !important; border: 0 solid #1a1a1a !important; }',
+          '.settings__content, .settings-input__content, .selectbox__content { background: #1a1a1a !important; }',
+          '.torrent-serial { background: rgba(0, 0, 0, 0.22) !important; border: 0.2em solid rgba(0, 0, 0, 0.22) !important; }',
+          '.torrent-serial.focus { background-color: ' + color + '33 !important; border: 0.2em solid ' + color + ' !important; }'
         ].join('\n');
         style.html(dynamicTheme);
-        $('head').append(style);
-        console.log('Стиль додано до head:', style[0].outerHTML);
+        // Асинхронне додавання стилів для уникнення проблем із DOM
+        setTimeout(function() {
+          $('head').append(style);
+          console.log('Стиль додано до head:', style[0].outerHTML);
+        }, 0);
       }
 
       // Додаємо компонент і параметри налаштувань
@@ -170,9 +177,9 @@
               } else {
                 $('#custom_themes_stylesheet, #custom_themes_dynamic').remove();
                 restoreOriginalSettings();
+                updateColorVisibility(ThemeSettings.settings.theme);
               }
               Lampa.Settings.update();
-              updateColorVisibility(ThemeSettings.settings.theme);
             }
           });
 
@@ -242,6 +249,7 @@
                 applyDynamicTheme(value);
               }
               Lampa.Settings.update();
+              updateColorVisibility(ThemeSettings.settings.theme);
             }
           });
         }
@@ -253,9 +261,12 @@
           if (ThemeSettings.settings.enabled && theme === 'custom_color') {
             colorParam.addClass('visible');
           } else {
-            colorParam.removeClass('visible');
+            colorParam.removeClass('visible').hide(); // Явно приховуємо елемент
           }
         }
+
+        // Ініціалізуємо видимість при завантаженні
+        updateColorVisibility(ThemeSettings.settings.theme);
 
         // Слухач для оновлення видимості
         Lampa.Settings.listener.follow('open', function(e) {
@@ -424,8 +435,8 @@
                   .info__right { display: contents !important; }
                   .themes .card--collection { width: 25% !important; }
                 }
-                div[data-name="custom_themes_color"] { display: none; }
-                div[data-name="custom_themes_color"].visible { display: block; }
+                div[data-name="custom_themes_color"] { display: none !important; }
+                div[data-name="custom_themes_color"].visible { display: block !important; }
               </style>
               <div class="full-start__button selector view--category">
                 <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
