@@ -111,26 +111,28 @@
         
         // Додаємо компонент custom_themes
         if (Lampa.SettingsApi) {
+          console.log('Lampa.SettingsApi доступний');
           Lampa.SettingsApi.addComponent({
             component: 'custom_themes',
             name: Lampa.Lang.translate('Custom Themes'),
             icon: '<svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zm0 0a9 9 0 0 0 9-9 9 9 0 0 0-.5-3.5M5.6 7.6l4.5 4.5M10.1 7.6l4.5 4.5"/></svg>'
           });
+        } else {
+          console.error('Lampa.SettingsApi не доступний');
         }
 
         // Додаємо CSS для приховування "Колір теми" за замовчуванням
         $('head').append(`
           <style>
-            div[data-name="custom_themes_color"] { display: none !important; }
-            div[data-name="custom_themes_color"].visible { display: block !important; }
-            .settings-param[data-name="custom_themes_color"] { display: none !important; }
-            .settings-param[data-name="custom_themes_color"].visible { display: block !important; }
+            [data-name="custom_themes_color"] { display: none !important; }
+            [data-name="custom_themes_color"].visible { display: block !important; }
           </style>
         `);
 
         // Додаємо параметри
         if (Lampa.SettingsApi) {
           // Параметр: Увімкнути/вимкнути плагін (Стиль Лампа/Користувацька тема)
+          console.log('Додаємо параметр custom_themes_enabled');
           Lampa.SettingsApi.addParam({
             component: 'custom_themes',
             param: {
@@ -148,11 +150,12 @@
               console.log('Тема інтерфейсу змінено:', value, 'Settings:', JSON.stringify(ThemeSettings.settings));
               applySavedTheme();
               Lampa.Settings.update();
-              setTimeout(updateColorVisibility, 100); // Додаємо затримку
+              setTimeout(updateColorVisibility, 500); // Збільшено затримку
             }
           });
 
           // Параметр: Вибір теми
+          console.log('Додаємо параметр custom_themes_theme');
           Lampa.SettingsApi.addParam({
             component: 'custom_themes',
             param: {
@@ -174,11 +177,12 @@
               console.log('Тема змінена:', value, 'Settings:', JSON.stringify(ThemeSettings.settings));
               applySavedTheme();
               Lampa.Settings.update();
-              setTimeout(updateColorVisibility, 100); // Додаємо затримку
+              setTimeout(updateColorVisibility, 500); // Збільшено затримку
             }
           });
 
           // Параметр: Вибір кольору
+          console.log('Додаємо параметр custom_themes_color');
           Lampa.SettingsApi.addParam({
             component: 'custom_themes',
             param: {
@@ -218,8 +222,8 @@
         // Оновлення видимості параметра "Колір теми"
         function updateColorVisibility() {
           console.log('Оновлення видимості, settings:', JSON.stringify(ThemeSettings.settings));
-          var colorParam = $('div[data-name="custom_themes_color"], .settings-param[data-name="custom_themes_color"]');
-          console.log('Елемент colorParam:', colorParam.length ? 'Знайдено (' + colorParam.length + ')' : 'Не знайдено');
+          var colorParam = $('[data-name="custom_themes_color"]');
+          console.log('Елемент colorParam:', colorParam.length ? 'Знайдено (' + colorParam.length + '), HTML: ' + colorParam[0]?.outerHTML : 'Не знайдено');
           if (ThemeSettings.settings.enabled && ThemeSettings.settings.theme === 'custom_color') {
             colorParam.addClass('visible');
             console.log('Додано клас .visible до custom_themes_color');
@@ -233,12 +237,12 @@
         Lampa.Settings.listener.follow('open', function(e) {
           if (e.name === 'custom_themes') {
             console.log('Відкрито налаштування custom_themes');
-            setTimeout(updateColorVisibility, 100); // Додаємо затримку
+            setTimeout(updateColorVisibility, 500); // Збільшено затримку
           }
         });
 
         // Ініціалізуємо видимість при запуску
-        setTimeout(updateColorVisibility, 100); // Додаємо затримку
+        setTimeout(updateColorVisibility, 500); // Збільшено затримку
       }
       
       addThemeSettings();
