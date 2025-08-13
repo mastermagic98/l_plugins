@@ -65,6 +65,28 @@
         }
       };
 
+      // Зберігаємо поточні налаштування
+      function saveCurrentSettings() {
+        ['background', 'glass_style', 'black_style'].forEach(function (setting) {
+          if (Lampa.Storage.get(setting) === true) {
+            Lampa.Storage.set('my' + setting.charAt(0).toUpperCase() + setting.slice(1), 
+              Lampa.Storage.get(setting));
+            Lampa.Storage.set(setting, "false");
+          }
+        });
+      }
+
+      // Відновлюємо оригінальні налаштування
+      function restoreOriginalSettings() {
+        ['Background', 'GlassStyle', 'BlackStyle'].forEach(function (setting) {
+          var key = 'my' + setting;
+          if (localStorage.getItem(key)) {
+            Lampa.Storage.set(setting.toLowerCase(), Lampa.Storage.get(key));
+            localStorage.removeItem(key);
+          }
+        });
+      }
+
       // Застосовуємо збережену тему
       function applySavedTheme() {
         if (!ThemeSettings.settings.enabled) {
@@ -135,12 +157,7 @@
             onChange: function(value) {
               ThemeSettings.settings.enabled = value;
               Lampa.Storage.set('custom_themes_enabled', value);
-              if (value) {
-                applySavedTheme();
-              } else {
-                $('#custom_themes_stylesheet, #custom_themes_dynamic').remove();
-                restoreOriginalSettings();
-              }
+              applySavedTheme();
               Lampa.Settings.update();
               updateColorVisibility();
             }
@@ -166,12 +183,7 @@
               ThemeSettings.settings.theme = value;
               Lampa.Storage.set('custom_themes_theme', value);
               if (ThemeSettings.settings.enabled) {
-                if (value === 'custom_color') {
-                  applyDynamicTheme(ThemeSettings.settings.custom_color);
-                } else {
-                  $('#custom_themes_dynamic').remove();
-                  applySavedTheme();
-                }
+                applySavedTheme();
               }
               Lampa.Settings.update();
               updateColorVisibility();
@@ -230,6 +242,9 @@
             updateColorVisibility();
           }
         });
+
+        // Ініціалізуємо видимість при запуску
+        updateColorVisibility();
       }
       
       addThemeSettings();
@@ -371,29 +386,6 @@
           Lampa.Controller.toggle("content");
         }
         
-        // Зберігаємо поточні налаштування
-        function saveCurrentSettings() {
-          ['background', 'glass_style', 'black_style'].forEach(function (setting) {
-            if (Lampa.Storage.get(setting) === true) {
-              Lampa.Storage.set('my' + setting.charAt(0).toUpperCase() + setting.slice(1), 
-                Lampa.Storage.get(setting));
-              Lampa.Storage.set(setting, "false");
-            }
-          });
-        }
-        
-        // Відновлюємо оригінальні налаштування
-        function restoreOriginalSettings() {
-          ['Background', 'GlassStyle', 'BlackStyle'].forEach(function (setting) {
-            var key = 'my' + setting;
-            if (localStorage.getItem(key)) {
-              Lampa.Storage.set(setting.toLowerCase(), Lampa.Storage.get(key));
-              localStorage.removeItem(key);
-            }
-          });
-        }
-        
-        // Будуємо інтерфейс
         this.build = function (themesData) {
           Lampa.Background.change('');
           
