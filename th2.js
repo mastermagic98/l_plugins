@@ -119,8 +119,8 @@
         // Додаємо CSS для приховування "Колір теми" за замовчуванням
         $('head').append(`
           <style>
-            div[data-name="custom_themes_color"] { display: none; }
-            div[data-name="custom_themes_color"].visible { display: block; }
+            div[data-name="custom_themes_color"] { display: none !important; }
+            div[data-name="custom_themes_color"].visible { display: block !important; }
           </style>
         `);
 
@@ -215,10 +215,13 @@
         function updateColorVisibility() {
           console.log('Оновлення видимості, enabled:', ThemeSettings.settings.enabled, 'theme:', ThemeSettings.settings.theme);
           var colorParam = $('div[data-name="custom_themes_color"]');
+          console.log('Елемент colorParam:', colorParam.length ? 'Знайдено' : 'Не знайдено');
           if (ThemeSettings.settings.enabled && ThemeSettings.settings.theme === 'custom_color') {
             colorParam.addClass('visible');
+            console.log('Додано клас .visible до custom_themes_color');
           } else {
             colorParam.removeClass('visible');
+            console.log('Видалено клас .visible з custom_themes_color');
           }
         }
 
