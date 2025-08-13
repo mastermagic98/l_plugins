@@ -67,10 +67,12 @@
 
       // Застосовуємо збережену тему
       function applySavedTheme() {
-        console.log('Застосовуємо тему, enabled:', ThemeSettings.settings.enabled, 'theme:', ThemeSettings.settings.theme);
+        console.log('Застосовуємо тему, settings:', JSON.stringify(ThemeSettings.settings));
         $('#custom_themes_dynamic').remove();
         if (ThemeSettings.settings.enabled && ThemeSettings.settings.theme === 'custom_color') {
           applyDynamicTheme(ThemeSettings.settings.custom_color);
+        } else {
+          console.log('Тема не застосована: enabled або theme не відповідають умовам');
         }
       }
 
@@ -121,6 +123,8 @@
           <style>
             div[data-name="custom_themes_color"] { display: none !important; }
             div[data-name="custom_themes_color"].visible { display: block !important; }
+            .settings-param[data-name="custom_themes_color"] { display: none !important; }
+            .settings-param[data-name="custom_themes_color"].visible { display: block !important; }
           </style>
         `);
 
@@ -141,10 +145,10 @@
             onChange: function(value) {
               ThemeSettings.settings.enabled = value;
               Lampa.Storage.set('custom_themes_enabled', value);
-              console.log('Тема інтерфейсу змінено:', value);
+              console.log('Тема інтерфейсу змінено:', value, 'Settings:', JSON.stringify(ThemeSettings.settings));
               applySavedTheme();
               Lampa.Settings.update();
-              updateColorVisibility();
+              setTimeout(updateColorVisibility, 100); // Додаємо затримку
             }
           });
 
@@ -167,10 +171,10 @@
             onChange: function(value) {
               ThemeSettings.settings.theme = value;
               Lampa.Storage.set('custom_themes_theme', value);
-              console.log('Тема змінена:', value);
+              console.log('Тема змінена:', value, 'Settings:', JSON.stringify(ThemeSettings.settings));
               applySavedTheme();
               Lampa.Settings.update();
-              updateColorVisibility();
+              setTimeout(updateColorVisibility, 100); // Додаємо затримку
             }
           });
 
@@ -202,7 +206,7 @@
             onChange: function(value) {
               ThemeSettings.settings.custom_color = value;
               Lampa.Storage.set('custom_themes_color', value);
-              console.log('Колір змінено:', value);
+              console.log('Колір змінено:', value, 'Settings:', JSON.stringify(ThemeSettings.settings));
               if (ThemeSettings.settings.enabled && ThemeSettings.settings.theme === 'custom_color') {
                 applyDynamicTheme(value);
               }
@@ -213,9 +217,9 @@
 
         // Оновлення видимості параметра "Колір теми"
         function updateColorVisibility() {
-          console.log('Оновлення видимості, enabled:', ThemeSettings.settings.enabled, 'theme:', ThemeSettings.settings.theme);
-          var colorParam = $('div[data-name="custom_themes_color"]');
-          console.log('Елемент colorParam:', colorParam.length ? 'Знайдено' : 'Не знайдено');
+          console.log('Оновлення видимості, settings:', JSON.stringify(ThemeSettings.settings));
+          var colorParam = $('div[data-name="custom_themes_color"], .settings-param[data-name="custom_themes_color"]');
+          console.log('Елемент colorParam:', colorParam.length ? 'Знайдено (' + colorParam.length + ')' : 'Не знайдено');
           if (ThemeSettings.settings.enabled && ThemeSettings.settings.theme === 'custom_color') {
             colorParam.addClass('visible');
             console.log('Додано клас .visible до custom_themes_color');
@@ -229,12 +233,12 @@
         Lampa.Settings.listener.follow('open', function(e) {
           if (e.name === 'custom_themes') {
             console.log('Відкрито налаштування custom_themes');
-            updateColorVisibility();
+            setTimeout(updateColorVisibility, 100); // Додаємо затримку
           }
         });
 
         // Ініціалізуємо видимість при запуску
-        updateColorVisibility();
+        setTimeout(updateColorVisibility, 100); // Додаємо затримку
       }
       
       addThemeSettings();
