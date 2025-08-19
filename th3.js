@@ -288,7 +288,7 @@
                 'padding: 5px 0;' +
                 'text-shadow: 0 0 2px #000;' +
             '}' +
-            '.color_input:focus + .color_input_hint {' +
+            '.settings-param[data-type="input"] .color_input:focus + .color_input_hint {' +
                 'display: block;' +
             '}'
         );
@@ -322,8 +322,8 @@
         }).join('');
 
         // Додаємо поле для введення HEX-коду з початковим символом # і підказкою
-        var inputHtml = '<div style="padding: 10px; text-align: center;">' +
-                        '<input type="text" class="color_input selector" value="#" placeholder="#FFFFFF" style="padding: 8px; width: 100px; border-radius: 4px; border: 1px solid #ddd; background-color: #fff; color: #000; font-size: 14px;" maxlength="7" />' +
+        var inputHtml = '<div class="settings-param selector" data-type="input" data-name="color_hex" style="padding: 10px; text-align: center;">' +
+                        '<input type="text" class="color_input" value="#" placeholder="#FFFFFF" maxlength="7" />' +
                         '<div class="color_input_hint">' + Lampa.Lang.translate('hex_hint') + '</div>' +
                         '</div>';
 
@@ -446,9 +446,8 @@
                 // Перевірка введення, щоб зберегти #
                 inputField.addEventListener('input', function () {
                     if (!inputField.value.startsWith('#')) {
-                        inputField.value = '#' + inputField.value.replace('#', '');
+                        inputField.value = '#' + inputField.value.replace(/[^0-9A-Fa-f]/g, '').substring(0, 6);
                     }
-                    inputField.setSelectionRange(1, inputField.value.length);
                 });
             }
         } catch (e) {}
