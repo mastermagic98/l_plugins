@@ -252,15 +252,11 @@
                 'transform: rotate(-45deg);' +
             '}' +
             '.color_input_hint {' +
-                'display: none;' +
                 'color: #fff;' +
                 'font-size: 14px;' +
                 'text-align: center;' +
                 'padding: 5px 0;' +
                 'text-shadow: 0 0 2px #000;' +
-            '}' +
-            '.settings-param[data-type="input"] .color_input:focus + .color_input_hint {' +
-                'display: block;' +
             '}'
         );
     }
@@ -292,10 +288,10 @@
             return '<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; justify-items: center; padding: 10px;">' + groupContent + '</div>';
         }).join('');
 
-        // Додаємо поле для введення HEX-коду з написом "Інший колір"
-        var inputHtml = '<div class="settings-param selector" data-type="input" data-name="color_hex" style="padding: 10px; text-align: center;">' +
-                        '<div style="font-size: 16px; color: #fff; margin-bottom: 5px;">' + Lampa.Lang.translate('custom_color') + '</div>' +
-                        '<input type="text" class="color_input" data-type="input" value="#" maxlength="7" />' +
+        // Додаємо поле для введення HEX-коду
+        var inputHtml = '<div class="settings-param selector" data-name="color_hex" data-type="input" data-string="true" placeholder="' + Lampa.Lang.translate('hex_hint') + '">' +
+                        '<div class="settings-param__name">' + Lampa.Lang.translate('custom_color') + '</div>' +
+                        '<div class="settings-param__value">#' + '</div>' +
                         '<div class="color_input_hint">' + Lampa.Lang.translate('hex_hint') + '</div>' +
                         '</div>';
 
@@ -317,16 +313,9 @@
                         var selectedElement = a[0];
                         var color;
 
-                        if (selectedElement.classList.contains('color_input')) {
-                            // Викликаємо Lampa.Input.edit для редагування HEX-коду
-                            var inputField = modalHtml.find('.color_input')[0];
-                            var inputOptions = {
-                                title: Lampa.Lang.translate('custom_color'),
-                                value: inputField.value || '#',
-                                free: true,
-                                nosave: true
-                            };
-                            Lampa.Input.edit(inputOptions, function (value) {
+                        if (selectedElement.classList.contains('settings-param') && selectedElement.getAttribute('data-name') === 'color_hex') {
+                            // Викликаємо Lampa.Params.select для редагування HEX-коду
+                            Lampa.Params.select('color_hex', '', '#', function (value) {
                                 // Очищаємо введення від некоректних символів
                                 value = '#' + value.replace(/[^0-9A-Fa-f]/g, '').substring(0, 6);
                                 if (value === '#' || !isValidHex(value)) {
@@ -349,7 +338,7 @@
                                     Lampa.Settings.render();
                                 }
                             });
-                            return; // Чекаємо введення через Lampa.Input.edit
+                            return; // Чекаємо введення через Lampa.Params.select
                         } else if (selectedElement.classList.contains('default')) {
                             color = '#353535'; // Колір за замовчуванням
                             ColorPlugin.settings[paramName] = color;
@@ -382,50 +371,18 @@
                 }
             });
 
-            // Обробники для поля вводу (для попереднього перегляду)
-            var inputField = modalHtml.find('.color_input')[0];
-            if (inputField) {
-                // Показ/приховування підказки
-                inputField.addEventListener('focus', function () {
-                    var hint = modalHtml.find('.color_input_hint')[0];
-                    if (hint) {
-                        hint.style.display = 'block';
-                    }
-                    inputField.setSelectionRange(1, 1); // Курсор після #
-                });
-                inputField.addEventListener('blur', function () {
-                    var hint = modalHtml.find('.color_input_hint')[0];
-                    if (hint) {
-                        hint.style.display = 'none';
-                    }
-                });
+            // Ініціалізація введення HEX-коду
+            Lampa.Params.select('color_hex', '', '#');
 
-                // Запобігаємо видаленню # і обмежуємо курсор
-                inputField.addEventListener('keydown', function (e) {
-                    var cursorPos = inputField.selectionStart;
-                    var value = inputField.value;
-
-                    // Запобігаємо видаленню # (позиція 0)
-                    if ((e.keyCode === 8 || e.keyCode === 46) && cursorPos <= 1) {
-                        e.preventDefault();
-                    }
-
-                    // Запобігаємо переміщенню курсора на позицію 0
-                    if (e.keyCode === 37 && cursorPos <= 1) { // Стрілка вліво
-                        e.preventDefault();
-                        inputField.setSelectionRange(1, 1);
-                    }
-
-                    // Обмежуємо введення до 7 символів (# + 6 цифр)
-                    if (value.length >= 7 && e.keyCode !== 8 && e.keyCode !== 46 && e.keyCode !== 13 && e.keyCode !== 27) {
-                        e.preventDefault();
-                    }
-                });
-
-                // Перевірка введення, щоб зберегти #
-                inputField.addEventListener('input', function () {
-                    if (!inputField.value.startsWith('#')) {
-                        inputField.value = '#' + inputField.value.replace(/[^0-9A-Fa-f]/g, '').substring(0, 6);
+            // Обробка введення для захисту # та обмеження символів
+            var valueField = modalHtml.find('.settings-param__value')[0];
+            if (valueField) {
+                valueField.addEventListener('DOMSubtreeModified', function () {
+                    var value = valueField.innerText || '#';
+                    if (!value.startsWith('#')) {
+                        valueField.innerText = '#' + value.replace(/[^0-9A-Fa-f]/g, '').substring(0, 6);
+                    } else if (value.length > 7) {
+                        valueField.innerText = value.substring(0, 7);
                     }
                 });
             }
