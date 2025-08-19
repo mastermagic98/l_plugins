@@ -53,7 +53,7 @@
     // Об'єкт для зберігання налаштувань
     var ColorPlugin = {
         settings: {
-            main_color: '#e40c2b',
+            main_color: '#353535', // Змінили колір за замовчуванням
             background_color: '#1d1f20',
             text_color: '#fff',
             transparent_white: 'rgba(255,255,255,0.2)',
@@ -62,6 +62,7 @@
         },
         colors: {
             main: {
+                'default': Lampa.Lang.translate('default_color'), // Перший у списку
                 '#e40c2b': 'Червоний',
                 '#4d7cff': 'Синій',
                 '#ffeb3b': 'Жовтий',
@@ -70,7 +71,6 @@
                 '#a64dff': 'Пурпурний',
                 '#4caf50': 'Зелений',
                 '#ff69b4': 'Рожевий',
-                'default': Lampa.Lang.translate('default_color'),
                 'custom': Lampa.Lang.translate('custom_color')
             },
             background: {
@@ -98,6 +98,18 @@
                 '#000000': 'Чорний',
                 '#ffffff': 'Білий',
                 '#dddddd': 'Світло-сірий'
+            },
+            custom_palette: {
+                '#ff0000': 'Червоний',
+                '#00ff00': 'Зелений',
+                '#0000ff': 'Синій',
+                '#ffff00': 'Жовтий',
+                '#ff00ff': 'Магента',
+                '#00ffff': 'Ціан',
+                '#800080': 'Фіолетовий',
+                '#ffa500': 'Помаранчевий',
+                '#ffffff': 'Білий',
+                '#000000': 'Чорний'
             }
         }
     };
@@ -280,10 +292,62 @@
         return result;
     }
 
+    // Функція для створення модального вікна вибору кастомного кольору
+    function openCustomColorPicker(callback) {
+        var paletteKeys = Object.keys(ColorPlugin.colors.custom_palette);
+        var groupedPalette = chunkArray(paletteKeys, 5);
+        var paletteContent = groupedPalette.map(function (group) {
+            var groupContent = group.map(function (color) {
+                return createColorHtml(color, ColorPlugin.colors.custom_palette[color]);
+            }).join('');
+            return '<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; justify-items: center; padding: 10px;">' + groupContent + '</div>';
+        }).join('');
+
+        // Додаємо поле для введення HEX-коду
+        var inputHtml = '<div style="padding: 10px; text-align: center;">' +
+                        '<input type="text" class="color_input selector" placeholder="#FFFFFF" style="padding: 8px; width: 100px; border-radius: 4px; border: 1px solid #ddd; background-color: #fff; color: #000; font-size: 14px;" />' +
+                        '</div>';
+
+        var modalHtml = $('<div>' + paletteContent + inputHtml + '</div>');
+
+        try {
+            Lampa.Modal.open({
+                title: Lampa.Lang.translate('custom_color'),
+                size: 'medium',
+                align: 'center',
+                html: modalHtml,
+                onBack: function () {
+                    Lampa.Modal.close();
+                    Lampa.Controller.toggle('modal');
+                },
+                onSelect: function (a) {
+                    if (a.length > 0 && a[0] instanceof HTMLElement) {
+                        var selectedElement = a[0];
+                        var color;
+
+                        if (selectedElement.classList.contains('color_input')) {
+                            color = selectedElement.value.trim();
+                            if (!isValidHex(color)) {
+                                Lampa.Noty.show('Невірний формат HEX-коду. Використовуйте формат #FFFFFF.');
+                                return;
+                            }
+                        } else {
+                            color = selectedElement.style.backgroundColor || ColorPlugin.colors.custom_palette[selectedElement.title];
+                            color = color.includes('rgb') ? rgbToHex(color) : color;
+                        }
+
+                        callback(color);
+                        Lampa.Modal.close();
+                    }
+                }
+            });
+        } catch (e) {}
+    }
+
     // Функція для створення модального вікна вибору кольору
     function openColorPicker(paramName, colors, title) {
         var colorKeys = Object.keys(colors);
-        var groupedColors = chunkArray(colorKeys, 5); // Змінили на 5, щоб умістити 10 елементів (8 кольорів + default + custom)
+        var groupedColors = chunkArray(colorKeys, 5); // Сітка 5x2 для 10 елементів
         var colorContent = groupedColors.map(function (group) {
             var groupContent = group.map(function (color) {
                 return createColorHtml(color, colors[color]);
@@ -291,12 +355,7 @@
             return '<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; justify-items: center; padding: 10px;">' + groupContent + '</div>';
         }).join('');
 
-        // Додаємо поле для введення HEX-коду для кастомного кольору
-        var inputHtml = '<div style="padding: 10px; text-align: center;">' +
-                        '<input type="text" class="color_input selector" placeholder="#FFFFFF" style="padding: 8px; width: 100px; border-radius: 4px; border: 1px solid #ddd; background-color: #fff; color: #000; font-size: 14px;" />' +
-                        '</div>';
-
-        var modalHtml = $('<div>' + colorContent + inputHtml + '</div>');
+        var modalHtml = $('<div>' + colorContent + '</div>');
 
         try {
             Lampa.Modal.open({
@@ -314,16 +373,19 @@
                         var selectedElement = a[0];
                         var color;
 
-                        if (selectedElement.classList.contains('color_input')) {
-                            color = selectedElement.value.trim();
-                            if (!isValidHex(color)) {
-                                Lampa.Noty.show('Невірний формат HEX-коду. Використовуйте формат #FFFFFF.');
-                                return;
-                            }
-                        } else if (selectedElement.classList.contains('default')) {
-                            color = '#e40c2b'; // Колір за замовчуванням
+                        if (selectedElement.classList.contains('default')) {
+                            color = '#353535'; // Колір за замовчуванням
                         } else if (selectedElement.classList.contains('custom')) {
-                            // Нічого не робимо, якщо вибрано кастомний блок, але поле вводу не заповнене
+                            openCustomColorPicker(function (selectedColor) {
+                                ColorPlugin.settings[paramName] = selectedColor;
+                                Lampa.Storage.set('color_plugin_' + paramName, selectedColor);
+                                applyStyles();
+                                var descr = $('.settings-param[data-name="color_plugin_' + paramName + '"] .settings-param__descr div');
+                                if (descr.length) {
+                                    descr.css('background-color', selectedColor);
+                                }
+                                Lampa.Settings.render();
+                            });
                             return;
                         } else {
                             color = selectedElement.style.backgroundColor || ColorPlugin.settings[paramName];
@@ -350,7 +412,7 @@
     // Ініціалізація плагіна
     function initPlugin() {
         // Завантажуємо збережені налаштування
-        ColorPlugin.settings.main_color = Lampa.Storage.get('color_plugin_main_color', '#e40c2b');
+        ColorPlugin.settings.main_color = Lampa.Storage.get('color_plugin_main_color', '#353535');
         ColorPlugin.settings.background_color = Lampa.Storage.get('color_plugin_background_color', '#1d1f20');
         ColorPlugin.settings.text_color = Lampa.Storage.get('color_plugin_text_color', '#fff');
         ColorPlugin.settings.transparent_white = Lampa.Storage.get('color_plugin_transparent_white', 'rgba(255,255,255,0.2)');
