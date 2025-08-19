@@ -122,6 +122,20 @@
         return /^#[0-9A-Fa-f]{6}$/.test(color);
     }
 
+    // Функція для імітації події hover:enter
+    function triggerHoverEnter(elem) {
+        if (Lampa.Storage.field('navigation_type') === 'mouse' || Lampa.Platform.screen('mobile')) {
+            if (Lampa.DeviceInput && Lampa.DeviceInput.canClick({})) {
+                if (typeof Lampa.animateTriggerEnter === 'function') {
+                    Lampa.animateTriggerEnter(elem);
+                }
+                if (Lampa.Utils$2 && typeof Lampa.Utils$2.trigger === 'function') {
+                    Lampa.Utils$2.trigger(elem, 'hover:enter');
+                }
+            }
+        }
+    }
+
     // Функція для застосування стилів
     function applyStyles() {
         if (!ColorPlugin.settings.enabled) {
@@ -366,11 +380,7 @@
                             if (inputField) {
                                 inputField.focus();
                                 inputField.setSelectionRange(1, 1); // Курсор після #
-                                // Викликаємо клавіатуру Lampa, якщо вона увімкнена
-                                if (Lampa.Keyboard && Lampa.Storage.get('keyboard_use', false)) {
-                                    Lampa.Keyboard.show();
-                                    Lampa.Keyboard.bind(inputField);
-                                }
+                                triggerHoverEnter(inputField); // Викликаємо клавіатуру
                             }
                             return; // Чекаємо введення HEX-коду
                         } else {
@@ -395,19 +405,14 @@
             // Обробники для поля вводу
             var inputField = modalHtml.find('.color_input')[0];
             if (inputField) {
-                // Показ/приховування підказки
+                // Показ/приховування підказки та виклик клавіатури
                 inputField.addEventListener('focus', function () {
                     var hint = modalHtml.find('.color_input_hint')[0];
                     if (hint) {
                         hint.style.display = 'block';
                     }
-                    // Курсор після #
-                    inputField.setSelectionRange(1, 1);
-                    // Викликаємо клавіатуру Lampa
-                    if (Lampa.Keyboard && Lampa.Storage.get('keyboard_use', false)) {
-                        Lampa.Keyboard.show();
-                        Lampa.Keyboard.bind(inputField);
-                    }
+                    inputField.setSelectionRange(1, 1); // Курсор після #
+                    triggerHoverEnter(inputField); // Викликаємо клавіатуру
                 });
                 inputField.addEventListener('blur', function () {
                     var hint = modalHtml.find('.color_input_hint')[0];
