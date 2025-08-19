@@ -1,29 +1,116 @@
-(function() {
+(function () {
     'use strict';
+
+    // Додаємо переклади
+    Lampa.Lang.add({
+        color_plugin: {
+            ru: 'Настройка цветов',
+            en: 'Color settings',
+            uk: 'Налаштування кольорів'
+        },
+        main_color: {
+            ru: 'Основной цвет',
+            en: 'Main color',
+            uk: 'Основний колір'
+        },
+        background_color: {
+            ru: 'Цвет фона',
+            en: 'Background color',
+            uk: 'Колір фону'
+        },
+        text_color: {
+            ru: 'Цвет текста',
+            en: 'Text color',
+            uk: 'Колір тексту'
+        },
+        transparent_white: {
+            ru: 'Прозрачный фон',
+            en: 'Transparent background',
+            uk: 'Прозорий фон'
+        },
+        icon_color: {
+            ru: 'Цвет иконок',
+            en: 'Icons color',
+            uk: 'Колір іконок'
+        },
+        color_plugin_enabled: {
+            ru: 'Включить плагин',
+            en: 'Enable plugin',
+            uk: 'Увімкнути плагін'
+        }
+    });
 
     // Об'єкт для зберігання налаштувань
     var ColorPlugin = {
         settings: {
-            theme: 'custom_color',
             main_color: '#e40c2b',
             background_color: '#1d1f20',
             text_color: '#fff',
             transparent_white: 'rgba(255,255,255,0.2)',
             icon_color: '#000',
             enabled: true
+        },
+        colors: {
+            main: {
+                '#e40c2b': 'Червоний',
+                '#b0b0b0': 'Світло-сірий',
+                '#ffeb3b': 'Жовтий',
+                '#4d7cff': 'Синій',
+                '#a64dff': 'Пурпурний',
+                '#ff9f4d': 'Помаранчевий',
+                '#3da18d': 'М’ятний',
+                '#4caf50': 'Зелений',
+                '#ff69b4': 'Рожевий',
+                '#6a1b9a': 'Фіолетовий',
+                '#26a69a': 'Бірюзовий'
+            },
+            background: {
+                '#1d1f20': 'Темно-сірий',
+                '#000000': 'Чорний',
+                '#0a1b2a': 'Темно-синій',
+                '#081822': 'Глибокий синій',
+                '#1a102b': 'Темно-фіолетовий',
+                '#1f0e04': 'Темно-коричневий',
+                '#4b0e2b': 'Темно-рожевий'
+            },
+            text: {
+                '#ffffff': 'Білий',
+                '#dddddd': 'Світло-сірий',
+                '#b0b0b0': 'Сірий',
+                '#000000': 'Чорний'
+            },
+            transparent: {
+                'rgba(255,255,255,0.2)': 'Прозорий білий 20%',
+                'rgba(255,255,255,0.1)': 'Прозорий білий 10%',
+                'rgba(255,255,255,0.3)': 'Прозорий білий 30%',
+                'rgba(0,0,0,0.2)': 'Прозорий чорний 20%'
+            },
+            icon: {
+                '#000000': 'Чорний',
+                '#ffffff': 'Білий',
+                '#dddddd': 'Світло-сірий'
+            }
         }
     };
+
+    // Функція для конвертації RGB у HEX
+    function rgbToHex(rgb) {
+        var matches = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+        if (!matches) return rgb;
+        function hex(n) {
+            return ('0' + parseInt(n).toString(16)).slice(-2);
+        }
+        return '#' + hex(matches[1]) + hex(matches[2]) + hex(matches[3]);
+    }
 
     // Функція для застосування стилів
     function applyStyles() {
         if (!ColorPlugin.settings.enabled) {
-            // Видаляємо стилі, якщо плагін відключений
             var oldStyle = document.getElementById('color-plugin-styles');
             if (oldStyle) oldStyle.remove();
             return;
         }
 
-        // Створюємо або оновлюємо CSS стилі
         var style = document.getElementById('color-plugin-styles');
         if (!style) {
             style = document.createElement('style');
@@ -31,7 +118,6 @@
             document.head.appendChild(style);
         }
 
-        // Формуємо CSS на основі налаштувань
         style.innerHTML = (
             ':root {' +
                 '--main-color: ' + ColorPlugin.settings.main_color + ';' +
@@ -115,21 +201,67 @@
         );
     }
 
-    // Функція для оновлення видимості параметрів
-    function updateColorVisibility(theme) {
-        var colorParams = ['main_color', 'background_color', 'text_color', 'transparent_white', 'icon_color'];
-        for (var i = 0; i < colorParams.length; i++) {
-            var param = Lampa.SettingsApi.getParameter('color_plugin_' + colorParams[i]);
-            if (param) {
-                param.visible(theme === 'custom_color');
-            }
+    // Функція для створення HTML для вибору кольору
+    function createColorHtml(color, name) {
+        return '<div class="color_square selector" tabindex="0" style="background-color: ' + color + '; width: 60px; height: 60px; border-radius: 8px; cursor: pointer;" title="' + name + '"></div>';
+    }
+
+    // Функція для розбиття масиву кольорів на групи
+    function chunkArray(arr, size) {
+        var result = [];
+        for (var i = 0; i < arr.length; i += size) {
+            result.push(arr.slice(i, i + size));
         }
+        return result;
+    }
+
+    // Функція для створення модального вікна вибору кольору
+    function openColorPicker(paramName, colors, title) {
+        var colorKeys = Object.keys(colors);
+        var groupedColors = chunkArray(colorKeys, 6);
+        var colorContent = groupedColors.map(function (group) {
+            var groupContent = group.map(function (color) {
+                return createColorHtml(color, colors[color]);
+            }).join('');
+            return '<div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 15px; justify-items: center; padding: 10px;">' + groupContent + '</div>';
+        }).join('');
+        var modalHtml = $('<div>' + colorContent + '</div>');
+
+        try {
+            Lampa.Modal.open({
+                title: Lampa.Lang.translate(title),
+                size: 'medium',
+                align: 'center',
+                html: modalHtml,
+                onBack: function () {
+                    Lampa.Modal.close();
+                    Lampa.Controller.toggle('settings_component');
+                    Lampa.Controller.enable('menu');
+                },
+                onSelect: function (a) {
+                    Lampa.Modal.close();
+                    Lampa.Controller.toggle('settings_component');
+                    Lampa.Controller.enable('menu');
+                    if (a.length > 0 && a[0] instanceof HTMLElement) {
+                        var color = a[0].style.backgroundColor || ColorPlugin.settings[paramName];
+                        color = color.includes('rgb') ? rgbToHex(color) : color;
+                        ColorPlugin.settings[paramName] = color;
+                        Lampa.Storage.set('color_plugin_' + paramName, color);
+                        applyStyles();
+                        var descr = $('.settings-param[data-name="color_plugin_' + paramName + '"] .settings-param__descr div');
+                        if (descr.length) {
+                            descr.css('background-color', color);
+                        }
+                        Lampa.Settings.render();
+                    }
+                }
+            });
+        } catch (e) {}
     }
 
     // Ініціалізація плагіна
     function initPlugin() {
         // Завантажуємо збережені налаштування
-        ColorPlugin.settings.theme = Lampa.Storage.get('color_plugin_theme', 'custom_color');
         ColorPlugin.settings.main_color = Lampa.Storage.get('color_plugin_main_color', '#e40c2b');
         ColorPlugin.settings.background_color = Lampa.Storage.get('color_plugin_background_color', '#1d1f20');
         ColorPlugin.settings.text_color = Lampa.Storage.get('color_plugin_text_color', '#fff');
@@ -137,167 +269,142 @@
         ColorPlugin.settings.icon_color = Lampa.Storage.get('color_plugin_icon_color', '#000');
         ColorPlugin.settings.enabled = Lampa.Storage.get('color_plugin_enabled', true);
 
+        // Додаємо компонент до меню налаштувань
+        Lampa.SettingsApi.addComponent({
+            component: 'color_plugin',
+            name: Lampa.Lang.translate('color_plugin'),
+            icon: '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>'
+        });
+
         // Додаємо параметри до налаштувань
         if (Lampa.SettingsApi) {
-            // Параметр вибору теми
-            Lampa.SettingsApi.addParam({
-                component: 'color_plugin',
-                param: {
-                    name: 'color_plugin_theme',
-                    type: 'select',
-                    values: {
-                        custom_color: 'Користувацька',
-                        default: 'LAMPA'
-                    },
-                    default: 'custom_color'
-                },
-                field: {
-                    name: Lampa.Lang.translate('Тема'),
-                    description: 'Виберіть тему для інтерфейсу'
-                },
-                onChange: function(value) {
-                    ColorPlugin.settings.theme = value;
-                    Lampa.Storage.set('color_plugin_theme', value);
-                    Lampa.Settings.update();
-                    applyStyles();
-                    updateColorVisibility(value);
-                }
-            });
-
-            // Параметр основного кольору
+            // Основний колір
             Lampa.SettingsApi.addParam({
                 component: 'color_plugin',
                 param: {
                     name: 'color_plugin_main_color',
-                    type: 'input',
-                    default: '#e40c2b'
+                    type: 'button'
                 },
                 field: {
-                    name: Lampa.Lang.translate('Основний колір'),
-                    description: 'Виберіть основний колір (наприклад, #e40c2b)'
+                    name: Lampa.Lang.translate('main_color'),
+                    description: '<div style="width: 2em; height: 2em; background-color: ' + ColorPlugin.settings.main_color + '; display: inline-block; border: 1px solid #ddd;"></div>'
                 },
-                onChange: function(value) {
-                    ColorPlugin.settings.main_color = value;
-                    Lampa.Storage.set('color_plugin_main_color', value);
-                    Lampa.Settings.update();
-                    if (ColorPlugin.settings.theme === 'custom_color') {
-                        applyStyles();
+                onRender: function (item) {
+                    var descr = item.find('.settings-param__descr div');
+                    if (descr.length) {
+                        descr.css('background-color', ColorPlugin.settings.main_color);
                     }
+                },
+                onChange: function () {
+                    openColorPicker('main_color', ColorPlugin.colors.main, 'main_color');
                 }
             });
 
-            // Параметр кольору фону
+            // Колір фону
             Lampa.SettingsApi.addParam({
                 component: 'color_plugin',
                 param: {
                     name: 'color_plugin_background_color',
-                    type: 'input',
-                    default: '#1d1f20'
+                    type: 'button'
                 },
                 field: {
-                    name: Lampa.Lang.translate('Колір фону'),
-                    description: 'Виберіть колір фону (наприклад, #1d1f20)'
+                    name: Lampa.Lang.translate('background_color'),
+                    description: '<div style="width: 2em; height: 2em; background-color: ' + ColorPlugin.settings.background_color + '; display: inline-block; border: 1px solid #ddd;"></div>'
                 },
-                onChange: function(value) {
-                    ColorPlugin.settings.background_color = value;
-                    Lampa.Storage.set('color_plugin_background_color', value);
-                    Lampa.Settings.update();
-                    if (ColorPlugin.settings.theme === 'custom_color') {
-                        applyStyles();
+                onRender: function (item) {
+                    var descr = item.find('.settings-param__descr div');
+                    if (descr.length) {
+                        descr.css('background-color', ColorPlugin.settings.background_color);
                     }
+                },
+                onChange: function () {
+                    openColorPicker('background_color', ColorPlugin.colors.background, 'background_color');
                 }
             });
 
-            // Параметр кольору тексту
+            // Колір тексту
             Lampa.SettingsApi.addParam({
                 component: 'color_plugin',
                 param: {
                     name: 'color_plugin_text_color',
-                    type: 'input',
-                    default: '#fff'
+                    type: 'button'
                 },
                 field: {
-                    name: Lampa.Lang.translate('Колір тексту'),
-                    description: 'Виберіть колір тексту (наприклад, #fff)'
+                    name: Lampa.Lang.translate('text_color'),
+                    description: '<div style="width: 2em; height: 2em; background-color: ' + ColorPlugin.settings.text_color + '; display: inline-block; border: 1px solid #ddd;"></div>'
                 },
-                onChange: function(value) {
-                    ColorPlugin.settings.text_color = value;
-                    Lampa.Storage.set('color_plugin_text_color', value);
-                    Lampa.Settings.update();
-                    if (ColorPlugin.settings.theme === 'custom_color') {
-                        applyStyles();
+                onRender: function (item) {
+                    var descr = item.find('.settings-param__descr div');
+                    if (descr.length) {
+                        descr.css('background-color', ColorPlugin.settings.text_color);
                     }
+                },
+                onChange: function () {
+                    openColorPicker('text_color', ColorPlugin.colors.text, 'text_color');
                 }
             });
 
-            // Параметр прозорого фону
+            // Прозорий фон
             Lampa.SettingsApi.addParam({
                 component: 'color_plugin',
                 param: {
                     name: 'color_plugin_transparent_white',
-                    type: 'input',
-                    default: 'rgba(255,255,255,0.2)'
+                    type: 'button'
                 },
                 field: {
-                    name: Lampa.Lang.translate('Прозорий фон'),
-                    description: 'Виберіть колір прозорого фону (наприклад, rgba(255,255,255,0.2))'
+                    name: Lampa.Lang.translate('transparent_white'),
+                    description: '<div style="width: 2em; height: 2em; background-color: ' + ColorPlugin.settings.transparent_white + '; display: inline-block; border: 1px solid #ddd;"></div>'
                 },
-                onChange: function(value) {
-                    ColorPlugin.settings.transparent_white = value;
-                    Lampa.Storage.set('color_plugin_transparent_white', value);
-                    Lampa.Settings.update();
-                    if (ColorPlugin.settings.theme === 'custom_color') {
-                        applyStyles();
+                onRender: function (item) {
+                    var descr = item.find('.settings-param__descr div');
+                    if (descr.length) {
+                        descr.css('background-color', ColorPlugin.settings.transparent_white);
                     }
+                },
+                onChange: function () {
+                    openColorPicker('transparent_white', ColorPlugin.colors.transparent, 'transparent_white');
                 }
             });
 
-            // Параметр кольору іконок
+            // Колір іконок
             Lampa.SettingsApi.addParam({
                 component: 'color_plugin',
                 param: {
                     name: 'color_plugin_icon_color',
-                    type: 'input',
-                    default: '#000'
+                    type: 'button'
                 },
                 field: {
-                    name: Lampa.Lang.translate('Колір іконок'),
-                    description: 'Виберіть колір іконок (наприклад, #000)'
+                    name: Lampa.Lang.translate('icon_color'),
+                    description: '<div style="width: 2em; height: 2em; background-color: ' + ColorPlugin.settings.icon_color + '; display: inline-block; border: 1px solid #ddd;"></div>'
                 },
-                onChange: function(value) {
-                    ColorPlugin.settings.icon_color = value;
-                    Lampa.Storage.set('color_plugin_icon_color', value);
-                    Lampa.Settings.update();
-                    if (ColorPlugin.settings.theme === 'custom_color') {
-                        applyStyles();
+                onRender: function (item) {
+                    var descr = item.find('.settings-param__descr div');
+                    if (descr.length) {
+                        descr.css('background-color', ColorPlugin.settings.icon_color);
                     }
+                },
+                onChange: function () {
+                    openColorPicker('icon_color', ColorPlugin.colors.icon, 'icon_color');
                 }
             });
 
-            // Параметр увімкнення/вимкнення плагіна
+            // Увімкнення/вимкнення плагіна
             Lampa.SettingsApi.addParam({
                 component: 'color_plugin',
                 param: {
                     name: 'color_plugin_enabled',
-                    type: 'toggle',
+                    type: 'trigger',
                     default: true
                 },
                 field: {
-                    name: Lampa.Lang.translate('Увімкнути плагін'),
+                    name: Lampa.Lang.translate('color_plugin_enabled'),
                     description: 'Увімкнути або вимкнути плагін зміни кольорів'
                 },
-                onChange: function(value) {
-                    ColorPlugin.settings.enabled = value;
-                    Lampa.Storage.set('color_plugin_enabled', value);
-                    Lampa.Settings.update();
+                onChange: function (value) {
+                    ColorPlugin.settings.enabled = value === 'true';
+                    Lampa.Storage.set('color_plugin_enabled', ColorPlugin.settings.enabled);
                     applyStyles();
-                }
-            });
-
-            // Ініціалізація видимості параметрів при відкритті налаштувань
-            Lampa.Settings.listener.follow('open', function(e) {
-                if (e.name === 'color_plugin') {
-                    updateColorVisibility(ColorPlugin.settings.theme);
+                    Lampa.Settings.render();
                 }
             });
 
@@ -306,13 +413,22 @@
         }
     }
 
-    // Запускаємо ініціалізацію плагіна
-    initPlugin();
+    // Запускаємо плагін після готовності програми
+    if (window.appready) {
+        initPlugin();
+    } else {
+        Lampa.Listener.follow('app', function (event) {
+            if (event.type === 'ready') {
+                initPlugin();
+            }
+        });
+    }
 
-    // Додаємо плагін до Lampa
-    Lampa.Plugin.add({
-        name: 'ColorPlugin',
-        version: '1.0.0',
-        init: initPlugin
+    // Оновлюємо стилі при відкритті налаштувань
+    Lampa.Listener.follow('settings_component', function (event) {
+        if (event.type === 'open') {
+            applyStyles();
+            Lampa.Settings.render();
+        }
     });
 })();
