@@ -295,7 +295,7 @@
         // Додаємо поле для введення HEX-коду з написом "Інший колір"
         var inputHtml = '<div class="settings-param selector" data-type="input" data-name="color_hex" style="padding: 10px; text-align: center;">' +
                         '<div style="font-size: 16px; color: #fff; margin-bottom: 5px;">' + Lampa.Lang.translate('custom_color') + '</div>' +
-                        '<input type="text" class="color_input" value="#" maxlength="7" />' +
+                        '<input type="text" class="color_input" data-type="input" value="#" maxlength="7" />' +
                         '<div class="color_input_hint">' + Lampa.Lang.translate('hex_hint') + '</div>' +
                         '</div>';
 
