@@ -1,426 +1,442 @@
 (function () {
-  'use strict';
+    'use strict';
 
-  // Ініціалізуємо TV-платформу Lampa
-  Lampa.Platform.tv();
+    function create() {
+      var html;
+      var timer;
+      var network = new Lampa.Reguest();
+      var loaded = {};
 
-  (function () {
-    // Функція для створення обгортки консолі (захист від деобфускації)
-    function createConsoleWrapper() {
-      var isFirstCall = true;
-      return function (context, callback) {
-        var wrapper = isFirstCall ? function () {
-          if (callback) {
-            var result = callback.apply(context, arguments);
-            callback = null;
-            return result;
-          }
-        } : function () {};
-        isFirstCall = false;
-        return wrapper;
+      this.create = function () {
+        html = $("<div class=\"new-interface-info\">\n            <div class=\"new-interface-info__body\">\n                <div class=\"new-interface-info__head\"></div>\n                <div class=\"new-interface-info__title\"></div>\n                <div class=\"new-interface-info__details\"></div>\n                <div class=\"new-interface-info__description\"></div>\n            </div>\n        </div>");
+      };
+
+      this.update = function (data) {
+        html.find('.new-interface-info__head,.new-interface-info__details').text('---');
+        html.find('.new-interface-info__title').text(data.title);
+        html.find('.new-interface-info__description').text(data.overview || Lampa.Lang.translate('full_notext'));
+        Lampa.Background.change(Lampa.Api.img(data.backdrop_path, 'w200'));
+        this.load(data);
+      };
+
+      this.draw = function (data) {
+        var create = ((data.release_date || data.first_air_date || '0000') + '').slice(0, 4);
+        var vote = parseFloat((data.vote_average || 0) + '').toFixed(1);
+        var head = [];
+        var details = [];
+        var countries = Lampa.Api.sources.tmdb.parseCountries(data);
+        var pg = Lampa.Api.sources.tmdb.parsePG(data);
+        if (create !== '0000') head.push('<span>' + create + '</span>');
+        if (countries.length > 0) head.push(countries.join(', '));
+        if (vote > 0) details.push('<div class="full-start__rate"><div>' + vote + '</div><div>TMDB</div></div>');
+        if (data.genres && data.genres.length > 0) details.push(data.genres.map(function (item) {
+          return Lampa.Utils.capitalizeFirstLetter(item.name);
+        }).join(' | '));
+        if (data.runtime) details.push(Lampa.Utils.secondsToTime(data.runtime * 60, true));
+        if (pg) details.push('<span class="full-start__pg" style="font-size: 0.9em;">' + pg + '</span>');
+        html.find('.new-interface-info__head').empty().append(head.join(', '));
+        html.find('.new-interface-info__details').html(details.join('<span class="new-interface-info__split">&#9679;</span>'));
+      };
+
+      this.load = function (data) {
+        var _this = this;
+
+        clearTimeout(timer);
+        var url = Lampa.TMDB.api((data.name ? 'tv' : 'movie') + '/' + data.id + '?api_key=' + Lampa.TMDB.key() + '&append_to_response=content_ratings,release_dates&language=' + Lampa.Storage.get('language'));
+        if (loaded[url]) return this.draw(loaded[url]);
+        timer = setTimeout(function () {
+          network.clear();
+          network.timeout(5000);
+          network.silent(url, function (movie) {
+            loaded[url] = movie;
+
+            _this.draw(movie);
+          });
+        }, 300);
+      };
+
+      this.render = function () {
+        return html;
+      };
+
+      this.empty = function () {};
+
+      this.destroy = function () {
+        html.remove();
+        loaded = {};
+        html = null;
       };
     }
 
-    // Головна функція для ініціалізації менеджера тем
-    function initializeThemeManager() {
-      console.log('Ініціалізація менеджера тем...');
-
-      // Захищаємо методи консолі
-      var consoleWrapper = createConsoleWrapper();
-      
-      function protectConsole() {
-        var wrapper = consoleWrapper(this, function () {
-          function getGlobalObject() {
-            try {
-              return Function("return (function() {}.constructor('return this')());")();
-            } catch (e) {
-              return window;
-            }
-          }
-          
-          var global = getGlobalObject();
-          var consoleObj = global.console = global.console || {};
-          var methods = ['log', 'warn', 'info', 'error', 'exception', 'table', 'trace'];
-          
-          methods.forEach(function (method) {
-            var methodWrapper = consoleWrapper.constructor.prototype.bind(consoleWrapper);
-            var originalMethod = consoleObj[method] || methodWrapper;
-            methodWrapper.__proto__ = consoleWrapper.bind(consoleWrapper);
-            methodWrapper.toString = originalMethod.toString.bind(originalMethod);
-            consoleObj[method] = methodWrapper;
-          });
-        });
-        wrapper();
-      }
-      
-      protectConsole();
-
-      // Застосовуємо збережену тему (якщо вона є)
-      function applySavedTheme() {
-        var savedTheme = localStorage.getItem("selectedTheme");
-        if (savedTheme) {
-          $("body").append($("<link rel='stylesheet' href='" + savedTheme + "'>"));
-          console.log('Застосовано збережену тему:', savedTheme);
-        }
-      }
-      
-      applySavedTheme();
-
-      // Додаємо розділ тем в налаштування
-      function addThemeSettings() {
-        console.log('Додаємо налаштування тем...');
-        
-        Lampa.SettingsApi.addParam({
-          component: "interface",
-          param: {
-            name: 'my_themes', // Ключовий ідентифікатор
-            type: 'static'
-          },
-          field: {
-            name: "Мої теми",
-            description: "Змінити палітру елементів додатка"
-          },
-          onRender: function (element) {
-            setTimeout(function () {
-              // Переміщуємо наш розділ після розділу "Розмір інтерфейсу"
-              $(".settings-param > div:contains('Мої теми')").parent()
-                .insertAfter($("div[data-name='interface_size']"));
-              
-              element.on("hover:enter", function () {
-                setTimeout(function () {
-                  if ($(".settings-param").length || $(".settings-folder").length) {
-                    window.history.back();
-                  }
-                }, 50);
-                
-                setTimeout(function () {
-                  var currentTheme = Lampa.Storage.get("themesCurrent");
-                  var themeData = currentTheme ? JSON.parse(JSON.stringify(currentTheme)) : {
-                    url: "https://bylampa.github.io/themes/categories/stroke.json",
-                    title: "Focus Pack",
-                    component: "my_themes",
-                    page: 1
-                  };
-                  
-                  Lampa.Activity.push(themeData);
-                  Lampa.Storage.set("themesCurrent", JSON.stringify(Lampa.Activity.active()));
-                }, 100);
-              });
-            }, 0);
-          }
-        });
-      }
-      
-      addThemeSettings();
-
-      // Основний клас для роботи з темами
-      function ThemeManager(activityData) {
-        var self = this;
-        var apiRequest = new Lampa.Reguest();
-        var scroll = new Lampa.Scroll({ mask: true, over: true, step: 250 });
-        var cards = [];
-        var container = $("<div></div>");
-        var themesContainer = $("<div class='my_themes category-full'></div>");
-        var infoElement;
-        var focusedCard;
-        
-        // Список категорій тем
-        var categories = [
-          { title: "Focus Pack", url: "https://bylampa.github.io/themes/categories/stroke.json" },
-          { title: "Color Gallery", url: "https://bylampa.github.io/themes/categories/color_gallery.json" },
-          { title: "Gradient Style", url: "https://bylampa.github.io/themes/categories/gradient_style.json" }
-        ];
-
-        // Функція для додавання позначки "Встановлено"
-        function addInstalledBadge(card) {
-          var badge = $("<div class='card__quality'>Установлена</div>").css({
-            position: "absolute",
-            left: "-3%",
-            bottom: "70%",
-            padding: "0.4em 0.4em",
-            background: '#ffe216',
-            color: '#000',
-            fontSize: "0.8em",
-            borderRadius: "0.3em",
-            textTransform: "uppercase"
-          });
-          card.find('.card__view').append(badge);
-        }
-
-        // Створюємо інтерфейс
-        this.create = function () {
-          self.activity.loader(true);
-          apiRequest.silent(activityData.url, self.build.bind(self), function () {
-            var emptyView = new Lampa.Empty();
-            container.append(emptyView.render());
-            self.start = emptyView.start;
-            self.activity.loader(false);
-            self.activity.toggle();
-          });
-          return self.render();
-        };
-
-        // Додаємо картки тем
-        this.appendCards = function (themes) {
-          themes.forEach(function (theme) {
-            var card = Lampa.Template.get("card", {
-              title: theme.title,
-              release_year: ''
-            });
-            
-            card.addClass("card--collection")
-              .find(".card__img").css({ cursor: "pointer", 'background-color': "#353535a6" }).end()
-              .css({ 'text-align': 'center' });
-            
-            var cardImage = card.find(".card__img")[0];
-            
-            cardImage.onload = function () { card.addClass("card--loaded"); };
-            cardImage.onerror = function () { cardImage.src = "./img/img_broken.svg"; };
-            cardImage.src = theme.logo;
-            
-            $('.info__title').remove();
-            
-            // Перевіряємо чи ця тема встановлена
-            if (localStorage.getItem("selectedTheme") === theme.css) {
-              addInstalledBadge(card);
-            }
-            
-            // Обробники подій
-            card.on('hover:focus', function () {
-              focusedCard = card[0];
-              scroll.update(card, true);
-              infoElement.find('.info__title').text(theme.title);
-            });
-            
-            card.on("hover:enter", function () {
-              showThemeOptions(theme);
-            });
-            
-            themesContainer.append(card);
-            cards.push(card);
-          });
-        };
-        
-        // Показуємо опції для теми (встановити/видалити)
-        function showThemeOptions(theme) {
-          Lampa.Select.show({
-            title: '',
-            items: [{ title: "Установить" }, { title: "Удалить" }],
-            onBack: function () { Lampa.Controller.toggle('content'); },
-            onSelect: function (option) {
-              if (option.title === "Установить") {
-                installTheme(theme);
-              } else {
-                removeTheme();
-              }
-            }
-          });
-        }
-        
-        // Встановлюємо тему
-        function installTheme(theme) {
-          $("link[rel='stylesheet'][href^='https://bylampa.github.io/themes/css/']").remove();
-          $("body").append($("<link rel='stylesheet' href='" + theme.css + "'>"));
-          
-          localStorage.setItem('selectedTheme', theme.css);
-          console.log("Тема установлена:", theme.css);
-          
-          $(".card__quality").remove();
-          // Знаходимо картку, що відповідає темі
-          var currentCard = cards.find(function (card) {
-            return card.find(".card__img")[0].src === theme.logo;
-          });
-          if (currentCard) {
-            addInstalledBadge(currentCard);
-          }
-          
-          // Зберігаємо поточні налаштування
-          saveCurrentSettings();
-          
-          Lampa.Controller.toggle("content");
-        }
-        
-        // Видаляємо тему
-        function removeTheme() {
-          $("link[rel='stylesheet'][href^='https://bylampa.github.io/themes/css/']").remove();
-          localStorage.getItem("selectedTheme");
-          $(".card__quality").remove();
-          
-          // Відновлюємо оригінальні налаштування
-          restoreOriginalSettings();
-          
-          Lampa.Controller.toggle("content");
-        }
-        
-        // Зберігаємо поточні налаштування
-        function saveCurrentSettings() {
-          ['background', 'glass_style', 'black_style'].forEach(function (setting) {
-            if (Lampa.Storage.get(setting) === true) {
-              Lampa.Storage.set('my' + setting.charAt(0).toUpperCase() + setting.slice(1), 
-                Lampa.Storage.get(setting));
-              Lampa.Storage.set(setting, "false");
-            }
-          });
-        }
-        
-        // Відновлюємо оригінальні налаштування
-        function restoreOriginalSettings() {
-          ['Background', 'GlassStyle', 'BlackStyle'].forEach(function (setting) {
-            var key = 'my' + setting;
-            if (localStorage.getItem(key)) {
-              Lampa.Storage.set(setting.toLowerCase(), Lampa.Storage.get(key));
-              localStorage.removeItem(key);
-            }
-          });
-        }
-        
-        // Будуємо інтерфейс
-        this.build = function (themesData) {
-          Lampa.Background.change('');
-          
-          // Додаємо шаблони для UI
-          Lampa.Template.add("button_category", `
-            <div id='button_category'>
-              <style>
-                .themes .card--collection { width: 14.2% !important; }
-                .scroll__content { padding: 1.5em 0 !important; }
-                .info { height: 9em !important; }
-                .info__title-original { font-size: 1.2em; }
-                @media (max-width: 385px) {
-                  .info__right { display: contents !important; }
-                  .themes .card--collection { width: 33.3% !important; }
-                }
-                @media (max-width: 580px) {
-                  .info__right { display: contents !important; }
-                  .themes .card--collection { width: 25% !important; }
-                }
-              </style>
-              <div class="full-start__button selector view--category">
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M20,10H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h16c1.1,0,2-0.9,2-2C22,10.9,21.1,10,20,10z" fill="currentColor"/>
-                  <path d="M4,8h12c1.1,0,2-0.9,2-2c0-1.1-0.9-2-2-2H4C2.9,4,2,4.9,2,6C2,7.1,2.9,8,4,8z" fill="currentColor"/>
-                  <path d="M16,16H4c-1.1,0-2,0.9-2,2c0,1.1,0.9,2,2,2h12c1.1,0,2-0.9,2-2C18,16.9,17.1,16,16,16z" fill="currentColor"/>
-                </svg>
-                <span>Категорії тем</span>
-              </div>
-            </div>
-          `);
-          
-          Lampa.Template.add('info_tvtv', `
-            <div class="info layer--width">
-              <div class="info__left">
-                <div class="info__title"></div>
-                <div class="info__title-original"></div>
-                <div class="info__create"></div>
-              </div>
-              <div class="info__right">
-                <div id="stantion_filtr"></div>
-              </div>
-            </div>
-          `);
-          
-          // Створюємо елементи інтерфейсу
-          var categoryButton = Lampa.Template.get('button_category');
-          infoElement = Lampa.Template.get("info_tvtv");
-          infoElement.find("#stantion_filtr").append(categoryButton);
-          
-          infoElement.find(".view--category").on("hover:enter hover:click", function () {
-            self.selectCategory();
-          });
-          
-          scroll.render().addClass('layer--wheight').data("mheight", infoElement);
-          container.append(infoElement.append());
-          container.append(scroll.render());
-          
-          this.appendCards(themesData);
-          scroll.append(themesContainer);
-          $('.my_themes').append("<div id='spacer' style='height: 25em;'></div>");
-          
-          this.activity.loader(false);
-          this.activity.toggle();
-        };
-        
-        // Вибір категорії
-        this.selectCategory = function () {
-          Lampa.Select.show({
-            title: "Категорії тем",
-            items: categories,
-            onSelect: function (category) {
-              Lampa.Activity.push({
-                url: category.url,
-                title: category.title,
-                component: "my_themes",
-                page: 1
-              });
-              Lampa.Storage.set("themesCurrent", JSON.stringify(Lampa.Activity.active()));
-            },
-            onBack: function () { Lampa.Controller.toggle("content"); }
-          });
-        };
-        
-        // Керування через пульт
-        this.start = function () {
-          Lampa.Controller.add("content", {
-            toggle: function () {
-              Lampa.Controller.collectionSet(scroll.render());
-              Lampa.Controller.collectionFocus(focusedCard || false, scroll.render());
-            },
-            left: function () {
-              Navigator.canmove("left") ? Navigator.move('left') : Lampa.Controller.toggle('menu');
-            },
-            right: function () {
-              Navigator.canmove("right") ? Navigator.move("right") : self.selectCategory();
-            },
-            up: function () {
-              if (Navigator.canmove('up')) {
-                Navigator.move('up');
-              } else if (!infoElement.find('.view--category').hasClass("focus")) {
-                Lampa.Controller.collectionSet(infoElement);
-                Navigator.move("right");
-              } else {
-                Lampa.Controller.toggle("head");
-              }
-            },
-            down: function () {
-              Navigator.canmove("down") ? Navigator.move('down') 
-                : infoElement.find(".view--category").hasClass('focus') && Lampa.Controller.toggle('content');
-            },
-            back: function () { Lampa.Activity.backward(); }
-          });
-          
-          Lampa.Controller.toggle("content");
-        };
-        
-        this.pause = function () {};
-        this.stop = function () {};
-        this.render = function () { return container; };
-        this.destroy = function () {
-          apiRequest.clear();
-          scroll.destroy();
-          infoElement && infoElement.remove();
-          container.remove();
-          themesContainer.remove();
-        };
-      }
-      
-      // Реєструємо компонент
-      Lampa.Component.add('my_themes', ThemeManager);
-      
-      // Слідкуємо за змінами
-      Lampa.Storage.listener.follow("change", function (event) {
-        if (event.name === 'activity' && Lampa.Activity.active().component !== "my_themes") {
-          setTimeout(function () { $('#button_category').remove(); }, 0);
-        }
+    function component(object) {
+      var network = new Lampa.Reguest();
+      var scroll = new Lampa.Scroll({
+        mask: true,
+        over: true,
+        scroll_by_item: true
       });
+      var items = [];
+      var html = $('<div class="new-interface"><img class="full-start__background"></div>');
+      var active = 0;
+      var newlampa = Lampa.Manifest.app_digital >= 166;
+      var info;
+      var lezydata;
+      var viewall = Lampa.Storage.field('card_views_type') == 'view' || Lampa.Storage.field('navigation_type') == 'mouse';
+      var background_img = html.find('.full-start__background');
+      var background_last = '';
+      var background_timer;
+
+      this.create = function () {};
+
+      this.empty = function () {
+        var button;
+
+        if (object.source == 'tmdb') {
+          button = $('<div class="empty__footer"><div class="simple-button selector">' + Lampa.Lang.translate('change_source_on_cub') + '</div></div>');
+          button.find('.selector').on('hover:enter', function () {
+            Lampa.Storage.set('source', 'cub');
+            Lampa.Activity.replace({
+              source: 'cub'
+            });
+          });
+        }
+
+        var empty = new Lampa.Empty();
+        html.append(empty.render(button));
+        this.start = empty.start;
+        this.activity.loader(false);
+        this.activity.toggle();
+      };
+
+      this.loadNext = function () {
+        var _this = this;
+
+        if (this.next && !this.next_wait && items.length) {
+          this.next_wait = true;
+          this.next(function (new_data) {
+            _this.next_wait = false;
+            new_data.forEach(_this.append.bind(_this));
+            Lampa.Layer.visible(items[active + 1].render(true));
+          }, function () {
+            _this.next_wait = false;
+          });
+        }
+      };
+
+      this.push = function () {};
+
+      this.build = function (data) {
+        var _this2 = this;
+
+        lezydata = data;
+        console.trace();
+        info = new create(object);
+        info.create();
+        scroll.minus(info.render());
+        data.slice(0, viewall ? data.length : 2).forEach(this.append.bind(this));
+        html.append(info.render());
+        html.append(scroll.render());
+
+        if (newlampa) {
+          Lampa.Layer.update(html);
+          Lampa.Layer.visible(scroll.render(true));
+          scroll.onEnd = this.loadNext.bind(this);
+
+          scroll.onWheel = function (step) {
+            if (!Lampa.Controller.own(_this2)) _this2.start();
+            if (step > 0) _this2.down();else if (active > 0) _this2.up();
+          };
+        }
+
+        this.activity.loader(false);
+        this.activity.toggle();
+      };
+
+      this.background = function (elem) {
+        var new_background = Lampa.Api.img(elem.backdrop_path, 'w1280');
+        clearTimeout(background_timer);
+        if (new_background == background_last) return;
+        background_timer = setTimeout(function () {
+          background_img.removeClass('loaded');
+
+          background_img[0].onload = function () {
+            background_img.addClass('loaded');
+          };
+
+          background_img[0].onerror = function () {
+            background_img.removeClass('loaded');
+          };
+
+          background_last = new_background;
+          setTimeout(function () {
+            background_img[0].src = background_last;
+          }, 300);
+        }, 1000);
+      };
+
+      this.append = function (element) {
+        var _this3 = this;
+
+        if (element.ready) return;
+        element.ready = true;
+        var item = new Lampa.InteractionLine(element, {
+          url: element.url,
+          card_small: true,
+          cardClass: element.cardClass,
+          genres: object.genres,
+          object: object,
+          card_wide: true,
+          nomore: element.nomore
+        });
+        item.create();
+        item.onDown = this.down.bind(this);
+        item.onUp = this.up.bind(this);
+        item.onBack = this.back.bind(this);
+
+        item.onToggle = function () {
+          active = items.indexOf(item);
+        };
+
+        if (this.onMore) item.onMore = this.onMore.bind(this);
+
+        item.onFocus = function (elem) {
+          info.update(elem);
+
+          _this3.background(elem);
+        };
+
+        item.onHover = function (elem) {
+          info.update(elem);
+
+          _this3.background(elem);
+        };
+
+        item.onFocusMore = info.empty.bind(info);
+        scroll.append(item.render());
+        items.push(item);
+      };
+
+      this.back = function () {
+        Lampa.Activity.backward();
+      };
+
+      this.down = function () {
+        active++;
+        active = Math.min(active, items.length - 1);
+        if (!viewall) lezydata.slice(0, active + 2).forEach(this.append.bind(this));
+        items[active].toggle();
+        scroll.update(items[active].render());
+      };
+
+      this.up = function () {
+        active--;
+
+        if (active < 0) {
+          active = 0;
+          Lampa.Controller.toggle('head');
+        } else {
+          items[active].toggle();
+          scroll.update(items[active].render());
+        }
+      };
+
+      this.start = function () {
+        var _this4 = this;
+
+        Lampa.Controller.add('content', {
+          link: this,
+          toggle: function toggle() {
+            if (_this4.activity.canRefresh()) return false;
+
+            if (items.length) {
+              items[active].toggle();
+            }
+          },
+          update: function update() {},
+          left: function left() {
+            if (Navigator.canmove('left')) Navigator.move('left');else Lampa.Controller.toggle('menu');
+          },
+          right: function right() {
+            Navigator.move('right');
+          },
+          up: function up() {
+            if (Navigator.canmove('up')) Navigator.move('up');else Lampa.Controller.toggle('head');
+          },
+          down: function down() {
+            if (Navigator.canmove('down')) Navigator.move('down');
+          },
+          back: this.back
+        });
+        Lampa.Controller.toggle('content');
+      };
+
+      this.refresh = function () {
+        this.activity.loader(true);
+        this.activity.need_refresh = true;
+      };
+
+      this.pause = function () {};
+
+      this.stop = function () {};
+
+      this.render = function () {
+        return html;
+      };
+
+      this.destroy = function () {
+        network.clear();
+        Lampa.Arrays.destroy(items);
+        scroll.destroy();
+        if (info) info.destroy();
+        html.remove();
+        items = null;
+        network = null;
+        lezydata = null;
+      };
     }
-    
-    // Запускаємо після готовності додатка
-    if (window.appready) {
-      initializeThemeManager();
-    } else {
-      Lampa.Listener.follow("app", function (event) {
-        if (event.type === "ready") initializeThemeManager();
-      });
+
+    function startPlugin() {
+      window.plugin_interface_ready = true;
+      var old_interface = Lampa.InteractionMain;
+      var new_interface = component;
+
+      Lampa.InteractionMain = function (object) {
+        var use = new_interface;
+        if (!(object.source == 'tmdb' || object.source == 'cub')) use = new_interface;
+        if (window.innerWidth < 767) use = new_interface;
+        if (!Lampa.Account.hasPremium()) use = new_interface;
+        if (Lampa.Manifest.app_digital < 153) use = new_interface;
+        return new use(object);
+      };
+
+      Lampa.Template.add('new_interface_style', `
+        <style>
+        .new-interface .card--small.card--wide {
+            width: 18.3em;
+        }
+        
+        .new-interface-info {
+            position: relative;
+            padding: 1.5em;
+            height: 24em;
+        }
+        
+        .new-interface-info__body {
+            width: 80%;
+            padding-top: 1.1em;
+        }
+        
+        .new-interface-info__head {
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 1em;
+            font-size: 1.3em;
+            min-height: 1em;
+        }
+        
+        .new-interface-info__head span {
+            color: #fff;
+        }
+        
+        .new-interface-info__title {
+            font-size: 4em;
+            font-weight: 600;
+            margin-bottom: 0.3em;
+            overflow: hidden;
+            -o-text-overflow: ".";
+            text-overflow: ".";
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            line-clamp: 1;
+            -webkit-box-orient: vertical;
+            margin-left: -0.03em;
+            line-height: 1.3;
+        }
+        
+        .new-interface-info__details {
+            margin-bottom: 1.6em;
+            display: -webkit-box;
+            display: -webkit-flex;
+            display: -moz-box;
+            display: -ms-flexbox;
+            display: flex;
+            -webkit-box-align: center;
+            -webkit-align-items: center;
+            -moz-box-align: center;
+            -ms-flex-align: center;
+            align-items: center;
+            -webkit-flex-wrap: wrap;
+            -ms-flex-wrap: wrap;
+            flex-wrap: wrap;
+            min-height: 1.9em;
+            font-size: 1.1em;
+        }
+        
+        .new-interface-info__split {
+            margin: 0 1em;
+            font-size: 0.7em;
+        }
+        
+        .new-interface-info__description {
+            font-size: 1.2em;
+            font-weight: 300;
+            line-height: 1.5;
+            overflow: hidden;
+            -o-text-overflow: ".";
+            text-overflow: ".";
+            display: -webkit-box;
+            -webkit-line-clamp: 4;
+            line-clamp: 4;
+            -webkit-box-orient: vertical;
+            width: 70%;
+        }
+        
+        .new-interface .card-more__box {
+            padding-bottom: 95%;
+        }
+        
+        .new-interface .full-start__background {
+            height: 108%;
+            top: -6em;
+        }
+        
+        .new-interface .full-start__rate {
+            font-size: 1.3em;
+            margin-right: 0;
+        }
+        
+        .new-interface .card__promo {
+            display: none;
+        }
+        
+        .new-interface .card.card--wide+.card-more .card-more__box {
+            padding-bottom: 95%;
+        }
+        
+        .new-interface .card.card--wide .card-watched {
+            display: none !important;
+        }
+        
+        body.light--version .new-interface-info__body {
+            width: 69%;
+            padding-top: 1.5em;
+        }
+        
+        body.light--version .new-interface-info {
+            height: 25.3em;
+        }
+
+        /* Додано нові стилі для білих іконок при фокусі */
+        .navigator--focus .navigator__item--icon {
+            color: #fff !important;
+        }
+
+        .navigator--focus .navigator__item--icon svg {
+            fill: #fff !important;
+        }
+        </style>
+      `);
+      $('body').append(Lampa.Template.get('new_interface_style', {}, true));
     }
-  })();
+
+    if (!window.plugin_interface_ready) startPlugin();
 })();
