@@ -76,7 +76,7 @@
                 '#a64dff': 'Пурпурний',
                 '#4caf50': 'Зелений',
                 '#ff69b4': 'Рожевий',
-                '#00bcd4': 'Бірюзовий' // Новий колір замість custom
+                '#00bcd4': 'Бірюзовий' // Новий колір замість HEX
             },
             background: {
                 '#1d1f20': 'Темно-сірий',
@@ -321,10 +321,14 @@
                             // Викликаємо Lampa.Input.edit для редагування HEX-коду
                             var inputField = modalHtml.find('.color_input')[0];
                             var inputOptions = {
+                                title: Lampa.Lang.translate('custom_color'),
                                 value: inputField.value || '#',
-                                name: 'color_hex'
+                                free: true,
+                                nosave: true
                             };
                             Lampa.Input.edit(inputOptions, function (value) {
+                                // Очищаємо введення від некоректних символів
+                                value = '#' + value.replace(/[^0-9A-Fa-f]/g, '').substring(0, 6);
                                 if (value === '#' || !isValidHex(value)) {
                                     Lampa.Noty.show('Невірний формат HEX-коду. Використовуйте формат #FFFFFF.');
                                     Lampa.Controller.toggle('settings_component');
@@ -378,7 +382,7 @@
                 }
             });
 
-            // Обробники для поля вводу
+            // Обробники для поля вводу (для попереднього перегляду)
             var inputField = modalHtml.find('.color_input')[0];
             if (inputField) {
                 // Показ/приховування підказки
