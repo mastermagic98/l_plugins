@@ -1,454 +1,318 @@
-(function () {
+(function() {
     'use strict';
 
-    function create() {
-      var html;
-      var timer;
-      var network = new Lampa.Reguest();
-      var loaded = {};
+    // Об'єкт для зберігання налаштувань
+    var ColorPlugin = {
+        settings: {
+            theme: 'custom_color',
+            main_color: '#e40c2b',
+            background_color: '#1d1f20',
+            text_color: '#fff',
+            transparent_white: 'rgba(255,255,255,0.2)',
+            icon_color: '#000',
+            enabled: true
+        }
+    };
 
-      this.create = function () {
-        html = $("<div class=\"new-interface-info\">\n            <div class=\"new-interface-info__body\">\n                <div class=\"new-interface-info__head\"></div>\n                <div class=\"new-interface-info__title\"></div>\n                <div class=\"new-interface-info__details\"></div>\n                <div class=\"new-interface-info__description\"></div>\n            </div>\n        </div>");
-      };
+    // Функція для застосування стилів
+    function applyStyles() {
+        if (!ColorPlugin.settings.enabled) {
+            // Видаляємо стилі, якщо плагін відключений
+            var oldStyle = document.getElementById('color-plugin-styles');
+            if (oldStyle) oldStyle.remove();
+            return;
+        }
 
-      this.update = function (data) {
-        html.find('.new-interface-info__head,.new-interface-info__details').text('---');
-        html.find('.new-interface-info__title').text(data.title);
-        html.find('.new-interface-info__description').text(data.overview || Lampa.Lang.translate('full_notext'));
-        Lampa.Background.change(Lampa.Api.img(data.backdrop_path, 'w200'));
-        this.load(data);
-      };
+        // Створюємо або оновлюємо CSS стилі
+        var style = document.getElementById('color-plugin-styles');
+        if (!style) {
+            style = document.createElement('style');
+            style.id = 'color-plugin-styles';
+            document.head.appendChild(style);
+        }
 
-      this.draw = function (data) {
-        var create = ((data.release_date || data.first_air_date || '0000') + '').slice(0, 4);
-        var vote = parseFloat((data.vote_average || 0) + '').toFixed(1);
-        var head = [];
-        var details = [];
-        var countries = Lampa.Api.sources.tmdb.parseCountries(data);
-        var pg = Lampa.Api.sources.tmdb.parsePG(data);
-        if (create !== '0000') head.push('<span>' + create + '</span>');
-        if (countries.length > 0) head.push(countries.join(', '));
-        if (vote > 0) details.push('<div class="full-start__rate"><div>' + vote + '</div><div>TMDB</div></div>');
-        if (data.genres && data.genres.length > 0) details.push(data.genres.map(function (item) {
-          return Lampa.Utils.capitalizeFirstLetter(item.name);
-        }).join(' | '));
-        if (data.runtime) details.push(Lampa.Utils.secondsToTime(data.runtime * 60, true));
-        if (pg) details.push('<span class="full-start__pg" style="font-size: 0.9em;">' + pg + '</span>');
-        html.find('.new-interface-info__head').empty().append(head.join(', '));
-        html.find('.new-interface-info__details').html(details.join('<span class="new-interface-info__split">&#9679;</span>'));
-      };
-
-      this.load = function (data) {
-        var _this = this;
-
-        clearTimeout(timer);
-        var url = Lampa.TMDB.api((data.name ? 'tv' : 'movie') + '/' + data.id + '?api_key=' + Lampa.TMDB.key() + '&append_to_response=content_ratings,release_dates&language=' + Lampa.Storage.get('language'));
-        if (loaded[url]) return this.draw(loaded[url]);
-        timer = setTimeout(function () {
-          network.clear();
-          network.timeout(5000);
-          network.silent(url, function (movie) {
-            loaded[url] = movie;
-
-            _this.draw(movie);
-          });
-        }, 300);
-      };
-
-      this.render = function () {
-        return html;
-      };
-
-      this.empty = function () {};
-
-      this.destroy = function () {
-        html.remove();
-        loaded = {};
-        html = null;
-      };
+        // Формуємо CSS на основі налаштувань
+        style.innerHTML = (
+            ':root {' +
+                '--main-color: ' + ColorPlugin.settings.main_color + ';' +
+                '--background-color: ' + ColorPlugin.settings.background_color + ';' +
+                '--text-color: ' + ColorPlugin.settings.text_color + ';' +
+                '--transparent-white: ' + ColorPlugin.settings.transparent_white + ';' +
+            '}' +
+            '.menu__ico {' +
+                'color: ' + ColorPlugin.settings.icon_color + ';' +
+                '-webkit-filter: invert(1);' +
+                'filter: invert(1);' +
+            '}' +
+            '.console__tab.focus, .menu__item.focus, .menu__item.traverse, .menu__item.hover, ' +
+            '.full-person.focus, .full-start__button.focus, .full-descr__tag.focus, ' +
+            '.simple-button.focus, .head__action.focus, .head__action.hover, ' +
+            '.player-panel .button.focus, .search-source.active {' +
+                'background: ' + ColorPlugin.settings.main_color + ';' +
+                'color: ' + ColorPlugin.settings.text_color + ';' +
+            '}' +
+            '.navigation-tabs__button.focus, .time-line > div, .player-panel__position, ' +
+            '.player-panel__position > div:after {' +
+                'background-color: ' + ColorPlugin.settings.main_color + ';' +
+                'color: ' + ColorPlugin.settings.text_color + ';' +
+            '}' +
+            '.iptv-menu__list-item.focus, .iptv-program__timeline>div {' +
+                'background-color: ' + ColorPlugin.settings.main_color + ' !important;' +
+                'color: ' + ColorPlugin.settings.text_color + ' !important;' +
+            '}' +
+            '.radio-item.focus, .lang__selector-item.focus, .simple-keyboard .hg-button.focus, ' +
+            '.modal__button.focus, .search-history-key.focus, .simple-keyboard-mic.focus, ' +
+            '.torrent-serial__progress, .full-review-add.focus, .full-review.focus, ' +
+            '.tag-count.focus, .settings-folder.focus, .settings-param.focus, ' +
+            '.selectbox-item.focus, .selectbox-item.hover {' +
+                'background: ' + ColorPlugin.settings.main_color + ';' +
+                'color: ' + ColorPlugin.settings.text_color + ';' +
+            '}' +
+            '.online.focus {' +
+                'box-shadow: 0 0 0 0.2em ' + ColorPlugin.settings.main_color + ';' +
+            '}' +
+            '.online_modss.focus::after, .online-prestige.focus::after, ' +
+            '.radio-item.focus .radio-item__imgbox:after, .iptv-channel.focus::before, ' +
+            '.iptv-channel.last--focus::before {' +
+                'border-color: ' + ColorPlugin.settings.main_color + ' !important;' +
+            '}' +
+            '.card-more.focus .card-more__box::after {' +
+                'border: 0.3em solid ' + ColorPlugin.settings.main_color + ';' +
+            '}' +
+            '.iptv-playlist-item.focus::after, .iptv-playlist-item.hover::after {' +
+                'border-color: ' + ColorPlugin.settings.main_color + ' !important;' +
+            '}' +
+            '.ad-bot.focus .ad-bot__content::after, .ad-bot.hover .ad-bot__content::after, ' +
+            '.card-episode.focus .full-episode::after, .register.focus::after, ' +
+            '.season-episode.focus::after, .full-episode.focus::after, ' +
+            '.full-review-add.focus::after, .card.focus .card__view::after, ' +
+            '.card.hover .card__view::after, .extensions__item.focus:after, ' +
+            '.torrent-item.focus::after, .extensions__block-add.focus:after {' +
+                'border-color: ' + ColorPlugin.settings.main_color + ';' +
+            '}' +
+            '.torrent-serial__size {' +
+                'background-color: ' + ColorPlugin.settings.text_color + ';' +
+                'color: ' + ColorPlugin.settings.icon_color + ';' +
+            '}' +
+            '.broadcast__scan > div, .broadcast__device.focus {' +
+                'background-color: ' + ColorPlugin.settings.main_color + ';' +
+                'color: ' + ColorPlugin.settings.text_color + ';' +
+            '}' +
+            '.card:hover .card__img, .card.focus .card__img {' +
+                'border-color: ' + ColorPlugin.settings.main_color + ';' +
+            '}' +
+            '.noty {' +
+                'background: ' + ColorPlugin.settings.main_color + ';' +
+                'color: ' + ColorPlugin.settings.text_color + ';' +
+            '}' +
+            '.radio-player.focus {' +
+                'background-color: ' + ColorPlugin.settings.main_color + ';' +
+                'color: ' + ColorPlugin.settings.text_color + ';' +
+            '}' +
+            '.explorer-card__head-img.focus::after {' +
+                'border: 0.3em solid ' + ColorPlugin.settings.main_color + ';' +
+            '}'
+        );
     }
 
-    function component(object) {
-      var network = new Lampa.Reguest();
-      var scroll = new Lampa.Scroll({
-        mask: true,
-        over: true,
-        scroll_by_item: true
-      });
-      var items = [];
-      var html = $('<div class="new-interface"><img class="full-start__background"></div>');
-      var active = 0;
-      var newlampa = Lampa.Manifest.app_digital >= 166;
-      var info;
-      var lezydata;
-      var viewall = Lampa.Storage.field('card_views_type') == 'view' || Lampa.Storage.field('navigation_type') == 'mouse';
-      var background_img = html.find('.full-start__background');
-      var background_last = '';
-      var background_timer;
-
-      this.create = function () {};
-
-      this.empty = function () {
-        var button;
-
-        if (object.source == 'tmdb') {
-          button = $('<div class="empty__footer"><div class="simple-button selector">' + Lampa.Lang.translate('change_source_on_cub') + '</div></div>');
-          button.find('.selector').on('hover:enter', function () {
-            Lampa.Storage.set('source', 'cub');
-            Lampa.Activity.replace({
-              source: 'cub'
-            });
-          });
-        }
-
-        var empty = new Lampa.Empty();
-        html.append(empty.render(button));
-        this.start = empty.start;
-        this.activity.loader(false);
-        this.activity.toggle();
-      };
-
-      this.loadNext = function () {
-        var _this = this;
-
-        if (this.next && !this.next_wait && items.length) {
-          this.next_wait = true;
-          this.next(function (new_data) {
-            _this.next_wait = false;
-            new_data.forEach(_this.append.bind(_this));
-            Lampa.Layer.visible(items[active + 1].render(true));
-          }, function () {
-            _this.next_wait = false;
-          });
-        }
-      };
-
-      this.push = function () {};
-
-      this.build = function (data) {
-        var _this2 = this;
-
-        lezydata = data;
-        console.trace();
-        info = new create(object);
-        info.create();
-        scroll.minus(info.render());
-        data.slice(0, viewall ? data.length : 2).forEach(this.append.bind(this));
-        html.append(info.render());
-        html.append(scroll.render());
-
-        if (newlampa) {
-          Lampa.Layer.update(html);
-          Lampa.Layer.visible(scroll.render(true));
-          scroll.onEnd = this.loadNext.bind(this);
-
-          scroll.onWheel = function (step) {
-            if (!Lampa.Controller.own(_this2)) _this2.start();
-            if (step > 0) _this2.down();else if (active > 0) _this2.up();
-          };
-        }
-
-        this.activity.loader(false);
-        this.activity.toggle();
-      };
-
-      this.background = function (elem) {
-        var new_background = Lampa.Api.img(elem.backdrop_path, 'w1280');
-        clearTimeout(background_timer);
-        if (new_background == background_last) return;
-        background_timer = setTimeout(function () {
-          background_img.removeClass('loaded');
-
-          background_img[0].onload = function () {
-            background_img.addClass('loaded');
-          };
-
-          background_img[0].onerror = function () {
-            background_img.removeClass('loaded');
-          };
-
-          background_last = new_background;
-          setTimeout(function () {
-            background_img[0].src = background_last;
-          }, 300);
-        }, 1000);
-      };
-
-      this.append = function (element) {
-        var _this3 = this;
-
-        if (element.ready) return;
-        element.ready = true;
-        var item = new Lampa.InteractionLine(element, {
-          url: element.url,
-          card_small: true,
-          cardClass: element.cardClass,
-          genres: object.genres,
-          object: object,
-          card_wide: true,
-          nomore: element.nomore
-        });
-        item.create();
-        item.onDown = this.down.bind(this);
-        item.onUp = this.up.bind(this);
-        item.onBack = this.back.bind(this);
-
-        item.onToggle = function () {
-          active = items.indexOf(item);
-        };
-
-        if (this.onMore) item.onMore = this.onMore.bind(this);
-
-        item.onFocus = function (elem) {
-          info.update(elem);
-
-          _this3.background(elem);
-        };
-
-        item.onHover = function (elem) {
-          info.update(elem);
-
-          _this3.background(elem);
-        };
-
-        item.onFocusMore = info.empty.bind(info);
-        scroll.append(item.render());
-        items.push(item);
-      };
-
-      this.back = function () {
-        Lampa.Activity.backward();
-      };
-
-      this.down = function () {
-        active++;
-        active = Math.min(active, items.length - 1);
-        if (!viewall) lezydata.slice(0, active + 2).forEach(this.append.bind(this));
-        items[active].toggle();
-        scroll.update(items[active].render());
-      };
-
-      this.up = function () {
-        active--;
-
-        if (active < 0) {
-          active = 0;
-          Lampa.Controller.toggle('head');
-        } else {
-          items[active].toggle();
-          scroll.update(items[active].render());
-        }
-      };
-
-      this.start = function () {
-        var _this4 = this;
-
-        Lampa.Controller.add('content', {
-          link: this,
-          toggle: function toggle() {
-            if (_this4.activity.canRefresh()) return false;
-
-            if (items.length) {
-              items[active].toggle();
+    // Функція для оновлення видимості параметрів
+    function updateColorVisibility(theme) {
+        var colorParams = ['main_color', 'background_color', 'text_color', 'transparent_white', 'icon_color'];
+        for (var i = 0; i < colorParams.length; i++) {
+            var param = Lampa.SettingsApi.getParameter('color_plugin_' + colorParams[i]);
+            if (param) {
+                param.visible(theme === 'custom_color');
             }
-          },
-          update: function update() {},
-          left: function left() {
-            if (Navigator.canmove('left')) Navigator.move('left');else Lampa.Controller.toggle('menu');
-          },
-          right: function right() {
-            Navigator.move('right');
-          },
-          up: function up() {
-            if (Navigator.canmove('up')) Navigator.move('up');else Lampa.Controller.toggle('head');
-          },
-          down: function down() {
-            if (Navigator.canmove('down')) Navigator.move('down');
-          },
-          back: this.back
-        });
-        Lampa.Controller.toggle('content');
-      };
-
-      this.refresh = function () {
-        this.activity.loader(true);
-        this.activity.need_refresh = true;
-      };
-
-      this.pause = function () {};
-
-      this.stop = function () {};
-
-      this.render = function () {
-        return html;
-      };
-
-      this.destroy = function () {
-        network.clear();
-        Lampa.Arrays.destroy(items);
-        scroll.destroy();
-        if (info) info.destroy();
-        html.remove();
-        items = null;
-        network = null;
-        lezydata = null;
-      };
+        }
     }
 
-    function startPlugin() {
-      window.plugin_interface_ready = true;
-      var old_interface = Lampa.InteractionMain;
-      var new_interface = component;
+    // Ініціалізація плагіна
+    function initPlugin() {
+        // Завантажуємо збережені налаштування
+        ColorPlugin.settings.theme = Lampa.Storage.get('color_plugin_theme', 'custom_color');
+        ColorPlugin.settings.main_color = Lampa.Storage.get('color_plugin_main_color', '#e40c2b');
+        ColorPlugin.settings.background_color = Lampa.Storage.get('color_plugin_background_color', '#1d1f20');
+        ColorPlugin.settings.text_color = Lampa.Storage.get('color_plugin_text_color', '#fff');
+        ColorPlugin.settings.transparent_white = Lampa.Storage.get('color_plugin_transparent_white', 'rgba(255,255,255,0.2)');
+        ColorPlugin.settings.icon_color = Lampa.Storage.get('color_plugin_icon_color', '#000');
+        ColorPlugin.settings.enabled = Lampa.Storage.get('color_plugin_enabled', true);
 
-      Lampa.InteractionMain = function (object) {
-        var use = new_interface;
-        if (!(object.source == 'tmdb' || object.source == 'cub')) use = new_interface;
-        if (window.innerWidth < 767) use = new_interface;
-        if (!Lampa.Account.hasPremium()) use = new_interface;
-        if (Lampa.Manifest.app_digital < 153) use = new_interface;
-        return new use(object);
-      };
+        // Додаємо параметри до налаштувань
+        if (Lampa.SettingsApi) {
+            // Параметр вибору теми
+            Lampa.SettingsApi.addParam({
+                component: 'color_plugin',
+                param: {
+                    name: 'color_plugin_theme',
+                    type: 'select',
+                    values: {
+                        custom_color: 'Користувацька',
+                        default: 'LAMPA'
+                    },
+                    default: 'custom_color'
+                },
+                field: {
+                    name: Lampa.Lang.translate('Тема'),
+                    description: 'Виберіть тему для інтерфейсу'
+                },
+                onChange: function(value) {
+                    ColorPlugin.settings.theme = value;
+                    Lampa.Storage.set('color_plugin_theme', value);
+                    Lampa.Settings.update();
+                    applyStyles();
+                    updateColorVisibility(value);
+                }
+            });
 
-      Lampa.Template.add('new_interface_style', `
-        <style>
-        .new-interface .card--small.card--wide {
-            width: 18.3em;
-        }
-        
-        .new-interface-info {
-            position: relative;
-            padding: 1.5em;
-            height: 24em;
-        }
-        
-        .new-interface-info__body {
-            width: 80%;
-            padding-top: 1.1em;
-        }
-        
-        .new-interface-info__head {
-            color: rgba(255, 255, 255, 0.6);
-            margin-bottom: 1em;
-            font-size: 1.3em;
-            min-height: 1em;
-        }
-        
-        .new-interface-info__head span {
-            color: #fff;
-        }
-        
-        .new-interface-info__title {
-            font-size: 4em;
-            font-weight: 600;
-            margin-bottom: 0.3em;
-            overflow: hidden;
-            -o-text-overflow: ".";
-            text-overflow: ".";
-            display: -webkit-box;
-            -webkit-line-clamp: 1;
-            line-clamp: 1;
-            -webkit-box-orient: vertical;
-            margin-left: -0.03em;
-            line-height: 1.3;
-        }
-        
-        .new-interface-info__details {
-            margin-bottom: 1.6em;
-            display: -webkit-box;
-            display: -webkit-flex;
-            display: -moz-box;
-            display: -ms-flexbox;
-            display: flex;
-            -webkit-box-align: center;
-            -webkit-align-items: center;
-            -moz-box-align: center;
-            -ms-flex-align: center;
-            align-items: center;
-            -webkit-flex-wrap: wrap;
-            -ms-flex-wrap: wrap;
-            flex-wrap: wrap;
-            min-height: 1.9em;
-            font-size: 1.1em;
-        }
-        
-        .new-interface-info__split {
-            margin: 0 1em;
-            font-size: 0.7em;
-        }
-        
-        .new-interface-info__description {
-            font-size: 1.2em;
-            font-weight: 300;
-            line-height: 1.5;
-            overflow: hidden;
-            -o-text-overflow: ".";
-            text-overflow: ".";
-            display: -webkit-box;
-            -webkit-line-clamp: 4;
-            line-clamp: 4;
-            -webkit-box-orient: vertical;
-            width: 70%;
-        }
-        
-        .new-interface .card-more__box {
-            padding-bottom: 95%;
-        }
-        
-        .new-interface .full-start__background {
-            height: 108%;
-            top: -6em;
-        }
-        
-        .new-interface .full-start__rate {
-            font-size: 1.3em;
-            margin-right: 0;
-        }
-        
-        .new-interface .card__promo {
-            display: none;
-        }
-        
-        .new-interface .card.card--wide+.card-more .card-more__box {
-            padding-bottom: 95%;
-        }
-        
-        .new-interface .card.card--wide .card-watched {
-            display: none !important;
-        }
-        
-        body.light--version .new-interface-info__body {
-            width: 69%;
-            padding-top: 1.5em;
-        }
-        
-        body.light--version .new-interface-info {
-            height: 25.3em;
-        }
+            // Параметр основного кольору
+            Lampa.SettingsApi.addParam({
+                component: 'color_plugin',
+                param: {
+                    name: 'color_plugin_main_color',
+                    type: 'input',
+                    default: '#e40c2b'
+                },
+                field: {
+                    name: Lampa.Lang.translate('Основний колір'),
+                    description: 'Виберіть основний колір (наприклад, #e40c2b)'
+                },
+                onChange: function(value) {
+                    ColorPlugin.settings.main_color = value;
+                    Lampa.Storage.set('color_plugin_main_color', value);
+                    Lampa.Settings.update();
+                    if (ColorPlugin.settings.theme === 'custom_color') {
+                        applyStyles();
+                    }
+                }
+            });
 
-        /* Стилі для іконок в меню ліворуч */
-        .navigator .navigator__item--icon {
-            color: rgba(255, 255, 255, 0.6);
-            transition: color 0.2s ease;
+            // Параметр кольору фону
+            Lampa.SettingsApi.addParam({
+                component: 'color_plugin',
+                param: {
+                    name: 'color_plugin_background_color',
+                    type: 'input',
+                    default: '#1d1f20'
+                },
+                field: {
+                    name: Lampa.Lang.translate('Колір фону'),
+                    description: 'Виберіть колір фону (наприклад, #1d1f20)'
+                },
+                onChange: function(value) {
+                    ColorPlugin.settings.background_color = value;
+                    Lampa.Storage.set('color_plugin_background_color', value);
+                    Lampa.Settings.update();
+                    if (ColorPlugin.settings.theme === 'custom_color') {
+                        applyStyles();
+                    }
+                }
+            });
+
+            // Параметр кольору тексту
+            Lampa.SettingsApi.addParam({
+                component: 'color_plugin',
+                param: {
+                    name: 'color_plugin_text_color',
+                    type: 'input',
+                    default: '#fff'
+                },
+                field: {
+                    name: Lampa.Lang.translate('Колір тексту'),
+                    description: 'Виберіть колір тексту (наприклад, #fff)'
+                },
+                onChange: function(value) {
+                    ColorPlugin.settings.text_color = value;
+                    Lampa.Storage.set('color_plugin_text_color', value);
+                    Lampa.Settings.update();
+                    if (ColorPlugin.settings.theme === 'custom_color') {
+                        applyStyles();
+                    }
+                }
+            });
+
+            // Параметр прозорого фону
+            Lampa.SettingsApi.addParam({
+                component: 'color_plugin',
+                param: {
+                    name: 'color_plugin_transparent_white',
+                    type: 'input',
+                    default: 'rgba(255,255,255,0.2)'
+                },
+                field: {
+                    name: Lampa.Lang.translate('Прозорий фон'),
+                    description: 'Виберіть колір прозорого фону (наприклад, rgba(255,255,255,0.2))'
+                },
+                onChange: function(value) {
+                    ColorPlugin.settings.transparent_white = value;
+                    Lampa.Storage.set('color_plugin_transparent_white', value);
+                    Lampa.Settings.update();
+                    if (ColorPlugin.settings.theme === 'custom_color') {
+                        applyStyles();
+                    }
+                }
+            });
+
+            // Параметр кольору іконок
+            Lampa.SettingsApi.addParam({
+                component: 'color_plugin',
+                param: {
+                    name: 'color_plugin_icon_color',
+                    type: 'input',
+                    default: '#000'
+                },
+                field: {
+                    name: Lampa.Lang.translate('Колір іконок'),
+                    description: 'Виберіть колір іконок (наприклад, #000)'
+                },
+                onChange: function(value) {
+                    ColorPlugin.settings.icon_color = value;
+                    Lampa.Storage.set('color_plugin_icon_color', value);
+                    Lampa.Settings.update();
+                    if (ColorPlugin.settings.theme === 'custom_color') {
+                        applyStyles();
+                    }
+                }
+            });
+
+            // Параметр увімкнення/вимкнення плагіна
+            Lampa.SettingsApi.addParam({
+                component: 'color_plugin',
+                param: {
+                    name: 'color_plugin_enabled',
+                    type: 'toggle',
+                    default: true
+                },
+                field: {
+                    name: Lampa.Lang.translate('Увімкнути плагін'),
+                    description: 'Увімкнути або вимкнути плагін зміни кольорів'
+                },
+                onChange: function(value) {
+                    ColorPlugin.settings.enabled = value;
+                    Lampa.Storage.set('color_plugin_enabled', value);
+                    Lampa.Settings.update();
+                    applyStyles();
+                }
+            });
+
+            // Ініціалізація видимості параметрів при відкритті налаштувань
+            Lampa.Settings.listener.follow('open', function(e) {
+                if (e.name === 'color_plugin') {
+                    updateColorVisibility(ColorPlugin.settings.theme);
+                }
+            });
+
+            // Застосовуємо стилі при ініціалізації
+            applyStyles();
         }
-        
-        .navigator .navigator__item--icon svg {
-            fill: rgba(255, 255, 255, 0.6);
-            transition: fill 0.2s ease;
-        }
-        
-        .navigator--focus .navigator__item--icon,
-        .navigator__item--active .navigator__item--icon {
-            color: #fff !important;
-        }
-        
-        .navigator--focus .navigator__item--icon svg,
-        .navigator__item--active .navigator__item--icon svg {
-            fill: #fff !important;
-        }
-        </style>
-      `);
-      $('body').append(Lampa.Template.get('new_interface_style', {}, true));
     }
 
-    if (!window.plugin_interface_ready) startPlugin();
+    // Запускаємо ініціалізацію плагіна
+    initPlugin();
+
+    // Додаємо плагін до Lampa
+    Lampa.Plugin.add({
+        name: 'ColorPlugin',
+        version: '1.0.0',
+        init: initPlugin
+    });
 })();
