@@ -76,7 +76,7 @@
                 '#a64dff': 'Пурпурний',
                 '#4caf50': 'Зелений',
                 '#ff69b4': 'Рожевий',
-                '#00bcd4': 'Бірюзовий'
+                '#00bcd4': 'Бірюзовий' // Новий колір замість custom
             },
             background: {
                 '#1d1f20': 'Темно-сірий',
@@ -318,54 +318,32 @@
                         var color;
 
                         if (selectedElement.classList.contains('color_input')) {
-                            // Викликаємо Lampa.Input.edit для введення HEX-коду
+                            // Викликаємо Lampa.Input.edit для редагування HEX-коду
                             var inputField = modalHtml.find('.color_input')[0];
-                            Lampa.Input.edit({
-                                element: inputField,
-                                value: '#',
-                                placeholder: '#FFFFFF',
-                                onChange: function (value) {
-                                    if (!value.startsWith('#')) {
-                                        value = '#' + value.replace(/[^0-9A-Fa-f]/g, '').substring(0, 6);
-                                        inputField.value = value;
-                                    }
-                                },
-                                onOk: function (value) {
-                                    if (isValidHex(value)) {
-                                        ColorPlugin.settings[paramName] = value;
-                                        Lampa.Storage.set('color_plugin_' + paramName, value);
-                                        applyStyles();
-                                        var descr = $('.settings-param[data-name="color_plugin_' + paramName + '"] .settings-param__descr div');
-                                        if (descr.length) {
-                                            descr.css('background-color', value);
-                                        }
-                                        Lampa.Modal.close();
-                                        Lampa.Controller.toggle('settings_component');
-                                        Lampa.Controller.enable('menu');
-                                        Lampa.Settings.render();
-                                    } else {
-                                        Lampa.Noty.show('Невірний формат HEX-коду. Використовуйте формат #FFFFFF.');
-                                    }
-                                },
-                                onBack: function () {
-                                    Lampa.Controller.toggle('content');
-                                }
-                            }, function (value) {
-                                if (value === '' || !isValidHex(value)) {
-                                    Lampa.Controller.toggle('content');
+                            var inputOptions = {
+                                value: inputField.value || '#',
+                                name: 'color_hex'
+                            };
+                            Lampa.Input.edit(inputOptions, function (value) {
+                                if (value === '#' || !isValidHex(value)) {
+                                    Lampa.Noty.show('Невірний формат HEX-коду. Використовуйте формат #FFFFFF.');
+                                    Lampa.Controller.toggle('settings_component');
                                     return;
                                 }
-                                ColorPlugin.settings[paramName] = value;
-                                Lampa.Storage.set('color_plugin_' + paramName, value);
-                                applyStyles();
-                                var descr = $('.settings-param[data-name="color_plugin_' + paramName + '"] .settings-param__descr div');
-                                if (descr.length) {
-                                    descr.css('background-color', value);
+                                try {
+                                    ColorPlugin.settings[paramName] = value;
+                                    Lampa.Storage.set('color_plugin_' + paramName, value);
+                                    applyStyles();
+                                    var descr = $('.settings-param[data-name="color_plugin_' + paramName + '"] .settings-param__descr div');
+                                    if (descr.length) {
+                                        descr.css('background-color', value);
+                                    }
+                                } finally {
+                                    Lampa.Modal.close();
+                                    Lampa.Controller.toggle('settings_component');
+                                    Lampa.Controller.enable('menu');
+                                    Lampa.Settings.render();
                                 }
-                                Lampa.Modal.close();
-                                Lampa.Controller.toggle('settings_component');
-                                Lampa.Controller.enable('menu');
-                                Lampa.Settings.render();
                             });
                             return; // Чекаємо введення через Lampa.Input.edit
                         } else if (selectedElement.classList.contains('default')) {
@@ -403,60 +381,13 @@
             // Обробники для поля вводу
             var inputField = modalHtml.find('.color_input')[0];
             if (inputField) {
-                // Показ/приховування підказки та виклик клавіатури
+                // Показ/приховування підказки
                 inputField.addEventListener('focus', function () {
                     var hint = modalHtml.find('.color_input_hint')[0];
                     if (hint) {
                         hint.style.display = 'block';
                     }
                     inputField.setSelectionRange(1, 1); // Курсор після #
-                    Lampa.Input.edit({
-                        element: inputField,
-                        value: '#',
-                        placeholder: '#FFFFFF',
-                        onChange: function (value) {
-                            if (!value.startsWith('#')) {
-                                value = '#' + value.replace(/[^0-9A-Fa-f]/g, '').substring(0, 6);
-                                inputField.value = value;
-                            }
-                        },
-                        onOk: function (value) {
-                            if (isValidHex(value)) {
-                                ColorPlugin.settings[paramName] = value;
-                                Lampa.Storage.set('color_plugin_' + paramName, value);
-                                applyStyles();
-                                var descr = $('.settings-param[data-name="color_plugin_' + paramName + '"] .settings-param__descr div');
-                                if (descr.length) {
-                                    descr.css('background-color', value);
-                                }
-                                Lampa.Modal.close();
-                                Lampa.Controller.toggle('settings_component');
-                                Lampa.Controller.enable('menu');
-                                Lampa.Settings.render();
-                            } else {
-                                Lampa.Noty.show('Невірний формат HEX-коду. Використовуйте формат #FFFFFF.');
-                            }
-                        },
-                        onBack: function () {
-                            Lampa.Controller.toggle('content');
-                        }
-                    }, function (value) {
-                        if (value === '' || !isValidHex(value)) {
-                            Lampa.Controller.toggle('content');
-                            return;
-                        }
-                        ColorPlugin.settings[paramName] = value;
-                        Lampa.Storage.set('color_plugin_' + paramName, value);
-                        applyStyles();
-                        var descr = $('.settings-param[data-name="color_plugin_' + paramName + '"] .settings-param__descr div');
-                        if (descr.length) {
-                            descr.css('background-color', value);
-                        }
-                        Lampa.Modal.close();
-                        Lampa.Controller.toggle('settings_component');
-                        Lampa.Controller.enable('menu');
-                        Lampa.Settings.render();
-                    });
                 });
                 inputField.addEventListener('blur', function () {
                     var hint = modalHtml.find('.color_input_hint')[0];
