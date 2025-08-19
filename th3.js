@@ -201,6 +201,12 @@
             '.color_square.focus {' +
                 'border: 0.3em solid var(--main-color);' +
                 'transform: scale(1.1);' +
+            '}' +
+            'body.glass--style .selectbox-item.focus, ' +
+            'body.glass--style .settings-folder.focus, ' +
+            'body.glass--style .settings-param.focus {' +
+                'background-color: ' + ColorPlugin.settings.main_color + ';' +
+                'color: ' + ColorPlugin.settings.text_color + ';' +
             '}'
         );
     }
