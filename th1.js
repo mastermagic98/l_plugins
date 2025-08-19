@@ -137,6 +137,27 @@
                 background-color: ${selectedColor}33;
                 border: 0.2em solid ${selectedColor};
             }
+            /* Стилі для іконок у кнопках */
+            .full-start__button svg {
+                fill: #ffffff; /* Колір іконок без фокусу */
+            }
+            .full-start__button.focus svg {
+                fill: ${selectedColor}; /* Колір іконок у фокусі */
+            }
+            .menu__item svg {
+                fill: #ffffff; /* Колір іконок у меню без фокусу */
+            }
+            .menu__item.focus svg,
+            .menu__item.traverse svg,
+            .menu__item.hover svg {
+                fill: ${selectedColor}; /* Колір іконок у меню при фокусі/наведенні */
+            }
+            .simple-button svg {
+                fill: #ffffff; /* Колір іконок у простих кнопках без фокусу */
+            }
+            .simple-button.focus svg {
+                fill: ${selectedColor}; /* Колір іконок у простих кнопках при фокусі */
+            }
         `;
 
         // Встановлюємо стиль
@@ -144,7 +165,7 @@
         $('head').append(style);
     }
 
-    // Додавання шаблонів та базових стилів
+    // Решта коду залишається без змін
     function AddIn() {
         // Шаблон карточки, де рік перенесено вище назви
         Lampa.Template.add('card', `
