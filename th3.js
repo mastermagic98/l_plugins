@@ -197,6 +197,10 @@
             '}' +
             '.explorer-card__head-img.focus::after {' +
                 'border: 0.3em solid ' + ColorPlugin.settings.main_color + ';' +
+            '}' +
+            '.color_square.focus {' +
+                'border: 0.3em solid var(--main-color);' +
+                'transform: scale(1.1);' +
             '}'
         );
     }
