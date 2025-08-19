@@ -47,6 +47,11 @@
             ru: 'Свой цвет',
             en: 'Custom color',
             uk: 'Свій колір'
+        },
+        hex_hint: {
+            ru: 'Используйте формат #FFFFFF, например #123524',
+            en: 'Use the format #FFFFFF, for example #123524',
+            uk: 'Використовуйте формат #FFFFFF, наприклад #123524'
         }
     });
 
@@ -260,6 +265,17 @@
                 'font-size: 14px;' +
                 'font-weight: bold;' +
                 'text-shadow: 0 0 2px #000;' +
+            '}' +
+            '.color_input_hint {' +
+                'display: none;' +
+                'color: #fff;' +
+                'font-size: 14px;' +
+                'text-align: center;' +
+                'padding: 5px 0;' +
+                'text-shadow: 0 0 2px #000;' +
+            '}' +
+            '.color_input:focus + .color_input_hint {' +
+                'display: block;' +
             '}'
         );
     }
@@ -291,9 +307,10 @@
             return '<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; justify-items: center; padding: 10px;">' + groupContent + '</div>';
         }).join('');
 
-        // Додаємо поле для введення HEX-коду з початковим символом #
+        // Додаємо поле для введення HEX-коду з початковим символом # і підказкою
         var inputHtml = '<div style="padding: 10px; text-align: center;">' +
                         '<input type="text" class="color_input selector" value="#" placeholder="#FFFFFF" style="padding: 8px; width: 100px; border-radius: 4px; border: 1px solid #ddd; background-color: #fff; color: #000; font-size: 14px;" />' +
+                        '<div class="color_input_hint">' + Lampa.Lang.translate('hex_hint') + '</div>' +
                         '</div>';
 
         var modalHtml = $('<div>' + colorContent + inputHtml + '</div>');
@@ -323,8 +340,11 @@
                         } else if (selectedElement.classList.contains('default')) {
                             color = '#353535'; // Колір за замовчуванням
                         } else if (selectedElement.classList.contains('custom')) {
-                            // Нічого не робимо, якщо вибрано кастомний блок, але поле вводу не заповнене
-                            return;
+                            var inputField = modalHtml.find('.color_input')[0];
+                            if (inputField) {
+                                inputField.focus(); // Автофокус на поле вводу
+                            }
+                            return; // Нічого не робимо, чекаємо введення HEX-коду
                         } else {
                             color = selectedElement.style.backgroundColor || ColorPlugin.settings[paramName];
                             color = color.includes('rgb') ? rgbToHex(color) : color;
@@ -344,6 +364,23 @@
                     }
                 }
             });
+
+            // Додаємо обробники подій для показу/приховування підказки
+            var inputField = modalHtml.find('.color_input')[0];
+            if (inputField) {
+                inputField.addEventListener('focus', function () {
+                    var hint = modalHtml.find('.color_input_hint')[0];
+                    if (hint) {
+                        hint.style.display = 'block';
+                    }
+                });
+                inputField.addEventListener('blur', function () {
+                    var hint = modalHtml.find('.color_input_hint')[0];
+                    if (hint) {
+                        hint.style.display = 'none';
+                    }
+                });
+            }
         } catch (e) {}
     }
 
