@@ -173,12 +173,14 @@
                 '--text-color: ' + ColorPlugin.settings.text_color + ';' +
                 '--transparent-white: ' + ColorPlugin.settings.transparent_white + ';' +
             '}' +
-            '.menu__ico, .menu__ico.focus {' +
+            // Іконки меню ліворуч (включаючи фокус) та іконки налаштувань
+            '.menu__ico, .menu__ico.focus, .head__action, .head__action.focus, .head__action:hover, .settings-param__ico {' +
                 'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
+                'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
-            '.console__tab.focus, .menu__item.focus, .menu__item.traverse, .menu__item.hover, ' +
+            '.console__tab.focus, .menu__item.focus, .menu__item.traverse, .menu__item:hover, ' +
             '.full-person.focus, .full-start__button.focus, .full-descr__tag.focus, ' +
-            '.simple-button.focus, .head__action.focus, .head__action.hover, ' +
+            '.simple-button.focus, .head__action.focus, .head__action:hover, ' +
             '.player-panel .button.focus, .search-source.active {' +
                 'background: ' + ColorPlugin.settings.main_color + ';' +
                 'color: ' + ColorPlugin.settings.text_color + ';' +
@@ -196,7 +198,7 @@
             '.modal__button.focus, .search-history-key.focus, .simple-keyboard-mic.focus, ' +
             '.torrent-serial__progress, .full-review-add.focus, .full-review.focus, ' +
             '.tag-count.focus, .settings-folder.focus, .settings-param.focus, ' +
-            '.selectbox-item.focus, .selectbox-item.hover {' +
+            '.selectbox-item.focus, .selectbox-item:hover {' +
                 'background: ' + ColorPlugin.settings.main_color + ';' +
                 'color: ' + ColorPlugin.settings.text_color + ';' +
             '}' +
@@ -211,14 +213,14 @@
             '.card-more.focus .card-more__box::after {' +
                 'border: 0.3em solid ' + ColorPlugin.settings.main_color + ';' +
             '}' +
-            '.iptv-playlist-item.focus::after, .iptv-playlist-item.hover::after {' +
+            '.iptv-playlist-item.focus::after, .iptv-playlist-item:hover::after {' +
                 'border-color: ' + ColorPlugin.settings.main_color + ' !important;' +
             '}' +
-            '.ad-bot.focus .ad-bot__content::after, .ad-bot.hover .ad-bot__content::after, ' +
+            '.ad-bot.focus .ad-bot__content::after, .ad-bot:hover .ad-bot__content::after, ' +
             '.card-episode.focus .full-episode::after, .register.focus::after, ' +
             '.season-episode.focus::after, .full-episode.focus::after, ' +
             '.full-review-add.focus::after, .card.focus .card__view::after, ' +
-            '.card.hover .card__view::after, .extensions__item.focus:after, ' +
+            '.card:hover .card__view::after, .extensions__item.focus:after, ' +
             '.torrent-item.focus::after, .extensions__block-add.focus:after {' +
                 'border-color: ' + ColorPlugin.settings.main_color + ';' +
             '}' +
