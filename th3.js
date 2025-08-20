@@ -49,9 +49,9 @@
             uk: 'HEX-код кольору'
         },
         hex_input_hint: {
-            ru: 'Введите HEX-код в формате #FFFFFF',
-            en: 'Enter HEX code in the format #FFFFFF',
-            uk: 'Введіть HEX-код у форматі #FFFFFF'
+            ru: 'Используйте формат #FFFFFF, например #123524',
+            en: 'Use the format #FFFFFF, for example #123524',
+            uk: 'Використовуйте формат #FFFFFF, наприклад #123524'
         }
     });
 
@@ -251,13 +251,14 @@
                 'transform: rotate(-45deg);' +
             '}' +
             '.hex-input {' +
-                'width: 360px;' + // 5 * (60px ширина блоку + 15px відступ) = 360px
+                'width: 360px;' + // 5 * 60px + 4 * 15px
                 'height: 60px;' +
                 'border-radius: 8px;' +
                 'border: 1px solid #ddd;' +
                 'position: relative;' +
                 'cursor: pointer;' +
                 'display: flex;' +
+                'flex-direction: column;' +
                 'align-items: center;' +
                 'justify-content: center;' +
                 'color: #fff;' +
@@ -270,12 +271,15 @@
                 'border: 0.3em solid var(--main-color);' +
                 'transform: scale(1.1);' +
             '}' +
-            '.hex-input::after {' +
-                'content: "' + Lampa.Lang.translate('custom_hex_input') + '";' +
+            '.hex-input .label {' +
                 'position: absolute;' +
-                'top: 50%;' +
-                'left: 50%;' +
-                'transform: translate(-50%, -50%);' +
+                'top: 10px;' +
+                'font-size: 12px;' +
+            '}' +
+            '.hex-input .value {' +
+                'position: absolute;' +
+                'bottom: 10px;' +
+                'font-size: 14px;' +
             '}'
         );
     }
@@ -309,9 +313,10 @@
 
         // Блок для введення HEX-коду у стилі color_square
         var hexValue = Lampa.Storage.get('color_plugin_custom_hex', '') || '#000000';
-        var inputHtml = '<div style="padding: 10px; text-align: center;">' +
+        var inputHtml = '<div style="padding: 10px; display: flex; justify-content: center;">' +
                         '<div class="color_square selector hex-input" tabindex="0" style="background-color: ' + hexValue + ';">' +
-                        hexValue +
+                        '<div class="label">' + Lampa.Lang.translate('custom_hex_input') + '</div>' +
+                        '<div class="value">' + hexValue + '</div>' +
                         '</div>' +
                         '</div>';
 
