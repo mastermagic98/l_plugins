@@ -71,7 +71,7 @@
                 '#a64dff': 'Пурпурний',
                 '#4caf50': 'Зелений',
                 '#ff69b4': 'Рожевий',
-                '#26a69a': 'Бірюзовий' // Новий колір замість custom
+                '#26a69a': 'Бірюзовий'
             },
             background: {
                 '#1d1f20': 'Темно-сірий',
@@ -245,6 +245,15 @@
                 'height: 2px;' +
                 'background-color: #000;' +
                 'transform: rotate(-45deg);' +
+            '}' +
+            '.hex-preview {' +
+                'width: 60px;' +
+                'height: 60px;' +
+                'border-radius: 8px;' +
+                'border: 1px solid #ddd;' +
+                'margin-left: 10px;' +
+                'display: inline-block;' +
+                'vertical-align: middle;' +
             '}'
         );
     }
@@ -276,10 +285,14 @@
             return '<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; justify-items: center; padding: 10px;">' + groupContent + '</div>';
         }).join('');
 
-        // Поле для введення HEX-коду у стилі settings-param
-        var inputHtml = '<div class="settings-param selector" data-name="color_plugin_custom_hex" data-type="input" placeholder="#{settings_cub_not_specified}">' +
+        // Поле для введення HEX-коду у стилі settings-param із попереднім переглядом
+        var hexValue = Lampa.Storage.get('color_plugin_custom_hex', '') || '#000000';
+        var inputHtml = '<div style="display: flex; align-items: center; padding: 10px;">' +
+                        '<div class="settings-param selector" data-name="color_plugin_custom_hex" data-type="input" placeholder="#{settings_cub_not_specified}">' +
                         '<div class="settings-param__name">' + Lampa.Lang.translate('custom_hex_input') + '</div>' +
-                        '<div class="settings-param__value"></div>' +
+                        '<div class="settings-param__value">' + (hexValue || '') + '</div>' +
+                        '</div>' +
+                        '<div class="hex-preview" style="background-color: ' + hexValue + ';"></div>' +
                         '</div>';
 
         var modalHtml = $('<div>' + colorContent + inputHtml + '</div>');
@@ -301,6 +314,7 @@
                         var color;
 
                         if (selectedElement.classList.contains('settings-param')) {
+                            Lampa.Modal.close(); // Закриваємо модальне вікно перед викликом клавіатури
                             var inputOptions = {
                                 name: 'color_plugin_custom_hex',
                                 value: Lampa.Storage.get('color_plugin_custom_hex', ''),
@@ -311,11 +325,13 @@
                                 if (value === '') {
                                     Lampa.Noty.show('HEX-код не введено.');
                                     Lampa.Controller.toggle('settings_component');
+                                    Lampa.Controller.enable('menu');
                                     return;
                                 }
                                 if (!isValidHex(value)) {
                                     Lampa.Noty.show('Невірний формат HEX-коду. Використовуйте формат #FFFFFF.');
                                     Lampa.Controller.toggle('settings_component');
+                                    Lampa.Controller.enable('menu');
                                     return;
                                 }
                                 Lampa.Storage.set('color_plugin_custom_hex', value);
@@ -326,7 +342,6 @@
                                 if (descr.length) {
                                     descr.css('background-color', value);
                                 }
-                                Lampa.Modal.close();
                                 Lampa.Controller.toggle('settings_component');
                                 Lampa.Controller.enable('menu');
                                 Lampa.Settings.render();
