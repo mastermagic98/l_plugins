@@ -122,6 +122,20 @@
         return /^#[0-9A-Fa-f]{6}$/.test(color);
     }
 
+    // Функція для імітації події hover:enter
+    function triggerHoverEnter(elem) {
+        if (Lampa.Storage.field('navigation_type') === 'mouse' || Lampa.Platform.screen('mobile')) {
+            if (Lampa.DeviceInput && Lampa.DeviceInput.canClick({})) {
+                if (typeof Lampa.animateTriggerEnter === 'function') {
+                    Lampa.animateTriggerEnter(elem);
+                }
+                if (Lampa.Utils$2 && typeof Lampa.Utils$2.trigger === 'function') {
+                    Lampa.Utils$2.trigger(elem, 'hover:enter');
+                }
+            }
+        }
+    }
+
     // Функція для застосування стилів
     function applyStyles() {
         if (!ColorPlugin.settings.enabled) {
@@ -318,34 +332,22 @@
                         var color;
 
                         if (selectedElement.classList.contains('color_input')) {
-                            // Викликаємо Lampa.Input.edit для редагування HEX-коду
-                            var inputField = modalHtml.find('.color_input')[0];
-                            var inputOptions = {
-                                value: inputField.value || '#',
-                                name: 'color_hex'
-                            };
-                            Lampa.Input.edit(inputOptions, function (value) {
-                                if (value === '#' || !isValidHex(value)) {
-                                    Lampa.Noty.show('Невірний формат HEX-коду. Використовуйте формат #FFFFFF.');
-                                    Lampa.Controller.toggle('settings_component');
-                                    return;
-                                }
-                                try {
-                                    ColorPlugin.settings[paramName] = value;
-                                    Lampa.Storage.set('color_plugin_' + paramName, value);
-                                    applyStyles();
-                                    var descr = $('.settings-param[data-name="color_plugin_' + paramName + '"] .settings-param__descr div');
-                                    if (descr.length) {
-                                        descr.css('background-color', value);
-                                    }
-                                } finally {
-                                    Lampa.Modal.close();
-                                    Lampa.Controller.toggle('settings_component');
-                                    Lampa.Controller.enable('menu');
-                                    Lampa.Settings.render();
-                                }
-                            });
-                            return; // Чекаємо введення через Lampa.Input.edit
+                            color = selectedElement.value.trim();
+                            if (!isValidHex(color)) {
+                                Lampa.Noty.show('Невірний формат HEX-коду. Використовуйте формат #FFFFFF.');
+                                return;
+                            }
+                            ColorPlugin.settings[paramName] = color;
+                            Lampa.Storage.set('color_plugin_' + paramName, color);
+                            applyStyles();
+                            var descr = $('.settings-param[data-name="color_plugin_' + paramName + '"] .settings-param__descr div');
+                            if (descr.length) {
+                                descr.css('background-color', color);
+                            }
+                            Lampa.Modal.close();
+                            Lampa.Controller.toggle('settings_component');
+                            Lampa.Controller.enable('menu');
+                            Lampa.Settings.render();
                         } else if (selectedElement.classList.contains('default')) {
                             color = '#353535'; // Колір за замовчуванням
                             ColorPlugin.settings[paramName] = color;
@@ -381,13 +383,14 @@
             // Обробники для поля вводу
             var inputField = modalHtml.find('.color_input')[0];
             if (inputField) {
-                // Показ/приховування підказки
+                // Показ/приховування підказки та виклик клавіатури
                 inputField.addEventListener('focus', function () {
                     var hint = modalHtml.find('.color_input_hint')[0];
                     if (hint) {
                         hint.style.display = 'block';
                     }
                     inputField.setSelectionRange(1, 1); // Курсор після #
+                    triggerHoverEnter(inputField); // Викликаємо клавіатуру
                 });
                 inputField.addEventListener('blur', function () {
                     var hint = modalHtml.find('.color_input_hint')[0];
