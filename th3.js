@@ -254,11 +254,13 @@
                 'background-color: ' + ColorPlugin.settings.main_color + ';' +
                 'color: ' + ColorPlugin.settings.text_color + ';' +
             '}' +
-            // Колір іконки в settings-param__descr завжди main_color
-            '.settings-param__descr svg {' +
-                'fill: ' + ColorPlugin.settings.main_color + ' !important;' +
+            // Колір квадратика в settings-param__descr завжди main_color
+            '.settings-param__descr div {' +
+                'background-color: ' + ColorPlugin.settings.main_color + ' !important;' +
                 'width: 2em;' +
                 'height: 2em;' +
+                'display: inline-block;' +
+                'border: 1px solid #ddd;' +
             '}' +
             '.color_square.default {' +
                 'background-color: #fff;' +
@@ -406,6 +408,10 @@
                                 ColorPlugin.settings[paramName] = value;
                                 Lampa.Storage.set('color_plugin_' + paramName, value);
                                 applyStyles();
+                                var descr = $('.settings-param[data-name="color_plugin_' + paramName + '"] .settings-param__descr div');
+                                if (descr.length) {
+                                    descr.css('background-color', ColorPlugin.settings.main_color);
+                                }
                                 Lampa.Controller.toggle('settings_component');
                                 Lampa.Controller.enable('menu');
                                 Lampa.Settings.render();
@@ -421,6 +427,10 @@
                         ColorPlugin.settings[paramName] = color;
                         Lampa.Storage.set('color_plugin_' + paramName, color);
                         applyStyles();
+                        var descr = $('.settings-param[data-name="color_plugin_' + paramName + '"] .settings-param__descr div');
+                        if (descr.length) {
+                            descr.css('background-color', ColorPlugin.settings.main_color);
+                        }
                         Lampa.Modal.close();
                         Lampa.Controller.toggle('settings_component');
                         Lampa.Controller.enable('menu');
@@ -449,9 +459,6 @@
                 icon: '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="' + ColorPlugin.settings.icon_color + '"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>'
             });
 
-            // SVG-іконка для всіх параметрів у settings-param__descr
-            var descrIcon = '<svg width="2em" height="2em" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="' + ColorPlugin.settings.main_color + '"><path fill-rule="evenodd" d="M1 3.25A2.25 2.25 0 0 1 3.25 1h9.5A2.25 2.25 0 0 1 15 3.25v9.5A2.25 2.25 0 0 1 12.75 15h-9.5A2.25 2.25 0 0 1 1 12.75zm2.25-.75a.75.75 0 0 0-.75.75v9.5c0 .414.336.75.75.75h9.5a.75.75 0 0 0 .75-.75v-9.5a.75.75 0 0 0-.75-.75z" clip-rule="evenodd"/></svg>';
-
             // Основний колір
             Lampa.SettingsApi.addParam({
                 component: 'color_plugin',
@@ -461,12 +468,12 @@
                 },
                 field: {
                     name: Lampa.Lang.translate('main_color'),
-                    description: descrIcon
+                    description: '<div style="width: 2em; height: 2em; background-color: ' + ColorPlugin.settings.main_color + '; display: inline-block; border: 1px solid #ddd;"></div>'
                 },
                 onRender: function (item) {
-                    var descr = item.find('.settings-param__descr svg');
+                    var descr = item.find('.settings-param__descr div');
                     if (descr.length) {
-                        descr.attr('fill', ColorPlugin.settings.main_color);
+                        descr.css('background-color', ColorPlugin.settings.main_color);
                     }
                 },
                 onChange: function () {
@@ -483,12 +490,12 @@
                 },
                 field: {
                     name: Lampa.Lang.translate('background_color'),
-                    description: descrIcon
+                    description: '<div style="width: 2em; height: 2em; background-color: ' + ColorPlugin.settings.main_color + '; display: inline-block; border: 1px solid #ddd;"></div>'
                 },
                 onRender: function (item) {
-                    var descr = item.find('.settings-param__descr svg');
+                    var descr = item.find('.settings-param__descr div');
                     if (descr.length) {
-                        descr.attr('fill', ColorPlugin.settings.main_color);
+                        descr.css('background-color', ColorPlugin.settings.main_color);
                     }
                 },
                 onChange: function () {
@@ -505,12 +512,12 @@
                 },
                 field: {
                     name: Lampa.Lang.translate('text_color'),
-                    description: descrIcon
+                    description: '<div style="width: 2em; height: 2em; background-color: ' + ColorPlugin.settings.main_color + '; display: inline-block; border: 1px solid #ddd;"></div>'
                 },
                 onRender: function (item) {
-                    var descr = item.find('.settings-param__descr svg');
+                    var descr = item.find('.settings-param__descr div');
                     if (descr.length) {
-                        descr.attr('fill', ColorPlugin.settings.main_color);
+                        descr.css('background-color', ColorPlugin.settings.main_color);
                     }
                 },
                 onChange: function () {
@@ -527,12 +534,12 @@
                 },
                 field: {
                     name: Lampa.Lang.translate('transparent_white'),
-                    description: descrIcon
+                    description: '<div style="width: 2em; height: 2em; background-color: ' + ColorPlugin.settings.main_color + '; display: inline-block; border: 1px solid #ddd;"></div>'
                 },
                 onRender: function (item) {
-                    var descr = item.find('.settings-param__descr svg');
+                    var descr = item.find('.settings-param__descr div');
                     if (descr.length) {
-                        descr.attr('fill', ColorPlugin.settings.main_color);
+                        descr.css('background-color', ColorPlugin.settings.main_color);
                     }
                 },
                 onChange: function () {
@@ -549,12 +556,12 @@
                 },
                 field: {
                     name: Lampa.Lang.translate('icon_color'),
-                    description: descrIcon
+                    description: '<div style="width: 2em; height: 2em; background-color: ' + ColorPlugin.settings.main_color + '; display: inline-block; border: 1px solid #ddd;"></div>'
                 },
                 onRender: function (item) {
-                    var descr = item.find('.settings-param__descr svg');
+                    var descr = item.find('.settings-param__descr div');
                     if (descr.length) {
-                        descr.attr('fill', ColorPlugin.settings.main_color);
+                        descr.css('background-color', ColorPlugin.settings.main_color);
                     }
                 },
                 onChange: function () {
