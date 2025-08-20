@@ -43,11 +43,6 @@
             en: 'Default',
             uk: 'За замовчуванням'
         },
-        custom_color: {
-            ru: 'Свой цвет',
-            en: 'Custom color',
-            uk: 'Свій колір'
-        },
         custom_hex_input: {
             ru: 'HEX-код цвета',
             en: 'HEX color code',
@@ -76,7 +71,7 @@
                 '#a64dff': 'Пурпурний',
                 '#4caf50': 'Зелений',
                 '#ff69b4': 'Рожевий',
-                'custom': Lampa.Lang.translate('custom_color')
+                '#26a69a': 'Бірюзовий' // Новий колір замість custom
             },
             background: {
                 '#1d1f20': 'Темно-сірий',
@@ -103,18 +98,6 @@
                 '#000000': 'Чорний',
                 '#ffffff': 'Білий',
                 '#dddddd': 'Світло-сірий'
-            },
-            custom_palette: {
-                '#ff0000': 'Червоний',
-                '#00ff00': 'Зелений',
-                '#0000ff': 'Синій',
-                '#ffff00': 'Жовтий',
-                '#ff00ff': 'Магента',
-                '#00ffff': 'Ціан',
-                '#800080': 'Фіолетовий',
-                '#ffa500': 'Помаранчевий',
-                '#ffffff': 'Білий',
-                '#000000': 'Чорний'
             }
         }
     };
@@ -262,29 +245,14 @@
                 'height: 2px;' +
                 'background-color: #000;' +
                 'transform: rotate(-45deg);' +
-            '}' +
-            '.color_square.custom {' +
-                'background: linear-gradient(45deg, red, orange, yellow, green, blue);' +
-                'position: relative;' +
-            '}' +
-            '.color_square.custom::after {' +
-                'content: "HEX";' +
-                'position: absolute;' +
-                'top: 50%;' +
-                'left: 50%;' +
-                'transform: translate(-50%, -50%);' +
-                'color: #fff;' +
-                'font-size: 14px;' +
-                'font-weight: bold;' +
-                'text-shadow: 0 0 2px #000;' +
             '}'
         );
     }
 
     // Функція для створення HTML для вибору кольору
     function createColorHtml(color, name) {
-        var className = color === 'default' ? 'color_square selector default' : color === 'custom' ? 'color_square selector custom' : 'color_square selector';
-        var style = color === 'default' || color === 'custom' ? '' : 'background-color: ' + color + ';';
+        var className = color === 'default' ? 'color_square selector default' : 'color_square selector';
+        var style = color === 'default' ? '' : 'background-color: ' + color + ';';
         return '<div class="' + className + '" tabindex="0" style="' + style + ' width: 60px; height: 60px; border-radius: 8px; cursor: pointer;" title="' + name + '"></div>';
     }
 
@@ -295,75 +263,6 @@
             result.push(arr.slice(i, i + size));
         }
         return result;
-    }
-
-    // Функція для створення модального вікна вибору кастомного кольору
-    function openCustomColorPicker(callback) {
-        var paletteKeys = Object.keys(ColorPlugin.colors.custom_palette);
-        var groupedPalette = chunkArray(paletteKeys, 5);
-        var paletteContent = groupedPalette.map(function (group) {
-            var groupContent = group.map(function (color) {
-                return createColorHtml(color, ColorPlugin.colors.custom_palette[color]);
-            }).join('');
-            return '<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; justify-items: center; padding: 10px;">' + groupContent + '</div>';
-        }).join('');
-
-        // Поле для введення HEX-коду у стилі settings-param
-        var inputHtml = '<div class="settings-param selector" data-name="color_plugin_custom_hex" data-type="input" placeholder="#{settings_cub_not_specified}">' +
-                        '<div class="settings-param__name">' + Lampa.Lang.translate('custom_hex_input') + '</div>' +
-                        '<div class="settings-param__value"></div>' +
-                        '</div>';
-
-        var modalHtml = $('<div>' + paletteContent + inputHtml + '</div>');
-
-        try {
-            Lampa.Modal.open({
-                title: Lampa.Lang.translate('custom_color'),
-                size: 'medium',
-                align: 'center',
-                html: modalHtml,
-                onBack: function () {
-                    Lampa.Modal.close();
-                    Lampa.Controller.toggle('modal');
-                },
-                onSelect: function (a) {
-                    if (a.length > 0 && a[0] instanceof HTMLElement) {
-                        var selectedElement = a[0];
-                        var color;
-
-                        if (selectedElement.classList.contains('settings-param')) {
-                            var inputOptions = {
-                                name: 'color_plugin_custom_hex',
-                                value: Lampa.Storage.get('color_plugin_custom_hex', ''),
-                                placeholder: Lampa.Lang.translate('settings_cub_not_specified')
-                            };
-
-                            Lampa.Input.edit(inputOptions, function (value) {
-                                if (value === '') {
-                                    Lampa.Noty.show('HEX-код не введено.');
-                                    Lampa.Controller.toggle('modal');
-                                    return;
-                                }
-                                if (!isValidHex(value)) {
-                                    Lampa.Noty.show('Невірний формат HEX-коду. Використовуйте формат #FFFFFF.');
-                                    Lampa.Controller.toggle('modal');
-                                    return;
-                                }
-                                Lampa.Storage.set('color_plugin_custom_hex', value);
-                                callback(value);
-                                Lampa.Modal.close();
-                            });
-                            return;
-                        } else {
-                            color = selectedElement.style.backgroundColor || ColorPlugin.colors.custom_palette[selectedElement.title];
-                            color = color.includes('rgb') ? rgbToHex(color) : color;
-                            callback(color);
-                            Lampa.Modal.close();
-                        }
-                    }
-                }
-            });
-        } catch (e) {}
     }
 
     // Функція для створення модального вікна вибору кольору
@@ -377,7 +276,13 @@
             return '<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; justify-items: center; padding: 10px;">' + groupContent + '</div>';
         }).join('');
 
-        var modalHtml = $('<div>' + colorContent + '</div>');
+        // Поле для введення HEX-коду у стилі settings-param
+        var inputHtml = '<div class="settings-param selector" data-name="color_plugin_custom_hex" data-type="input" placeholder="#{settings_cub_not_specified}">' +
+                        '<div class="settings-param__name">' + Lampa.Lang.translate('custom_hex_input') + '</div>' +
+                        '<div class="settings-param__value"></div>' +
+                        '</div>';
+
+        var modalHtml = $('<div>' + colorContent + inputHtml + '</div>');
 
         try {
             Lampa.Modal.open({
@@ -395,20 +300,40 @@
                         var selectedElement = a[0];
                         var color;
 
-                        if (selectedElement.classList.contains('default')) {
-                            color = '#353535';
-                        } else if (selectedElement.classList.contains('custom')) {
-                            openCustomColorPicker(function (selectedColor) {
-                                ColorPlugin.settings[paramName] = selectedColor;
-                                Lampa.Storage.set('color_plugin_' + paramName, selectedColor);
+                        if (selectedElement.classList.contains('settings-param')) {
+                            var inputOptions = {
+                                name: 'color_plugin_custom_hex',
+                                value: Lampa.Storage.get('color_plugin_custom_hex', ''),
+                                placeholder: Lampa.Lang.translate('settings_cub_not_specified')
+                            };
+
+                            Lampa.Input.edit(inputOptions, function (value) {
+                                if (value === '') {
+                                    Lampa.Noty.show('HEX-код не введено.');
+                                    Lampa.Controller.toggle('settings_component');
+                                    return;
+                                }
+                                if (!isValidHex(value)) {
+                                    Lampa.Noty.show('Невірний формат HEX-коду. Використовуйте формат #FFFFFF.');
+                                    Lampa.Controller.toggle('settings_component');
+                                    return;
+                                }
+                                Lampa.Storage.set('color_plugin_custom_hex', value);
+                                ColorPlugin.settings[paramName] = value;
+                                Lampa.Storage.set('color_plugin_' + paramName, value);
                                 applyStyles();
                                 var descr = $('.settings-param[data-name="color_plugin_' + paramName + '"] .settings-param__descr div');
                                 if (descr.length) {
-                                    descr.css('background-color', selectedColor);
+                                    descr.css('background-color', value);
                                 }
+                                Lampa.Modal.close();
+                                Lampa.Controller.toggle('settings_component');
+                                Lampa.Controller.enable('menu');
                                 Lampa.Settings.render();
                             });
                             return;
+                        } else if (selectedElement.classList.contains('default')) {
+                            color = '#353535';
                         } else {
                             color = selectedElement.style.backgroundColor || ColorPlugin.settings[paramName];
                             color = color.includes('rgb') ? rgbToHex(color) : color;
