@@ -254,13 +254,41 @@
                 'background-color: ' + ColorPlugin.settings.main_color + ';' +
                 'color: ' + ColorPlugin.settings.text_color + ';' +
             '}' +
-            // Колір квадратика в settings-param__descr завжди main_color
-            '.settings-param__descr div {' +
+            // Стили для квадратів у settings-param__descr
+            '.settings-param[data-name="color_plugin_main_color"] .settings-param__descr div {' +
                 'background-color: ' + ColorPlugin.settings.main_color + ' !important;' +
                 'width: 2em;' +
                 'height: 2em;' +
                 'display: inline-block;' +
-                'border: 1px solid #ddd;' +
+                'border: 2px solid rgb(255, 255, 255) !important;' +
+            '}' +
+            '.settings-param[data-name="color_plugin_background_color"] .settings-param__descr div {' +
+                'background-color: ' + ColorPlugin.settings.background_color + ' !important;' +
+                'width: 2em;' +
+                'height: 2em;' +
+                'display: inline-block;' +
+                'border: 2px solid rgb(255, 255, 255) !important;' +
+            '}' +
+            '.settings-param[data-name="color_plugin_text_color"] .settings-param__descr div {' +
+                'background-color: ' + ColorPlugin.settings.text_color + ' !important;' +
+                'width: 2em;' +
+                'height: 2em;' +
+                'display: inline-block;' +
+                'border: 2px solid rgb(255, 255, 255) !important;' +
+            '}' +
+            '.settings-param[data-name="color_plugin_transparent_white"] .settings-param__descr div {' +
+                'background-color: ' + ColorPlugin.settings.transparent_white + ' !important;' +
+                'width: 2em;' +
+                'height: 2em;' +
+                'display: inline-block;' +
+                'border: 2px solid rgb(255, 255, 255) !important;' +
+            '}' +
+            '.settings-param[data-name="color_plugin_icon_color"] .settings-param__descr div {' +
+                'background-color: ' + ColorPlugin.settings.icon_color + ' !important;' +
+                'width: 2em;' +
+                'height: 2em;' +
+                'display: inline-block;' +
+                'border: 2px solid rgb(255, 255, 255) !important;' +
             '}' +
             '.color_square.default {' +
                 'background-color: #fff;' +
@@ -410,7 +438,7 @@
                                 applyStyles();
                                 var descr = $('.settings-param[data-name="color_plugin_' + paramName + '"] .settings-param__descr div');
                                 if (descr.length) {
-                                    descr.css('background-color', ColorPlugin.settings.main_color);
+                                    descr.css('background-color', ColorPlugin.settings[paramName]);
                                 }
                                 Lampa.Controller.toggle('settings_component');
                                 Lampa.Controller.enable('menu');
@@ -418,7 +446,13 @@
                             });
                             return;
                         } else if (selectedElement.classList.contains('default')) {
-                            color = '#353535';
+                            color = {
+                                main_color: '#353535',
+                                background_color: '#1d1f20',
+                                text_color: '#fff',
+                                transparent_white: 'rgba(255,255,255,0.2)',
+                                icon_color: '#000'
+                            }[paramName];
                         } else {
                             color = selectedElement.style.backgroundColor || ColorPlugin.settings[paramName];
                             color = color.includes('rgb') ? rgbToHex(color) : color;
@@ -429,7 +463,7 @@
                         applyStyles();
                         var descr = $('.settings-param[data-name="color_plugin_' + paramName + '"] .settings-param__descr div');
                         if (descr.length) {
-                            descr.css('background-color', ColorPlugin.settings.main_color);
+                            descr.css('background-color', ColorPlugin.settings[paramName]);
                         }
                         Lampa.Modal.close();
                         Lampa.Controller.toggle('settings_component');
@@ -468,12 +502,15 @@
                 },
                 field: {
                     name: Lampa.Lang.translate('main_color'),
-                    description: '<div style="width: 2em; height: 2em; background-color: ' + ColorPlugin.settings.main_color + '; display: inline-block; border: 1px solid #ddd;"></div>'
+                    description: '<div style="width: 2em; height: 2em; background-color: ' + ColorPlugin.settings.main_color + '; display: inline-block; border: 2px solid rgb(255, 255, 255);"></div>'
                 },
                 onRender: function (item) {
                     var descr = item.find('.settings-param__descr div');
                     if (descr.length) {
-                        descr.css('background-color', ColorPlugin.settings.main_color);
+                        descr.css({
+                            'background-color': ColorPlugin.settings.main_color,
+                            'border': '2px solid rgb(255, 255, 255)'
+                        });
                     }
                 },
                 onChange: function () {
@@ -490,12 +527,15 @@
                 },
                 field: {
                     name: Lampa.Lang.translate('background_color'),
-                    description: '<div style="width: 2em; height: 2em; background-color: ' + ColorPlugin.settings.main_color + '; display: inline-block; border: 1px solid #ddd;"></div>'
+                    description: '<div style="width: 2em; height: 2em; background-color: ' + ColorPlugin.settings.background_color + '; display: inline-block; border: 2px solid rgb(255, 255, 255);"></div>'
                 },
                 onRender: function (item) {
                     var descr = item.find('.settings-param__descr div');
                     if (descr.length) {
-                        descr.css('background-color', ColorPlugin.settings.main_color);
+                        descr.css({
+                            'background-color': ColorPlugin.settings.background_color,
+                            'border': '2px solid rgb(255, 255, 255)'
+                        });
                     }
                 },
                 onChange: function () {
@@ -512,12 +552,15 @@
                 },
                 field: {
                     name: Lampa.Lang.translate('text_color'),
-                    description: '<div style="width: 2em; height: 2em; background-color: ' + ColorPlugin.settings.main_color + '; display: inline-block; border: 1px solid #ddd;"></div>'
+                    description: '<div style="width: 2em; height: 2em; background-color: ' + ColorPlugin.settings.text_color + '; display: inline-block; border: 2px solid rgb(255, 255, 255);"></div>'
                 },
                 onRender: function (item) {
                     var descr = item.find('.settings-param__descr div');
                     if (descr.length) {
-                        descr.css('background-color', ColorPlugin.settings.main_color);
+                        descr.css({
+                            'background-color': ColorPlugin.settings.text_color,
+                            'border': '2px solid rgb(255, 255, 255)'
+                        });
                     }
                 },
                 onChange: function () {
@@ -534,12 +577,15 @@
                 },
                 field: {
                     name: Lampa.Lang.translate('transparent_white'),
-                    description: '<div style="width: 2em; height: 2em; background-color: ' + ColorPlugin.settings.main_color + '; display: inline-block; border: 1px solid #ddd;"></div>'
+                    description: '<div style="width: 2em; height: 2em; background-color: ' + ColorPlugin.settings.transparent_white + '; display: inline-block; border: 2px solid rgb(255, 255, 255);"></div>'
                 },
                 onRender: function (item) {
                     var descr = item.find('.settings-param__descr div');
                     if (descr.length) {
-                        descr.css('background-color', ColorPlugin.settings.main_color);
+                        descr.css({
+                            'background-color': ColorPlugin.settings.transparent_white,
+                            'border': '2px solid rgb(255, 255, 255)'
+                        });
                     }
                 },
                 onChange: function () {
@@ -556,12 +602,15 @@
                 },
                 field: {
                     name: Lampa.Lang.translate('icon_color'),
-                    description: '<div style="width: 2em; height: 2em; background-color: ' + ColorPlugin.settings.main_color + '; display: inline-block; border: 1px solid #ddd;"></div>'
+                    description: '<div style="width: 2em; height: 2em; background-color: ' + ColorPlugin.settings.icon_color + '; display: inline-block; border: 2px solid rgb(255, 255, 255);"></div>'
                 },
                 onRender: function (item) {
                     var descr = item.find('.settings-param__descr div');
                     if (descr.length) {
-                        descr.css('background-color', ColorPlugin.settings.main_color);
+                        descr.css({
+                            'background-color': ColorPlugin.settings.icon_color,
+                            'border': '2px solid rgb(255, 255, 255)'
+                        });
                     }
                 },
                 onChange: function () {
