@@ -52,6 +52,21 @@
             ru: 'Используйте формат #FFFFFF, например #123524',
             en: 'Use the format #FFFFFF, for example #123524',
             uk: 'Використовуйте формат #FFFFFF, наприклад #123524'
+        },
+        apply_focus_color: {
+            ru: 'Применить цвет для фокуса',
+            en: 'Apply focus color',
+            uk: 'Застосувати колір для фокусу'
+        },
+        yes: {
+            ru: 'Да',
+            en: 'Yes',
+            uk: 'Так'
+        },
+        no: {
+            ru: 'Нет',
+            en: 'No',
+            uk: 'Ні'
         }
     });
 
@@ -63,6 +78,8 @@
             text_color: '#fff',
             transparent_white: 'rgba(255,255,255,0.2)',
             icon_color: '#000',
+            icon_focus: 'no',
+            text_focus: 'no',
             enabled: true
         },
         colors: {
@@ -110,7 +127,11 @@
             icon: {
                 '#000000': 'Чорний',
                 '#ffffff': 'Білий',
-                '#dddddd': 'Світло-сірий'
+                '#dddddd': 'Світло-сірий',
+                '#9f0712': 'Темно-червоний',
+                '#fef3c6': 'Світло-жовтий',
+                '#497d00': 'Темно-зелений',
+                '#007595': 'Морський синій'
             }
         }
     };
@@ -145,6 +166,9 @@
             document.head.appendChild(style);
         }
 
+        var iconFocusColor = ColorPlugin.settings.icon_focus === 'yes' ? ColorPlugin.settings.main_color : ColorPlugin.settings.icon_color;
+        var textFocusColor = ColorPlugin.settings.text_focus === 'yes' ? ColorPlugin.settings.main_color : ColorPlugin.settings.text_color;
+
         style.innerHTML = (
             ':root {' +
                 '--main-color: ' + ColorPlugin.settings.main_color + ';' +
@@ -157,21 +181,24 @@
                 '-webkit-filter: invert(1);' +
                 'filter: invert(1);' +
             '}' +
+            '.menu__ico.focus {' +
+                'color: ' + iconFocusColor + ';' +
+            '}' +
             '.console__tab.focus, .menu__item.focus, .menu__item.traverse, .menu__item.hover, ' +
             '.full-person.focus, .full-start__button.focus, .full-descr__tag.focus, ' +
             '.simple-button.focus, .head__action.focus, .head__action.hover, ' +
             '.player-panel .button.focus, .search-source.active {' +
                 'background: ' + ColorPlugin.settings.main_color + ';' +
-                'color: ' + ColorPlugin.settings.text_color + ';' +
+                'color: ' + textFocusColor + ';' +
             '}' +
             '.navigation-tabs__button.focus, .time-line > div, .player-panel__position, ' +
             '.player-panel__position > div:after {' +
                 'background-color: ' + ColorPlugin.settings.main_color + ';' +
-                'color: ' + ColorPlugin.settings.text_color + ';' +
+                'color: ' + textFocusColor + ';' +
             '}' +
             '.iptv-menu__list-item.focus, .iptv-program__timeline>div {' +
                 'background-color: ' + ColorPlugin.settings.main_color + ' !important;' +
-                'color: ' + ColorPlugin.settings.text_color + ' !important;' +
+                'color: ' + textFocusColor + ' !important;' +
             '}' +
             '.radio-item.focus, .lang__selector-item.focus, .simple-keyboard .hg-button.focus, ' +
             '.modal__button.focus, .search-history-key.focus, .simple-keyboard-mic.focus, ' +
@@ -179,7 +206,7 @@
             '.tag-count.focus, .settings-folder.focus, .settings-param.focus, ' +
             '.selectbox-item.focus, .selectbox-item.hover {' +
                 'background: ' + ColorPlugin.settings.main_color + ';' +
-                'color: ' + ColorPlugin.settings.text_color + ';' +
+                'color: ' + textFocusColor + ';' +
             '}' +
             '.online.focus {' +
                 'box-shadow: 0 0 0 0.2em ' + ColorPlugin.settings.main_color + ';' +
@@ -204,23 +231,23 @@
                 'border-color: ' + ColorPlugin.settings.main_color + ';' +
             '}' +
             '.torrent-serial__size {' +
-                'background-color: ' + ColorPlugin.settings.text_color + ';' +
-                'color: ' + ColorPlugin.settings.icon_color + ';' +
+                'background-color: ' + textFocusColor + ';' +
+                'color: ' + iconFocusColor + ';' +
             '}' +
             '.broadcast__scan > div, .broadcast__device.focus {' +
                 'background-color: ' + ColorPlugin.settings.main_color + ';' +
-                'color: ' + ColorPlugin.settings.text_color + ';' +
+                'color: ' + textFocusColor + ';' +
             '}' +
             '.card:hover .card__img, .card.focus .card__img {' +
                 'border-color: ' + ColorPlugin.settings.main_color + ';' +
             '}' +
             '.noty {' +
                 'background: ' + ColorPlugin.settings.main_color + ';' +
-                'color: ' + ColorPlugin.settings.text_color + ';' +
+                'color: ' + textFocusColor + ';' +
             '}' +
             '.radio-player.focus {' +
                 'background-color: ' + ColorPlugin.settings.main_color + ';' +
-                'color: ' + ColorPlugin.settings.text_color + ';' +
+                'color: ' + textFocusColor + ';' +
             '}' +
             '.explorer-card__head-img.focus::after {' +
                 'border: 0.3em solid ' + ColorPlugin.settings.main_color + ';' +
@@ -233,7 +260,7 @@
             'body.glass--style .settings-folder.focus, ' +
             'body.glass--style .settings-param.focus {' +
                 'background-color: ' + ColorPlugin.settings.main_color + ';' +
-                'color: ' + ColorPlugin.settings.text_color + ';' +
+                'color: ' + textFocusColor + ';' +
             '}' +
             '.color_square.default {' +
                 'background-color: #fff;' +
@@ -259,10 +286,15 @@
                 'background-color: #000;' +
                 'transform: rotate(-45deg);' +
             '}' +
-            '.hex-input {' +
-                'width: 270px;' + // 5 * 45px + 4 * 11.25px
+            '.color_square {' +
+                'width: 45px;' + // Зменшено на 25%
                 'height: 45px;' + // Зменшено на 25%
-                'border-radius: 6px;' + // Зменшено пропорційно
+                'border-radius: 6px;' +
+            '}' +
+            '.hex-input {' +
+                'width: 360px;' + // Повернено до 360px (5 * 60px + 4 * 15px)
+                'height: 60px;' +
+                'border-radius: 8px;' +
                 'border: 1px solid #ddd;' +
                 'position: relative;' +
                 'cursor: pointer;' +
@@ -271,45 +303,24 @@
                 'align-items: center;' +
                 'justify-content: center;' +
                 'color: #fff;' +
-                'font-size: 10.5px;' + // Зменшено на 25% від 14px
+                'font-size: 14px;' +
                 'font-weight: bold;' +
-                'text-shadow: 0 0 1.5px #000;' + // Зменшено пропорційно
+                'text-shadow: 0 0 2px #000;' +
                 'background-color: #000000;' +
             '}' +
             '.hex-input.focus {' +
-                'border: 0.225em solid var(--main-color);' + // Зменшено на 25% від 0.3em
+                'border: 0.3em solid var(--main-color);' +
                 'transform: scale(1.1);' +
             '}' +
             '.hex-input .label {' +
                 'position: absolute;' +
-                'top: 7.5px;' + // Зменшено на 25% від 10px
-                'font-size: 9px;' + // Зменшено на 25% від 12px
+                'top: 10px;' +
+                'font-size: 12px;' +
             '}' +
             '.hex-input .value {' +
                 'position: absolute;' +
-                'bottom: 7.5px;' + // Зменшено на 25% від 10px
-                'font-size: 10.5px;' + // Зменшено на 25% від 14px
-            '}' +
-            '.color_square {' +
-                'width: 45px;' + // Зменшено на 25% від 60px
-                'height: 45px;' + // Зменшено на 25% від 60px
-                'border-radius: 6px;' + // Зменшено пропорційно
-            '}' +
-            '.settings-param__name {' +
-                'display: flex;' +
-                'align-items: center;' +
-            '}' +
-            '.settings-param__name svg {' +
-                'width: 20px;' + // Розмір іконки
-                'height: 20px;' +
-                'margin-right: 10px;' +
-                'order: -1;' + // Розміщуємо іконку перед текстом
-            '}' +
-            '.settings-param[data-name="color_plugin_main_color"] .settings-param__name svg {' +
-                'fill: ' + ColorPlugin.settings.main_color + ';' +
-            '}' +
-            '.settings-param[data-name="color_plugin_background_color"] .settings-param__name svg {' +
-                'fill: ' + ColorPlugin.settings.background_color + ';' +
+                'bottom: 10px;' +
+                'font-size: 14px;' +
             '}'
         );
     }
@@ -338,12 +349,12 @@
             var groupContent = group.map(function (color) {
                 return createColorHtml(color, colors[color]);
             }).join('');
-            return '<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 11.25px; justify-items: center; padding: 7.5px;">' + groupContent + '</div>';
+            return '<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 11.25px; justify-items: center; padding: 10px;">' + groupContent + '</div>';
         }).join('');
 
         // Блок для введення HEX-коду у стилі color_square
         var hexValue = Lampa.Storage.get('color_plugin_custom_hex', '') || '#000000';
-        var inputHtml = '<div style="padding: 7.5px; display: flex; justify-content: center;">' +
+        var inputHtml = '<div style="padding: 10px; display: flex; justify-content: center;">' +
                         '<div class="color_square selector hex-input" tabindex="0" style="background-color: ' + hexValue + ';">' +
                         '<div class="label">' + Lampa.Lang.translate('custom_hex_input') + '</div>' +
                         '<div class="value">' + hexValue + '</div>' +
@@ -394,9 +405,13 @@
                                 ColorPlugin.settings[paramName] = value;
                                 Lampa.Storage.set('color_plugin_' + paramName, value);
                                 applyStyles();
-                                Lampa.Settings.render();
+                                var descr = $('.settings-param[data-name="color_plugin_' + paramName + '"] .settings-param__descr div');
+                                if (descr.length) {
+                                    descr.css('background-color', value);
+                                }
                                 Lampa.Controller.toggle('settings_component');
                                 Lampa.Controller.enable('menu');
+                                Lampa.Settings.render();
                             });
                             return;
                         } else if (selectedElement.classList.contains('default')) {
@@ -409,10 +424,14 @@
                         ColorPlugin.settings[paramName] = color;
                         Lampa.Storage.set('color_plugin_' + paramName, color);
                         applyStyles();
-                        Lampa.Settings.render();
+                        var descr = $('.settings-param[data-name="color_plugin_' + paramName + '"] .settings-param__descr div');
+                        if (descr.length) {
+                            descr.css('background-color', color);
+                        }
                         Lampa.Modal.close();
                         Lampa.Controller.toggle('settings_component');
                         Lampa.Controller.enable('menu');
+                        Lampa.Settings.render();
                     }
                 }
             });
@@ -427,6 +446,8 @@
         ColorPlugin.settings.text_color = Lampa.Storage.get('color_plugin_text_color', '#fff');
         ColorPlugin.settings.transparent_white = Lampa.Storage.get('color_plugin_transparent_white', 'rgba(255,255,255,0.2)');
         ColorPlugin.settings.icon_color = Lampa.Storage.get('color_plugin_icon_color', '#000');
+        ColorPlugin.settings.icon_focus = Lampa.Storage.get('color_plugin_icon_focus', 'no');
+        ColorPlugin.settings.text_focus = Lampa.Storage.get('color_plugin_text_focus', 'no');
         ColorPlugin.settings.enabled = Lampa.Storage.get('color_plugin_enabled', true);
 
         // Додаємо компонент до меню налаштувань
@@ -447,11 +468,13 @@
                 },
                 field: {
                     name: Lampa.Lang.translate('main_color'),
-                    description: '<svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m11.195 10.146.085.074 7.5 7.5a.75.75 0 0 1-.576 1.279l-.108-.015-4.261-.897-2.467 3.588a.75.75 0 0 1-1.36-.317L10 21.25v-10.5a.75.75 0 0 1 1.195-.604m.305 2.415v6.274l1.382-2.01a.75.75 0 0 1 .661-.324l.112.015 2.28.48zM19.5 4A2.5 2.5 0 0 1 22 6.5v9a2.5 2.5 0 0 1-2.025 2.455 1.75 1.75 0 0 0-.69-1.116l-.339-.339h.554a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1h-15a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1H9V18H4.5A2.5 2.5 0 0 1 2 6.5v-9A2.5 2.5 0 0 1 4.5 4z" fill="' + ColorPlugin.settings.main_color + '"/></svg>'
+                    description: '<div style="width: 2em; height: 2em; background-color: ' + ColorPlugin.settings.main_color + '; display: inline-block; border: 1px solid #ddd;"></div>'
                 },
                 onRender: function (item) {
-                    var name = item.find('.settings-param__name');
-                    name.prepend(item.find('.settings-param__descr svg'));
+                    var descr = item.find('.settings-param__descr div');
+                    if (descr.length) {
+                        descr.css('background-color', ColorPlugin.settings.main_color);
+                    }
                 },
                 onChange: function () {
                     openColorPicker('main_color', ColorPlugin.colors.main, 'main_color');
@@ -467,11 +490,13 @@
                 },
                 field: {
                     name: Lampa.Lang.translate('background_color'),
-                    description: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g stroke-width="0"/><g stroke-linecap="round" stroke-linejoin="round"/><g fill="' + ColorPlugin.settings.background_color + '"><path d="M6.75 1a.75.75 0 0 0-.75.75v1.756l-.093.087-4.243 4.243a2 2 0 0 0 0 2.828L5.2 14.2a2 2 0 0 0 2.828 0l4.243-4.243a2 2 0 0 0 0-2.828L8.735 3.593A2 2 0 0 0 7.5 3.015V1.75A.75.75 0 0 0 6.75 1M6 5.621v.629a.75.75 0 0 0 1.5 0V4.54a.5.5 0 0 1 .175.114l3.535 3.535c.09.09.138.205.145.322H3.111zm.26 7.518-3.128-3.128h6.964l-3.129 3.128a.5.5 0 0 1-.707 0"/><path d="M2 17.5v-5.086l1.5 1.5V17.5a1 1 0 0 0 1 1h15a1 1 0 0 0 1-1v-11a1 1 0 0 0-1-1h-7.444l-1.5-1.5H19.5A2.5 2.5 0 0 1 22 6.5v11a2.5 2.5 0 0 1-2.5 2.5h-15A2.5 2.5 0 0 1 2 17.5"/><path d="M11 14.375c0-.493.154-.972.342-1.381.19-.416.438-.806.674-1.134a10 10 0 0 1 .949-1.135l.005-.005a.75.75 0 0 1 1.06 0l.305.328c.176.199.412.48.65.812.235.328.482.718.673 1.134.188.409.342.888.342 1.381C16 15.765 14.971 17 13.5 17S11 15.765 11 14.375m2.766-1.64a8 8 0 0 0-.266-.35 8 8 0 0 0-.266.35c-.201.28-.392.585-.529.885-.14.305-.205.56-.205.755 0 .691.48 1.125 1 1.125s1-.434 1-1.125c0-.194-.065-.45-.205-.755a5.5 5.5 0 0 0-.53-.886"/></g></svg>'
+                    description: '<div style="width: 2em; height: 2em; background-color: ' + ColorPlugin.settings.background_color + '; display: inline-block; border: 1px solid #ddd;"></div>'
                 },
                 onRender: function (item) {
-                    var name = item.find('.settings-param__name');
-                    name.prepend(item.find('.settings-param__descr svg'));
+                    var descr = item.find('.settings-param__descr div');
+                    if (descr.length) {
+                        descr.css('background-color', ColorPlugin.settings.background_color);
+                    }
                 },
                 onChange: function () {
                     openColorPicker('background_color', ColorPlugin.colors.background, 'background_color');
@@ -497,6 +522,40 @@
                 },
                 onChange: function () {
                     openColorPicker('text_color', ColorPlugin.colors.text, 'text_color');
+                }
+            });
+
+            // Застосувати колір фокусу для тексту
+            Lampa.SettingsApi.addParam({
+                component: 'color_plugin',
+                param: {
+                    name: 'color_plugin_text_focus',
+                    type: 'select',
+                    values: {
+                        'yes': Lampa.Lang.translate('yes'),
+                        'no': Lampa.Lang.translate('no')
+                    },
+                    default: 'no'
+                },
+                field: {
+                    name: Lampa.Lang.translate('apply_focus_color'),
+                    description: Lampa.Lang.translate('text_color')
+                },
+                onChange: function (value) {
+                    ColorPlugin.settings.text_focus = value;
+                    Lampa.Storage.set('color_plugin_text_focus', value);
+                    if (value === 'yes') {
+                        ColorPlugin.settings.text_color = ColorPlugin.settings.main_color;
+                        Lampa.Storage.set('color_plugin_text_color', ColorPlugin.settings.main_color);
+                        var descr = $('.settings-param[data-name="color_plugin_text_color"] .settings-param__descr div');
+                        if (descr.length) {
+                            descr.css('background-color', ColorPlugin.settings.main_color);
+                        }
+                    } else {
+                        openColorPicker('text_color', ColorPlugin.colors.text, 'text_color');
+                    }
+                    applyStyles();
+                    Lampa.Settings.render();
                 }
             });
 
@@ -541,6 +600,40 @@
                 },
                 onChange: function () {
                     openColorPicker('icon_color', ColorPlugin.colors.icon, 'icon_color');
+                }
+            });
+
+            // Застосувати колір фокусу для іконок
+            Lampa.SettingsApi.addParam({
+                component: 'color_plugin',
+                param: {
+                    name: 'color_plugin_icon_focus',
+                    type: 'select',
+                    values: {
+                        'yes': Lampa.Lang.translate('yes'),
+                        'no': Lampa.Lang.translate('no')
+                    },
+                    default: 'no'
+                },
+                field: {
+                    name: Lampa.Lang.translate('apply_focus_color'),
+                    description: Lampa.Lang.translate('icon_color')
+                },
+                onChange: function (value) {
+                    ColorPlugin.settings.icon_focus = value;
+                    Lampa.Storage.set('color_plugin_icon_focus', value);
+                    if (value === 'yes') {
+                        ColorPlugin.settings.icon_color = ColorPlugin.settings.main_color;
+                        Lampa.Storage.set('color_plugin_icon_color', ColorPlugin.settings.main_color);
+                        var descr = $('.settings-param[data-name="color_plugin_icon_color"] .settings-param__descr div');
+                        if (descr.length) {
+                            descr.css('background-color', ColorPlugin.settings.main_color);
+                        }
+                    } else {
+                        openColorPicker('icon_color', ColorPlugin.colors.icon, 'icon_color');
+                    }
+                    applyStyles();
+                    Lampa.Settings.render();
                 }
             });
 
