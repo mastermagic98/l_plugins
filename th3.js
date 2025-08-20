@@ -46,7 +46,7 @@
         custom_color: {
             ru: 'Свой цвет',
             en: 'Custom color',
-            uk: 'Інший колір'
+            uk: 'Свій колір'
         },
         hex_hint: {
             ru: 'Используйте формат #FFFFFF, например #123524',
@@ -76,7 +76,7 @@
                 '#a64dff': 'Пурпурний',
                 '#4caf50': 'Зелений',
                 '#ff69b4': 'Рожевий',
-                '#00bcd4': 'Бірюзовий' // Новий колір замість custom
+                'custom': Lampa.Lang.translate('custom_color')
             },
             background: {
                 '#1d1f20': 'Темно-сірий',
@@ -265,6 +265,21 @@
                 'background-color: #000;' +
                 'transform: rotate(-45deg);' +
             '}' +
+            '.color_square.custom {' +
+                'background: linear-gradient(45deg, red, orange, yellow, green, blue);' +
+                'position: relative;' +
+            '}' +
+            '.color_square.custom::after {' +
+                'content: "HEX";' +
+                'position: absolute;' +
+                'top: 50%;' +
+                'left: 50%;' +
+                'transform: translate(-50%, -50%);' +
+                'color: #fff;' +
+                'font-size: 14px;' +
+                'font-weight: bold;' +
+                'text-shadow: 0 0 2px #000;' +
+            '}' +
             '.color_input_hint {' +
                 'display: none;' +
                 'color: #fff;' +
@@ -281,8 +296,8 @@
 
     // Функція для створення HTML для вибору кольору
     function createColorHtml(color, name) {
-        var className = color === 'default' ? 'color_square selector default' : 'color_square selector';
-        var style = color === 'default' ? '' : 'background-color: ' + color + ';';
+        var className = color === 'default' ? 'color_square selector default' : color === 'custom' ? 'color_square selector custom' : 'color_square selector';
+        var style = color === 'default' || color === 'custom' ? '' : 'background-color: ' + color + ';';
         return '<div class="' + className + '" tabindex="0" style="' + style + ' width: 60px; height: 60px; border-radius: 8px; cursor: pointer;" title="' + name + '"></div>';
     }
 
@@ -306,10 +321,9 @@
             return '<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; justify-items: center; padding: 10px;">' + groupContent + '</div>';
         }).join('');
 
-        // Додаємо поле для введення HEX-коду з написом "Інший колір"
+        // Додаємо поле для введення HEX-коду з початковим символом # і підказкою
         var inputHtml = '<div class="settings-param selector" data-type="input" data-name="color_hex" style="padding: 10px; text-align: center;">' +
-                        '<div style="font-size: 16px; color: #fff; margin-bottom: 5px;">' + Lampa.Lang.translate('custom_color') + '</div>' +
-                        '<input type="text" class="color_input" value="#" maxlength="7" />' +
+                        '<input type="text" class="color_input" value="#" placeholder="#FFFFFF" maxlength="7" />' +
                         '<div class="color_input_hint">' + Lampa.Lang.translate('hex_hint') + '</div>' +
                         '</div>';
 
@@ -361,6 +375,14 @@
                             Lampa.Controller.toggle('settings_component');
                             Lampa.Controller.enable('menu');
                             Lampa.Settings.render();
+                        } else if (selectedElement.classList.contains('custom')) {
+                            var inputField = modalHtml.find('.color_input')[0];
+                            if (inputField) {
+                                inputField.focus();
+                                inputField.setSelectionRange(1, 1); // Курсор після #
+                                triggerHoverEnter(inputField); // Викликаємо клавіатуру
+                            }
+                            return; // Чекаємо введення HEX-коду
                         } else {
                             color = selectedElement.style.backgroundColor || ColorPlugin.settings[paramName];
                             color = color.includes('rgb') ? rgbToHex(color) : color;
