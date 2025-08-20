@@ -254,36 +254,41 @@
                 'background-color: ' + ColorPlugin.settings.main_color + ';' +
                 'color: ' + ColorPlugin.settings.text_color + ';' +
             '}' +
-            // Стили для квадратів у settings-param__descr
-            '.settings-param[data-name="color_plugin_main_color"] .settings-param__descr div {' +
+            // Стили для квадратів у settings-param__descr (з фокусом і без)
+            '.settings-param[data-name="color_plugin_main_color"] .settings-param__descr div, ' +
+            '.settings-param.focus[data-name="color_plugin_main_color"] .settings-param__descr div {' +
                 'background-color: ' + ColorPlugin.settings.main_color + ' !important;' +
                 'width: 2em;' +
                 'height: 2em;' +
                 'display: inline-block;' +
                 'border: 2px solid rgb(255, 255, 255) !important;' +
             '}' +
-            '.settings-param[data-name="color_plugin_background_color"] .settings-param__descr div {' +
+            '.settings-param[data-name="color_plugin_background_color"] .settings-param__descr div, ' +
+            '.settings-param.focus[data-name="color_plugin_background_color"] .settings-param__descr div {' +
                 'background-color: ' + ColorPlugin.settings.background_color + ' !important;' +
                 'width: 2em;' +
                 'height: 2em;' +
                 'display: inline-block;' +
                 'border: 2px solid rgb(255, 255, 255) !important;' +
             '}' +
-            '.settings-param[data-name="color_plugin_text_color"] .settings-param__descr div {' +
+            '.settings-param[data-name="color_plugin_text_color"] .settings-param__descr div, ' +
+            '.settings-param.focus[data-name="color_plugin_text_color"] .settings-param__descr div {' +
                 'background-color: ' + ColorPlugin.settings.text_color + ' !important;' +
                 'width: 2em;' +
                 'height: 2em;' +
                 'display: inline-block;' +
                 'border: 2px solid rgb(255, 255, 255) !important;' +
             '}' +
-            '.settings-param[data-name="color_plugin_transparent_white"] .settings-param__descr div {' +
+            '.settings-param[data-name="color_plugin_transparent_white"] .settings-param__descr div, ' +
+            '.settings-param.focus[data-name="color_plugin_transparent_white"] .settings-param__descr div {' +
                 'background-color: ' + ColorPlugin.settings.transparent_white + ' !important;' +
                 'width: 2em;' +
                 'height: 2em;' +
                 'display: inline-block;' +
                 'border: 2px solid rgb(255, 255, 255) !important;' +
             '}' +
-            '.settings-param[data-name="color_plugin_icon_color"] .settings-param__descr div {' +
+            '.settings-param[data-name="color_plugin_icon_color"] .settings-param__descr div, ' +
+            '.settings-param.focus[data-name="color_plugin_icon_color"] .settings-param__descr div {' +
                 'background-color: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'width: 2em;' +
                 'height: 2em;' +
@@ -439,6 +444,7 @@
                                 var descr = $('.settings-param[data-name="color_plugin_' + paramName + '"] .settings-param__descr div');
                                 if (descr.length) {
                                     descr.css('background-color', ColorPlugin.settings[paramName]);
+                                    console.log('ColorPlugin: Updated ' + paramName + ' to ' + ColorPlugin.settings[paramName]);
                                 }
                                 Lampa.Controller.toggle('settings_component');
                                 Lampa.Controller.enable('menu');
@@ -464,6 +470,7 @@
                         var descr = $('.settings-param[data-name="color_plugin_' + paramName + '"] .settings-param__descr div');
                         if (descr.length) {
                             descr.css('background-color', ColorPlugin.settings[paramName]);
+                            console.log('ColorPlugin: Updated ' + paramName + ' to ' + ColorPlugin.settings[paramName]);
                         }
                         Lampa.Modal.close();
                         Lampa.Controller.toggle('settings_component');
@@ -505,13 +512,16 @@
                     description: '<div style="width: 2em; height: 2em; background-color: ' + ColorPlugin.settings.main_color + '; display: inline-block; border: 2px solid rgb(255, 255, 255);"></div>'
                 },
                 onRender: function (item) {
-                    var descr = item.find('.settings-param__descr div');
-                    if (descr.length) {
-                        descr.css({
-                            'background-color': ColorPlugin.settings.main_color,
-                            'border': '2px solid rgb(255, 255, 255)'
-                        });
-                    }
+                    setTimeout(function() {
+                        var descr = item.find('.settings-param__descr div');
+                        if (descr.length) {
+                            descr.css({
+                                'background-color': ColorPlugin.settings.main_color,
+                                'border': '2px solid rgb(255, 255, 255)'
+                            });
+                            console.log('ColorPlugin: Render main_color, color: ' + ColorPlugin.settings.main_color + ', focused: ' + item.hasClass('focus'));
+                        }
+                    }, 0);
                 },
                 onChange: function () {
                     openColorPicker('main_color', ColorPlugin.colors.main, 'main_color');
@@ -530,13 +540,16 @@
                     description: '<div style="width: 2em; height: 2em; background-color: ' + ColorPlugin.settings.background_color + '; display: inline-block; border: 2px solid rgb(255, 255, 255);"></div>'
                 },
                 onRender: function (item) {
-                    var descr = item.find('.settings-param__descr div');
-                    if (descr.length) {
-                        descr.css({
-                            'background-color': ColorPlugin.settings.background_color,
-                            'border': '2px solid rgb(255, 255, 255)'
-                        });
-                    }
+                    setTimeout(function() {
+                        var descr = item.find('.settings-param__descr div');
+                        if (descr.length) {
+                            descr.css({
+                                'background-color': ColorPlugin.settings.background_color,
+                                'border': '2px solid rgb(255, 255, 255)'
+                            });
+                            console.log('ColorPlugin: Render background_color, color: ' + ColorPlugin.settings.background_color + ', focused: ' + item.hasClass('focus'));
+                        }
+                    }, 0);
                 },
                 onChange: function () {
                     openColorPicker('background_color', ColorPlugin.colors.background, 'background_color');
@@ -555,13 +568,16 @@
                     description: '<div style="width: 2em; height: 2em; background-color: ' + ColorPlugin.settings.text_color + '; display: inline-block; border: 2px solid rgb(255, 255, 255);"></div>'
                 },
                 onRender: function (item) {
-                    var descr = item.find('.settings-param__descr div');
-                    if (descr.length) {
-                        descr.css({
-                            'background-color': ColorPlugin.settings.text_color,
-                            'border': '2px solid rgb(255, 255, 255)'
-                        });
-                    }
+                    setTimeout(function() {
+                        var descr = item.find('.settings-param__descr div');
+                        if (descr.length) {
+                            descr.css({
+                                'background-color': ColorPlugin.settings.text_color,
+                                'border': '2px solid rgb(255, 255, 255)'
+                            });
+                            console.log('ColorPlugin: Render text_color, color: ' + ColorPlugin.settings.text_color + ', focused: ' + item.hasClass('focus'));
+                        }
+                    }, 0);
                 },
                 onChange: function () {
                     openColorPicker('text_color', ColorPlugin.colors.text, 'text_color');
@@ -580,13 +596,16 @@
                     description: '<div style="width: 2em; height: 2em; background-color: ' + ColorPlugin.settings.transparent_white + '; display: inline-block; border: 2px solid rgb(255, 255, 255);"></div>'
                 },
                 onRender: function (item) {
-                    var descr = item.find('.settings-param__descr div');
-                    if (descr.length) {
-                        descr.css({
-                            'background-color': ColorPlugin.settings.transparent_white,
-                            'border': '2px solid rgb(255, 255, 255)'
-                        });
-                    }
+                    setTimeout(function() {
+                        var descr = item.find('.settings-param__descr div');
+                        if (descr.length) {
+                            descr.css({
+                                'background-color': ColorPlugin.settings.transparent_white,
+                                'border': '2px solid rgb(255, 255, 255)'
+                            });
+                            console.log('ColorPlugin: Render transparent_white, color: ' + ColorPlugin.settings.transparent_white + ', focused: ' + item.hasClass('focus'));
+                        }
+                    }, 0);
                 },
                 onChange: function () {
                     openColorPicker('transparent_white', ColorPlugin.colors.transparent, 'transparent_white');
@@ -605,13 +624,16 @@
                     description: '<div style="width: 2em; height: 2em; background-color: ' + ColorPlugin.settings.icon_color + '; display: inline-block; border: 2px solid rgb(255, 255, 255);"></div>'
                 },
                 onRender: function (item) {
-                    var descr = item.find('.settings-param__descr div');
-                    if (descr.length) {
-                        descr.css({
-                            'background-color': ColorPlugin.settings.icon_color,
-                            'border': '2px solid rgb(255, 255, 255)'
-                        });
-                    }
+                    setTimeout(function() {
+                        var descr = item.find('.settings-param__descr div');
+                        if (descr.length) {
+                            descr.css({
+                                'background-color': ColorPlugin.settings.icon_color,
+                                'border': '2px solid rgb(255, 255, 255)'
+                            });
+                            console.log('ColorPlugin: Render icon_color, color: ' + ColorPlugin.settings.icon_color + ', focused: ' + item.hasClass('focus'));
+                        }
+                    }, 0);
                 },
                 onChange: function () {
                     openColorPicker('icon_color', ColorPlugin.colors.icon, 'icon_color');
