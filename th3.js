@@ -52,21 +52,6 @@
             ru: 'Используйте формат #FFFFFF, например #123524',
             en: 'Use the format #FFFFFF, for example #123524',
             uk: 'Використовуйте формат #FFFFFF, наприклад #123524'
-        },
-        apply_focus_color: {
-            ru: 'Применить цвет для фокуса',
-            en: 'Apply focus color',
-            uk: 'Застосувати колір для фокусу'
-        },
-        yes: {
-            ru: 'Да',
-            en: 'Yes',
-            uk: 'Так'
-        },
-        no: {
-            ru: 'Нет',
-            en: 'No',
-            uk: 'Ні'
         }
     });
 
@@ -78,8 +63,6 @@
             text_color: '#fff',
             transparent_white: 'rgba(255,255,255,0.2)',
             icon_color: '#000',
-            icon_focus: 'no',
-            text_focus: 'no',
             enabled: true
         },
         colors: {
@@ -151,6 +134,15 @@
         return /^#[0-9A-Fa-f]{6}$/.test(color);
     }
 
+    // Функція для оновлення іконки плагіна
+    function updatePluginIcon() {
+        var component = Lampa.SettingsApi.components.find(function(c) { return c.component === 'color_plugin'; });
+        if (component) {
+            component.icon = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="' + ColorPlugin.settings.icon_color + '"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
+            Lampa.Settings.render();
+        }
+    }
+
     // Функція для застосування стилів
     function applyStyles() {
         if (!ColorPlugin.settings.enabled) {
@@ -166,9 +158,6 @@
             document.head.appendChild(style);
         }
 
-        var iconFocusColor = ColorPlugin.settings.icon_focus === 'yes' ? ColorPlugin.settings.main_color : ColorPlugin.settings.icon_color;
-        var textFocusColor = ColorPlugin.settings.text_focus === 'yes' ? ColorPlugin.settings.main_color : ColorPlugin.settings.text_color;
-
         style.innerHTML = (
             ':root {' +
                 '--main-color: ' + ColorPlugin.settings.main_color + ';' +
@@ -176,29 +165,24 @@
                 '--text-color: ' + ColorPlugin.settings.text_color + ';' +
                 '--transparent-white: ' + ColorPlugin.settings.transparent_white + ';' +
             '}' +
-            '.menu__ico {' +
+            '.menu__ico, .menu__ico.focus {' +
                 'color: ' + ColorPlugin.settings.icon_color + ';' +
-                '-webkit-filter: invert(1);' +
-                'filter: invert(1);' +
-            '}' +
-            '.menu__ico.focus {' +
-                'color: ' + iconFocusColor + ';' +
             '}' +
             '.console__tab.focus, .menu__item.focus, .menu__item.traverse, .menu__item.hover, ' +
             '.full-person.focus, .full-start__button.focus, .full-descr__tag.focus, ' +
             '.simple-button.focus, .head__action.focus, .head__action.hover, ' +
             '.player-panel .button.focus, .search-source.active {' +
                 'background: ' + ColorPlugin.settings.main_color + ';' +
-                'color: ' + textFocusColor + ';' +
+                'color: ' + ColorPlugin.settings.text_color + ';' +
             '}' +
             '.navigation-tabs__button.focus, .time-line > div, .player-panel__position, ' +
             '.player-panel__position > div:after {' +
                 'background-color: ' + ColorPlugin.settings.main_color + ';' +
-                'color: ' + textFocusColor + ';' +
+                'color: ' + ColorPlugin.settings.text_color + ';' +
             '}' +
             '.iptv-menu__list-item.focus, .iptv-program__timeline>div {' +
                 'background-color: ' + ColorPlugin.settings.main_color + ' !important;' +
-                'color: ' + textFocusColor + ' !important;' +
+                'color: ' + ColorPlugin.settings.text_color + ' !important;' +
             '}' +
             '.radio-item.focus, .lang__selector-item.focus, .simple-keyboard .hg-button.focus, ' +
             '.modal__button.focus, .search-history-key.focus, .simple-keyboard-mic.focus, ' +
@@ -206,7 +190,7 @@
             '.tag-count.focus, .settings-folder.focus, .settings-param.focus, ' +
             '.selectbox-item.focus, .selectbox-item.hover {' +
                 'background: ' + ColorPlugin.settings.main_color + ';' +
-                'color: ' + textFocusColor + ';' +
+                'color: ' + ColorPlugin.settings.text_color + ';' +
             '}' +
             '.online.focus {' +
                 'box-shadow: 0 0 0 0.2em ' + ColorPlugin.settings.main_color + ';' +
@@ -231,23 +215,23 @@
                 'border-color: ' + ColorPlugin.settings.main_color + ';' +
             '}' +
             '.torrent-serial__size {' +
-                'background-color: ' + textFocusColor + ';' +
-                'color: ' + iconFocusColor + ';' +
+                'background-color: ' + ColorPlugin.settings.text_color + ';' +
+                'color: ' + ColorPlugin.settings.icon_color + ';' +
             '}' +
             '.broadcast__scan > div, .broadcast__device.focus {' +
                 'background-color: ' + ColorPlugin.settings.main_color + ';' +
-                'color: ' + textFocusColor + ';' +
+                'color: ' + ColorPlugin.settings.text_color + ';' +
             '}' +
             '.card:hover .card__img, .card.focus .card__img {' +
                 'border-color: ' + ColorPlugin.settings.main_color + ';' +
             '}' +
             '.noty {' +
                 'background: ' + ColorPlugin.settings.main_color + ';' +
-                'color: ' + textFocusColor + ';' +
+                'color: ' + ColorPlugin.settings.text_color + ';' +
             '}' +
             '.radio-player.focus {' +
                 'background-color: ' + ColorPlugin.settings.main_color + ';' +
-                'color: ' + textFocusColor + ';' +
+                'color: ' + ColorPlugin.settings.text_color + ';' +
             '}' +
             '.explorer-card__head-img.focus::after {' +
                 'border: 0.3em solid ' + ColorPlugin.settings.main_color + ';' +
@@ -260,7 +244,26 @@
             'body.glass--style .settings-folder.focus, ' +
             'body.glass--style .settings-param.focus {' +
                 'background-color: ' + ColorPlugin.settings.main_color + ';' +
-                'color: ' + textFocusColor + ';' +
+                'color: ' + ColorPlugin.settings.text_color + ';' +
+            '}' +
+            // Захищаємо колір квадратиків від зміни при фокусі
+            '.settings-param__descr div {' +
+                'background-color: inherit !important;' +
+            '}' +
+            '.settings-param[data-name="color_plugin_main_color"] .settings-param__descr div {' +
+                'background-color: ' + ColorPlugin.settings.main_color + ' !important;' +
+            '}' +
+            '.settings-param[data-name="color_plugin_background_color"] .settings-param__descr div {' +
+                'background-color: ' + ColorPlugin.settings.background_color + ' !important;' +
+            '}' +
+            '.settings-param[data-name="color_plugin_text_color"] .settings-param__descr div {' +
+                'background-color: ' + ColorPlugin.settings.text_color + ' !important;' +
+            '}' +
+            '.settings-param[data-name="color_plugin_transparent_white"] .settings-param__descr div {' +
+                'background-color: ' + ColorPlugin.settings.transparent_white + ' !important;' +
+            '}' +
+            '.settings-param[data-name="color_plugin_icon_color"] .settings-param__descr div {' +
+                'background-color: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
             '.color_square.default {' +
                 'background-color: #fff;' +
@@ -287,12 +290,12 @@
                 'transform: rotate(-45deg);' +
             '}' +
             '.color_square {' +
-                'width: 45px;' + // Зменшено на 25%
-                'height: 45px;' + // Зменшено на 25%
+                'width: 45px;' +
+                'height: 45px;' +
                 'border-radius: 6px;' +
             '}' +
             '.hex-input {' +
-                'width: 360px;' + // Повернено до 360px (5 * 60px + 4 * 15px)
+                'width: 360px;' +
                 'height: 60px;' +
                 'border-radius: 8px;' +
                 'border: 1px solid #ddd;' +
@@ -323,6 +326,9 @@
                 'font-size: 14px;' +
             '}'
         );
+
+        // Оновлюємо іконку плагіна
+        updatePluginIcon();
     }
 
     // Функція для створення HTML для вибору кольору
@@ -446,15 +452,13 @@
         ColorPlugin.settings.text_color = Lampa.Storage.get('color_plugin_text_color', '#fff');
         ColorPlugin.settings.transparent_white = Lampa.Storage.get('color_plugin_transparent_white', 'rgba(255,255,255,0.2)');
         ColorPlugin.settings.icon_color = Lampa.Storage.get('color_plugin_icon_color', '#000');
-        ColorPlugin.settings.icon_focus = Lampa.Storage.get('color_plugin_icon_focus', 'no');
-        ColorPlugin.settings.text_focus = Lampa.Storage.get('color_plugin_text_focus', 'no');
         ColorPlugin.settings.enabled = Lampa.Storage.get('color_plugin_enabled', true);
 
         // Додаємо компонент до меню налаштувань
         Lampa.SettingsApi.addComponent({
             component: 'color_plugin',
             name: Lampa.Lang.translate('color_plugin'),
-            icon: '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>'
+            icon: '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="' + ColorPlugin.settings.icon_color + '"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>'
         });
 
         // Додаємо параметри до налаштувань
@@ -525,40 +529,6 @@
                 }
             });
 
-            // Застосувати колір фокусу для тексту
-            Lampa.SettingsApi.addParam({
-                component: 'color_plugin',
-                param: {
-                    name: 'color_plugin_text_focus',
-                    type: 'select',
-                    values: {
-                        'yes': Lampa.Lang.translate('yes'),
-                        'no': Lampa.Lang.translate('no')
-                    },
-                    default: 'no'
-                },
-                field: {
-                    name: Lampa.Lang.translate('apply_focus_color'),
-                    description: Lampa.Lang.translate('text_color')
-                },
-                onChange: function (value) {
-                    ColorPlugin.settings.text_focus = value;
-                    Lampa.Storage.set('color_plugin_text_focus', value);
-                    if (value === 'yes') {
-                        ColorPlugin.settings.text_color = ColorPlugin.settings.main_color;
-                        Lampa.Storage.set('color_plugin_text_color', ColorPlugin.settings.main_color);
-                        var descr = $('.settings-param[data-name="color_plugin_text_color"] .settings-param__descr div');
-                        if (descr.length) {
-                            descr.css('background-color', ColorPlugin.settings.main_color);
-                        }
-                    } else {
-                        openColorPicker('text_color', ColorPlugin.colors.text, 'text_color');
-                    }
-                    applyStyles();
-                    Lampa.Settings.render();
-                }
-            });
-
             // Прозорий фон
             Lampa.SettingsApi.addParam({
                 component: 'color_plugin',
@@ -600,40 +570,6 @@
                 },
                 onChange: function () {
                     openColorPicker('icon_color', ColorPlugin.colors.icon, 'icon_color');
-                }
-            });
-
-            // Застосувати колір фокусу для іконок
-            Lampa.SettingsApi.addParam({
-                component: 'color_plugin',
-                param: {
-                    name: 'color_plugin_icon_focus',
-                    type: 'select',
-                    values: {
-                        'yes': Lampa.Lang.translate('yes'),
-                        'no': Lampa.Lang.translate('no')
-                    },
-                    default: 'no'
-                },
-                field: {
-                    name: Lampa.Lang.translate('apply_focus_color'),
-                    description: Lampa.Lang.translate('icon_color')
-                },
-                onChange: function (value) {
-                    ColorPlugin.settings.icon_focus = value;
-                    Lampa.Storage.set('color_plugin_icon_focus', value);
-                    if (value === 'yes') {
-                        ColorPlugin.settings.icon_color = ColorPlugin.settings.main_color;
-                        Lampa.Storage.set('color_plugin_icon_color', ColorPlugin.settings.main_color);
-                        var descr = $('.settings-param[data-name="color_plugin_icon_color"] .settings-param__descr div');
-                        if (descr.length) {
-                            descr.css('background-color', ColorPlugin.settings.main_color);
-                        }
-                    } else {
-                        openColorPicker('icon_color', ColorPlugin.colors.icon, 'icon_color');
-                    }
-                    applyStyles();
-                    Lampa.Settings.render();
                 }
             });
 
