@@ -47,6 +47,11 @@
             ru: 'HEX-код цвета',
             en: 'HEX color code',
             uk: 'HEX-код кольору'
+        },
+        hex_input_hint: {
+            ru: 'Введите HEX-код в формате #FFFFFF',
+            en: 'Enter HEX code in the format #FFFFFF',
+            uk: 'Введіть HEX-код у форматі #FFFFFF'
         }
     });
 
@@ -70,8 +75,7 @@
                 '#ff9f4d': 'Помаранчевий',
                 '#a64dff': 'Пурпурний',
                 '#4caf50': 'Зелений',
-                '#ff69b4': 'Рожевий',
-                '#26a69a': 'Бірюзовий'
+                '#ff69b4': 'Рожевий'
             },
             background: {
                 '#1d1f20': 'Темно-сірий',
@@ -246,14 +250,32 @@
                 'background-color: #000;' +
                 'transform: rotate(-45deg);' +
             '}' +
-            '.hex-preview {' +
-                'width: 60px;' +
+            '.hex-input {' +
+                'width: 360px;' + // 5 * (60px ширина блоку + 15px відступ) = 360px
                 'height: 60px;' +
                 'border-radius: 8px;' +
                 'border: 1px solid #ddd;' +
-                'margin-left: 10px;' +
-                'display: inline-block;' +
-                'vertical-align: middle;' +
+                'position: relative;' +
+                'cursor: pointer;' +
+                'display: flex;' +
+                'align-items: center;' +
+                'justify-content: center;' +
+                'color: #fff;' +
+                'font-size: 14px;' +
+                'font-weight: bold;' +
+                'text-shadow: 0 0 2px #000;' +
+                'background-color: #000000;' +
+            '}' +
+            '.hex-input.focus {' +
+                'border: 0.3em solid var(--main-color);' +
+                'transform: scale(1.1);' +
+            '}' +
+            '.hex-input::after {' +
+                'content: "' + Lampa.Lang.translate('custom_hex_input') + '";' +
+                'position: absolute;' +
+                'top: 50%;' +
+                'left: 50%;' +
+                'transform: translate(-50%, -50%);' +
             '}'
         );
     }
@@ -285,14 +307,12 @@
             return '<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; justify-items: center; padding: 10px;">' + groupContent + '</div>';
         }).join('');
 
-        // Поле для введення HEX-коду у стилі settings-param із попереднім переглядом
+        // Блок для введення HEX-коду у стилі color_square
         var hexValue = Lampa.Storage.get('color_plugin_custom_hex', '') || '#000000';
-        var inputHtml = '<div style="display: flex; align-items: center; padding: 10px;">' +
-                        '<div class="settings-param selector" data-name="color_plugin_custom_hex" data-type="input" placeholder="#{settings_cub_not_specified}">' +
-                        '<div class="settings-param__name">' + Lampa.Lang.translate('custom_hex_input') + '</div>' +
-                        '<div class="settings-param__value">' + (hexValue || '') + '</div>' +
+        var inputHtml = '<div style="padding: 10px; text-align: center;">' +
+                        '<div class="color_square selector hex-input" tabindex="0" style="background-color: ' + hexValue + ';">' +
+                        hexValue +
                         '</div>' +
-                        '<div class="hex-preview" style="background-color: ' + hexValue + ';"></div>' +
                         '</div>';
 
         var modalHtml = $('<div>' + colorContent + inputHtml + '</div>');
@@ -313,7 +333,8 @@
                         var selectedElement = a[0];
                         var color;
 
-                        if (selectedElement.classList.contains('settings-param')) {
+                        if (selectedElement.classList.contains('hex-input')) {
+                            Lampa.Noty.show(Lampa.Lang.translate('hex_input_hint')); // Показуємо підказку
                             Lampa.Modal.close(); // Закриваємо модальне вікно перед викликом клавіатури
                             var inputOptions = {
                                 name: 'color_plugin_custom_hex',
