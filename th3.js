@@ -259,7 +259,7 @@
                 'padding: 5px 0;' +
                 'text-shadow: 0 0 2px #000;' +
             '}' +
-            '.settings-param[data-type="input"] input:focus + .color_input_hint {' +
+            '.settings-param[data-type="input"] .color_input:focus + .color_input_hint {' +
                 'display: block;' +
             '}'
         );
@@ -292,10 +292,10 @@
             return '<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; justify-items: center; padding: 10px;">' + groupContent + '</div>';
         }).join('');
 
-        // Поле для введення HEX-коду
+        // Додаємо поле для введення HEX-коду з написом "Інший колір"
         var inputHtml = '<div class="settings-param selector" data-type="input" data-name="color_hex" style="padding: 10px; text-align: center;">' +
                         '<div style="font-size: 16px; color: #fff; margin-bottom: 5px;">' + Lampa.Lang.translate('custom_color') + '</div>' +
-                        '<input type="text" data-type="input" class="color_input" value="" placeholder="' + Lampa.Lang.translate('hex_hint') + '">' +
+                        '<input type="text" class="color_input" data-type="input" value="#" maxlength="7" />' +
                         '<div class="color_input_hint">' + Lampa.Lang.translate('hex_hint') + '</div>' +
                         '</div>';
 
@@ -322,13 +322,14 @@
                             var inputField = modalHtml.find('.color_input')[0];
                             var inputOptions = {
                                 title: Lampa.Lang.translate('custom_color'),
-                                value: inputField.value || '',
+                                value: inputField.value || '#',
                                 free: true,
                                 nosave: true
                             };
                             Lampa.Input.edit(inputOptions, function (value) {
-                                // Валідація HEX-коду
-                                if (!isValidHex(value)) {
+                                // Очищаємо введення від некоректних символів
+                                value = '#' + value.replace(/[^0-9A-Fa-f]/g, '').substring(0, 6);
+                                if (value === '#' || !isValidHex(value)) {
                                     Lampa.Noty.show('Невірний формат HEX-коду. Використовуйте формат #FFFFFF.');
                                     Lampa.Controller.toggle('settings_component');
                                     return;
@@ -381,19 +382,50 @@
                 }
             });
 
-            // Показ/приховування підказки
+            // Обробники для поля вводу (для попереднього перегляду)
             var inputField = modalHtml.find('.color_input')[0];
             if (inputField) {
+                // Показ/приховування підказки
                 inputField.addEventListener('focus', function () {
                     var hint = modalHtml.find('.color_input_hint')[0];
                     if (hint) {
                         hint.style.display = 'block';
                     }
+                    inputField.setSelectionRange(1, 1); // Курсор після #
                 });
                 inputField.addEventListener('blur', function () {
                     var hint = modalHtml.find('.color_input_hint')[0];
                     if (hint) {
                         hint.style.display = 'none';
+                    }
+                });
+
+                // Запобігаємо видаленню # і обмежуємо курсор
+                inputField.addEventListener('keydown', function (e) {
+                    var cursorPos = inputField.selectionStart;
+                    var value = inputField.value;
+
+                    // Запобігаємо видаленню # (позиція 0)
+                    if ((e.keyCode === 8 || e.keyCode === 46) && cursorPos <= 1) {
+                        e.preventDefault();
+                    }
+
+                    // Запобігаємо переміщенню курсора на позицію 0
+                    if (e.keyCode === 37 && cursorPos <= 1) { // Стрілка вліво
+                        e.preventDefault();
+                        inputField.setSelectionRange(1, 1);
+                    }
+
+                    // Обмежуємо введення до 7 символів (# + 6 цифр)
+                    if (value.length >= 7 && e.keyCode !== 8 && e.keyCode !== 46 && e.keyCode !== 13 && e.keyCode !== 27) {
+                        e.preventDefault();
+                    }
+                });
+
+                // Перевірка введення, щоб зберегти #
+                inputField.addEventListener('input', function () {
+                    if (!inputField.value.startsWith('#')) {
+                        inputField.value = '#' + inputField.value.replace(/[^0-9A-Fa-f]/g, '').substring(0, 6);
                     }
                 });
             }
