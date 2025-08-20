@@ -174,7 +174,7 @@
                 '--transparent-white: ' + ColorPlugin.settings.transparent_white + ';' +
             '}' +
             '.menu__ico, .menu__ico.focus {' +
-                'color: ' + ColorPlugin.settings.icon_color + ';' +
+                'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
             '.console__tab.focus, .menu__item.focus, .menu__item.traverse, .menu__item.hover, ' +
             '.full-person.focus, .full-start__button.focus, .full-descr__tag.focus, ' +
@@ -256,43 +256,48 @@
             '}' +
             // Стили для квадратів у settings-param__descr (з фокусом і без)
             '.settings-param[data-name="color_plugin_main_color"] .settings-param__descr div, ' +
-            '.settings-param.focus[data-name="color_plugin_main_color"] .settings-param__descr div {' +
+            '.settings-param.focus[data-name="color_plugin_main_color"] .settings-param__descr div, ' +
+            '.settings-param.focus[data-name="color_plugin_main_color"] .settings-param__descr div[style*="background-color"] {' +
                 'background-color: ' + ColorPlugin.settings.main_color + ' !important;' +
-                'width: 2em;' +
-                'height: 2em;' +
-                'display: inline-block;' +
+                'width: 2em !important;' +
+                'height: 2em !important;' +
+                'display: inline-block !important;' +
                 'border: 2px solid rgb(255, 255, 255) !important;' +
             '}' +
             '.settings-param[data-name="color_plugin_background_color"] .settings-param__descr div, ' +
-            '.settings-param.focus[data-name="color_plugin_background_color"] .settings-param__descr div {' +
+            '.settings-param.focus[data-name="color_plugin_background_color"] .settings-param__descr div, ' +
+            '.settings-param.focus[data-name="color_plugin_background_color"] .settings-param__descr div[style*="background-color"] {' +
                 'background-color: ' + ColorPlugin.settings.background_color + ' !important;' +
-                'width: 2em;' +
-                'height: 2em;' +
-                'display: inline-block;' +
+                'width: 2em !important;' +
+                'height: 2em !important;' +
+                'display: inline-block !important;' +
                 'border: 2px solid rgb(255, 255, 255) !important;' +
             '}' +
             '.settings-param[data-name="color_plugin_text_color"] .settings-param__descr div, ' +
-            '.settings-param.focus[data-name="color_plugin_text_color"] .settings-param__descr div {' +
+            '.settings-param.focus[data-name="color_plugin_text_color"] .settings-param__descr div, ' +
+            '.settings-param.focus[data-name="color_plugin_text_color"] .settings-param__descr div[style*="background-color"] {' +
                 'background-color: ' + ColorPlugin.settings.text_color + ' !important;' +
-                'width: 2em;' +
-                'height: 2em;' +
-                'display: inline-block;' +
+                'width: 2em !important;' +
+                'height: 2em !important;' +
+                'display: inline-block !important;' +
                 'border: 2px solid rgb(255, 255, 255) !important;' +
             '}' +
             '.settings-param[data-name="color_plugin_transparent_white"] .settings-param__descr div, ' +
-            '.settings-param.focus[data-name="color_plugin_transparent_white"] .settings-param__descr div {' +
+            '.settings-param.focus[data-name="color_plugin_transparent_white"] .settings-param__descr div, ' +
+            '.settings-param.focus[data-name="color_plugin_transparent_white"] .settings-param__descr div[style*="background-color"] {' +
                 'background-color: ' + ColorPlugin.settings.transparent_white + ' !important;' +
-                'width: 2em;' +
-                'height: 2em;' +
-                'display: inline-block;' +
+                'width: 2em !important;' +
+                'height: 2em !important;' +
+                'display: inline-block !important;' +
                 'border: 2px solid rgb(255, 255, 255) !important;' +
             '}' +
             '.settings-param[data-name="color_plugin_icon_color"] .settings-param__descr div, ' +
-            '.settings-param.focus[data-name="color_plugin_icon_color"] .settings-param__descr div {' +
+            '.settings-param.focus[data-name="color_plugin_icon_color"] .settings-param__descr div, ' +
+            '.settings-param.focus[data-name="color_plugin_icon_color"] .settings-param__descr div[style*="background-color"] {' +
                 'background-color: ' + ColorPlugin.settings.icon_color + ' !important;' +
-                'width: 2em;' +
-                'height: 2em;' +
-                'display: inline-block;' +
+                'width: 2em !important;' +
+                'height: 2em !important;' +
+                'display: inline-block !important;' +
                 'border: 2px solid rgb(255, 255, 255) !important;' +
             '}' +
             '.color_square.default {' +
@@ -359,6 +364,7 @@
 
         // Оновлюємо іконку плагіна
         updatePluginIcon();
+        console.log('ColorPlugin: Applied styles, icon_color: ' + ColorPlugin.settings.icon_color);
     }
 
     // Функція для створення HTML для вибору кольору
@@ -519,9 +525,9 @@
                                 'background-color': ColorPlugin.settings.main_color,
                                 'border': '2px solid rgb(255, 255, 255)'
                             });
-                            console.log('ColorPlugin: Render main_color, color: ' + ColorPlugin.settings.main_color + ', focused: ' + item.hasClass('focus'));
+                            console.log('ColorPlugin: Render main_color, color: ' + ColorPlugin.settings.main_color + ', focused: ' + item.hasClass('focus') + ', computed color: ' + descr.css('background-color'));
                         }
-                    }, 0);
+                    }, 100);
                 },
                 onChange: function () {
                     openColorPicker('main_color', ColorPlugin.colors.main, 'main_color');
@@ -547,9 +553,9 @@
                                 'background-color': ColorPlugin.settings.background_color,
                                 'border': '2px solid rgb(255, 255, 255)'
                             });
-                            console.log('ColorPlugin: Render background_color, color: ' + ColorPlugin.settings.background_color + ', focused: ' + item.hasClass('focus'));
+                            console.log('ColorPlugin: Render background_color, color: ' + ColorPlugin.settings.background_color + ', focused: ' + item.hasClass('focus') + ', computed color: ' + descr.css('background-color'));
                         }
-                    }, 0);
+                    }, 100);
                 },
                 onChange: function () {
                     openColorPicker('background_color', ColorPlugin.colors.background, 'background_color');
@@ -575,9 +581,9 @@
                                 'background-color': ColorPlugin.settings.text_color,
                                 'border': '2px solid rgb(255, 255, 255)'
                             });
-                            console.log('ColorPlugin: Render text_color, color: ' + ColorPlugin.settings.text_color + ', focused: ' + item.hasClass('focus'));
+                            console.log('ColorPlugin: Render text_color, color: ' + ColorPlugin.settings.text_color + ', focused: ' + item.hasClass('focus') + ', computed color: ' + descr.css('background-color'));
                         }
-                    }, 0);
+                    }, 100);
                 },
                 onChange: function () {
                     openColorPicker('text_color', ColorPlugin.colors.text, 'text_color');
@@ -603,9 +609,9 @@
                                 'background-color': ColorPlugin.settings.transparent_white,
                                 'border': '2px solid rgb(255, 255, 255)'
                             });
-                            console.log('ColorPlugin: Render transparent_white, color: ' + ColorPlugin.settings.transparent_white + ', focused: ' + item.hasClass('focus'));
+                            console.log('ColorPlugin: Render transparent_white, color: ' + ColorPlugin.settings.transparent_white + ', focused: ' + item.hasClass('focus') + ', computed color: ' + descr.css('background-color'));
                         }
-                    }, 0);
+                    }, 100);
                 },
                 onChange: function () {
                     openColorPicker('transparent_white', ColorPlugin.colors.transparent, 'transparent_white');
@@ -631,9 +637,9 @@
                                 'background-color': ColorPlugin.settings.icon_color,
                                 'border': '2px solid rgb(255, 255, 255)'
                             });
-                            console.log('ColorPlugin: Render icon_color, color: ' + ColorPlugin.settings.icon_color + ', focused: ' + item.hasClass('focus'));
+                            console.log('ColorPlugin: Render icon_color, color: ' + ColorPlugin.settings.icon_color + ', focused: ' + item.hasClass('focus') + ', computed color: ' + descr.css('background-color'));
                         }
-                    }, 0);
+                    }, 100);
                 },
                 onChange: function () {
                     openColorPicker('icon_color', ColorPlugin.colors.icon, 'icon_color');
