@@ -1,3 +1,4 @@
+//іконки ліворуч у фокусі не у фокусі. ШАПКА БІЛА
 (function () {
     'use strict';
 
@@ -141,8 +142,6 @@
             var menuItem = document.querySelector('.menu__item[data-component="color_plugin"] .menu__ico');
             if (menuItem) {
                 menuItem.innerHTML = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="' + ColorPlugin.settings.icon_color + '"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
-                menuItem.style.color = ColorPlugin.settings.icon_color;
-                menuItem.style.fill = ColorPlugin.settings.icon_color;
             }
             return;
         }
@@ -175,17 +174,12 @@
                 '--text-color: ' + ColorPlugin.settings.text_color + ';' +
                 '--transparent-white: ' + ColorPlugin.settings.transparent_white + ';' +
             '}' +
-            // Іконки меню ліворуч, іконки налаштувань, іконки заголовка та іконка плагіна
-            '.menu__item .menu__ico, .menu__item .menu__ico.focus, ' +
-            '.head__action, .head__action.focus, .head__action:hover, ' +
-            '.settings-folder__icon, .settings-param__ico, ' +
-            '.menu__item[data-component="color_plugin"] .menu__ico {' +
+            '.menu__ico, .menu__ico.focus {' +
                 'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
-                'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
-            '.console__tab.focus, .menu__item.focus, .menu__item.traverse, .menu__item:hover, ' +
+            '.console__tab.focus, .menu__item.focus, .menu__item.traverse, .menu__item.hover, ' +
             '.full-person.focus, .full-start__button.focus, .full-descr__tag.focus, ' +
-            '.simple-button.focus, .head__action.focus, .head__action:hover, ' +
+            '.simple-button.focus, .head__action.focus, .head__action.hover, ' +
             '.player-panel .button.focus, .search-source.active {' +
                 'background: ' + ColorPlugin.settings.main_color + ';' +
                 'color: ' + ColorPlugin.settings.text_color + ';' +
@@ -203,7 +197,7 @@
             '.modal__button.focus, .search-history-key.focus, .simple-keyboard-mic.focus, ' +
             '.torrent-serial__progress, .full-review-add.focus, .full-review.focus, ' +
             '.tag-count.focus, .settings-folder.focus, .settings-param.focus, ' +
-            '.selectbox-item.focus, .selectbox-item:hover {' +
+            '.selectbox-item.focus, .selectbox-item.hover {' +
                 'background: ' + ColorPlugin.settings.main_color + ';' +
                 'color: ' + ColorPlugin.settings.text_color + ';' +
             '}' +
@@ -218,14 +212,14 @@
             '.card-more.focus .card-more__box::after {' +
                 'border: 0.3em solid ' + ColorPlugin.settings.main_color + ';' +
             '}' +
-            '.iptv-playlist-item.focus::after, .iptv-playlist-item:hover::after {' +
+            '.iptv-playlist-item.focus::after, .iptv-playlist-item.hover::after {' +
                 'border-color: ' + ColorPlugin.settings.main_color + ' !important;' +
             '}' +
-            '.ad-bot.focus .ad-bot__content::after, .ad-bot:hover .ad-bot__content::after, ' +
+            '.ad-bot.focus .ad-bot__content::after, .ad-bot.hover .ad-bot__content::after, ' +
             '.card-episode.focus .full-episode::after, .register.focus::after, ' +
             '.season-episode.focus::after, .full-episode.focus::after, ' +
             '.full-review-add.focus::after, .card.focus .card__view::after, ' +
-            '.card:hover .card__view::after, .extensions__item.focus:after, ' +
+            '.card.hover .card__view::after, .extensions__item.focus:after, ' +
             '.torrent-item.focus::after, .extensions__block-add.focus:after {' +
                 'border-color: ' + ColorPlugin.settings.main_color + ';' +
             '}' +
