@@ -174,7 +174,7 @@
                 '--transparent-white: ' + ColorPlugin.settings.transparent_white + ';' +
             '}' +
             // Стиль для іконок лівого меню
-            '.menu__ico, .menu__ico.focus {' +
+            '.menu__ico, .menu__ico.focus, .menu__item.focus .menu__ico {' +
                 'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
@@ -331,8 +331,10 @@
         );
 
         // Оновлюємо іконку плагіна
-        updatePluginTcon(); // Виправлено з updatePluginIcon на updatePluginTcon
+        updatePluginTcon();
         console.log('ColorPlugin: Applied styles, icon_color: ' + ColorPlugin.settings.icon_color + ', main_color: ' + ColorPlugin.settings.main_color);
+        // Дебаг-логування для перевірки іконок лівого меню
+        console.log('ColorPlugin: Applying icon_color to left menu: .menu__ico, .menu__ico.focus, .menu__item.focus .menu__ico');
     }
 
     // Функція для створення HTML для вибору кольору
