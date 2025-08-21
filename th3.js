@@ -134,15 +134,35 @@
         return /^#[0-9A-Fa-f]{6}$/.test(color);
     }
 
-    // Функція для видалення вбудованих атрибутів SVG
-    function removeInlineSvgStyles(elements) {
-        for (var i = 0; i < elements.length; i++) {
-            var svgChildren = elements[i].querySelectorAll('path, g, rect, circle, *');
-            for (var j = 0; j < svgChildren.length; j++) {
-                svgChildren[j].removeAttribute('fill');
-                svgChildren[j].removeAttribute('style');
+    // Функція для конвертації HEX у CSS-фільтр
+    function hexToFilter(hex) {
+        // Видаляємо # і конвертуємо HEX у RGB
+        hex = hex.replace('#', '');
+        var r = parseInt(hex.substring(0, 2), 16) / 255;
+        var g = parseInt(hex.substring(2, 4), 16) / 255;
+        var b = parseInt(hex.substring(4, 6), 16) / 255;
+
+        // Конвертуємо RGB у HSL
+        var max = Math.max(r, g, b), min = Math.min(r, g, b);
+        var h, s, l = (max + min) / 2;
+
+        if (max === min) {
+            h = s = 0; // Аchromatic
+        } else {
+            var d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+            switch (max) {
+                case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                case g: h = (b - r) / d + 2; break;
+                case b: h = (r - g) / d + 4; break;
             }
+            h /= 6;
         }
+
+        // Конвертуємо hue у градуси
+        h = Math.round(h * 360);
+        // Створюємо CSS-фільтр із hue-rotate
+        return 'hue-rotate(' + h + 'deg) brightness(1) saturate(1)';
     }
 
     // Функція для оновлення іконки плагіна
@@ -156,7 +176,6 @@
                 menuItem.style.fill = ColorPlugin.settings.icon_color;
                 var paths = menuItem.querySelectorAll('path');
                 for (var i = 0; i < paths.length; i++) {
-                    paths[i].removeAttribute('fill');
                     paths[i].style.fill = ColorPlugin.settings.icon_color;
                 }
             }
@@ -177,12 +196,11 @@
             return;
         }
 
-        var style = document.getElementById('color-plugin-styles');
-        if (!style) {
-            style = document.createElement('style');
-            style.id = 'color-plugin-styles';
-            document.head.appendChild(style);
-        }
+        var style = document.createElement('style');
+        style.id = 'color-plugin-styles';
+        document.head.appendChild(style);
+
+        var iconFilter = hexToFilter(ColorPlugin.settings.icon_color);
 
         style.innerHTML = (
             ':root {' +
@@ -195,16 +213,17 @@
             '.menu__item.selector .menu__ico, .menu__item.selector .menu__ico.focus, ' +
             '.menu__item.selector .menu__ico.focus path, .menu__item.selector .menu__ico.focus *,' +
             '.head__action, .head__action.focus, .head__action:hover, ' +
-            '.settings--inner .settings-folder__icon, .settings--inner .settings-folder__icon.focus, ' +
-            '.settings--inner .settings-folder__icon *, .settings--inner .settings-folder__icon path, ' +
-            '.settings--inner .settings-param__ico, .settings--inner .settings-param__ico.focus, ' +
-            '.settings--inner .settings-param__ico *, .settings--inner .settings-param__ico path, ' +
-            '.settings--inner .settings-param__icon, .settings--inner .settings-param__icon.focus, ' +
-            '.settings--inner .settings-param__icon *, .settings--inner .settings-param__icon path, ' +
+            '.head__action path, .head__action.focus path, .head__action:hover path,' +
+            '.settings-folder__icon, .settings-folder__icon *, ' +
+            '.settings-param__ico, .settings-param__ico *, .settings-param__icon, .settings-param__icon *,' +
             '.menu__item[data-component="color_plugin"] .menu__ico, ' +
             '.menu__item[data-component="color_plugin"] .menu__ico path {' +
                 'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
+            '}' +
+            // Застосування фільтра для <img> у іконках налаштувань
+            '.settings-folder__icon img, .settings-param__ico img, .settings-param__icon img {' +
+                'filter: ' + iconFilter + ' !important;' +
             '}' +
             '.console__tab.focus, .menu__item.focus, .menu__item.traverse, .menu__item:hover, ' +
             '.full-person.focus, .full-start__button.focus, .full-descr__tag.focus, ' +
@@ -348,32 +367,33 @@
 
         // Резервне оновлення стилів для іконок меню ліворуч
         var menuIcons = document.querySelectorAll('.menu__item.selector .menu__ico, .menu__item.selector .menu__ico.focus');
-        removeInlineSvgStyles(menuIcons);
         for (var i = 0; i < menuIcons.length; i++) {
             menuIcons[i].style.color = ColorPlugin.settings.icon_color;
             menuIcons[i].style.fill = ColorPlugin.settings.icon_color;
-            var paths = menuIcons[i].querySelectorAll('path, g, rect, circle, *');
+            var paths = menuIcons[i].querySelectorAll('path');
             for (var j = 0; j < paths.length; j++) {
                 paths[j].style.fill = ColorPlugin.settings.icon_color;
             }
         }
 
         // Резервне оновлення стилів для іконок налаштувань
-        var settingsIcons = document.querySelectorAll('.settings--inner .settings-folder__icon, .settings--inner .settings-param__ico, .settings--inner .settings-param__icon');
-        removeInlineSvgStyles(settingsIcons);
+        var settingsIcons = document.querySelectorAll('.settings-folder__icon, .settings-folder__icon img, .settings-param__ico, .settings-param__ico img, .settings-param__icon, .settings-param__icon img');
         for (var i = 0; i < settingsIcons.length; i++) {
             settingsIcons[i].style.color = ColorPlugin.settings.icon_color;
             settingsIcons[i].style.fill = ColorPlugin.settings.icon_color;
-            var paths = settingsIcons[i].querySelectorAll('path, g, rect, circle, *');
-            for (var j = 0; j < paths.length; j++) {
-                paths[j].style.fill = ColorPlugin.settings.icon_color;
+            if (settingsIcons[i].tagName.toLowerCase() === 'img') {
+                settingsIcons[i].style.filter = iconFilter;
+            } else {
+                var paths = settingsIcons[i].querySelectorAll('path, g, *');
+                for (var j = 0; j < paths.length; j++) {
+                    paths[j].style.fill = ColorPlugin.settings.icon_color;
+                }
             }
         }
 
         // Оновлюємо іконку плагіна
         updatePluginIcon();
-        console.log('ColorPlugin: Applied styles, icon_color: ' + ColorPlugin.settings.icon_color + ', main_color: ' + ColorPlugin.settings.main_color);
-        console.log('ColorPlugin: Found settings icons: ', settingsIcons.length);
+        console.log('ColorPlugin: Applied styles, icon_color: ' + ColorPlugin.settings.icon_color + ', filter: ' + iconFilter);
     }
 
     // Функція для створення HTML для вибору кольору
@@ -622,17 +642,6 @@
     Lampa.Listener.follow('settings_component', function (event) {
         if (event.type === 'open') {
             applyStyles();
-            var settingsIcons = document.querySelectorAll('.settings--inner .settings-folder__icon, .settings--inner .settings-param__ico, .settings--inner .settings-param__icon');
-            removeInlineSvgStyles(settingsIcons);
-            for (var i = 0; i < settingsIcons.length; i++) {
-                settingsIcons[i].style.color = ColorPlugin.settings.icon_color;
-                settingsIcons[i].style.fill = ColorPlugin.settings.icon_color;
-                var paths = settingsIcons[i].querySelectorAll('path, g, rect, circle, *');
-                for (var j = 0; j < paths.length; j++) {
-                    paths[j].style.fill = ColorPlugin.settings.icon_color;
-                }
-            }
-            console.log('ColorPlugin: Settings opened, updated ' + settingsIcons.length + ' icons');
             Lampa.Settings.render();
         }
     });
@@ -640,27 +649,29 @@
     // Оновлюємо стилі при зміні фокусу
     Lampa.Listener.follow('controller', function (event) {
         if (event.type === 'focus') {
+            var iconFilter = hexToFilter(ColorPlugin.settings.icon_color);
             var menuIcons = document.querySelectorAll('.menu__item.selector .menu__ico.focus');
-            removeInlineSvgStyles(menuIcons);
             for (var i = 0; i < menuIcons.length; i++) {
                 menuIcons[i].style.color = ColorPlugin.settings.icon_color;
                 menuIcons[i].style.fill = ColorPlugin.settings.icon_color;
-                var paths = menuIcons[i].querySelectorAll('path, g, rect, circle, *');
+                var paths = menuIcons[i].querySelectorAll('path');
                 for (var j = 0; j < paths.length; j++) {
                     paths[j].style.fill = ColorPlugin.settings.icon_color;
                 }
             }
-            var settingsIcons = document.querySelectorAll('.settings--inner .settings-folder__icon.focus, .settings--inner .settings-param__ico.focus, .settings--inner .settings-param__icon.focus');
-            removeInlineSvgStyles(settingsIcons);
+            var settingsIcons = document.querySelectorAll('.settings-folder__icon.focus, .settings-folder__icon.focus img, .settings-param__ico.focus, .settings-param__ico.focus img, .settings-param__icon.focus, .settings-param__icon.focus img');
             for (var i = 0; i < settingsIcons.length; i++) {
                 settingsIcons[i].style.color = ColorPlugin.settings.icon_color;
                 settingsIcons[i].style.fill = ColorPlugin.settings.icon_color;
-                var paths = settingsIcons[i].querySelectorAll('path, g, rect, circle, *');
-                for (var j = 0; j < paths.length; j++) {
-                    paths[j].style.fill = ColorPlugin.settings.icon_color;
+                if (settingsIcons[i].tagName.toLowerCase() === 'img') {
+                    settingsIcons[i].style.filter = iconFilter;
+                } else {
+                    var paths = settingsIcons[i].querySelectorAll('path, g, *');
+                    for (var j = 0; j < paths.length; j++) {
+                        paths[j].style.fill = ColorPlugin.settings.icon_color;
+                    }
                 }
             }
-            console.log('ColorPlugin: Focus event, updated ' + settingsIcons.length + ' settings icons');
         }
     });
 })();
