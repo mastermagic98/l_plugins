@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    // Додаємо переклади
+    // Додаємо переклади (без змін)
     Lampa.Lang.add({
         color_plugin: {
             ru: 'Настройка цветов',
@@ -29,9 +29,9 @@
             uk: 'Прозорий фон'
         },
         icon_color: {
-            ru: 'Цвет иконок (общий)',
-            en: 'Icons color (global)',
-            uk: 'Колір іконок (загальний)'
+            ru: 'Цвет иконок',
+            en: 'Icons color',
+            uk: 'Колір іконок'
         },
         color_plugin_enabled: {
             ru: 'Включить плагин',
@@ -52,38 +52,17 @@
             ru: 'Используйте формат #FFFFFF, например #123524',
             en: 'Use the format #FFFFFF, for example #123524',
             uk: 'Використовуйте формат #FFFFFF, наприклад #123524'
-        },
-        // Нові ключі для груп
-        icon_group_left: {
-            ru: 'Иконки левого меню',
-            en: 'Left menu icons',
-            uk: 'Іконки лівого меню'
-        },
-        icon_group_top: {
-            ru: 'Иконки верхнего меню (хедер)',
-            en: 'Top header icons',
-            uk: 'Іконки верхнього меню (хедер)'
-        },
-        icon_group_right: {
-            ru: 'Иконки правых настроек',
-            en: 'Right settings icons',
-            uk: 'Іконки правих налаштувань'
         }
     });
 
-    // Об'єкт для зберігання налаштувань
+    // Об'єкт для зберігання налаштувань (без змін)
     var ColorPlugin = {
         settings: {
             main_color: '#353535',
-            background_color: '#1d1f20',
-            text_color: '#ffffff',
+ background_color: '#1d1f20',
+            text_color: '#fff',
             transparent_white: 'rgba(255,255,255,0.2)',
-
-            // Раніше був один icon_color — тепер три незалежні змінні:
-            icon_color_left: '#497d00',  // ліве меню
-            icon_color_top: '#ffffff',   // верхній хедер
-            icon_color_right: '#9f0712', // праві налаштування (і іконка самого плагіна)
-
+            icon_color: '#000',
             enabled: true
         },
         colors: {
@@ -128,7 +107,6 @@
                 'rgba(255,255,255,0.3)': 'Прозорий білий 30%',
                 'rgba(0,0,0,0.2)': 'Прозорий чорний 20%'
             },
-            // Набір для іконок (спільний для трьох груп)
             icon: {
                 '#000000': 'Чорний',
                 '#ffffff': 'Білий',
@@ -136,49 +114,44 @@
                 '#9f0712': 'Темно-червоний',
                 '#fef3c6': 'Світло-жовтий',
                 '#497d00': 'Темно-зелений',
-                '#007595': 'Морський синій',
-                '#3b88d5': 'Маринер',
-                '#e1284e': 'Амарант'
+                '#007595': 'Морський синій'
             }
         }
     };
 
-    // Функція для конвертації RGB у HEX
+    // Функція для конвертації RGB у HEX (без змін)
     function rgbToHex(rgb) {
-        var matches = rgb && rgb.match ? rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/) : null;
+        var matches = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
         if (!matches) return rgb;
         function hex(n) {
-            return ('0' + parseInt(n, 10).toString(16)).slice(-2);
+            return ('0' + parseInt(n).toString(16)).slice(-2);
         }
         return '#' + hex(matches[1]) + hex(matches[2]) + hex(matches[3]);
     }
 
-    // Функція для валідації HEX-коду
+    // Функція для валідації HEX-коду (без змін)
     function isValidHex(color) {
         return /^#[0-9A-Fa-f]{6}$/.test(color);
     }
 
-    // Оновлення іконки самого плагіна (відображається у правих налаштуваннях)
+    // Функція для оновлення іконки плагіна (без змін)
     function updatePluginIcon() {
-        try {
-            if (!Lampa.SettingsApi || !Lampa.SettingsApi.components) {
-                var menuItem = document.querySelector('.menu__item[data-component="color_plugin"] .menu__ico');
-                if (menuItem) {
-                    menuItem.innerHTML = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="' + ColorPlugin.settings.icon_color_right + '"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
-                }
-                return;
+        if (!Lampa.SettingsApi || !Lampa.SettingsApi.components) {
+            console.warn('ColorPlugin: Lampa.SettingsApi.components is not available.');
+            var menuItem = document.querySelector('.menu__item[data-component="color_plugin"] .menu__ico');
+            if (menuItem) {
+                menuItem.innerHTML = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="' + ColorPlugin.settings.icon_color + '"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
             }
-            var component = Lampa.SettingsApi.components.find(function (c) { return c.component === 'color_plugin'; });
-            if (component) {
-                component.icon = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="' + ColorPlugin.settings.icon_color_right + '"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
-                Lampa.Settings.render();
-            }
-        } catch (e) {
-            console.warn('ColorPlugin: updatePluginIcon error', e);
+            return;
+        }
+        var component = Lampa.SettingsApi.components.find(function(c) { return c.component === 'color_plugin'; });
+        if (component) {
+            component.icon = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="' + ColorPlugin.settings.icon_color + '"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1  1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
+            Lampa.Settings.render();
         }
     }
 
-    // Функція для застосування стилів
+    // Оновлена функція для застосування стилів
     function applyStyles() {
         if (!ColorPlugin.settings.enabled) {
             var oldStyle = document.getElementById('color-plugin-styles');
@@ -193,99 +166,67 @@
             document.head.appendChild(style);
         }
 
-        // Увага: жорстке розділення трьох груп іконок + збережено попередні акценти
-        style.innerHTML =
+        style.innerHTML = (
             ':root {' +
                 '--main-color: ' + ColorPlugin.settings.main_color + ';' +
                 '--background-color: ' + ColorPlugin.settings.background_color + ';' +
                 '--text-color: ' + ColorPlugin.settings.text_color + ';' +
                 '--transparent-white: ' + ColorPlugin.settings.transparent_white + ';' +
-                '--icon-left: ' + ColorPlugin.settings.icon_color_left + ';' +
-                '--icon-top: ' + ColorPlugin.settings.icon_color_top + ';' +
-                '--icon-right: ' + ColorPlugin.settings.icon_color_right + ';' +
             '}' +
-
-            /* ----------------- ЛІВЕ МЕНЮ: ІКОНКИ -----------------
-               Тільки ліва колонка меню. Фіксуємо звичайний стан та фокус/hover/traverse.
-               SVG використовує currentColor, тож виставляємо через color.
-            */
-            '.menu .menu__item .menu__ico {' +
-                'color: var(--icon-left) !important;' +
+            // Стиль для іконок лівого меню
+            '.menu__ico, .menu__ico.focus {' +
+                'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
+                'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
-            '.menu .menu__item.focus .menu__ico, ' +
-            '.menu .menu__item.hover .menu__ico, ' +
-            '.menu .menu__item.traverse .menu__ico {' +
-                'color: var(--icon-left) !important;' +
+            // Стиль для іконок верхнього меню
+            '.head__action .icon, .head__settings .icon, .selector.open--search .icon, ' +
+            '.head__action.focus .icon, .head__settings.focus .icon, .selector.open--search.focus .icon {' +
+                'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
+                'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
-
-            /* ----------------- ВЕРХНІЙ ХЕДЕР: ІКОНКИ -----------------
-               Діємо тільки на елементи хедера. Не чіпаємо ліве меню та праві налаштування.
-            */
-            '.head .head__action svg, .head .head__action .icon, .head .head__action {' +
-                'color: var(--icon-top) !important;' +
-                'fill: var(--icon-top) !important;' +
+            // Стиль для іконок меню налаштувань праворуч
+            '.settings-folder__icon, .settings-folder__icon.focus {' +
+                'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
+                'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
-            '.head .head__action.focus svg, .head .head__action.hover svg, .head .head__action.focus, .head .head__action.hover {' +
-                'color: var(--icon-top) !important;' +
-                'fill: var(--icon-top) !important;' +
-            '}' +
-
-            /* ----------------- ПРАВІ НАЛАШТУВАННЯ: ІКОНКИ -----------------
-               Селектори для списків налаштувань, іконок папок/параметрів.
-            */
-            '.settings, .settings__content, .settings-param, .settings-folder {' +
-                '--cp-right-icon: var(--icon-right);' +
-            '}' +
-            '.settings .settings-param .settings-param__name .menu__ico, ' +
-            '.settings .settings-param .menu__ico, ' +
-            '.settings .settings-folder .menu__ico, ' +
-            '.settings .menu__ico {' +
-                'color: var(--cp-right-icon) !important;' +
-            '}' +
-            '.settings .settings-param.focus .menu__ico, ' +
-            '.settings .settings-folder.focus .menu__ico, ' +
-            '.settings .selectbox-item.focus .menu__ico {' +
-                'color: var(--cp-right-icon) !important;' +
-            '}' +
-
-            /* ----------------- ІНШІ АКЦЕНТИ З ПОПЕРЕДНЬОЇ ВЕРСІЇ ----------------- */
+            // Решта стилів без змін
             '.console__tab.focus, .menu__item.focus, .menu__item.traverse, .menu__item.hover, ' +
             '.full-person.focus, .full-start__button.focus, .full-descr__tag.focus, ' +
             '.simple-button.focus, .head__action.focus, .head__action.hover, ' +
             '.player-panel .button.focus, .search-source.active {' +
-                'background: var(--main-color);' +
-                'color: var(--text-color);' +
+                'background: ' + ColorPlugin.settings.main_color + ';' +
+                'color: ' + ColorPlugin.settings.text_color + ';' +
             '}' +
             '.navigation-tabs__button.focus, .time-line > div, .player-panel__position, ' +
             '.player-panel__position > div:after {' +
-                'background-color: var(--main-color);' +
-                'color: var(--text-color);' +
+                'background-color: ' + ColorPlugin.settings.main_color + ';' +
+                'color: ' + ColorPlugin.settings.text_color + ';' +
             '}' +
             '.iptv-menu__list-item.focus, .iptv-program__timeline>div {' +
-                'background-color: var(--main-color) !important;' +
-                'color: var(--text-color) !important;' +
+                'background-color: ' + ColorPlugin.settings.main_color + ' !important;' +
+                'color: ' + ColorPlugin.settings.text_color + ' !important;' +
             '}' +
             '.radio-item.focus, .lang__selector-item.focus, .simple-keyboard .hg-button.focus, ' +
             '.modal__button.focus, .search-history-key.focus, .simple-keyboard-mic.focus, ' +
             '.torrent-serial__progress, .full-review-add.focus, .full-review.focus, ' +
             '.tag-count.focus, .settings-folder.focus, .settings-param.focus, ' +
             '.selectbox-item.focus, .selectbox-item.hover {' +
-                'background: var(--main-color);' +
-                'color: var(--text-color);' +
+                'background: ' + ColorPlugin.settings.main_color + ';' +
+                'color: ' + ColorPlugin.settings.text_color + ';' +
             '}' +
             '.online.focus {' +
-                'box-shadow: 0 0 0 0.2em var(--main-color);' +
+                'box-shadow: 0 0 0 0.2em ' + ColorPlugin.settings.main_color + ';' +
             '}' +
             '.online_modss.focus::after, .online-prestige.focus::after, ' +
             '.radio-item.focus .radio-item__imgbox:after, .iptv-channel.focus::before, ' +
             '.iptv-channel.last--focus::before {' +
-                'border-color: var(--main-color) !important;' +
+                'border-color: ' + ColorPlugin.settings.main_color + ' !important;' +
             '}' +
             '.card-more.focus .card-more__box::after {' +
-                'border: 0.3em solid var(--main-color);' +
+                'border: 0.3em solid ' + ColorPlugin.settings.main_color + ';' +
             '}' +
             '.iptv-playlist-item.focus::after, .iptv-playlist-item.hover::after {' +
-                'border-color: var(--main-color) !important;' +
+                'border-color: ' + ColorPlugin.settings.main_color + ' !important;' +
             '}' +
             '.ad-bot.focus .ad-bot__content::after, .ad-bot.hover .ad-bot__content::after, ' +
             '.card-episode.focus .full-episode::after, .register.focus::after, ' +
@@ -293,29 +234,29 @@
             '.full-review-add.focus::after, .card.focus .card__view::after, ' +
             '.card.hover .card__view::after, .extensions__item.focus:after, ' +
             '.torrent-item.focus::after, .extensions__block-add.focus:after {' +
-                'border-color: var(--main-color);' +
+                'border-color: ' + ColorPlugin.settings.main_color + ';' +
             '}' +
             '.torrent-serial__size {' +
-                'background-color: var(--text-color);' +
-                'color: var(--icon-right);' +
+                'background-color: ' + ColorPlugin.settings.text_color + ';' +
+                'color: ' + ColorPlugin.settings.icon_color + ';' +
             '}' +
             '.broadcast__scan > div, .broadcast__device.focus {' +
-                'background-color: var(--main-color);' +
-                'color: var(--text-color);' +
+                'background-color: ' + ColorPlugin.settings.main_color + ';' +
+                'color: ' + ColorPlugin.settings.text_color + ';' +
             '}' +
             '.card:hover .card__img, .card.focus .card__img {' +
-                'border-color: var(--main-color);' +
+                'border-color: ' + ColorPlugin.settings.main_color + ';' +
             '}' +
             '.noty {' +
-                'background: var(--main-color);' +
-                'color: var(--text-color);' +
+                'background: ' + ColorPlugin.settings.main_color + ';' +
+                'color: ' + ColorPlugin.settings.text_color + ';' +
             '}' +
             '.radio-player.focus {' +
-                'background-color: var(--main-color);' +
-                'color: var(--text-color);' +
+                'background-color: ' + ColorPlugin.settings.main_color + ';' +
+                'color: ' + ColorPlugin.settings.text_color + ';' +
             '}' +
             '.explorer-card__head-img.focus::after {' +
-                'border: 0.3em solid var(--main-color);' +
+                'border: 0.3em solid ' + ColorPlugin.settings.main_color + ';' +
             '}' +
             '.color_square.focus {' +
                 'border: 0.3em solid var(--main-color);' +
@@ -324,11 +265,11 @@
             'body.glass--style .selectbox-item.focus, ' +
             'body.glass--style .settings-folder.focus, ' +
             'body.glass--style .settings-param.focus {' +
-                'background-color: var(--main-color);' +
-                'color: var(--text-color);' +
+                'background-color: ' + ColorPlugin.settings.main_color + ';' +
+                'color: ' + ColorPlugin.settings.text_color + ';' +
             '}' +
             '.color_square.default {' +
-                'background-color: #ffffff;' +
+                'background-color: #fff;' +
                 'position: relative;' +
             '}' +
             '.color_square.default::after {' +
@@ -386,33 +327,34 @@
                 'position: absolute;' +
                 'bottom: 10px;' +
                 'font-size: 14px;' +
-            '}';
+            '}'
+        );
 
+        // Оновлюємо іконку плагіна
         updatePluginIcon();
-        console.log('ColorPlugin: styles applied. Left:', ColorPlugin.settings.icon_color_left, 'Top:', ColorPlugin.settings.icon_color_top, 'Right:', ColorPlugin.settings.icon_color_right);
+        console.log('ColorPlugin: Applied styles, icon_color: ' + ColorPlugin.settings.icon_color + ', main_color: ' + ColorPlugin.settings.main_color);
     }
 
-    // Функція для створення HTML для вибору кольору
+    // Функція для створення HTML для вибору кольору (без змін)
     function createColorHtml(color, name) {
         var className = color === 'default' ? 'color_square selector default' : 'color_square selector';
         var style = color === 'default' ? '' : 'background-color: ' + color + ';';
         return '<div class="' + className + '" tabindex="0" style="' + style + '" title="' + name + '"></div>';
     }
 
-    // Функція для розбиття масиву кольорів на групи
+    // Функція для розбиття масиву кольорів на групи (без змін)
     function chunkArray(arr, size) {
         var result = [];
-        var i;
-        for (i = 0; i < arr.length; i += size) {
+        for (var i = 0; i < arr.length; i += size) {
             result.push(arr.slice(i, i + size));
         }
-        return result;
+        Dodd result;
     }
 
-    // Функція для створення модального вікна вибору кольору
+    // Функція для створення модального вікна вибору кольору (без змін)
     function openColorPicker(paramName, colors, title) {
         var colorKeys = Object.keys(colors);
-        var groupedColors = chunkArray(colorKeys, 5);
+        var groupedColors = chunkArray(colorKeys, 5); // Сітка 5x2
         var colorContent = groupedColors.map(function (group) {
             var groupContent = group.map(function (color) {
                 return createColorHtml(color, colors[color]);
@@ -420,14 +362,14 @@
             return '<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 11.25px; justify-items: center; padding: 10px;">' + groupContent + '</div>';
         }).join('');
 
+        // Блок для введення HEX-коду у стилі color_square
         var hexValue = Lampa.Storage.get('color_plugin_custom_hex', '') || '#000000';
-        var inputHtml =
-            '<div style="padding: 10px; display: flex; justify-content: center;">' +
-                '<div class="color_square selector hex-input" tabindex="0" style="background-color: ' + hexValue + ';">' +
-                    '<div class="label">' + Lampa.Lang.translate('custom_hex_input') + '</div>' +
-                    '<div class="value">' + hexValue + '</div>' +
-                '</div>' +
-            '</div>';
+        var inputHtml = '<div style="padding: 10px; display: flex; justify-content: center;">' +
+                        '<div class="color_square selector hex-input" tabindex="0" style="background-color: ' + hexValue + ';">' +
+                        '<div class="label">' + Lampa.Lang.translate('custom_hex_input') + '</div>' +
+                        '<div class="value">' + hexValue + '</div>' +
+                        '</div>' +
+                        '</div>';
 
         var modalHtml = $('<div>' + colorContent + inputHtml + '</div>');
 
@@ -448,8 +390,8 @@
                         var color;
 
                         if (selectedElement.classList.contains('hex-input')) {
-                            Lampa.Noty.show(Lampa.Lang.translate('hex_input_hint'));
-                            Lampa.Modal.close();
+                            Lampa.Noty.show(Lampa.Lang.translate('hex_input_hint')); // Показуємо підказку
+                            Lampa.Modal.close(); // Закриваємо модальне вікно перед викликом клавіатури
                             var inputOptions = {
                                 name: 'color_plugin_custom_hex',
                                 value: Lampa.Storage.get('color_plugin_custom_hex', ''),
@@ -479,19 +421,16 @@
                             });
                             return;
                         } else if (selectedElement.classList.contains('default')) {
-                            var defaults = {
+                            color = {
                                 main_color: '#353535',
                                 background_color: '#1d1f20',
-                                text_color: '#ffffff',
+                                text_color: '#fff',
                                 transparent_white: 'rgba(255,255,255,0.2)',
-                                icon_color_left: '#497d00',
-                                icon_color_top: '#ffffff',
-                                icon_color_right: '#9f0712'
-                            };
-                            color = defaults[paramName];
+                                icon_color: '#000'
+                            }[paramName];
                         } else {
                             color = selectedElement.style.backgroundColor || ColorPlugin.settings[paramName];
-                            color = color && color.indexOf('rgb') !== -1 ? rgbToHex(color) : color;
+                            color = color.includes('rgb') ? rgbToHex(color) : color;
                         }
 
                         ColorPlugin.settings[paramName] = color;
@@ -509,27 +448,22 @@
         }
     }
 
-    // Ініціалізація плагіна
+    // Ініціалізація плагіна (без змін)
     function initPlugin() {
         // Завантажуємо збережені налаштування
         ColorPlugin.settings.main_color = Lampa.Storage.get('color_plugin_main_color', '#353535');
         ColorPlugin.settings.background_color = Lampa.Storage.get('color_plugin_background_color', '#1d1f20');
-        ColorPlugin.settings.text_color = Lampa.Storage.get('color_plugin_text_color', '#ffffff');
+        ColorPlugin.settings.text_color = Lampa.Storage.get('color_plugin_text_color', '#fff');
         ColorPlugin.settings.transparent_white = Lampa.Storage.get('color_plugin_transparent_white', 'rgba(255,255,255,0.2)');
-
-        // Три незалежні групи іконок
-        ColorPlugin.settings.icon_color_left = Lampa.Storage.get('color_plugin_icon_color_left', '#497d00');
-        ColorPlugin.settings.icon_color_top = Lampa.Storage.get('color_plugin_icon_color_top', '#ffffff');
-        ColorPlugin.settings.icon_color_right = Lampa.Storage.get('color_plugin_icon_color_right', '#9f0712');
-
+        ColorPlugin.settings.icon_color = Lampa.Storage.get('color_plugin_icon_color', '#000');
         ColorPlugin.settings.enabled = Lampa.Storage.get('color_plugin_enabled', true);
 
+        // Додаємо компонент до меню налаштувань
         if (Lampa.SettingsApi) {
-            // Компонент у налаштуваннях
             Lampa.SettingsApi.addComponent({
                 component: 'color_plugin',
                 name: Lampa.Lang.translate('color_plugin'),
-                icon: '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="' + ColorPlugin.settings.icon_color_right + '"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>'
+                icon: '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="' + ColorPlugin.settings.icon_color + '"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>'
             });
 
             // Основний колір
@@ -592,48 +526,18 @@
                 }
             });
 
-            // КОЛІР ІКОНОК — ЛІВЕ МЕНЮ
+            // Колір іконок
             Lampa.SettingsApi.addParam({
                 component: 'color_plugin',
                 param: {
-                    name: 'color_plugin_icon_color_left',
+                    name: 'color_plugin_icon_color',
                     type: 'button'
                 },
                 field: {
-                    name: Lampa.Lang.translate('icon_group_left')
+                    name: Lampa.Lang.translate('icon_color')
                 },
                 onChange: function () {
-                    openColorPicker('icon_color_left', ColorPlugin.colors.icon, 'icon_group_left');
-                }
-            });
-
-            // КОЛІР ІКОНОК — ВЕРХНІЙ ХЕДЕР
-            Lampa.SettingsApi.addParam({
-                component: 'color_plugin',
-                param: {
-                    name: 'color_plugin_icon_color_top',
-                    type: 'button'
-                },
-                field: {
-                    name: Lampa.Lang.translate('icon_group_top')
-                },
-                onChange: function () {
-                    openColorPicker('icon_color_top', ColorPlugin.colors.icon, 'icon_group_top');
-                }
-            });
-
-            // КОЛІР ІКОНОК — ПРАВІ НАЛАШТУВАННЯ
-            Lampa.SettingsApi.addParam({
-                component: 'color_plugin',
-                param: {
-                    name: 'color_plugin_icon_color_right',
-                    type: 'button'
-                },
-                field: {
-                    name: Lampa.Lang.translate('icon_group_right')
-                },
-                onChange: function () {
-                    openColorPicker('icon_color_right', ColorPlugin.colors.icon, 'icon_group_right');
+                    openColorPicker('icon_color', ColorPlugin.colors.icon, 'icon_color');
                 }
             });
 
@@ -662,7 +566,7 @@
         }
     }
 
-    // Запускаємо плагін після готовності програми
+    // Запускаємо плагін після готовності програми (без змін)
     if (window.appready && Lampa.SettingsApi) {
         initPlugin();
     } else {
@@ -673,7 +577,7 @@
         });
     }
 
-    // Оновлюємо стилі при відкритті налаштувань
+    // Оновлюємо стилі при відкритті налаштувань (без змін)
     Lampa.Listener.follow('settings_component', function (event) {
         if (event.type === 'open') {
             applyStyles();
