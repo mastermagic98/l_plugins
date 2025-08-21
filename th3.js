@@ -140,13 +140,18 @@
             console.warn('ColorPlugin: Lampa.SettingsApi.components is not available.');
             var menuItem = document.querySelector('.menu__item[data-component="color_plugin"] .menu__ico');
             if (menuItem) {
-                menuItem.innerHTML = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="' + ColorPlugin.settings.icon_color + '"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
+                menuItem.innerHTML = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
+                var svg = menuItem.querySelector('svg');
+                if (svg) {
+                    svg.style.fill = ColorPlugin.settings.icon_color;
+                    console.log('ColorPlugin: Updated plugin icon color to', ColorPlugin.settings.icon_color);
+                }
             }
             return;
         }
         var component = Lampa.SettingsApi.components.find(function(c) { return c.component === 'color_plugin'; });
         if (component) {
-            component.icon = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="' + ColorPlugin.settings.icon_color + '"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
+            component.icon = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
             Lampa.Settings.render();
         }
     }
@@ -154,10 +159,11 @@
     // Функція для видалення вбудованих стилів SVG
     function removeInlineSvgStyles() {
         var selectors = [
-            '.head__action .icon svg path, .head__action .icon svg rect, .head__action .icon svg circle, .head__action .icon svg [stroke]',
-            '.head__settings .icon svg path, .head__settings .icon svg rect, .head__settings .icon svg circle, .head__settings .icon svg [stroke]',
-            '.selector.open--search .icon svg path, .selector.open--search .icon svg rect, .selector.open--search .icon svg circle, .selector.open--search .icon svg [stroke]',
-            '.settings-folder__icon svg path, .settings-folder__icon svg rect, .settings-folder__icon svg circle, .settings-folder__icon svg [stroke]'
+            '.head__action .icon svg path, .head__action .icon svg rect, .head__action .icon svg circle, .head__action .icon svg polygon, .head__action .icon svg polyline, .head__action .icon svg [stroke]',
+            '.head__settings .icon svg path, .head__settings .icon svg rect, .head__settings .icon svg circle, .head__settings .icon svg polygon, .head__settings .icon svg polyline, .head__settings .icon svg [stroke]',
+            '.selector.open--search .icon svg path, .selector.open--search .icon svg rect, .selector.open--search .icon svg circle, .selector.open--search .icon svg polygon, .selector.open--search .icon svg polyline, .selector.open--search .icon svg [stroke]',
+            '.settings-folder__icon svg path, .settings-folder__icon svg rect, .settings-folder__icon svg circle, .settings-folder__icon svg polygon, .settings-folder__icon svg polyline, .settings-folder__icon svg [stroke]',
+            '.menu__item[data-component="color_plugin"] .menu__ico svg path, .menu__item[data-component="color_plugin"] .menu__ico svg rect, .menu__item[data-component="color_plugin"] .menu__ico svg circle, .menu__item[data-component="color_plugin"] .menu__ico svg polygon, .menu__item[data-component="color_plugin"] .menu__ico svg polyline, .menu__item[data-component="color_plugin"] .menu__ico svg [stroke]'
         ];
         selectors.forEach(function(selector) {
             var elements = document.querySelectorAll(selector);
@@ -196,17 +202,62 @@
                 '--text-color: ' + ColorPlugin.settings.text_color + ';' +
                 '--transparent-white: ' + ColorPlugin.settings.transparent_white + ';' +
             '}' +
+            // Стиль для іконки плагіна "Налаштування кольорів"
+            '.menu__item[data-component="color_plugin"] .menu__ico, ' +
+            '.menu__item[data-component="color_plugin"].focus .menu__ico, ' +
+            '.menu__item[data-component="color_plugin"].traverse .menu__ico, ' +
+            '.menu__item[data-component="color_plugin"].hover .menu__ico, ' +
+            '.menu__item[data-component="color_plugin"] .menu__ico path[fill], ' +
+            '.menu__item[data-component="color_plugin"].focus .menu__ico path[fill], ' +
+            '.menu__item[data-component="color_plugin"].traverse .menu__ico path[fill], ' +
+            '.menu__item[data-component="color_plugin"].hover .menu__ico path[fill], ' +
+            '.menu__item[data-component="color_plugin"] .menu__ico rect[fill], ' +
+            '.menu__item[data-component="color_plugin"].focus .menu__ico rect[fill], ' +
+            '.menu__item[data-component="color_plugin"].traverse .menu__ico rect[fill], ' +
+            '.menu__item[data-component="color_plugin"].hover .menu__ico rect[fill], ' +
+            '.menu__item[data-component="color_plugin"] .menu__ico circle[fill], ' +
+            '.menu__item[data-component="color_plugin"].focus .menu__ico circle[fill], ' +
+            '.menu__item[data-component="color_plugin"].traverse .menu__ico circle[fill], ' +
+            '.menu__item[data-component="color_plugin"].hover .menu__ico circle[fill], ' +
+            '.menu__item[data-component="color_plugin"] .menu__ico polygon[fill], ' +
+            '.menu__item[data-component="color_plugin"].focus .menu__ico polygon[fill], ' +
+            '.menu__item[data-component="color_plugin"].traverse .menu__ico polygon[fill], ' +
+            '.menu__item[data-component="color_plugin"].hover .menu__ico polygon[fill], ' +
+            '.menu__item[data-component="color_plugin"] .menu__ico polyline[fill], ' +
+            '.menu__item[data-component="color_plugin"].focus .menu__ico polyline[fill], ' +
+            '.menu__item[data-component="color_plugin"].traverse .menu__ico polyline[fill], ' +
+            '.menu__item[data-component="color_plugin"].hover .menu__ico polyline[fill] {' +
+                'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
+                'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
+            '}' +
+            '.menu__item[data-component="color_plugin"] .menu__ico [stroke], ' +
+            '.menu__item[data-component="color_plugin"].focus .menu__ico [stroke], ' +
+            '.menu__item[data-component="color_plugin"].traverse .menu__ico [stroke], ' +
+            '.menu__item[data-component="color_plugin"].hover .menu__ico [stroke] {' +
+                'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
+            '}' +
+            '.menu__item[data-component="color_plugin"] .menu__ico img, ' +
+            '.menu__item[data-component="color_plugin"].focus .menu__ico img, ' +
+            '.menu__item[data-component="color_plugin"].traverse .menu__ico img, ' +
+            '.menu__item[data-component="color_plugin"].hover .menu__ico img {' +
+                '-webkit-filter: none !important;' +
+                'filter: none !important;' +
+            '}' +
             // Стиль для іконок лівого меню
             '.menu__ico, .menu__ico.focus, .menu__item.focus .menu__ico, ' +
             '.menu__item.traverse .menu__ico, .menu__item.hover .menu__ico, ' +
-            '.menu__item.focus .menu__ico path[fill], .menu__item.focus .menu__ico rect[fill], .menu__item.focus .menu__ico circle[fill], ' +
-            '.menu__item.traverse .menu__ico path[fill], .menu__item.traverse .menu__ico rect[fill], .menu__item.traverse .menu__ico circle[fill], ' +
-            '.menu__item.hover .menu__ico path[fill], .menu__item.hover .menu__ico rect[fill], .menu__item.hover .menu__ico circle[fill] {' +
+            '.menu__item.focus .menu__ico path[fill], .menu__item.focus .menu__ico rect[fill], .menu__item.focus .menu__ico circle[fill], .menu__item.focus .menu__ico polygon[fill], .menu__item.focus .menu__ico polyline[fill], ' +
+            '.menu__item.traverse .menu__ico path[fill], .menu__item.traverse .menu__ico rect[fill], .menu__item.traverse .menu__ico circle[fill], .menu__item.traverse .menu__ico polygon[fill], .menu__item.traverse .menu__ico polyline[fill], ' +
+            '.menu__item.hover .menu__ico path[fill], .menu__item.hover .menu__ico rect[fill], .menu__item.hover .menu__ico circle[fill], .menu__item.hover .menu__ico polygon[fill], .menu__item.hover .menu__ico polyline[fill] {' +
                 'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
             '.menu__item.focus .menu__ico [stroke], .menu__item.traverse .menu__ico [stroke], .menu__item.hover .menu__ico [stroke] {' +
                 'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
+            '}' +
+            '.menu__item.focus .menu__ico img, .menu__item.traverse .menu__ico img, .menu__item.hover .menu__ico img {' +
+                '-webkit-filter: none !important;' +
+                'filter: none !important;' +
             '}' +
             // Стиль для іконок верхнього меню
             '.head .head__action .icon, .head .head__settings .icon, .head .selector.open--search .icon, ' +
@@ -221,7 +272,13 @@
             '.head .selector.open--search .icon rect[fill], .head .selector.open--search.focus .icon rect[fill], .head .selector.open--search.traverse .icon rect[fill], .head .selector.open--search:hover .icon rect[fill], ' +
             '.head .head__action .icon circle[fill], .head .head__action.focus .icon circle[fill], .head .head__action.traverse .icon circle[fill], .head .head__action:hover .icon circle[fill], ' +
             '.head .head__settings .icon circle[fill], .head .head__settings.focus .icon circle[fill], .head .head__settings.traverse .icon circle[fill], .head .head__settings:hover .icon circle[fill], ' +
-            '.head .selector.open--search .icon circle[fill], .head .selector.open--search.focus .icon circle[fill], .head .selector.open--search.traverse .icon circle[fill], .head .selector.open--search:hover .icon circle[fill] {' +
+            '.head .selector.open--search .icon circle[fill], .head .selector.open--search.focus .icon circle[fill], .head .selector.open--search.traverse .icon circle[fill], .head .selector.open--search:hover .icon circle[fill], ' +
+            '.head .head__action .icon polygon[fill], .head .head__action.focus .icon polygon[fill], .head .head__action.traverse .icon polygon[fill], .head .head__action:hover .icon polygon[fill], ' +
+            '.head .head__settings .icon polygon[fill], .head .head__settings.focus .icon polygon[fill], .head .head__settings.traverse .icon polygon[fill], .head .head__settings:hover .icon polygon[fill], ' +
+            '.head .selector.open--search .icon polygon[fill], .head .selector.open--search.focus .icon polygon[fill], .head .selector.open--search.traverse .icon polygon[fill], .head .selector.open--search:hover .icon polygon[fill], ' +
+            '.head .head__action .icon polyline[fill], .head .head__action.focus .icon polyline[fill], .head .head__action.traverse .icon polyline[fill], .head .head__action:hover .icon polyline[fill], ' +
+            '.head .head__settings .icon polyline[fill], .head .head__settings.focus .icon polyline[fill], .head .head__settings.traverse .icon polyline[fill], .head .head__settings:hover .icon polyline[fill], ' +
+            '.head .selector.open--search .icon polyline[fill], .head .selector.open--search.focus .icon polyline[fill], .head .selector.open--search.traverse .icon polyline[fill], .head .selector.open--search:hover .icon polyline[fill] {' +
                 'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
@@ -230,26 +287,66 @@
             '.head .selector.open--search .icon [stroke], .head .selector.open--search.focus .icon [stroke], .head .selector.open--search.traverse .icon [stroke], .head .selector.open--search:hover .icon [stroke] {' +
                 'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
-            // Вимкнення фільтрів для растрових іконок верхнього меню
             '.head .head__action .icon img, .head .head__action.focus .icon img, .head .head__action.traverse .icon img, .head .head__action:hover .icon img, ' +
             '.head .head__settings .icon img, .head .head__settings.focus .icon img, .head .head__settings.traverse .icon img, .head .head__settings:hover .icon img, ' +
             '.head .selector.open--search .icon img, .head .selector.open--search.focus .icon img, .head .selector.open--search.traverse .icon img, .head .selector.open--search:hover .icon img {' +
                 '-webkit-filter: none !important;' +
                 'filter: none !important;' +
             '}' +
-            // Стиль для іконок меню налаштувань праворуч
+            // Стиль для іконок меню налаштувань (усі компоненти)
             '.settings-folder__icon, .settings-folder__icon.focus, .settings-folder__icon.traverse, .settings-folder__icon:hover, ' +
+            '.settings-folder__icon[component="interface"], .settings-folder__icon[component="interface"].focus, .settings-folder__icon[component="interface"].traverse, .settings-folder__icon[component="interface"]:hover, ' +
+            '.settings-folder__icon[component="player"], .settings-folder__icon[component="player"].focus, .settings-folder__icon[component="player"].traverse, .settings-folder__icon[component="player"]:hover, ' +
+            '.settings-folder__icon[component="parser"], .settings-folder__icon[component="parser"].focus, .settings-folder__icon[component="parser"].traverse, .settings-folder__icon[component="parser"]:hover, ' +
+            '.settings-folder__icon[component="torrserver"], .settings-folder__icon[component="torrserver"].focus, .settings-folder__icon[component="torrserver"].traverse, .settings-folder__icon[component="torrserver"]:hover, ' +
+            '.settings-folder__icon[component="other"], .settings-folder__icon[component="other"].focus, .settings-folder__icon[component="other"].traverse, .settings-folder__icon[component="other"]:hover, ' +
             '.settings-folder__icon path[fill], .settings-folder__icon.focus path[fill], .settings-folder__icon.traverse path[fill], .settings-folder__icon:hover path[fill], ' +
+            '.settings-folder__icon[component="interface"] path[fill], .settings-folder__icon[component="interface"].focus path[fill], .settings-folder__icon[component="interface"].traverse path[fill], .settings-folder__icon[component="interface"]:hover path[fill], ' +
+            '.settings-folder__icon[component="player"] path[fill], .settings-folder__icon[component="player"].focus path[fill], .settings-folder__icon[component="player"].traverse path[fill], .settings-folder__icon[component="player"]:hover path[fill], ' +
+            '.settings-folder__icon[component="parser"] path[fill], .settings-folder__icon[component="parser"].focus path[fill], .settings-folder__icon[component="parser"].traverse path[fill], .settings-folder__icon[component="parser"]:hover path[fill], ' +
+            '.settings-folder__icon[component="torrserver"] path[fill], .settings-folder__icon[component="torrserver"].focus path[fill], .settings-folder__icon[component="torrserver"].traverse path[fill], .settings-folder__icon[component="torrserver"]:hover path[fill], ' +
+            '.settings-folder__icon[component="other"] path[fill], .settings-folder__icon[component="other"].focus path[fill], .settings-folder__icon[component="other"].traverse path[fill], .settings-folder__icon[component="other"]:hover path[fill], ' +
             '.settings-folder__icon rect[fill], .settings-folder__icon.focus rect[fill], .settings-folder__icon.traverse rect[fill], .settings-folder__icon:hover rect[fill], ' +
-            '.settings-folder__icon circle[fill], .settings-folder__icon.focus circle[fill], .settings-folder__icon.traverse circle[fill], .settings-folder__icon:hover circle[fill] {' +
+            '.settings-folder__icon[component="interface"] rect[fill], .settings-folder__icon[component="interface"].focus rect[fill], .settings-folder__icon[component="interface"].traverse rect[fill], .settings-folder__icon[component="interface"]:hover rect[fill], ' +
+            '.settings-folder__icon[component="player"] rect[fill], .settings-folder__icon[component="player"].focus rect[fill], .settings-folder__icon[component="player"].traverse rect[fill], .settings-folder__icon[component="player"]:hover rect[fill], ' +
+            '.settings-folder__icon[component="parser"] rect[fill], .settings-folder__icon[component="parser"].focus rect[fill], .settings-folder__icon[component="parser"].traverse rect[fill], .settings-folder__icon[component="parser"]:hover rect[fill], ' +
+            '.settings-folder__icon[component="torrserver"] rect[fill], .settings-folder__icon[component="torrserver"].focus rect[fill], .settings-folder__icon[component="torrserver"].traverse rect[fill], .settings-folder__icon[component="torrserver"]:hover rect[fill], ' +
+            '.settings-folder__icon[component="other"] rect[fill], .settings-folder__icon[component="other"].focus rect[fill], .settings-folder__icon[component="other"].traverse rect[fill], .settings-folder__icon[component="other"]:hover rect[fill], ' +
+            '.settings-folder__icon circle[fill], .settings-folder__icon.focus circle[fill], .settings-folder__icon.traverse circle[fill], .settings-folder__icon:hover circle[fill], ' +
+            '.settings-folder__icon[component="interface"] circle[fill], .settings-folder__icon[component="interface"].focus circle[fill], .settings-folder__icon[component="interface"].traverse circle[fill], .settings-folder__icon[component="interface"]:hover circle[fill], ' +
+            '.settings-folder__icon[component="player"] circle[fill], .settings-folder__icon[component="player"].focus circle[fill], .settings-folder__icon[component="player"].traverse circle[fill], .settings-folder__icon[component="player"]:hover circle[fill], ' +
+            '.settings-folder__icon[component="parser"] circle[fill], .settings-folder__icon[component="parser"].focus circle[fill], .settings-folder__icon[component="parser"].traverse circle[fill], .settings-folder__icon[component="parser"]:hover circle[fill], ' +
+            '.settings-folder__icon[component="torrserver"] circle[fill], .settings-folder__icon[component="torrserver"].focus circle[fill], .settings-folder__icon[component="torrserver"].traverse circle[fill], .settings-folder__icon[component="torrserver"]:hover circle[fill], ' +
+            '.settings-folder__icon[component="other"] circle[fill], .settings-folder__icon[component="other"].focus circle[fill], .settings-folder__icon[component="other"].traverse circle[fill], .settings-folder__icon[component="other"]:hover circle[fill], ' +
+            '.settings-folder__icon polygon[fill], .settings-folder__icon.focus polygon[fill], .settings-folder__icon.traverse polygon[fill], .settings-folder__icon:hover polygon[fill], ' +
+            '.settings-folder__icon[component="interface"] polygon[fill], .settings-folder__icon[component="interface"].focus polygon[fill], .settings-folder__icon[component="interface"].traverse polygon[fill], .settings-folder__icon[component="interface"]:hover polygon[fill], ' +
+            '.settings-folder__icon[component="player"] polygon[fill], .settings-folder__icon[component="player"].focus polygon[fill], .settings-folder__icon[component="player"].traverse polygon[fill], .settings-folder__icon[component="player"]:hover polygon[fill], ' +
+            '.settings-folder__icon[component="parser"] polygon[fill], .settings-folder__icon[component="parser"].focus polygon[fill], .settings-folder__icon[component="parser"].traverse polygon[fill], .settings-folder__icon[component="parser"]:hover polygon[fill], ' +
+            '.settings-folder__icon[component="torrserver"] polygon[fill], .settings-folder__icon[component="torrserver"].focus polygon[fill], .settings-folder__icon[component="torrserver"].traverse polygon[fill], .settings-folder__icon[component="torrserver"]:hover polygon[fill], ' +
+            '.settings-folder__icon[component="other"] polygon[fill], .settings-folder__icon[component="other"].focus polygon[fill], .settings-folder__icon[component="other"].traverse polygon[fill], .settings-folder__icon[component="other"]:hover polygon[fill], ' +
+            '.settings-folder__icon polyline[fill], .settings-folder__icon.focus polyline[fill], .settings-folder__icon.traverse polyline[fill], .settings-folder__icon:hover polyline[fill], ' +
+            '.settings-folder__icon[component="interface"] polyline[fill], .settings-folder__icon[component="interface"].focus polyline[fill], .settings-folder__icon[component="interface"].traverse polyline[fill], .settings-folder__icon[component="interface"]:hover polyline[fill], ' +
+            '.settings-folder__icon[component="player"] polyline[fill], .settings-folder__icon[component="player"].focus polyline[fill], .settings-folder__icon[component="player"].traverse polyline[fill], .settings-folder__icon[component="player"]:hover polyline[fill], ' +
+            '.settings-folder__icon[component="parser"] polyline[fill], .settings-folder__icon[component="parser"].focus polyline[fill], .settings-folder__icon[component="parser"].traverse polyline[fill], .settings-folder__icon[component="parser"]:hover polyline[fill], ' +
+            '.settings-folder__icon[component="torrserver"] polyline[fill], .settings-folder__icon[component="torrserver"].focus polyline[fill], .settings-folder__icon[component="torrserver"].traverse polyline[fill], .settings-folder__icon[component="torrserver"]:hover polyline[fill], ' +
+            '.settings-folder__icon[component="other"] polyline[fill], .settings-folder__icon[component="other"].focus polyline[fill], .settings-folder__icon[component="other"].traverse polyline[fill], .settings-folder__icon[component="other"]:hover polyline[fill] {' +
                 'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
-            '.settings-folder__icon [stroke], .settings-folder__icon.focus [stroke], .settings-folder__icon.traverse [stroke], .settings-folder__icon:hover [stroke] {' +
+            '.settings-folder__icon [stroke], .settings-folder__icon.focus [stroke], .settings-folder__icon.traverse [stroke], .settings-folder__icon:hover [stroke], ' +
+            '.settings-folder__icon[component="interface"] [stroke], .settings-folder__icon[component="interface"].focus [stroke], .settings-folder__icon[component="interface"].traverse [stroke], .settings-folder__icon[component="interface"]:hover [stroke], ' +
+            '.settings-folder__icon[component="player"] [stroke], .settings-folder__icon[component="player"].focus [stroke], .settings-folder__icon[component="player"].traverse [stroke], .settings-folder__icon[component="player"]:hover [stroke], ' +
+            '.settings-folder__icon[component="parser"] [stroke], .settings-folder__icon[component="parser"].focus [stroke], .settings-folder__icon[component="parser"].traverse [stroke], .settings-folder__icon[component="parser"]:hover [stroke], ' +
+            '.settings-folder__icon[component="torrserver"] [stroke], .settings-folder__icon[component="torrserver"].focus [stroke], .settings-folder__icon[component="torrserver"].traverse [stroke], .settings-folder__icon[component="torrserver"]:hover [stroke], ' +
+            '.settings-folder__icon[component="other"] [stroke], .settings-folder__icon[component="other"].focus [stroke], .settings-folder__icon[component="other"].traverse [stroke], .settings-folder__icon[component="other"]:hover [stroke] {' +
                 'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
-            // Вимкнення фільтрів для растрових іконок меню налаштувань
-            '.settings-folder__icon img, .settings-folder__icon.focus img, .settings-folder__icon.traverse img, .settings-folder__icon:hover img {' +
+            '.settings-folder__icon img, .settings-folder__icon.focus img, .settings-folder__icon.traverse img, .settings-folder__icon:hover img, ' +
+            '.settings-folder__icon[component="interface"] img, .settings-folder__icon[component="interface"].focus img, .settings-folder__icon[component="interface"].traverse img, .settings-folder__icon[component="interface"]:hover img, ' +
+            '.settings-folder__icon[component="player"] img, .settings-folder__icon[component="player"].focus img, .settings-folder__icon[component="player"].traverse img, .settings-folder__icon[component="player"]:hover img, ' +
+            '.settings-folder__icon[component="parser"] img, .settings-folder__icon[component="parser"].focus img, .settings-folder__icon[component="parser"].traverse img, .settings-folder__icon[component="parser"]:hover img, ' +
+            '.settings-folder__icon[component="torrserver"] img, .settings-folder__icon[component="torrserver"].focus img, .settings-folder__icon[component="torrserver"].traverse img, .settings-folder__icon[component="torrserver"]:hover img, ' +
+            '.settings-folder__icon[component="other"] img, .settings-folder__icon[component="other"].focus img, .settings-folder__icon[component="other"].traverse img, .settings-folder__icon[component="other"]:hover img {' +
                 '-webkit-filter: none !important;' +
                 'filter: none !important;' +
             '}' +
@@ -400,20 +497,31 @@
         updatePluginTcon();
         console.log('ColorPlugin: Applied styles, icon_color: ' + ColorPlugin.settings.icon_color + ', main_color: ' + ColorPlugin.settings.main_color);
         // Дебаг-логування для перевірки іконок
+        console.log('ColorPlugin: Applying icon_color to plugin icon: .menu__item[data-component="color_plugin"] .menu__ico');
         console.log('ColorPlugin: Applying icon_color to left menu: .menu__ico, .menu__ico.focus, .menu__item.focus .menu__ico, .menu__item.traverse .menu__ico, .menu__item.hover .menu__ico');
         console.log('ColorPlugin: Applying icon_color to top menu: .head__action .icon, .head__settings .icon, .selector.open--search .icon');
-        console.log('ColorPlugin: Applying icon_color to settings menu: .settings-folder__icon');
-        var focusedTopIcons = document.querySelectorAll(
+        console.log('ColorPlugin: Applying icon_color to settings menu: .settings-folder__icon, including components [interface, player, parser, torrserver, other]');
+        var pluginIcon = document.querySelectorAll('.menu__item[data-component="color_plugin"] .menu__ico path[fill], .menu__item[data-component="color_plugin"].focus .menu__ico path[fill]');
+        console.log('ColorPlugin: Found ' + pluginIcon.length + ' SVG elements in plugin icon');
+        pluginIcon.forEach(function(icon) {
+            console.log('ColorPlugin: Plugin icon SVG element style - fill: ' + icon.style.fill);
+        });
+        var topMenuIcons = document.querySelectorAll(
             '.head__action.focus .icon path[fill], .head__action.traverse .icon path[fill], .head__action:hover .icon path[fill], ' +
             '.head__settings.focus .icon path[fill], .head__settings.traverse .icon path[fill], .head__settings:hover .icon path[fill], ' +
             '.selector.open--search.focus .icon path[fill], .selector.open--search.traverse .icon path[fill], .selector.open--search:hover .icon path[fill]'
         );
-        console.log('ColorPlugin: Found ' + focusedTopIcons.length + ' SVG elements in focused/hovered top menu icons');
-        focusedTopIcons.forEach(function(icon) {
+        console.log('ColorPlugin: Found ' + topMenuIcons.length + ' SVG elements in focused/hovered top menu icons');
+        topMenuIcons.forEach(function(icon) {
             console.log('ColorPlugin: Top menu SVG element style - fill: ' + icon.style.fill);
         });
         var settingsIcons = document.querySelectorAll(
-            '.settings-folder__icon path[fill], .settings-folder__icon.focus path[fill], .settings-folder__icon.traverse path[fill], .settings-folder__icon:hover path[fill]'
+            '.settings-folder__icon path[fill], .settings-folder__icon.focus path[fill], .settings-folder__icon.traverse path[fill], .settings-folder__icon:hover path[fill], ' +
+            '.settings-folder__icon[component="interface"] path[fill], .settings-folder__icon[component="interface"].focus path[fill], ' +
+            '.settings-folder__icon[component="player"] path[fill], .settings-folder__icon[component="player"].focus path[fill], ' +
+            '.settings-folder__icon[component="parser"] path[fill], .settings-folder__icon[component="parser"].focus path[fill], ' +
+            '.settings-folder__icon[component="torrserver"] path[fill], .settings-folder__icon[component="torrserver"].focus path[fill], ' +
+            '.settings-folder__icon[component="other"] path[fill], .settings-folder__icon[component="other"].focus path[fill]'
         );
         console.log('ColorPlugin: Found ' + settingsIcons.length + ' SVG elements in settings menu icons');
         settingsIcons.forEach(function(icon) {
@@ -549,7 +657,7 @@
             Lampa.SettingsApi.addComponent({
                 component: 'color_plugin',
                 name: Lampa.Lang.translate('color_plugin'),
-                icon: '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="' + ColorPlugin.settings.icon_color + '"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>'
+                icon: '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>'
             });
 
             // Основний колір
