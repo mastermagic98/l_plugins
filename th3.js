@@ -174,9 +174,16 @@
                 '--transparent-white: ' + ColorPlugin.settings.transparent_white + ';' +
             '}' +
             // Стиль для іконок лівого меню
-            '.menu__ico, .menu__ico.focus, .menu__item.focus .menu__ico {' +
+            '.menu__ico, .menu__ico.focus, .menu__item.focus .menu__ico, ' +
+            '.menu__item.traverse .menu__ico, .menu__item.hover .menu__ico, ' +
+            '.menu__item.focus .menu__ico path[fill], .menu__item.focus .menu__ico rect[fill], .menu__item.focus .menu__ico circle[fill], ' +
+            '.menu__item.traverse .menu__ico path[fill], .menu__item.traverse .menu__ico rect[fill], .menu__item.traverse .menu__ico circle[fill], ' +
+            '.menu__item.hover .menu__ico path[fill], .menu__item.hover .menu__ico rect[fill], .menu__item.hover .menu__ico circle[fill] {' +
                 'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
+            '}' +
+            '.menu__item.focus .menu__ico [stroke], .menu__item.traverse .menu__ico [stroke], .menu__item.hover .menu__ico [stroke] {' +
+                'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
             // Стиль для іконок верхнього меню
             '.head__action .icon, .head__settings .icon, .selector.open--search .icon, ' +
@@ -334,7 +341,12 @@
         updatePluginTcon();
         console.log('ColorPlugin: Applied styles, icon_color: ' + ColorPlugin.settings.icon_color + ', main_color: ' + ColorPlugin.settings.main_color);
         // Дебаг-логування для перевірки іконок лівого меню
-        console.log('ColorPlugin: Applying icon_color to left menu: .menu__ico, .menu__ico.focus, .menu__item.focus .menu__ico');
+        console.log('ColorPlugin: Applying icon_color to left menu: .menu__ico, .menu__ico.focus, .menu__item.focus .menu__ico, .menu__item.traverse .menu__ico, .menu__item.hover .menu__ico');
+        var focusedIcons = document.querySelectorAll('.menu__item.focus .menu__ico path[fill], .menu__item.traverse .menu__ico path[fill], .menu__item.hover .menu__ico path[fill]');
+        console.log('ColorPlugin: Found ' + focusedIcons.length + ' SVG elements in focused/hovered menu icons');
+        focusedIcons.forEach(function(icon) {
+            console.log('ColorPlugin: SVG element style - fill: ' + icon.style.fill);
+        });
     }
 
     // Функція для створення HTML для вибору кольору
