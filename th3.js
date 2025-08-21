@@ -193,19 +193,23 @@
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
-            // Скидання фону для нефокусованих елементів меню
+            // Скидання фону для нефокусованих іконок
             '.menu__item.selector .menu__ico {' +
                 'background-color: transparent !important;' +
             '}' +
-            // Контур у фокусі
+            // Контур у фокусі для іконок
             '.menu__item.selector.focus .menu__ico {' +
-                'outline: 2px solid ' + ColorPlugin.settings.main_color + ' !important;' +
-                'outline-offset: 2px;' +
+                'border: 2px solid ' + ColorPlugin.settings.main_color + ' !important;' +
+                'border-radius: 4px;' +
             '}' +
-            '.console__tab.focus, .menu__item.focus, .menu__item.traverse, .menu__item:hover, ' +
-            '.full-person.focus, .full-start__button.focus, .full-descr__tag.focus, ' +
-            '.simple-button.focus, .head__action.focus, .head__action:hover, ' +
-            '.player-panel .button.focus, .search-source.active {' +
+            // Фон для фокусованих елементів меню
+            '.menu__item.focus, .menu__item.traverse, .menu__item:hover {' +
+                'background: ' + ColorPlugin.settings.main_color + ' !important;' +
+                'color: ' + ColorPlugin.settings.text_color + ' !important;' +
+            '}' +
+            '.console__tab.focus, .full-person.focus, .full-start__button.focus, ' +
+            '.full-descr__tag.focus, .simple-button.focus, .head__action.focus, ' +
+            '.head__action:hover, .player-panel .button.focus, .search-source.active {' +
                 'background: ' + ColorPlugin.settings.main_color + ';' +
                 'color: ' + ColorPlugin.settings.text_color + ';' +
             '}' +
@@ -343,14 +347,14 @@
         );
 
         // Резервне оновлення стилів для іконок меню
-        var menuIcons = document.querySelectorAll('.menu__item.selector .menu__ico, .menu__item.selector .menu__ico.focus');
+        var menuIcons = document.querySelectorAll('.menu__item.selector .menu__ico');
         for (var i = 0; i < menuIcons.length; i++) {
             menuIcons[i].style.color = ColorPlugin.settings.icon_color;
             menuIcons[i].style.fill = ColorPlugin.settings.icon_color;
             menuIcons[i].style.backgroundColor = 'transparent';
             var paths = menuIcons[i].querySelectorAll('path, circle');
             for (var j = 0; j < paths.length; j++) {
-                paths[j].style.fill = ColorPlugin.settings.icon_color;
+                paths[j].style.fill = 'none';
                 paths[j].style.stroke = ColorPlugin.settings.icon_color;
             }
         }
@@ -610,7 +614,7 @@
         }
     });
 
-    // Оновлюємо стилі при зміні фокусу
+    // Оновлюємо стилі при зміні фокусу (лише для іконок)
     Lampa.Listener.follow('controller', function (event) {
         if (event.type === 'focus') {
             var menuIcons = document.querySelectorAll('.menu__item.selector .menu__ico.focus');
@@ -620,7 +624,7 @@
                 menuIcons[i].style.backgroundColor = 'transparent';
                 var paths = menuIcons[i].querySelectorAll('path, circle');
                 for (var j = 0; j < paths.length; j++) {
-                    paths[j].style.fill = ColorPlugin.settings.icon_color;
+                    paths[j].style.fill = 'none';
                     paths[j].style.stroke = ColorPlugin.settings.icon_color;
                 }
             }
