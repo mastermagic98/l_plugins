@@ -143,6 +143,10 @@
                 menuItem.innerHTML = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="' + ColorPlugin.settings.icon_color + '"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
                 menuItem.style.color = ColorPlugin.settings.icon_color;
                 menuItem.style.fill = ColorPlugin.settings.icon_color;
+                var paths = menuItem.querySelectorAll('path');
+                for (var i = 0; i < paths.length; i++) {
+                    paths[i].style.fill = ColorPlugin.settings.icon_color;
+                }
             }
             return;
         }
@@ -179,7 +183,8 @@
             '.menu__item.selector .menu__ico, .menu__item.selector .menu__ico.focus, ' +
             '.menu__item.selector .menu__ico.focus path, .menu__item.selector .menu__ico.focus *,' +
             '.head__action, .head__action.focus, .head__action:hover, ' +
-            '.settings-folder__icon, .settings-folder__icon *, .settings-param__ico, ' +
+            '.settings-folder__icon, .settings-folder__icon *, ' +
+            '.settings-param__ico, .settings-param__ico *, .settings-param__icon, .settings-param__icon *,' +
             '.menu__item[data-component="color_plugin"] .menu__ico, ' +
             '.menu__item[data-component="color_plugin"] .menu__ico path {' +
                 'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
@@ -325,12 +330,23 @@
             '}'
         );
 
-        // Резервне оновлення стилів для іконок меню
+        // Резервне оновлення стилів для іконок меню ліворуч
         var menuIcons = document.querySelectorAll('.menu__item.selector .menu__ico, .menu__item.selector .menu__ico.focus');
         for (var i = 0; i < menuIcons.length; i++) {
             menuIcons[i].style.color = ColorPlugin.settings.icon_color;
             menuIcons[i].style.fill = ColorPlugin.settings.icon_color;
             var paths = menuIcons[i].querySelectorAll('path');
+            for (var j = 0; j < paths.length; j++) {
+                paths[j].style.fill = ColorPlugin.settings.icon_color;
+            }
+        }
+
+        // Резервне оновлення стилів для іконок налаштувань
+        var settingsIcons = document.querySelectorAll('.settings-folder__icon, .settings-param__ico, .settings-param__icon');
+        for (var i = 0; i < settingsIcons.length; i++) {
+            settingsIcons[i].style.color = ColorPlugin.settings.icon_color;
+            settingsIcons[i].style.fill = ColorPlugin.settings.icon_color;
+            var paths = settingsIcons[i].querySelectorAll('path, g, *');
             for (var j = 0; j < paths.length; j++) {
                 paths[j].style.fill = ColorPlugin.settings.icon_color;
             }
@@ -599,6 +615,15 @@
                 menuIcons[i].style.color = ColorPlugin.settings.icon_color;
                 menuIcons[i].style.fill = ColorPlugin.settings.icon_color;
                 var paths = menuIcons[i].querySelectorAll('path');
+                for (var j = 0; j < paths.length; j++) {
+                    paths[j].style.fill = ColorPlugin.settings.icon_color;
+                }
+            }
+            var settingsIcons = document.querySelectorAll('.settings-folder__icon.focus, .settings-param__ico.focus, .settings-param__icon.focus');
+            for (var i = 0; i < settingsIcons.length; i++) {
+                settingsIcons[i].style.color = ColorPlugin.settings.icon_color;
+                settingsIcons[i].style.fill = ColorPlugin.settings.icon_color;
+                var paths = settingsIcons[i].querySelectorAll('path, g, *');
                 for (var j = 0; j < paths.length; j++) {
                     paths[j].style.fill = ColorPlugin.settings.icon_color;
                 }
