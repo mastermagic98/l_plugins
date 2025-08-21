@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    // Додаємо переклади (без змін)
+    // Додаємо переклади
     Lampa.Lang.add({
         color_plugin: {
             ru: 'Настройка цветов',
@@ -55,7 +55,7 @@
         }
     });
 
-    // Об'єкт для зберігання налаштувань (без змін)
+    // Об'єкт для зберігання налаштувань
     var ColorPlugin = {
         settings: {
             main_color: '#353535',
@@ -119,7 +119,7 @@
         }
     };
 
-    // Функція для конвертації RGB у HEX (без змін)
+    // Функція для конвертації RGB у HEX
     function rgbToHex(rgb) {
         var matches = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
         if (!matches) return rgb;
@@ -129,12 +129,12 @@
         return '#' + hex(matches[1]) + hex(matches[2]) + hex(matches[3]);
     }
 
-    // Функція для валідації HEX-коду (без змін)
+    // Функція для валідації HEX-коду
     function isValidHex(color) {
         return /^#[0-9A-Fa-f]{6}$/.test(color);
     }
 
-    // Функція для оновлення іконки плагіна (без змін)
+    // Функція для оновлення іконки плагіна
     function updatePluginTcon() {
         if (!Lampa.SettingsApi || !Lampa.SettingsApi.components) {
             console.warn('ColorPlugin: Lampa.SettingsApi.components is not available.');
@@ -189,7 +189,7 @@
                 'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
-            // Решта стилів без змін
+            // Решта стилів
             '.console__tab.focus, .menu__item.focus, .menu__item.traverse, .menu__item.hover, ' +
             '.full-person.focus, .full-start__button.focus, .full-descr__tag.focus, ' +
             '.simple-button.focus, .head__action.focus, .head__action.hover, ' +
@@ -331,27 +331,27 @@
         );
 
         // Оновлюємо іконку плагіна
-        updatePluginIcon();
+        updatePluginTcon(); // Виправлено з updatePluginIcon на updatePluginTcon
         console.log('ColorPlugin: Applied styles, icon_color: ' + ColorPlugin.settings.icon_color + ', main_color: ' + ColorPlugin.settings.main_color);
     }
 
-    // Функція для створення HTML для вибору кольору (без змін)
+    // Функція для створення HTML для вибору кольору
     function createColorHtml(color, name) {
         var className = color === 'default' ? 'color_square selector default' : 'color_square selector';
         var style = color === 'default' ? '' : 'background-color: ' + color + ';';
         return '<div class="' + className + '" tabindex="0" style="' + style + '" title="' + name + '"></div>';
     }
 
-    // Виправлена функція для розбиття масиву кольорів на групи
+    // Функція для розбиття масиву кольорів на групи
     function chunkArray(arr, size) {
         var result = [];
         for (var i = 0; i < arr.length; i += size) {
             result.push(arr.slice(i, i + size));
         }
-        return result; // Виправлено з "Dodd result" на "return result"
+        return result;
     }
 
-    // Функція для створення модального вікна вибору кольору (без змін)
+    // Функція для створення модального вікна вибору кольору
     function openColorPicker(paramName, colors, title) {
         var colorKeys = Object.keys(colors);
         var groupedColors = chunkArray(colorKeys, 5); // Сітка 5x2
@@ -448,7 +448,7 @@
         }
     }
 
-    // Ініціалізація плагіна (без змін)
+    // Ініціалізація плагіна
     function initPlugin() {
         // Завантажуємо збережені налаштування
         ColorPlugin.settings.main_color = Lampa.Storage.get('color_plugin_main_color', '#353535');
@@ -566,7 +566,7 @@
         }
     }
 
-    // Запускаємо плагін після готовності програми (без змін)
+    // Запускаємо плагін після готовності програми
     if (window.appready && Lampa.SettingsApi) {
         initPlugin();
     } else {
@@ -577,7 +577,7 @@
         });
     }
 
-    // Оновлюємо стилі при відкритті налаштувань (без змін)
+    // Оновлюємо стилі при відкритті налаштувань
     Lampa.Listener.follow('settings_component', function (event) {
         if (event.type === 'open') {
             applyStyles();
