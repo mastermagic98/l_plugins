@@ -179,12 +179,25 @@
                 '--text-color: ' + ColorPlugin.settings.text_color + ';' +
                 '--transparent-white: ' + ColorPlugin.settings.transparent_white + ';' +
             '}' +
-            // Іконки меню ліворуч, іконки налаштувань, іконки заголовка та іконка плагіна
-            '.menu__item.selector .menu__ico, ' +
+            // Іконки меню ліворуч (не у фокусі)
+            '.menu__item.selector .menu__ico {' +
+                'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
+                'fill: none !important;' +
+                'background-color: transparent !important;' +
+            '}' +
+            '.menu__item.selector .menu__ico path, .menu__item.selector .menu__ico * {' +
+                'fill: none !important;' +
+                'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
+            '}' +
+            // Іконки меню ліворуч (у фокусі)
             '.menu__item.selector .menu__ico.focus, ' +
-            '.menu__item.selector .menu__ico.focus path, ' +
-            '.menu__item.selector .menu__ico.focus circle, ' +
-            '.menu__item.selector .menu__ico.focus *, ' +
+            '.menu__item.selector .menu__ico.focus path, .menu__item.selector .menu__ico.focus * {' +
+                'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
+                'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
+                'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
+                'outline-color: ' + ColorPlugin.settings.icon_color + ' !important;' +
+            '}' +
+            // Інші іконки
             '.head__action, .head__action.focus, .head__action:hover, ' +
             '.settings-folder__icon, .settings-folder__icon *, .settings-param__ico, ' +
             '.menu__item[data-component="color_plugin"] .menu__ico, ' +
@@ -193,23 +206,10 @@
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
-            // Скидання фону для нефокусованих іконок
-            '.menu__item.selector .menu__ico {' +
-                'background-color: transparent !important;' +
-            '}' +
-            // Контур у фокусі для іконок
-            '.menu__item.selector.focus .menu__ico {' +
-                'border: 2px solid ' + ColorPlugin.settings.main_color + ' !important;' +
-                'border-radius: 4px;' +
-            '}' +
-            // Фон для фокусованих елементів меню
-            '.menu__item.focus, .menu__item.traverse, .menu__item:hover {' +
-                'background: ' + ColorPlugin.settings.main_color + ' !important;' +
-                'color: ' + ColorPlugin.settings.text_color + ' !important;' +
-            '}' +
-            '.console__tab.focus, .full-person.focus, .full-start__button.focus, ' +
-            '.full-descr__tag.focus, .simple-button.focus, .head__action.focus, ' +
-            '.head__action:hover, .player-panel .button.focus, .search-source.active {' +
+            '.console__tab.focus, .menu__item.focus, .menu__item.traverse, .menu__item:hover, ' +
+            '.full-person.focus, .full-start__button.focus, .full-descr__tag.focus, ' +
+            '.simple-button.focus, .head__action.focus, .head__action:hover, ' +
+            '.player-panel .button.focus, .search-source.active {' +
                 'background: ' + ColorPlugin.settings.main_color + ';' +
                 'color: ' + ColorPlugin.settings.text_color + ';' +
             '}' +
@@ -350,11 +350,22 @@
         var menuIcons = document.querySelectorAll('.menu__item.selector .menu__ico');
         for (var i = 0; i < menuIcons.length; i++) {
             menuIcons[i].style.color = ColorPlugin.settings.icon_color;
-            menuIcons[i].style.fill = ColorPlugin.settings.icon_color;
+            menuIcons[i].style.fill = 'none';
             menuIcons[i].style.backgroundColor = 'transparent';
-            var paths = menuIcons[i].querySelectorAll('path, circle');
+            var paths = menuIcons[i].querySelectorAll('path');
             for (var j = 0; j < paths.length; j++) {
                 paths[j].style.fill = 'none';
+                paths[j].style.stroke = ColorPlugin.settings.icon_color;
+            }
+        }
+        var focusedMenuIcons = document.querySelectorAll('.menu__item.selector .menu__ico.focus');
+        for (var i = 0; i < focusedMenuIcons.length; i++) {
+            focusedMenuIcons[i].style.color = ColorPlugin.settings.icon_color;
+            focusedMenuIcons[i].style.fill = ColorPlugin.settings.icon_color;
+            focusedMenuIcons[i].style.outlineColor = ColorPlugin.settings.icon_color;
+            var paths = focusedMenuIcons[i].querySelectorAll('path');
+            for (var j = 0; j < paths.length; j++) {
+                paths[j].style.fill = ColorPlugin.settings.icon_color;
                 paths[j].style.stroke = ColorPlugin.settings.icon_color;
             }
         }
@@ -614,15 +625,26 @@
         }
     });
 
-    // Оновлюємо стилі при зміні фокусу (лише для іконок)
+    // Оновлюємо стилі при зміні фокусу
     Lampa.Listener.follow('controller', function (event) {
         if (event.type === 'focus') {
-            var menuIcons = document.querySelectorAll('.menu__item.selector .menu__ico.focus');
-            for (var i = 0; i < menuIcons.length; i++) {
-                menuIcons[i].style.color = ColorPlugin.settings.icon_color;
-                menuIcons[i].style.fill = ColorPlugin.settings.icon_color;
-                menuIcons[i].style.backgroundColor = 'transparent';
-                var paths = menuIcons[i].querySelectorAll('path, circle');
+            var focusedMenuIcons = document.querySelectorAll('.menu__item.selector .menu__ico.focus');
+            for (var i = 0; i < focusedMenuIcons.length; i++) {
+                focusedMenuIcons[i].style.color = ColorPlugin.settings.icon_color;
+                focusedMenuIcons[i].style.fill = ColorPlugin.settings.icon_color;
+                focusedMenuIcons[i].style.outlineColor = ColorPlugin.settings.icon_color;
+                var paths = focusedMenuIcons[i].querySelectorAll('path');
+                for (var j = 0; j < paths.length; j++) {
+                    paths[j].style.fill = ColorPlugin.settings.icon_color;
+                    paths[j].style.stroke = ColorPlugin.settings.icon_color;
+                }
+            }
+            var nonFocusedMenuIcons = document.querySelectorAll('.menu__item.selector .menu__ico:not(.focus)');
+            for (var i = 0; i < nonFocusedMenuIcons.length; i++) {
+                nonFocusedMenuIcons[i].style.color = ColorPlugin.settings.icon_color;
+                nonFocusedMenuIcons[i].style.fill = 'none';
+                nonFocusedMenuIcons[i].style.backgroundColor = 'transparent';
+                var paths = nonFocusedMenuIcons[i].querySelectorAll('path');
                 for (var j = 0; j < paths.length; j++) {
                     paths[j].style.fill = 'none';
                     paths[j].style.stroke = ColorPlugin.settings.icon_color;
