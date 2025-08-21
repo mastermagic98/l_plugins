@@ -176,12 +176,10 @@
                 '--transparent-white: ' + ColorPlugin.settings.transparent_white + ';' +
             '}' +
             // Іконки меню ліворуч, іконки налаштувань, іконки заголовка та іконка плагіна
-            '.menu__item.selector .menu__ico, .menu__item.selector .menu__ico.focus, ' +
-            '.menu__item.selector .menu__ico.focus path, .menu__item.selector .menu__ico.focus *,' +
+            '.menu__item .menu__ico, .menu__item .menu__ico.focus, ' +
             '.head__action, .head__action.focus, .head__action:hover, ' +
-            '.settings-folder__icon, .settings-folder__icon *, .settings-param__ico, ' +
-            '.menu__item[data-component="color_plugin"] .menu__ico, ' +
-            '.menu__item[data-component="color_plugin"] .menu__ico path {' +
+            '.settings-folder__icon, .settings-param__ico, ' +
+            '.menu__item[data-component="color_plugin"] .menu__ico {' +
                 'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
@@ -324,17 +322,6 @@
                 'font-size: 14px;' +
             '}'
         );
-
-        // Резервне оновлення стилів для іконок меню
-        var menuIcons = document.querySelectorAll('.menu__item.selector .menu__ico, .menu__item.selector .menu__ico.focus');
-        for (var i = 0; i < menuIcons.length; i++) {
-            menuIcons[i].style.color = ColorPlugin.settings.icon_color;
-            menuIcons[i].style.fill = ColorPlugin.settings.icon_color;
-            var paths = menuIcons[i].querySelectorAll('path');
-            for (var j = 0; j < paths.length; j++) {
-                paths[j].style.fill = ColorPlugin.settings.icon_color;
-            }
-        }
 
         // Оновлюємо іконку плагіна
         updatePluginIcon();
@@ -588,21 +575,6 @@
         if (event.type === 'open') {
             applyStyles();
             Lampa.Settings.render();
-        }
-    });
-
-    // Оновлюємо стилі при зміні фокусу
-    Lampa.Listener.follow('controller', function (event) {
-        if (event.type === 'focus') {
-            var menuIcons = document.querySelectorAll('.menu__item.selector .menu__ico.focus');
-            for (var i = 0; i < menuIcons.length; i++) {
-                menuIcons[i].style.color = ColorPlugin.settings.icon_color;
-                menuIcons[i].style.fill = ColorPlugin.settings.icon_color;
-                var paths = menuIcons[i].querySelectorAll('path');
-                for (var j = 0; j < paths.length; j++) {
-                    paths[j].style.fill = ColorPlugin.settings.icon_color;
-                }
-            }
         }
     });
 })();
