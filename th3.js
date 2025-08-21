@@ -151,6 +151,29 @@
         }
     }
 
+    // Функція для видалення вбудованих стилів SVG
+    function removeInlineSvgStyles() {
+        var selectors = [
+            '.head__action .icon svg path, .head__action .icon svg rect, .head__action .icon svg circle, .head__action .icon svg [stroke]',
+            '.head__settings .icon svg path, .head__settings .icon svg rect, .head__settings .icon svg circle, .head__settings .icon svg [stroke]',
+            '.selector.open--search .icon svg path, .selector.open--search .icon svg rect, .selector.open--search .icon svg circle, .selector.open--search .icon svg [stroke]',
+            '.settings-folder__icon svg path, .settings-folder__icon svg rect, .settings-folder__icon svg circle, .settings-folder__icon svg [stroke]'
+        ];
+        selectors.forEach(function(selector) {
+            var elements = document.querySelectorAll(selector);
+            elements.forEach(function(el) {
+                if (el.style.fill) {
+                    console.log('ColorPlugin: Removing inline fill for', selector, ':', el.style.fill);
+                    el.style.fill = '';
+                }
+                if (el.style.stroke) {
+                    console.log('ColorPlugin: Removing inline stroke for', selector, ':', el.style.stroke);
+                    el.style.stroke = '';
+                }
+            });
+        });
+    }
+
     // Оновлена функція для застосування стилів
     function applyStyles() {
         if (!ColorPlugin.settings.enabled) {
@@ -186,31 +209,49 @@
                 'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
             // Стиль для іконок верхнього меню
-            '.head__action .icon, .head__settings .icon, .selector.open--search .icon, ' +
-            '.head__action.focus .icon, .head__settings.focus .icon, .selector.open--search.focus .icon, ' +
-            '.head__action.traverse .icon, .head__settings.traverse .icon, .selector.open--search.traverse .icon, ' +
-            '.head__action:hover .icon, .head__settings:hover .icon, .selector.open--search:hover .icon, ' +
-            '.head__action .icon path[fill], .head__action.focus .icon path[fill], .head__action.traverse .icon path[fill], .head__action:hover .icon path[fill], ' +
-            '.head__settings .icon path[fill], .head__settings.focus .icon path[fill], .head__settings.traverse .icon path[fill], .head__settings:hover .icon path[fill], ' +
-            '.selector.open--search .icon path[fill], .selector.open--search.focus .icon path[fill], .selector.open--search.traverse .icon path[fill], .selector.open--search:hover .icon path[fill], ' +
-            '.head__action .icon rect[fill], .head__action.focus .icon rect[fill], .head__action.traverse .icon rect[fill], .head__action:hover .icon rect[fill], ' +
-            '.head__settings .icon rect[fill], .head__settings.focus .icon rect[fill], .head__settings.traverse .icon rect[fill], .head__settings:hover .icon rect[fill], ' +
-            '.selector.open--search .icon rect[fill], .selector.open--search.focus .icon rect[fill], .selector.open--search.traverse .icon rect[fill], .selector.open--search:hover .icon rect[fill], ' +
-            '.head__action .icon circle[fill], .head__action.focus .icon circle[fill], .head__action.traverse .icon circle[fill], .head__action:hover .icon circle[fill], ' +
-            '.head__settings .icon circle[fill], .head__settings.focus .icon circle[fill], .head__settings.traverse .icon circle[fill], .head__settings:hover .icon circle[fill], ' +
-            '.selector.open--search .icon circle[fill], .selector.open--search.focus .icon circle[fill], .selector.open--search.traverse .icon circle[fill], .selector.open--search:hover .icon circle[fill] {' +
+            '.head .head__action .icon, .head .head__settings .icon, .head .selector.open--search .icon, ' +
+            '.head .head__action.focus .icon, .head .head__settings.focus .icon, .head .selector.open--search.focus .icon, ' +
+            '.head .head__action.traverse .icon, .head .head__settings.traverse .icon, .head .selector.open--search.traverse .icon, ' +
+            '.head .head__action:hover .icon, .head .head__settings:hover .icon, .head .selector.open--search:hover .icon, ' +
+            '.head .head__action .icon path[fill], .head .head__action.focus .icon path[fill], .head .head__action.traverse .icon path[fill], .head .head__action:hover .icon path[fill], ' +
+            '.head .head__settings .icon path[fill], .head .head__settings.focus .icon path[fill], .head .head__settings.traverse .icon path[fill], .head .head__settings:hover .icon path[fill], ' +
+            '.head .selector.open--search .icon path[fill], .head .selector.open--search.focus .icon path[fill], .head .selector.open--search.traverse .icon path[fill], .head .selector.open--search:hover .icon path[fill], ' +
+            '.head .head__action .icon rect[fill], .head .head__action.focus .icon rect[fill], .head .head__action.traverse .icon rect[fill], .head .head__action:hover .icon rect[fill], ' +
+            '.head .head__settings .icon rect[fill], .head .head__settings.focus .icon rect[fill], .head .head__settings.traverse .icon rect[fill], .head .head__settings:hover .icon rect[fill], ' +
+            '.head .selector.open--search .icon rect[fill], .head .selector.open--search.focus .icon rect[fill], .head .selector.open--search.traverse .icon rect[fill], .head .selector.open--search:hover .icon rect[fill], ' +
+            '.head .head__action .icon circle[fill], .head .head__action.focus .icon circle[fill], .head .head__action.traverse .icon circle[fill], .head .head__action:hover .icon circle[fill], ' +
+            '.head .head__settings .icon circle[fill], .head .head__settings.focus .icon circle[fill], .head .head__settings.traverse .icon circle[fill], .head .head__settings:hover .icon circle[fill], ' +
+            '.head .selector.open--search .icon circle[fill], .head .selector.open--search.focus .icon circle[fill], .head .selector.open--search.traverse .icon circle[fill], .head .selector.open--search:hover .icon circle[fill] {' +
                 'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
-            '.head__action .icon [stroke], .head__action.focus .icon [stroke], .head__action.traverse .icon [stroke], .head__action:hover .icon [stroke], ' +
-            '.head__settings .icon [stroke], .head__settings.focus .icon [stroke], .head__settings.traverse .icon [stroke], .head__settings:hover .icon [stroke], ' +
-            '.selector.open--search .icon [stroke], .selector.open--search.focus .icon [stroke], .selector.open--search.traverse .icon [stroke], .selector.open--search:hover .icon [stroke] {' +
+            '.head .head__action .icon [stroke], .head .head__action.focus .icon [stroke], .head .head__action.traverse .icon [stroke], .head .head__action:hover .icon [stroke], ' +
+            '.head .head__settings .icon [stroke], .head .head__settings.focus .icon [stroke], .head .head__settings.traverse .icon [stroke], .head .head__settings:hover .icon [stroke], ' +
+            '.head .selector.open--search .icon [stroke], .head .selector.open--search.focus .icon [stroke], .head .selector.open--search.traverse .icon [stroke], .head .selector.open--search:hover .icon [stroke] {' +
                 'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
+            // Вимкнення фільтрів для растрових іконок верхнього меню
+            '.head .head__action .icon img, .head .head__action.focus .icon img, .head .head__action.traverse .icon img, .head .head__action:hover .icon img, ' +
+            '.head .head__settings .icon img, .head .head__settings.focus .icon img, .head .head__settings.traverse .icon img, .head .head__settings:hover .icon img, ' +
+            '.head .selector.open--search .icon img, .head .selector.open--search.focus .icon img, .head .selector.open--search.traverse .icon img, .head .selector.open--search:hover .icon img {' +
+                '-webkit-filter: none !important;' +
+                'filter: none !important;' +
+            '}' +
             // Стиль для іконок меню налаштувань праворуч
-            '.settings-folder__icon, .settings-folder__icon.focus {' +
+            '.settings-folder__icon, .settings-folder__icon.focus, .settings-folder__icon.traverse, .settings-folder__icon:hover, ' +
+            '.settings-folder__icon path[fill], .settings-folder__icon.focus path[fill], .settings-folder__icon.traverse path[fill], .settings-folder__icon:hover path[fill], ' +
+            '.settings-folder__icon rect[fill], .settings-folder__icon.focus rect[fill], .settings-folder__icon.traverse rect[fill], .settings-folder__icon:hover rect[fill], ' +
+            '.settings-folder__icon circle[fill], .settings-folder__icon.focus circle[fill], .settings-folder__icon.traverse circle[fill], .settings-folder__icon:hover circle[fill] {' +
                 'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
+            '}' +
+            '.settings-folder__icon [stroke], .settings-folder__icon.focus [stroke], .settings-folder__icon.traverse [stroke], .settings-folder__icon:hover [stroke] {' +
+                'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
+            '}' +
+            // Вимкнення фільтрів для растрових іконок меню налаштувань
+            '.settings-folder__icon img, .settings-folder__icon.focus img, .settings-folder__icon.traverse img, .settings-folder__icon:hover img {' +
+                '-webkit-filter: none !important;' +
+                'filter: none !important;' +
             '}' +
             // Решта стилів
             '.console__tab.focus, .menu__item.focus, .menu__item.traverse, .menu__item.hover, ' +
@@ -353,12 +394,15 @@
             '}'
         );
 
+        // Видаляємо вбудовані стилі SVG
+        removeInlineSvgStyles();
         // Оновлюємо іконку плагіна
         updatePluginTcon();
         console.log('ColorPlugin: Applied styles, icon_color: ' + ColorPlugin.settings.icon_color + ', main_color: ' + ColorPlugin.settings.main_color);
         // Дебаг-логування для перевірки іконок
         console.log('ColorPlugin: Applying icon_color to left menu: .menu__ico, .menu__ico.focus, .menu__item.focus .menu__ico, .menu__item.traverse .menu__ico, .menu__item.hover .menu__ico');
         console.log('ColorPlugin: Applying icon_color to top menu: .head__action .icon, .head__settings .icon, .selector.open--search .icon');
+        console.log('ColorPlugin: Applying icon_color to settings menu: .settings-folder__icon');
         var focusedTopIcons = document.querySelectorAll(
             '.head__action.focus .icon path[fill], .head__action.traverse .icon path[fill], .head__action:hover .icon path[fill], ' +
             '.head__settings.focus .icon path[fill], .head__settings.traverse .icon path[fill], .head__settings:hover .icon path[fill], ' +
@@ -367,6 +411,13 @@
         console.log('ColorPlugin: Found ' + focusedTopIcons.length + ' SVG elements in focused/hovered top menu icons');
         focusedTopIcons.forEach(function(icon) {
             console.log('ColorPlugin: Top menu SVG element style - fill: ' + icon.style.fill);
+        });
+        var settingsIcons = document.querySelectorAll(
+            '.settings-folder__icon path[fill], .settings-folder__icon.focus path[fill], .settings-folder__icon.traverse path[fill], .settings-folder__icon:hover path[fill]'
+        );
+        console.log('ColorPlugin: Found ' + settingsIcons.length + ' SVG elements in settings menu icons');
+        settingsIcons.forEach(function(icon) {
+            console.log('ColorPlugin: Settings menu SVG element style - fill: ' + icon.style.fill);
         });
     }
 
