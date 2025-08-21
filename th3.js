@@ -1,4 +1,3 @@
-//іконки ліворуч у фокусі не у фокусі. ШАПКА БІЛА
 (function () {
     'use strict';
 
@@ -174,8 +173,11 @@
                 '--text-color: ' + ColorPlugin.settings.text_color + ';' +
                 '--transparent-white: ' + ColorPlugin.settings.transparent_white + ';' +
             '}' +
-            '.menu__ico, .menu__ico.focus {' +
+            '.menu__ico {' +
                 'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
+            '}' +
+            '.menu__ico.focus {' +
+                'color: ' + ColorPlugin.settings.text_color + ' !important;' +
             '}' +
             '.console__tab.focus, .menu__item.focus, .menu__item.traverse, .menu__item.hover, ' +
             '.full-person.focus, .full-start__button.focus, .full-descr__tag.focus, ' +
