@@ -187,9 +187,25 @@
             '}' +
             // Стиль для іконок верхнього меню
             '.head__action .icon, .head__settings .icon, .selector.open--search .icon, ' +
-            '.head__action.focus .icon, .head__settings.focus .icon, .selector.open--search.focus .icon {' +
+            '.head__action.focus .icon, .head__settings.focus .icon, .selector.open--search.focus .icon, ' +
+            '.head__action.traverse .icon, .head__settings.traverse .icon, .selector.open--search.traverse .icon, ' +
+            '.head__action:hover .icon, .head__settings:hover .icon, .selector.open--search:hover .icon, ' +
+            '.head__action .icon path[fill], .head__action.focus .icon path[fill], .head__action.traverse .icon path[fill], .head__action:hover .icon path[fill], ' +
+            '.head__settings .icon path[fill], .head__settings.focus .icon path[fill], .head__settings.traverse .icon path[fill], .head__settings:hover .icon path[fill], ' +
+            '.selector.open--search .icon path[fill], .selector.open--search.focus .icon path[fill], .selector.open--search.traverse .icon path[fill], .selector.open--search:hover .icon path[fill], ' +
+            '.head__action .icon rect[fill], .head__action.focus .icon rect[fill], .head__action.traverse .icon rect[fill], .head__action:hover .icon rect[fill], ' +
+            '.head__settings .icon rect[fill], .head__settings.focus .icon rect[fill], .head__settings.traverse .icon rect[fill], .head__settings:hover .icon rect[fill], ' +
+            '.selector.open--search .icon rect[fill], .selector.open--search.focus .icon rect[fill], .selector.open--search.traverse .icon rect[fill], .selector.open--search:hover .icon rect[fill], ' +
+            '.head__action .icon circle[fill], .head__action.focus .icon circle[fill], .head__action.traverse .icon circle[fill], .head__action:hover .icon circle[fill], ' +
+            '.head__settings .icon circle[fill], .head__settings.focus .icon circle[fill], .head__settings.traverse .icon circle[fill], .head__settings:hover .icon circle[fill], ' +
+            '.selector.open--search .icon circle[fill], .selector.open--search.focus .icon circle[fill], .selector.open--search.traverse .icon circle[fill], .selector.open--search:hover .icon circle[fill] {' +
                 'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
+            '}' +
+            '.head__action .icon [stroke], .head__action.focus .icon [stroke], .head__action.traverse .icon [stroke], .head__action:hover .icon [stroke], ' +
+            '.head__settings .icon [stroke], .head__settings.focus .icon [stroke], .head__settings.traverse .icon [stroke], .head__settings:hover .icon [stroke], ' +
+            '.selector.open--search .icon [stroke], .selector.open--search.focus .icon [stroke], .selector.open--search.traverse .icon [stroke], .selector.open--search:hover .icon [stroke] {' +
+                'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
             // Стиль для іконок меню налаштувань праворуч
             '.settings-folder__icon, .settings-folder__icon.focus {' +
@@ -340,12 +356,17 @@
         // Оновлюємо іконку плагіна
         updatePluginTcon();
         console.log('ColorPlugin: Applied styles, icon_color: ' + ColorPlugin.settings.icon_color + ', main_color: ' + ColorPlugin.settings.main_color);
-        // Дебаг-логування для перевірки іконок лівого меню
+        // Дебаг-логування для перевірки іконок
         console.log('ColorPlugin: Applying icon_color to left menu: .menu__ico, .menu__ico.focus, .menu__item.focus .menu__ico, .menu__item.traverse .menu__ico, .menu__item.hover .menu__ico');
-        var focusedIcons = document.querySelectorAll('.menu__item.focus .menu__ico path[fill], .menu__item.traverse .menu__ico path[fill], .menu__item.hover .menu__ico path[fill]');
-        console.log('ColorPlugin: Found ' + focusedIcons.length + ' SVG elements in focused/hovered menu icons');
-        focusedIcons.forEach(function(icon) {
-            console.log('ColorPlugin: SVG element style - fill: ' + icon.style.fill);
+        console.log('ColorPlugin: Applying icon_color to top menu: .head__action .icon, .head__settings .icon, .selector.open--search .icon');
+        var focusedTopIcons = document.querySelectorAll(
+            '.head__action.focus .icon path[fill], .head__action.traverse .icon path[fill], .head__action:hover .icon path[fill], ' +
+            '.head__settings.focus .icon path[fill], .head__settings.traverse .icon path[fill], .head__settings:hover .icon path[fill], ' +
+            '.selector.open--search.focus .icon path[fill], .selector.open--search.traverse .icon path[fill], .selector.open--search:hover .icon path[fill]'
+        );
+        console.log('ColorPlugin: Found ' + focusedTopIcons.length + ' SVG elements in focused/hovered top menu icons');
+        focusedTopIcons.forEach(function(icon) {
+            console.log('ColorPlugin: Top menu SVG element style - fill: ' + icon.style.fill);
         });
     }
 
