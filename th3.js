@@ -179,11 +179,19 @@
             '.settings-param__ico, .settings-param__ico.focus, .settings-param__ico:hover, ' +
             '.settings-param__icon, .settings-param__icon.focus, .settings-param__icon:hover, ' +
             '.settings__icon, .settings__icon.focus, .settings__icon:hover, ' +
-            '.settings-param svg, .settings-param.focus svg, .settings-param:hover svg, ' +
-            '.settings-param__content svg, .settings-param__content.focus svg, .settings-param__content:hover svg {' +
+            '.settings .settings-param svg, .settings .settings-param.focus svg, .settings .settings-param:hover svg, ' +
+            '.settings .settings-param__content svg, .settings .settings-param__content.focus svg, .settings .settings-param__content:hover svg {' +
                 'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
+            '}' +
+            // Перекриваємо color для контейнерів іконок у меню налаштувань
+            '.settings-param, .settings-param.focus, .settings-param:hover, ' +
+            '.settings-param__content, .settings-param__content.focus, .settings-param__content:hover, ' +
+            '.settings-param__ico, .settings-param__ico.focus, .settings-param__ico:hover, ' +
+            '.settings-param__icon, .settings-param__icon.focus, .settings-param__icon:hover, ' +
+            '.settings__icon, .settings__icon.focus, .settings__icon:hover {' +
+                'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
             // Запобігаємо додаванню контуру для іконок із fill у menu__ico
             '.menu__ico path[fill], .menu__ico.focus path[fill], .menu__ico:hover path[fill], .menu__ico.traverse path[fill] {' +
@@ -204,18 +212,20 @@
             '.menu__item:hover .menu__ico [stroke], .menu__ico [stroke] {' +
                 'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
-            // Перекриваємо білий колір для іконок у меню налаштувань
-            '.settings-param.focus .settings-param__ico path[fill], .settings-param.focus .settings-param__ico rect[fill], ' +
-            '.settings-param.focus .settings-param__ico circle[fill], .settings-param:hover .settings-param__ico path[fill], ' +
-            '.settings-param:hover .settings-param__ico rect[fill], .settings-param:hover .settings-param__ico circle[fill], ' +
+            // Перекриваємо білий колір для іконок у меню налаштувань (fill)
+            '.settings .settings-param.focus .settings-param__ico path[fill], .settings .settings-param.focus .settings-param__ico rect[fill], ' +
+            '.settings .settings-param.focus .settings-param__ico circle[fill], .settings .settings-param:hover .settings-param__ico path[fill], ' +
+            '.settings .settings-param:hover .settings-param__ico rect[fill], .settings .settings-param:hover .settings-param__ico circle[fill], ' +
             '.settings-param__ico [fill], .settings-param__icon [fill], .settings__icon [fill], ' +
-            '.settings-param svg path[fill], .settings-param svg rect[fill], .settings-param svg circle[fill], ' +
-            '.settings-param__content svg path[fill], .settings-param__content svg rect[fill], .settings-param__content svg circle[fill] {' +
+            '.settings .settings-param svg path[fill], .settings .settings-param svg rect[fill], .settings .settings-param svg circle[fill], ' +
+            '.settings .settings-param__content svg path[fill], .settings .settings-param__content svg rect[fill], .settings .settings-param__content svg circle[fill], ' +
+            '.settings .settings-param svg[fill], .settings .settings-param__content svg[fill] {' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
-            '.settings-param.focus .settings-param__ico [stroke], .settings-param:hover .settings-param__ico [stroke], ' +
+            // Перекриваємо білий колір для іконок у меню налаштувань (stroke)
+            '.settings .settings-param.focus .settings-param__ico [stroke], .settings .settings-param:hover .settings-param__ico [stroke], ' +
             '.settings-param__ico [stroke], .settings-param__icon [stroke], .settings__icon [stroke], ' +
-            '.settings-param svg [stroke], .settings-param__content svg [stroke] {' +
+            '.settings .settings-param svg [stroke], .settings .settings-param__content svg [stroke] {' +
                 'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
             // Переконаємося, що масштаб іконок не змінюється
@@ -223,6 +233,12 @@
                 'transform: none !important;' +
                 'width: 24px !important;' +
                 'height: 24px !important;' +
+            '}' +
+            // Додаємо фіксований розмір для іконок у меню налаштувань
+            '.settings-param__ico, .settings-param__icon, .settings__icon, ' +
+            '.settings .settings-param svg, .settings .settings-param__content svg {' +
+                'width: 31.1833px !important;' +
+                'height: 31.1833px !important;' +
             '}' +
             '.console__tab.focus, .menu__item.focus, .menu__item.traverse, .menu__item:hover, ' +
             '.full-person.focus, .full-start__button.focus, .full-descr__tag.focus, ' +
