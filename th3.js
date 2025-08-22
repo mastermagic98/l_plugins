@@ -138,18 +138,34 @@
 
     // Функція для оновлення іконки плагіну
     function updatePluginIcon() {
-        if (!Lampa.SettingsApi || !Lampa.SettingsApi.components) {
-            console.warn('ColorPlugin: Lampa.SettingsApi.components is not available.');
-            var menuItem = document.querySelector('.menu__item[data-component="color_plugin"] .menu__ico');
-            if (menuItem) {
-                menuItem.innerHTML = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="' + ColorPlugin.settings.icon_color + '" stroke="' + ColorPlugin.settings.icon_color + '" stroke-width="1"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
+        var iconSvg = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="' + ColorPlugin.settings.icon_color + '" stroke="' + ColorPlugin.settings.icon_color + '" stroke-width="1"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
+
+        // Спробуємо оновити через SettingsApi
+        if (Lampa.SettingsApi && Lampa.SettingsApi.components) {
+            var component = Lampa.SettingsApi.components.find(function(c) { return c.component === 'color_plugin'; });
+            if (component) {
+                component.icon = iconSvg;
+                Lampa.Settings.render();
+                return;
             }
-            return;
         }
-        var component = Lampa.SettingsApi.components.find(function(c) { return c.component === 'color_plugin'; });
-        if (component) {
-            component.icon = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="' + ColorPlugin.settings.icon_color + '" stroke="' + ColorPlugin.settings.icon_color + '" stroke-width="1"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
-            Lampa.Settings.render();
+
+        // Резервний варіант: вставляємо SVG напряму
+        var menuItem = document.querySelector('.menu__item[data-component="color_plugin"] .menu__ico');
+        if (menuItem) {
+            menuItem.innerHTML = iconSvg;
+            // Застосовуємо стилі напряму для резервного варіанту
+            menuItem.style.color = ColorPlugin.settings.icon_color;
+            menuItem.style.fill = ColorPlugin.settings.icon_color;
+            menuItem.style.stroke = ColorPlugin.settings.icon_color;
+            var svg = menuItem.querySelector('svg');
+            if (svg) {
+                svg.style.strokeWidth = '1px';
+                svg.style.fill = ColorPlugin.settings.icon_color;
+                svg.style.stroke = ColorPlugin.settings.icon_color;
+            }
+        } else {
+            console.warn('ColorPlugin: .menu__item[data-component="color_plugin"] .menu__ico not found.');
         }
     }
 
@@ -192,14 +208,16 @@
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
-            // Виправлення товщини іконки плагіну
-            '.menu__ico svg, .menu__item.focus .menu__ico svg, .menu__item:hover .menu__ico svg, .menu__item.traverse .menu__ico svg {' +
+            // Виправлення товщини і кольору іконки плагіну
+            '.menu__item[data-component="color_plugin"] .menu__ico svg, ' +
+            '.menu__item[data-component="color_plugin"].focus .menu__ico svg, ' +
+            '.menu__item[data-component="color_plugin"]:hover .menu__ico svg, ' +
+            '.menu__item[data-component="color_plugin"].traverse .menu__ico svg {' +
                 'stroke-width: 1px !important;' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
-            // Перекриваємо color для контейнерів іконок
-            '.settings, .settings.focus, .settings:hover, ' +
+            // Перекриваємо color для контейнерів іконок (без .settings)
             '.settings-param, .settings-param.focus, .settings-param:hover, ' +
             '.settings-param__content, .settings-param__content.focus, .settings-param__content:hover, ' +
             '.settings-param__ico, .settings-param__ico.focus, .settings-param__ico:hover, ' +
@@ -262,7 +280,7 @@
             '}' +
             '.console__tab.focus, .menu__item.focus, .menu__item.traverse, .menu__item:hover, ' +
             '.full-person.focus, .full-start__button.focus, .full-descr__tag.focus, ' +
-            '.simple-button.focus, .head__action.focus, .head__action:hover, ' +
+            '.impulse-button.focus, .simple-button.focus, .head__action.focus, .head__action:hover, ' +
             '.player-panel .button.focus, .search-source.active {' +
                 'background: ' + ColorPlugin.settings.main_color + ';' +
                 'color: ' + ColorPlugin.settings.text_color + ';' +
@@ -652,21 +670,29 @@
     }
 
     // Запускаємо плагін після готовності програми
-    if (window.appready && Lampa.SettingsApi) {
-        initPlugin();
-    } else {
-        Lampa.Listener.follow('app', function (event) {
-            if (event.type === 'ready' && Lampa.SettingsApi) {
-                initPlugin();
-            }
-        });
+    function startPlugin() {
+        if (window.appready && Lampa.SettingsApi) {
+            initPlugin();
+            updatePluginIcon();
+        } else {
+            Lampa.Listener.follow('app', function (event) {
+                if (event.type === 'ready' && Lampa.SettingsApi) {
+                    initPlugin();
+                    updatePluginIcon();
+                }
+            });
+        }
     }
 
-    // Оновлюємо стилі при відкритті налаштувань
+    // Оновлюємо стилі та іконку при відкритті налаштувань
     Lampa.Listener.follow('settings_component', function (event) {
         if (event.type === 'open') {
             applyStyles();
+            updatePluginIcon();
             Lampa.Settings.render();
         }
     });
+
+    // Запускаємо плагін
+    startPlugin();
 })();
