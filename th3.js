@@ -119,19 +119,21 @@
         }
     };
 
-    // Функція для конвертації RGB у HEX
-    function rgbToHex(rgb) {
-        var matches = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
-        if (!matches) return rgb;
-        function hex(n) {
-            return ('0' + parseInt(n).toString(16)).slice(-2);
-        }
-        return '#' + hex(matches[1]) + hex(matches[2]) + hex(matches[3]);
+    // Функція для конвертації HEX у RGB для фільтрів
+    function hexToRgb(hex) {
+        var r = parseInt(hex.slice(1, 3), 16) / 255;
+        var g = parseInt(hex.slice(3, 5), 16) / 255;
+        var b = parseInt(hex.slice(5, 7), 16) / 255;
+        return { r: r, g: g, b: b };
     }
 
-    // Функція для валідації HEX-коду
-    function isValidHex(color) {
-        return /^#[0-9A-Fa-f]{6}$/.test(color);
+    // Функція для створення CSS-фільтра для зміни кольору
+    function createColorFilter(hex) {
+        var rgb = hexToRgb(hex);
+        var filter = 'brightness(0) saturate(100%) invert(1) sepia(100%) saturate(10000%) hue-rotate(' +
+                     (Math.atan2(rgb.g - rgb.b, rgb.r - rgb.g) * 180 / Math.PI) + 'deg) ' +
+                     'brightness(' + (Math.sqrt(rgb.r * rgb.r + rgb.g * rgb.g + rgb.b * rgb.b) * 100) + '%)';
+        return filter;
     }
 
     // Функція для оновлення іконки плагіна
@@ -173,19 +175,26 @@
                 '--text-color: ' + ColorPlugin.settings.text_color + ';' +
                 '--transparent-white: ' + ColorPlugin.settings.transparent_white + ';' +
             '}' +
+            // Логотип
+            '.head__logo-icon img {' +
+                'filter: ' + createColorFilter(ColorPlugin.settings.icon_color) + ' !important;' +
+            '}' +
             // Іконки меню ліворуч, заголовка і налаштувань праворуч
             '.menu__ico, .menu__ico.focus, .menu__ico:hover, .menu__ico.traverse, ' +
             '.head__action, .head__action.focus, .head__action:hover, ' +
             '.settings-param__ico, .settings-param__ico.focus, .settings-param__ico:hover, ' +
             '.settings-param__icon, .settings-param__icon.focus, .settings-param__icon:hover, ' +
             '.settings__icon, .settings__icon.focus, .settings__icon:hover, ' +
+            '.settings svg, .settings.focus svg, .settings:hover svg, ' +
             '.settings .settings-param svg, .settings .settings-param.focus svg, .settings .settings-param:hover svg, ' +
-            '.settings .settings-param__content svg, .settings .settings-param__content.focus svg, .settings .settings-param__content:hover svg {' +
+            '.settings .settings-param__content svg, .settings .settings-param__content.focus svg, .settings .settings-param__content:hover svg, ' +
+            '.settings-param__ico svg, .settings-param__icon svg, .settings__icon svg {' +
                 'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
-            // Перекриваємо color для контейнерів іконок у меню налаштувань
+            // Перекриваємо color для контейнерів іконок
+            '.settings, .settings.focus, .settings:hover, ' +
             '.settings-param, .settings-param.focus, .settings-param:hover, ' +
             '.settings-param__content, .settings-param__content.focus, .settings-param__content:hover, ' +
             '.settings-param__ico, .settings-param__ico.focus, .settings-param__ico:hover, ' +
@@ -213,19 +222,25 @@
                 'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
             // Перекриваємо білий колір для іконок у меню налаштувань (fill)
+            '.settings svg path[fill], .settings svg rect[fill], .settings svg circle[fill], ' +
             '.settings .settings-param.focus .settings-param__ico path[fill], .settings .settings-param.focus .settings-param__ico rect[fill], ' +
             '.settings .settings-param.focus .settings-param__ico circle[fill], .settings .settings-param:hover .settings-param__ico path[fill], ' +
             '.settings .settings-param:hover .settings-param__ico rect[fill], .settings .settings-param:hover .settings-param__ico circle[fill], ' +
             '.settings-param__ico [fill], .settings-param__icon [fill], .settings__icon [fill], ' +
             '.settings .settings-param svg path[fill], .settings .settings-param svg rect[fill], .settings .settings-param svg circle[fill], ' +
             '.settings .settings-param__content svg path[fill], .settings .settings-param__content svg rect[fill], .settings .settings-param__content svg circle[fill], ' +
-            '.settings .settings-param svg[fill], .settings .settings-param__content svg[fill] {' +
+            '.settings .settings-param svg[fill], .settings .settings-param__content svg[fill], ' +
+            '.settings-param__ico svg path[fill], .settings-param__ico svg rect[fill], .settings-param__ico svg circle[fill], ' +
+            '.settings-param__icon svg path[fill], .settings-param__icon svg rect[fill], .settings-param__icon svg circle[fill], ' +
+            '.settings__icon svg path[fill], .settings__icon svg rect[fill], .settings__icon svg circle[fill] {' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
             // Перекриваємо білий колір для іконок у меню налаштувань (stroke)
+            '.settings svg [stroke], ' +
             '.settings .settings-param.focus .settings-param__ico [stroke], .settings .settings-param:hover .settings-param__ico [stroke], ' +
             '.settings-param__ico [stroke], .settings-param__icon [stroke], .settings__icon [stroke], ' +
-            '.settings .settings-param svg [stroke], .settings .settings-param__content svg [stroke] {' +
+            '.settings .settings-param svg [stroke], .settings .settings-param__content svg [stroke], ' +
+            '.settings-param__ico svg [stroke], .settings-param__icon svg [stroke], .settings__icon svg [stroke] {' +
                 'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
             // Переконаємося, що масштаб іконок не змінюється
@@ -234,9 +249,10 @@
                 'width: 24px !important;' +
                 'height: 24px !important;' +
             '}' +
-            // Додаємо фіксований розмір для іконок у меню налаштувань
+            // Фіксований розмір для іконок у меню налаштувань
             '.settings-param__ico, .settings-param__icon, .settings__icon, ' +
-            '.settings .settings-param svg, .settings .settings-param__content svg {' +
+            '.settings .settings-param svg, .settings .settings-param__content svg, ' +
+            '.settings-param__ico svg, .settings-param__icon svg, .settings__icon svg {' +
                 'width: 31.1833px !important;' +
                 'height: 31.1833px !important;' +
             '}' +
@@ -496,6 +512,21 @@
         } catch (e) {
             console.error('ColorPlugin: Error in openColorPicker', e);
         }
+    }
+
+    // Функція для конвертації RGB у HEX
+    function rgbToHex(rgb) {
+        var matches = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+        if (!matches) return rgb;
+        function hex(n) {
+            return ('0' + parseInt(n).toString(16)).slice(-2);
+        }
+        return '#' + hex(matches[1]) + hex(matches[2]) + hex(matches[3]);
+    }
+
+    // Функція для валідації HEX-коду
+    function isValidHex(color) {
+        return /^#[0-9A-Fa-f]{6}$/.test(color);
     }
 
     // Ініціалізація плагіна
