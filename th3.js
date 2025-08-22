@@ -173,9 +173,18 @@
                 '--text-color: ' + ColorPlugin.settings.text_color + ';' +
                 '--transparent-white: ' + ColorPlugin.settings.transparent_white + ';' +
             '}' +
-            // Іконки меню ліворуч (включаючи фокус) та іконки налаштувань
-            '.menu__ico, .menu__ico.focus, .head__action, .head__action.focus, .head__action:hover, .settings-param__ico {' +
+            // Іконки меню ліворуч, включаючи SVG-елементи у всіх станах, а також іконки заголовка і налаштувань
+            '.menu__ico, .menu__ico.focus, .menu__ico:hover, .menu__ico.traverse, ' +
+            '.head__action, .head__action.focus, .head__action:hover, .settings-param__ico {' +
                 'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
+                'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
+            '}' +
+            // Перекриваємо стилі з app.css для SVG-елементів у menu__ico
+            '.menu__item.focus .menu__ico path[fill], .menu__item.focus .menu__ico rect[fill], ' +
+            '.menu__item.focus .menu__ico circle[fill], .menu__item.traverse .menu__ico path[fill], ' +
+            '.menu__item.traverse .menu__ico rect[fill], .menu__item.traverse .menu__ico circle[fill], ' +
+            '.menu__item:hover .menu__ico path[fill], .menu__item:hover .menu__ico rect[fill], ' +
+            '.menu__item:hover .menu__ico circle[fill] {' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
             '.console__tab.focus, .menu__item.focus, .menu__item.traverse, .menu__item:hover, ' +
