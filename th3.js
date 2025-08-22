@@ -3,16 +3,56 @@
 
     // Додаємо переклади
     Lampa.Lang.add({
-        color_plugin: { ru: 'Настройка цветов', en: 'Color settings', uk: 'Налаштування кольорів' },
-        main_color: { ru: 'Основной цвет', en: 'Main color', uk: 'Основний колір' },
-        background_color: { ru: 'Цвет фона', en: 'Background color', uk: 'Колір фону' },
-        text_color: { ru: 'Цвет текста', en: 'Text color', uk: 'Колір тексту' },
-        transparent_white: { ru: 'Прозрачный фон', en: 'Transparent background', uk: 'Прозорий фон' },
-        icon_color: { ru: 'Цвет иконок', en: 'Icons color', uk: 'Колір іконок' },
-        color_plugin_enabled: { ru: 'Включить плагин', en: 'Enable plugin', uk: 'Увімкнути плагін' },
-        default_color: { ru: 'По умолчанию', en: 'Default', uk: 'За замовчуванням' },
-        custom_hex_input: { ru: 'HEX-код цвета', en: 'HEX color code', uk: 'HEX-код кольору' },
-        hex_input_hint: { ru: 'Используйте формат #FFFFFF, например #123524', en: 'Use the format #FFFFFF, for example #123524', uk: 'Використовуйте формат #FFFFFF, наприклад #123524' }
+        color_plugin: {
+            ru: 'Настройка цветов',
+            en: 'Color settings',
+            uk: 'Налаштування кольорів'
+        },
+        main_color: {
+            ru: 'Основной цвет',
+            en: 'Main color',
+            uk: 'Основний колір'
+        },
+        background_color: {
+            ru: 'Цвет фона',
+            en: 'Background color',
+            uk: 'Колір фону'
+        },
+        text_color: {
+            ru: 'Цвет текста',
+            en: 'Text color',
+            uk: 'Колір тексту'
+        },
+        transparent_white: {
+            ru: 'Прозрачный фон',
+            en: 'Transparent background',
+            uk: 'Прозорий фон'
+        },
+        icon_color: {
+            ru: 'Цвет иконок',
+            en: 'Icons color',
+            uk: 'Колір іконок'
+        },
+        color_plugin_enabled: {
+            ru: 'Включить плагин',
+            en: 'Enable plugin',
+            uk: 'Увімкнути плагін'
+        },
+        default_color: {
+            ru: 'По умолчанию',
+            en: 'Default',
+            uk: 'За замовчуванням'
+        },
+        custom_hex_input: {
+            ru: 'HEX-код цвета',
+            en: 'HEX color code',
+            uk: 'HEX-код кольору'
+        },
+        hex_input_hint: {
+            ru: 'Используйте формат #FFFFFF, например #123524',
+            en: 'Use the format #FFFFFF, for example #123524',
+            uk: 'Використовуйте формат #FFFFFF, наприклад #123524'
+        }
     });
 
     // Об'єкт для зберігання налаштувань
@@ -48,7 +88,12 @@
                 '#001433': 'Темно-синій',
                 '#001C33': 'Темно-яскраво-синій',
                 '#1A1833': 'Темно-фіолетовий',
-                '#2D1742': 'Темно-ліловий'
+                '#2D1742': 'Темно-ліловий',
+                '#4A0F24': 'Темно-малиновий',
+                '#4A1E29': 'Темно-кораловий',
+                '#4A3D00': 'Темно-жовтий',
+                '#0A2733': 'Темно-аквамарин',
+                '#0A2333': 'Темно-бірюзовий'
             },
             text: {
                 '#ffffff': 'Білий',
@@ -90,21 +135,42 @@
     }
 
     // Функція для оновлення іконки плагіна
-    function updatePluginIcon() {
-        var menuItem = document.querySelector('.menu__item[data-component="color_plugin"] .menu__ico');
-        if (menuItem) {
-            menuItem.innerHTML = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
-            var svg = menuItem.querySelector('svg');
-            if (svg) {
-                svg.style.fill = ColorPlugin.settings.icon_color;
-                console.log('ColorPlugin: Updated plugin icon color to', ColorPlugin.settings.icon_color);
+    function updatePluginTcon() {
+        if (!Lampa.SettingsApi || !Lampa.SettingsApi.components) {
+            console.warn('ColorPlugin: Lampa.SettingsApi.components is not available.');
+            var menuItem = document.querySelector('.menu__item[data-component="color_plugin"] .menu__ico');
+            if (menuItem) {
+                menuItem.innerHTML = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="' + ColorPlugin.settings.icon_color + '"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
+                var svg = menuItem.querySelector('svg');
+                if (svg) {
+                    svg.querySelectorAll('path[fill], rect[fill], circle[fill], polygon[fill], polyline[fill]').forEach(function(el) {
+                        el.style.fill = ColorPlugin.settings.icon_color;
+                    });
+                    svg.querySelectorAll('[stroke]').forEach(function(el) {
+                        el.style.stroke = ColorPlugin.settings.icon_color;
+                    });
+                }
             }
+            return;
         }
-        if (Lampa.SettingsApi && Lampa.SettingsApi.components) {
-            var component = Lampa.SettingsApi.components.find(function(c) { return c.component === 'color_plugin'; });
-            if (component) {
-                component.icon = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
-                Lampa.Settings.render();
+        var component = Lampa.SettingsApi.components.find(function(c) { return c.component === 'color_plugin'; });
+        if (component) {
+            component.icon = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="' + ColorPlugin.settings.icon_color + '"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
+            Lampa.Settings.render();
+            // Примусово оновлюємо іконку в DOM
+            var menuItem = document.querySelector('.menu__item[data-component="color_plugin"] .menu__ico');
+            if (menuItem) {
+                var svg = menuItem.querySelector('svg');
+                if (svg) {
+                    svg.querySelectorAll('path[fill], rect[fill], circle[fill], polygon[fill], polyline[fill]').forEach(function(el) {
+                        el.style.fill = ColorPlugin.settings.icon_color;
+                        console.log('ColorPlugin: Updated plugin icon fill to', ColorPlugin.settings.icon_color);
+                    });
+                    svg.querySelectorAll('[stroke]').forEach(function(el) {
+                        el.style.stroke = ColorPlugin.settings.icon_color;
+                        console.log('ColorPlugin: Updated plugin icon stroke to', ColorPlugin.settings.icon_color);
+                    });
+                }
             }
         }
     }
@@ -112,11 +178,11 @@
     // Функція для видалення вбудованих стилів SVG
     function removeInlineSvgStyles() {
         var selectors = [
-            '.head .head__settings .icon svg path, .head .head__settings .icon svg rect, .head .head__settings .icon svg circle, .head .head__settings .icon svg polygon, .head .head__settings .icon svg polyline',
-            '.head .head__action .icon svg path, .head .head__action .icon svg rect, .head .head__action .icon svg circle, .head .head__action .icon svg polygon, .head .head__action .icon svg polyline',
-            '.head .selector.open--search .icon svg path, .head .selector.open--search .icon svg rect, .head .selector.open--search .icon svg circle, .head .selector.open--search .icon svg polygon, .head .selector.open--search .icon svg polyline',
-            '.settings .settings-folder__icon svg, .settings .settings-folder__icon svg path, .settings .settings-folder__icon svg rect, .settings .settings-folder__icon svg circle, .settings .settings-folder__icon svg polygon, .settings .settings-folder__icon svg polyline',
-            '.menu__item[data-component="color_plugin"] .menu__ico svg path, .menu__item[data-component="color_plugin"] .menu__ico svg rect, .menu__item[data-component="color_plugin"] .menu__ico svg circle, .menu__item[data-component="color_plugin"] .menu__ico svg polygon, .menu__item[data-component="color_plugin"] .menu__ico svg polyline'
+            '.head__action .icon svg path, .head__action .icon svg rect, .head__action .icon svg circle, .head__action .icon svg polygon, .head__action .icon svg polyline, .head__action .icon svg [stroke]',
+            '.head__settings .icon svg path, .head__settings .icon svg rect, .head__settings .icon svg circle, .head__settings .icon svg polygon, .head__settings .icon svg polyline, .head__settings .icon svg [stroke]',
+            '.selector.open--search .icon svg path, .selector.open--search .icon svg rect, .selector.open--search .icon svg circle, .selector.open--search .icon svg polygon, .selector.open--search .icon svg polyline, .selector.open--search .icon svg [stroke]',
+            '.settings-folder__icon svg path, .settings-folder__icon svg rect, .settings-folder__icon svg circle, .settings-folder__icon svg polygon, .settings-folder__icon svg polyline, .settings-folder__icon svg [stroke]',
+            '.menu__item[data-component="color_plugin"] .menu__ico svg path, .menu__item[data-component="color_plugin"] .menu__ico svg rect, .menu__item[data-component="color_plugin"] .menu__ico svg circle, .menu__item[data-component="color_plugin"] .menu__ico svg polygon, .menu__item[data-component="color_plugin"] .menu__ico svg polyline, .menu__item[data-component="color_plugin"] .menu__ico svg [stroke]'
         ];
         selectors.forEach(function(selector) {
             var elements = document.querySelectorAll(selector);
@@ -133,7 +199,7 @@
         });
     }
 
-    // Функція для застосування стилів
+    // Оновлена функція для застосування стилів
     function applyStyles() {
         if (!ColorPlugin.settings.enabled) {
             var oldStyle = document.getElementById('color-plugin-styles');
@@ -155,60 +221,90 @@
                 '--text-color: ' + ColorPlugin.settings.text_color + ';' +
                 '--transparent-white: ' + ColorPlugin.settings.transparent_white + ';' +
             '}' +
-            // Стиль для іконки плагіна
+            // Стиль для іконок лівого меню
+            '.menu__ico, .menu__ico.focus, .menu__item.focus .menu__ico, ' +
+            '.menu__item.traverse .menu__ico, .menu__item.hover .menu__ico, ' +
+            '.menu__item.focus .menu__ico path[fill], .menu__item.focus .menu__ico rect[fill], .menu__item.focus .menu__ico circle[fill], .menu__item.focus .menu__ico polygon[fill], .menu__item.focus .menu__ico polyline[fill], ' +
+            '.menu__item.traverse .menu__ico path[fill], .menu__item.traverse .menu__ico rect[fill], .menu__item.traverse .menu__ico circle[fill], .menu__item.traverse .menu__ico polygon[fill], .menu__item.traverse .menu__ico polyline[fill], ' +
+            '.menu__item.hover .menu__ico path[fill], .menu__item.hover .menu__ico rect[fill], .menu__item.hover .menu__ico circle[fill], .menu__item.hover .menu__ico polygon[fill], .menu__item.hover .menu__ico polyline[fill] {' +
+                'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
+                'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
+            '}' +
+            '.menu__item.focus .menu__ico [stroke], .menu__item.traverse .menu__ico [stroke], .menu__item.hover .menu__ico [stroke] {' +
+                'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
+            '}' +
+            // Стиль для іконки плагіна "Налаштування кольорів"
             '.menu__item[data-component="color_plugin"] .menu__ico, ' +
             '.menu__item[data-component="color_plugin"].focus .menu__ico, ' +
             '.menu__item[data-component="color_plugin"].traverse .menu__ico, ' +
             '.menu__item[data-component="color_plugin"].hover .menu__ico, ' +
-            '.menu__item[data-component="color_plugin"] .menu__ico svg, ' +
             '.menu__item[data-component="color_plugin"] .menu__ico path[fill], ' +
+            '.menu__item[data-component="color_plugin"].focus .menu__ico path[fill], ' +
+            '.menu__item[data-component="color_plugin"].traverse .menu__ico path[fill], ' +
+            '.menu__item[data-component="color_plugin"].hover .menu__ico path[fill], ' +
             '.menu__item[data-component="color_plugin"] .menu__ico rect[fill], ' +
+            '.menu__item[data-component="color_plugin"].focus .menu__ico rect[fill], ' +
+            '.menu__item[data-component="color_plugin"].traverse .menu__ico rect[fill], ' +
+            '.menu__item[data-component="color_plugin"].hover .menu__ico rect[fill], ' +
             '.menu__item[data-component="color_plugin"] .menu__ico circle[fill], ' +
+            '.menu__item[data-component="color_plugin"].focus .menu__ico circle[fill], ' +
+            '.menu__item[data-component="color_plugin"].traverse .menu__ico circle[fill], ' +
+            '.menu__item[data-component="color_plugin"].hover .menu__ico circle[fill], ' +
             '.menu__item[data-component="color_plugin"] .menu__ico polygon[fill], ' +
-            '.menu__item[data-component="color_plugin"] .menu__ico polyline[fill] {' +
+            '.menu__item[data-component="color_plugin"].focus .menu__ico polygon[fill], ' +
+            '.menu__item[data-component="color_plugin"].traverse .menu__ico polygon[fill], ' +
+            '.menu__item[data-component="color_plugin"].hover .menu__ico polygon[fill], ' +
+            '.menu__item[data-component="color_plugin"] .menu__ico polyline[fill], ' +
+            '.menu__item[data-component="color_plugin"].focus .menu__ico polyline[fill], ' +
+            '.menu__item[data-component="color_plugin"].traverse .menu__ico polyline[fill], ' +
+            '.menu__item[data-component="color_plugin"].hover .menu__ico polyline[fill] {' +
                 'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
-            '.menu__item[data-component="color_plugin"] .menu__ico img {' +
-                '-webkit-filter: none !important;' +
-                'filter: none !important;' +
-            '}' +
-            // Стиль для іконок лівого меню
-            '.menu__ico, .menu__item.focus .menu__ico, .menu__item.traverse .menu__ico, .menu__item.hover .menu__ico, ' +
-            '.menu__ico svg, .menu__item.focus .menu__ico svg, .menu__item.traverse .menu__ico svg, .menu__item.hover .menu__ico svg, ' +
-            '.menu__ico path[fill], .menu__item.focus .menu__ico path[fill], .menu__item.traverse .menu__ico path[fill], .menu__item.hover .menu__ico path[fill], ' +
-            '.menu__ico rect[fill], .menu__item.focus .menu__ico rect[fill], .menu__item.traverse .menu__ico rect[fill], .menu__item.hover .menu__ico rect[fill], ' +
-            '.menu__ico circle[fill], .menu__item.focus .menu__ico circle[fill], .menu__item.traverse .menu__ico circle[fill], .menu__item.hover .menu__ico circle[fill], ' +
-            '.menu__ico polygon[fill], .menu__item.focus .menu__ico polygon[fill], .menu__item.traverse .menu__ico polygon[fill], .menu__item.hover .menu__ico polygon[fill], ' +
-            '.menu__ico polyline[fill], .menu__item.focus .menu__ico polyline[fill], .menu__item.traverse .menu__ico polyline[fill], .menu__item.hover .menu__ico polyline[fill] {' +
-                'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
-                'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
-            '}' +
-            '.menu__ico img, .menu__item.focus .menu__ico img, .menu__item.traverse .menu__ico img, .menu__item.hover .menu__ico img {' +
-                '-webkit-filter: none !important;' +
-                'filter: none !important;' +
+            '.menu__item[data-component="color_plugin"] .menu__ico [stroke], ' +
+            '.menu__item[data-component="color_plugin"].focus .menu__ico [stroke], ' +
+            '.menu__item[data-component="color_plugin"].traverse .menu__ico [stroke], ' +
+            '.menu__item[data-component="color_plugin"].hover .menu__ico [stroke] {' +
+                'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
             // Стиль для іконок верхнього меню
             '.head .head__action .icon, .head .head__settings .icon, .head .selector.open--search .icon, ' +
             '.head .head__action.focus .icon, .head .head__settings.focus .icon, .head .selector.open--search.focus .icon, ' +
             '.head .head__action.traverse .icon, .head .head__settings.traverse .icon, .head .selector.open--search.traverse .icon, ' +
             '.head .head__action:hover .icon, .head .head__settings:hover .icon, .head .selector.open--search:hover .icon, ' +
-            '.head .head__action .icon svg, .head .head__settings .icon svg, .head .selector.open--search .icon svg, ' +
-            '.head .head__action path[fill], .head .head__settings path[fill], .head .selector.open--search path[fill], ' +
-            '.head .head__action rect[fill], .head .head__settings rect[fill], .head .selector.open--search rect[fill], ' +
-            '.head .head__action circle[fill], .head .head__settings circle[fill], .head .selector.open--search circle[fill], ' +
-            '.head .head__action polygon[fill], .head .head__settings polygon[fill], .head .selector.open--search polygon[fill], ' +
-            '.head .head__action polyline[fill], .head .head__settings polyline[fill], .head .selector.open--search polyline[fill] {' +
+            '.head .head__action.lamp .icon, .head .head__action.lamp.focus .icon, .head .head__action.lamp.traverse .icon, .head .head__action.lamp:hover .icon, ' +
+            '.head .head__action .icon path[fill], .head .head__action.focus .icon path[fill], .head .head__action.traverse .icon path[fill], .head .head__action:hover .icon path[fill], .head .head__action.lamp .icon path[fill], ' +
+            '.head .head__settings .icon path[fill], .head .head__settings.focus .icon path[fill], .head .head__settings.traverse .icon path[fill], .head .head__settings:hover .icon path[fill], ' +
+            '.head .selector.open--search .icon path[fill], .head .selector.open--search.focus .icon path[fill], .head .selector.open--search.traverse .icon path[fill], .head .selector.open--search:hover .icon path[fill], ' +
+            '.head .head__action .icon rect[fill], .head .head__action.focus .icon rect[fill], .head .head__action.traverse .icon rect[fill], .head .head__action:hover .icon rect[fill], .head .head__action.lamp .icon rect[fill], ' +
+            '.head .head__settings .icon rect[fill], .head .head__settings.focus .icon rect[fill], .head .head__settings.traverse .icon rect[fill], .head .head__settings:hover .icon rect[fill], ' +
+            '.head .selector.open--search .icon rect[fill], .head .selector.open--search.focus .icon rect[fill], .head .selector.open--search.traverse .icon rect[fill], .head .selector.open--search:hover .icon rect[fill], ' +
+            '.head .head__action .icon circle[fill], .head .head__action.focus .icon circle[fill], .head .head__action.traverse .icon circle[fill], .head .head__action:hover .icon circle[fill], .head .head__action.lamp .icon circle[fill], ' +
+            '.head .head__settings .icon circle[fill], .head .head__settings.focus .icon circle[fill], .head .head__settings.traverse .icon circle[fill], .head .head__settings:hover .icon circle[fill], ' +
+            '.head .selector.open--search .icon circle[fill], .head .selector.open--search.focus .icon circle[fill], .head .selector.open--search.traverse .icon circle[fill], .head .selector.open--search:hover .icon circle[fill], ' +
+            '.head .head__action .icon polygon[fill], .head .head__action.focus .icon polygon[fill], .head .head__action.traverse .icon polygon[fill], .head .head__action:hover .icon polygon[fill], .head .head__action.lamp .icon polygon[fill], ' +
+            '.head .head__settings .icon polygon[fill], .head .head__settings.focus .icon polygon[fill], .head .head__settings.traverse .icon polygon[fill], .head .head__settings:hover .icon polygon[fill], ' +
+            '.head .selector.open--search .icon polygon[fill], .head .selector.open--search.focus .icon polygon[fill], .head .selector.open--search.traverse .icon polygon[fill], .head .selector.open--search:hover .icon polygon[fill], ' +
+            '.head .head__action .icon polyline[fill], .head .head__action.focus .icon polyline[fill], .head .head__action.traverse .icon polyline[fill], .head .head__action:hover .icon polyline[fill], .head .head__action.lamp .icon polyline[fill], ' +
+            '.head .head__settings .icon polyline[fill], .head .head__settings.focus .icon polyline[fill], .head .head__settings.traverse .icon polyline[fill], .head .head__settings:hover .icon polyline[fill], ' +
+            '.head .selector.open--search .icon polyline[fill], .head .selector.open--search.focus .icon polyline[fill], .head .selector.open--search.traverse .icon polyline[fill], .head .selector.open--search:hover .icon polyline[fill] {' +
                 'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
-            '.head .head__action .icon img, .head .head__settings .icon img, .head .selector.open--search .icon img {' +
+            '.head .head__action .icon [stroke], .head .head__action.focus .icon [stroke], .head .head__action.traverse .icon [stroke], .head .head__action:hover .icon [stroke], .head .head__action.lamp .icon [stroke], ' +
+            '.head .head__settings .icon [stroke], .head .head__settings.focus .icon [stroke], .head .head__settings.traverse .icon [stroke], .head .head__settings:hover .icon [stroke], ' +
+            '.head .selector.open--search .icon [stroke], .head .selector.open--search.focus .icon [stroke], .head .selector.open--search.traverse .icon [stroke], .head .selector.open--search:hover .icon [stroke] {' +
+                'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
+            '}' +
+            // Вимкнення фільтрів для растрових іконок верхнього меню
+            '.head .head__action .icon img, .head .head__action.focus .icon img, .head .head__action.traverse .icon img, .head .head__action:hover .icon img, .head .head__action.lamp .icon img, ' +
+            '.head .head__settings .icon img, .head .head__settings.focus .icon img, .head .head__settings.traverse .icon img, .head .head__settings:hover .icon img, ' +
+            '.head .selector.open--search .icon img, .head .selector.open--search.focus .icon img, .head .selector.open--search.traverse .icon img, .head .selector.open--search:hover .icon img {' +
                 '-webkit-filter: none !important;' +
                 'filter: none !important;' +
             '}' +
-            // Стиль для іконок меню налаштувань
+            // Стиль для іконок меню налаштувань праворуч
             '.settings .settings-folder__icon, .settings .settings-folder__icon.focus, .settings .settings-folder__icon.traverse, .settings .settings-folder__icon:hover, ' +
-            '.settings .settings-folder__icon svg, .settings .settings-folder__icon.focus svg, .settings .settings-folder__icon.traverse svg, .settings .settings-folder__icon:hover svg, ' +
             '.settings .settings-folder__icon path[fill], .settings .settings-folder__icon.focus path[fill], .settings .settings-folder__icon.traverse path[fill], .settings .settings-folder__icon:hover path[fill], ' +
             '.settings .settings-folder__icon rect[fill], .settings .settings-folder__icon.focus rect[fill], .settings .settings-folder__icon.traverse rect[fill], .settings .settings-folder__icon:hover rect[fill], ' +
             '.settings .settings-folder__icon circle[fill], .settings .settings-folder__icon.focus circle[fill], .settings .settings-folder__icon.traverse circle[fill], .settings .settings-folder__icon:hover circle[fill], ' +
@@ -217,14 +313,18 @@
                 'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
+            '.settings .settings-folder__icon [stroke], .settings .settings-folder__icon.focus [stroke], .settings .settings-folder__icon.traverse [stroke], .settings .settings-folder__icon:hover [stroke] {' +
+                'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
+            '}' +
+            // Вимкнення фільтрів для растрових іконок меню налаштувань
             '.settings .settings-folder__icon img, .settings .settings-folder__icon.focus img, .settings .settings-folder__icon.traverse img, .settings .settings-folder__icon:hover img {' +
                 '-webkit-filter: none !important;' +
                 'filter: none !important;' +
             '}' +
-            // Основні стилі для елементів інтерфейсу
+            // Решта стилів
             '.console__tab.focus, .menu__item.focus, .menu__item.traverse, .menu__item.hover, ' +
             '.full-person.focus, .full-start__button.focus, .full-descr__tag.focus, ' +
-            '.simple-button.focus, .head__action.focus, .head__action:hover, ' +
+            '.simple-button.focus, .head__action.focus, .head__action.hover, ' +
             '.player-panel .button.focus, .search-source.active {' +
                 'background: ' + ColorPlugin.settings.main_color + ';' +
                 'color: ' + ColorPlugin.settings.text_color + ';' +
@@ -249,15 +349,62 @@
             '.online.focus {' +
                 'box-shadow: 0 0 0 0.2em ' + ColorPlugin.settings.main_color + ';' +
             '}' +
+            '.online_modss.focus::after, .online-prestige.focus::after, ' +
+            '.radio-item.focus .radio-item__imgbox:after, .iptv-channel.focus::before, ' +
+            '.iptv-channel.last--focus::before {' +
+                'border-color: ' + ColorPlugin.settings.main_color + ' !important;' +
+            '}' +
+            '.card-more.focus .card-more__box::after {' +
+                'border: 0.3em solid ' + ColorPlugin.settings.main_color + ';' +
+            '}' +
+            '.iptv-playlist-item.focus::after, .iptv-playlist-item.hover::after {' +
+                'border-color: ' + ColorPlugin.settings.main_color + ' !important;' +
+            '}' +
+            '.ad-bot.focus .ad-bot__content::after, .ad-bot.hover .ad-bot__content::after, ' +
+            '.card-episode.focus .full-episode::after, .register.focus::after, ' +
+            '.season-episode.focus::after, .full-episode.focus::after, ' +
+            '.full-review-add.focus::after, .card.focus .card__view::after, ' +
+            '.card.hover .card__view::after, .extensions__item.focus:after, ' +
+            '.torrent-item.focus::after, .extensions__block-add.focus:after {' +
+                'border-color: ' + ColorPlugin.settings.main_color + ';' +
+            '}' +
+            '.torrent-serial__size {' +
+                'background-color: ' + ColorPlugin.settings.text_color + ';' +
+                'color: ' + ColorPlugin.settings.icon_color + ';' +
+            '}' +
+            '.broadcast__scan > div, .broadcast__device.focus {' +
+                'background-color: ' + ColorPlugin.settings.main_color + ';' +
+                'color: ' + ColorPlugin.settings.text_color + ';' +
+            '}' +
+            '.card:hover .card__img, .card.focus .card__img {' +
+                'border-color: ' + ColorPlugin.settings.main_color + ';' +
+            '}' +
+            '.noty {' +
+                'background: ' + ColorPlugin.settings.main_color + ';' +
+                'color: ' + ColorPlugin.settings.text_color + ';' +
+            '}' +
+            '.radio-player.focus {' +
+                'background-color: ' + ColorPlugin.settings.main_color + ';' +
+                'color: ' + ColorPlugin.settings.text_color + ';' +
+            '}' +
+            '.explorer-card__head-img.focus::after {' +
+                'border: 0.3em solid ' + ColorPlugin.settings.main_color + ';' +
+            '}' +
             '.color_square.focus {' +
                 'border: 0.3em solid var(--main-color);' +
                 'transform: scale(1.1);' +
+            '}' +
+            'body.glass--style .selectbox-item.focus, ' +
+            'body.glass--style .settings-folder.focus, ' +
+            'body.glass--style .settings-param.focus {' +
+                'background-color: ' + ColorPlugin.settings.main_color + ';' +
+                'color: ' + ColorPlugin.settings.text_color + ';' +
             '}' +
             '.color_square.default {' +
                 'background-color: #fff;' +
                 'position: relative;' +
             '}' +
-            '.color_square.default::after, .color_square.default::before {' +
+            '.color_square.default::after {' +
                 'content: "";' +
                 'position: absolute;' +
                 'top: 50%;' +
@@ -265,11 +412,16 @@
                 'right: 10%;' +
                 'height: 2px;' +
                 'background-color: #000;' +
-            '}' +
-            '.color_square.default::after {' +
                 'transform: rotate(45deg);' +
             '}' +
             '.color_square.default::before {' +
+                'content: "";' +
+                'position: absolute;' +
+                'top: 50%;' +
+                'left: 10%;' +
+                'right: 10%;' +
+                'height: 2px;' +
+                'background-color: #000;' +
                 'transform: rotate(-45deg);' +
             '}' +
             '.color_square {' +
@@ -313,16 +465,36 @@
         // Видаляємо вбудовані стилі SVG
         removeInlineSvgStyles();
         // Оновлюємо іконку плагіна
-        updatePluginIcon();
+        updatePluginTcon();
+        console.log('ColorPlugin: Applied styles, icon_color: ' + ColorPlugin.settings.icon_color + ', main_color: ' + ColorPlugin.settings.main_color);
         // Дебаг-логування для перевірки іконок
-        console.log('ColorPlugin: Applied styles, icon_color: ' + ColorPlugin.settings.icon_color);
+        console.log('ColorPlugin: Applying icon_color to left menu: .menu__ico, .menu__item.focus .menu__ico, .menu__item.traverse .menu__ico, .menu__item.hover .menu__ico');
+        console.log('ColorPlugin: Applying icon_color to top menu: .head__action .icon, .head__settings .icon, .selector.open--search .icon, .head__action.lamp .icon');
+        console.log('ColorPlugin: Applying icon_color to settings menu: .settings-folder__icon');
+        console.log('ColorPlugin: Applying icon_color to plugin icon: .menu__item[data-component="color_plugin"] .menu__ico');
+        var focusedTopIcons = document.querySelectorAll(
+            '.head__action.focus .icon path[fill], .head__action.traverse .icon path[fill], .head__action:hover .icon path[fill], ' +
+            '.head__action.lamp .icon path[fill], .head__action.lamp.focus .icon path[fill], ' +
+            '.head__settings.focus .icon path[fill], .head__settings.traverse .icon path[fill], .head__settings:hover .icon path[fill], ' +
+            '.selector.open--search.focus .icon path[fill], .selector.open--search.traverse .icon path[fill], .selector.open--search:hover .icon path[fill]'
+        );
+        console.log('ColorPlugin: Found ' + focusedTopIcons.length + ' SVG elements in focused/hovered top menu icons');
+        focusedTopIcons.forEach(function(icon) {
+            console.log('ColorPlugin: Top menu SVG element style - fill: ' + icon.style.fill);
+        });
         var settingsIcons = document.querySelectorAll(
-            '.settings .settings-folder__icon svg, .settings .settings-folder__icon.focus svg, ' +
-            '.settings .settings-folder__icon path[fill], .settings .settings-folder__icon.focus path[fill]'
+            '.settings-folder__icon path[fill], .settings-folder__icon.focus path[fill], .settings-folder__icon.traverse path[fill], .settings-folder__icon:hover path[fill]'
         );
         console.log('ColorPlugin: Found ' + settingsIcons.length + ' SVG elements in settings menu icons');
         settingsIcons.forEach(function(icon) {
             console.log('ColorPlugin: Settings menu SVG element style - fill: ' + icon.style.fill);
+        });
+        var pluginIcon = document.querySelectorAll(
+            '.menu__item[data-component="color_plugin"] .menu__ico path[fill], .menu__item[data-component="color_plugin"].focus .menu__ico path[fill]'
+        );
+        console.log('ColorPlugin: Found ' + pluginIcon.length + ' SVG elements in plugin icon');
+        pluginIcon.forEach(function(icon) {
+            console.log('ColorPlugin: Plugin icon SVG element style - fill: ' + icon.style.fill);
         });
     }
 
@@ -345,7 +517,7 @@
     // Функція для створення модального вікна вибору кольору
     function openColorPicker(paramName, colors, title) {
         var colorKeys = Object.keys(colors);
-        var groupedColors = chunkArray(colorKeys, 5);
+        var groupedColors = chunkArray(colorKeys, 5); // Сітка 5x2
         var colorContent = groupedColors.map(function (group) {
             var groupContent = group.map(function (color) {
                 return createColorHtml(color, colors[color]);
@@ -353,6 +525,7 @@
             return '<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 11.25px; justify-items: center; padding: 10px;">' + groupContent + '</div>';
         }).join('');
 
+        // Блок для введення HEX-коду у стилі color_square
         var hexValue = Lampa.Storage.get('color_plugin_custom_hex', '') || '#000000';
         var inputHtml = '<div style="padding: 10px; display: flex; justify-content: center;">' +
                         '<div class="color_square selector hex-input" tabindex="0" style="background-color: ' + hexValue + ';">' +
@@ -380,8 +553,8 @@
                         var color;
 
                         if (selectedElement.classList.contains('hex-input')) {
-                            Lampa.Noty.show(Lampa.Lang.translate('hex_input_hint'));
-                            Lampa.Modal.close();
+                            Lampa.Noty.show(Lampa.Lang.translate('hex_input_hint')); // Показуємо підказку
+                            Lampa.Modal.close(); // Закриваємо модальне вікно перед викликом клавіатури
                             var inputOptions = {
                                 name: 'color_plugin_custom_hex',
                                 value: Lampa.Storage.get('color_plugin_custom_hex', ''),
@@ -440,6 +613,7 @@
 
     // Ініціалізація плагіна
     function initPlugin() {
+        // Завантажуємо збережені налаштування
         ColorPlugin.settings.main_color = Lampa.Storage.get('color_plugin_main_color', '#353535');
         ColorPlugin.settings.background_color = Lampa.Storage.get('color_plugin_background_color', '#1d1f20');
         ColorPlugin.settings.text_color = Lampa.Storage.get('color_plugin_text_color', '#fff');
@@ -447,52 +621,101 @@
         ColorPlugin.settings.icon_color = Lampa.Storage.get('color_plugin_icon_color', '#000');
         ColorPlugin.settings.enabled = Lampa.Storage.get('color_plugin_enabled', true);
 
+        // Додаємо компонент до меню налаштувань
         if (Lampa.SettingsApi) {
             Lampa.SettingsApi.addComponent({
                 component: 'color_plugin',
                 name: Lampa.Lang.translate('color_plugin'),
-                icon: '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>'
+                icon: '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="' + ColorPlugin.settings.icon_color + '"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>'
             });
 
+            // Основний колір
             Lampa.SettingsApi.addParam({
                 component: 'color_plugin',
-                param: { name: 'color_plugin_main_color', type: 'button' },
-                field: { name: Lampa.Lang.translate('main_color') },
-                onChange: function () { openColorPicker('main_color', ColorPlugin.colors.main, 'main_color'); }
+                param: {
+                    name: 'color_plugin_main_color',
+                    type: 'button'
+                },
+                field: {
+                    name: Lampa.Lang.translate('main_color')
+                },
+                onChange: function () {
+                    openColorPicker('main_color', ColorPlugin.colors.main, 'main_color');
+                }
             });
 
+            // Колір фону
             Lampa.SettingsApi.addParam({
                 component: 'color_plugin',
-                param: { name: 'color_plugin_background_color', type: 'button' },
-                field: { name: Lampa.Lang.translate('background_color') },
-                onChange: function () { openColorPicker('background_color', ColorPlugin.colors.background, 'background_color'); }
+                param: {
+                    name: 'color_plugin_background_color',
+                    type: 'button'
+                },
+                field: {
+                    name: Lampa.Lang.translate('background_color')
+                },
+                onChange: function () {
+                    openColorPicker('background_color', ColorPlugin.colors.background, 'background_color');
+                }
             });
 
+            // Колір тексту
             Lampa.SettingsApi.addParam({
                 component: 'color_plugin',
-                param: { name: 'color_plugin_text_color', type: 'button' },
-                field: { name: Lampa.Lang.translate('text_color') },
-                onChange: function () { openColorPicker('text_color', ColorPlugin.colors.text, 'text_color'); }
+                param: {
+                    name: 'color_plugin_text_color',
+                    type: 'button'
+                },
+                field: {
+                    name: Lampa.Lang.translate('text_color')
+                },
+                onChange: function () {
+                    openColorPicker('text_color', ColorPlugin.colors.text, 'text_color');
+                }
             });
 
+            // Прозорий фон
             Lampa.SettingsApi.addParam({
                 component: 'color_plugin',
-                param: { name: 'color_plugin_transparent_white', type: 'button' },
-                field: { name: Lampa.Lang.translate('transparent_white') },
-                onChange: function () { openColorPicker('transparent_white', ColorPlugin.colors.transparent, 'transparent_white'); }
+                param: {
+                    name: 'color_plugin_transparent_white',
+                    type: 'button'
+                },
+                field: {
+                    name: Lampa.Lang.translate('transparent_white')
+                },
+                onChange: function () {
+                    openColorPicker('transparent_white', ColorPlugin.colors.transparent, 'transparent_white');
+                }
             });
 
+            // Колір іконок
             Lampa.SettingsApi.addParam({
                 component: 'color_plugin',
-                param: { name: 'color_plugin_icon_color', type: 'button' },
-                field: { name: Lampa.Lang.translate('icon_color') },
-                onChange: function () { openColorPicker('icon_color', ColorPlugin.colors.icon, 'icon_color'); }
+                param: {
+                    name: 'color_plugin_icon_color',
+                    type: 'button'
+                },
+                field: {
+                    name: Lampa.Lang.translate('icon_color')
+                },
+                onChange: function () {
+                    openColorPicker('icon_color', ColorPlugin.colors.icon, 'icon_color');
+                }
             });
 
+            // Увімкнення/вимкнення плагіна
             Lampa.SettingsApi.addParam({
                 component: 'color_plugin',
-                param: { name: 'color_plugin_enabled', type: 'trigger', default: true },
-                field: { name: Lampa.Lang.translate('color_plugin_enabled'), description: 'Увімкнути або вимкнути плагін зміни кольорів' },
+                param: {
+                    name: 'color_plugin_enabled',
+                    type: 'trigger',
+                    default: true
+                },
+                field: {
+                    name: Lampa.Lang.translate('color_plugin_enabled'),
+                    description: 'Увімкнути або вимкнути плагін зміни кольорів'
+                },
                 onChange: function (value) {
                     ColorPlugin.settings.enabled = value === 'true';
                     Lampa.Storage.set('color_plugin_enabled', ColorPlugin.settings.enabled);
@@ -501,11 +724,12 @@
                 }
             });
 
+            // Застосовуємо стилі при ініціалізації
             applyStyles();
         }
     }
 
-    // Запускаємо плагін
+    // Запускаємо плагін після готовності програми
     if (window.appready && Lampa.SettingsApi) {
         initPlugin();
     } else {
