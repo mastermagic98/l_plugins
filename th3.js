@@ -180,7 +180,6 @@
             '.settings-param__icon, .settings-param__icon.focus, .settings-param__icon:hover, ' +
             '.settings__icon, .settings__icon.focus, .settings__icon:hover, ' +
             '.settings-param svg, .settings-param.focus svg, .settings-param:hover svg, ' +
-            '.settings svg, .settings.focus svg, .settings:hover svg, ' +
             '.settings-param__content svg, .settings-param__content.focus svg, .settings-param__content:hover svg {' +
                 'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
@@ -211,13 +210,12 @@
             '.settings-param:hover .settings-param__ico rect[fill], .settings-param:hover .settings-param__ico circle[fill], ' +
             '.settings-param__ico [fill], .settings-param__icon [fill], .settings__icon [fill], ' +
             '.settings-param svg path[fill], .settings-param svg rect[fill], .settings-param svg circle[fill], ' +
-            '.settings svg path[fill], .settings svg rect[fill], .settings svg circle[fill], ' +
             '.settings-param__content svg path[fill], .settings-param__content svg rect[fill], .settings-param__content svg circle[fill] {' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
             '.settings-param.focus .settings-param__ico [stroke], .settings-param:hover .settings-param__ico [stroke], ' +
             '.settings-param__ico [stroke], .settings-param__icon [stroke], .settings__icon [stroke], ' +
-            '.settings-param svg [stroke], .settings svg [stroke], .settings-param__content svg [stroke] {' +
+            '.settings-param svg [stroke], .settings-param__content svg [stroke] {' +
                 'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
             // Переконаємося, що масштаб іконок не змінюється
