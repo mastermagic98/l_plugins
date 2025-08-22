@@ -141,6 +141,26 @@
             '.settings-param__ico [stroke], .settings-param__icon [stroke], .settings__icon [stroke] {' +
                 'stroke: #fff !important;' +
             '}' +
+            // Текст у всіх елементах - завжди білий
+            '.menu__item, .menu__item.focus, .menu__item:hover, .menu__item.traverse, ' +
+            '.console__tab, .console__tab.focus, ' +
+            '.full-person, .full-person.focus, .full-start__button, .full-start__button.focus, ' +
+            '.full-descr__tag, .full-descr__tag.focus, .simple-button, .simple-button.focus, ' +
+            '.head__action, .head__action.focus, .head__action:hover, ' +
+            '.player-panel .button, .player-panel .button.focus, .search-source, .search-source.active, ' +
+            '.navigation-tabs__button, .navigation-tabs__button.focus, ' +
+            '.iptv-menu__list-item, .iptv-menu__list-item.focus, ' +
+            '.radio-item, .radio-item.focus, .lang__selector-item, .lang__selector-item.focus, ' +
+            '.simple-keyboard .hg-button, .simple-keyboard .hg-button.focus, ' +
+            '.modal__button, .modal__button.focus, .search-history-key, .search-history-key.focus, ' +
+            '.simple-keyboard-mic, .simple-keyboard-mic.focus, .full-review-add, .full-review-add.focus, ' +
+            '.full-review, .full-review.focus, .tag-count, .tag-count.focus, ' +
+            '.settings-folder, .settings-folder.focus, .settings-param, .settings-param.focus, ' +
+            '.selectbox-item, .selectbox-item.focus, .selectbox-item:hover, ' +
+            '.broadcast__scan > div, .broadcast__device, .broadcast__device.focus, ' +
+            '.noty, .radio-player, .radio-player.focus {' +
+                'color: #fff !important;' +
+            '}' +
             // Стили для main_color
             '.console__tab.focus, .menu__item.focus, .menu__item.traverse, .menu__item:hover, ' +
             '.full-person.focus, .full-start__button.focus, .full-descr__tag.focus, ' +
