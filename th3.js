@@ -139,13 +139,13 @@
         var icons = document.querySelectorAll('.settings-folder__icon img');
         icons.forEach(function(img) {
             var src = img.getAttribute('src');
-            // Для іконки panel.svg використовуємо наданий SVG-код
+            var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('width', '58');
+            svg.setAttribute('height', '58');
+            svg.setAttribute('viewBox', '0 0 58 58');
+            svg.setAttribute('fill', 'none');
+
             if (src.includes('panel.svg')) {
-                var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                svg.setAttribute('width', '58');
-                svg.setAttribute('height', '58');
-                svg.setAttribute('viewBox', '0 0 58 58');
-                svg.setAttribute('fill', 'none');
                 svg.innerHTML = `
                     <mask id="path-1-inside-1" fill="white">
                         <rect x="31" width="27" height="27" rx="3"/>
@@ -162,7 +162,18 @@
                 `;
                 img.parentNode.replaceChild(svg, img);
             }
-            // Додайте обробку інших SVG-файлів, якщо вони відомі
+            // Додайте обробку інших SVG-файлів тут, наприклад:
+            /*
+            else if (src.includes('keyboard.svg')) {
+                svg.innerHTML = `...SVG-код для keyboard.svg...`;
+                img.parentNode.replaceChild(svg, img);
+            }
+            else if (src.includes('account.svg')) {
+                svg.innerHTML = `...SVG-код для account.svg...`;
+                img.parentNode.replaceChild(svg, img);
+            }
+            */
+            // Якщо SVG-код для інших іконок невідомий, залишимо <img> без змін
         });
     }
 
@@ -225,21 +236,27 @@
             '.menu__item:hover .menu__ico [stroke], .menu__ico [stroke] {' +
                 'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
-            // Іконки в меню налаштувань праворуч
-            '.settings-folder__icon svg, .settings-folder.focus .settings-folder__icon svg, ' +
-            '.settings-folder:hover .settings-folder__icon svg {' +
+            // Іконки в меню налаштувань праворуч (збільшена специфічність)
+            '.settings-folder.selector .settings-folder__icon svg, ' +
+            '.settings-folder.selector.focus .settings-folder__icon svg, ' +
+            '.settings-folder.selector:hover .settings-folder__icon svg {' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
-            '.settings-folder__icon svg path[fill], .settings-folder__icon svg rect[fill], ' +
-            '.settings-folder__icon svg circle[fill], .settings-folder.focus .settings-folder__icon svg path[fill], ' +
-            '.settings-folder.focus .settings-folder__icon svg rect[fill], .settings-folder.focus .settings-folder__icon svg circle[fill], ' +
-            '.settings-folder:hover .settings-folder__icon svg path[fill], .settings-folder:hover .settings-folder__icon svg rect[fill], ' +
-            '.settings-folder:hover .settings-folder__icon svg circle[fill] {' +
+            '.settings-folder.selector .settings-folder__icon svg path[fill], ' +
+            '.settings-folder.selector .settings-folder__icon svg rect[fill], ' +
+            '.settings-folder.selector .settings-folder__icon svg circle[fill], ' +
+            '.settings-folder.selector.focus .settings-folder__icon svg path[fill], ' +
+            '.settings-folder.selector.focus .settings-folder__icon svg rect[fill], ' +
+            '.settings-folder.selector.focus .settings-folder__icon svg circle[fill], ' +
+            '.settings-folder.selector:hover .settings-folder__icon svg path[fill], ' +
+            '.settings-folder.selector:hover .settings-folder__icon svg rect[fill], ' +
+            '.settings-folder.selector:hover .settings-folder__icon svg circle[fill] {' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
-            '.settings-folder__icon svg [stroke], .settings-folder.focus .settings-folder__icon svg [stroke], ' +
-            '.settings-folder:hover .settings-folder__icon svg [stroke] {' +
+            '.settings-folder.selector .settings-folder__icon svg [stroke], ' +
+            '.settings-folder.selector.focus .settings-folder__icon svg [stroke], ' +
+            '.settings-folder.selector:hover .settings-folder__icon svg [stroke] {' +
                 'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
             '.console__tab.focus, .menu__item.focus, .menu__item.traverse, .menu__item:hover, ' +
@@ -382,8 +399,16 @@
             '}'
         );
 
-        // Замінюємо <img> на SVG у меню налаштувань
-        replaceImgWithSvg();
+        // Замінюємо <img> на SVG і застосовуємо стилі з затримкою для перекриття динамічних стилів Lampa
+        setTimeout(function() {
+            replaceImgWithSvg();
+            // Повторно застосовуємо стилі для забезпечення перекриття
+            var style = document.getElementById('color-plugin-styles');
+            if (style) {
+                style.innerHTML = style.innerHTML; // Оновлюємо стилі
+            }
+        }, 100);
+
         // Оновлюємо іконку плагіна
         updatePluginIcon();
         console.log('ColorPlugin: Applied styles, icon_color: ' + ColorPlugin.settings.icon_color + ', main_color: ' + ColorPlugin.settings.main_color);
