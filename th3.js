@@ -136,49 +136,38 @@
 
     // Функція для оновлення іконки плагіна
     function updatePluginTcon() {
-        if (!Lampa.SettingsApi || !Lampa.SettingsApi.components) {
-            console.warn('ColorPlugin: Lampa.SettingsApi.components is not available.');
-            var menuItem = document.querySelector('.menu__item[data-component="color_plugin"] .menu__ico');
-            if (menuItem) {
-                menuItem.innerHTML = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="' + ColorPlugin.settings.icon_color + '"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
-                var svg = menuItem.querySelector('svg');
-                if (svg) {
-                    svg.querySelectorAll('path[fill], rect[fill], circle[fill], polygon[fill], polyline[fill]').forEach(function(el) {
-                        el.style.fill = ColorPlugin.settings.icon_color;
-                    });
-                    svg.querySelectorAll('[stroke]').forEach(function(el) {
-                        el.style.stroke = ColorPlugin.settings.icon_color;
-                    });
-                }
+        console.log('ColorPlugin: Updating plugin icon with color:', ColorPlugin.settings.icon_color);
+        var menuItem = document.querySelector('.menu__item[data-component="color_plugin"] .menu__ico');
+        if (menuItem) {
+            menuItem.innerHTML = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="' + ColorPlugin.settings.icon_color + '"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
+            var svg = menuItem.querySelector('svg');
+            if (svg) {
+                svg.querySelectorAll('path[fill], rect[fill], circle[fill], polygon[fill], polyline[fill]').forEach(function(el) {
+                    el.style.fill = ColorPlugin.settings.icon_color;
+                    console.log('ColorPlugin: Updated plugin icon fill to', ColorPlugin.settings.icon_color);
+                });
+                svg.querySelectorAll('[stroke]').forEach(function(el) {
+                    el.style.stroke = ColorPlugin.settings.icon_color;
+                    console.log('ColorPlugin: Updated plugin icon stroke to', ColorPlugin.settings.icon_color);
+                });
             }
-            return;
         }
-        var component = Lampa.SettingsApi.components.find(function(c) { return c.component === 'color_plugin'; });
-        if (component) {
-            component.icon = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="' + ColorPlugin.settings.icon_color + '"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
-            Lampa.Settings.render();
-            // Примусово оновлюємо іконку в DOM
-            var menuItem = document.querySelector('.menu__item[data-component="color_plugin"] .menu__ico');
-            if (menuItem) {
-                var svg = menuItem.querySelector('svg');
-                if (svg) {
-                    svg.querySelectorAll('path[fill], rect[fill], circle[fill], polygon[fill], polyline[fill]').forEach(function(el) {
-                        el.style.fill = ColorPlugin.settings.icon_color;
-                        console.log('ColorPlugin: Updated plugin icon fill to', ColorPlugin.settings.icon_color);
-                    });
-                    svg.querySelectorAll('[stroke]').forEach(function(el) {
-                        el.style.stroke = ColorPlugin.settings.icon_color;
-                        console.log('ColorPlugin: Updated plugin icon stroke to', ColorPlugin.settings.icon_color);
-                    });
-                }
+        if (Lampa.SettingsApi && Lampa.SettingsApi.components) {
+            var component = Lampa.SettingsApi.components.find(function(c) { return c.component === 'color_plugin'; });
+            if (component) {
+                component.icon = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="' + ColorPlugin.settings.icon_color + '"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
+                Lampa.Settings.render();
+                console.log('ColorPlugin: Updated plugin icon via SettingsApi');
             }
         }
     }
 
     // Функція для видалення вбудованих стилів SVG
     function removeInlineSvgStyles() {
+        console.log('ColorPlugin: Removing inline SVG styles');
         var selectors = [
             '.head__action .icon svg path, .head__action .icon svg rect, .head__action .icon svg circle, .head__action .icon svg polygon, .head__action .icon svg polyline, .head__action .icon svg [stroke]',
+            '.head__action.lamp .icon svg path, .head__action.lamp .icon svg rect, .head__action.lamp .icon svg circle, .head__action.lamp .icon svg polygon, .head__action.lamp .icon svg polyline, .head__action.lamp .icon svg [stroke]',
             '.head__settings .icon svg path, .head__settings .icon svg rect, .head__settings .icon svg circle, .head__settings .icon svg polygon, .head__settings .icon svg polyline, .head__settings .icon svg [stroke]',
             '.selector.open--search .icon svg path, .selector.open--search .icon svg rect, .selector.open--search .icon svg circle, .selector.open--search .icon svg polygon, .selector.open--search .icon svg polyline, .selector.open--search .icon svg [stroke]',
             '.settings-folder__icon svg path, .settings-folder__icon svg rect, .settings-folder__icon svg circle, .settings-folder__icon svg polygon, .settings-folder__icon svg polyline, .settings-folder__icon svg [stroke]',
@@ -201,9 +190,11 @@
 
     // Оновлена функція для застосування стилів
     function applyStyles() {
+        console.log('ColorPlugin: Applying styles, enabled:', ColorPlugin.settings.enabled);
         if (!ColorPlugin.settings.enabled) {
             var oldStyle = document.getElementById('color-plugin-styles');
             if (oldStyle) oldStyle.remove();
+            console.log('ColorPlugin: Plugin disabled, styles removed');
             return;
         }
 
@@ -212,6 +203,7 @@
             style = document.createElement('style');
             style.id = 'color-plugin-styles';
             document.head.appendChild(style);
+            console.log('ColorPlugin: Created new style element');
         }
 
         style.innerHTML = (
@@ -290,16 +282,18 @@
             '.head .selector.open--search .icon polyline[fill], .head .selector.open--search.focus .icon polyline[fill], .head .selector.open--search.traverse .icon polyline[fill], .head .selector.open--search:hover .icon polyline[fill] {' +
                 'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
+                'filter: none !important;' +
             '}' +
             '.head .head__action .icon [stroke], .head .head__action.focus .icon [stroke], .head .head__action.traverse .icon [stroke], .head .head__action:hover .icon [stroke], .head .head__action.lamp .icon [stroke], ' +
             '.head .head__settings .icon [stroke], .head .head__settings.focus .icon [stroke], .head .head__settings.traverse .icon [stroke], .head .head__settings:hover .icon [stroke], ' +
             '.head .selector.open--search .icon [stroke], .head .selector.open--search.focus .icon [stroke], .head .selector.open--search.traverse .icon [stroke], .head .selector.open--search:hover .icon [stroke] {' +
                 'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
+                'filter: none !important;' +
             '}' +
-            // Вимкнення фільтрів для растрових іконок верхнього меню
-            '.head .head__action .icon img, .head .head__action.focus .icon img, .head .head__action.traverse .icon img, .head .head__action:hover .icon img, .head .head__action.lamp .icon img, ' +
-            '.head .head__settings .icon img, .head .head__settings.focus .icon img, .head .head__settings.traverse .icon img, .head .head__settings:hover .icon img, ' +
-            '.head .selector.open--search .icon img, .head .selector.open--search.focus .icon img, .head .selector.open--search.traverse .icon img, .head .selector.open--search:hover .icon img {' +
+            // Вимкнення фільтрів для верхнього меню
+            '.head .head__action .icon, .head .head__action.focus .icon, .head .head__action.traverse .icon, .head .head__action:hover .icon, .head .head__action.lamp .icon, ' +
+            '.head .head__settings .icon, .head .head__settings.focus .icon, .head .head__settings.traverse .icon, .head .head__settings:hover .icon, ' +
+            '.head .selector.open--search .icon, .head .selector.open--search.focus .icon, .head .selector.open--search.traverse .icon, .head .selector.open--search:hover .icon {' +
                 '-webkit-filter: none !important;' +
                 'filter: none !important;' +
             '}' +
@@ -315,11 +309,6 @@
             '}' +
             '.settings .settings-folder__icon [stroke], .settings .settings-folder__icon.focus [stroke], .settings .settings-folder__icon.traverse [stroke], .settings .settings-folder__icon:hover [stroke] {' +
                 'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
-            '}' +
-            // Вимкнення фільтрів для растрових іконок меню налаштувань
-            '.settings .settings-folder__icon img, .settings .settings-folder__icon.focus img, .settings .settings-folder__icon.traverse img, .settings .settings-folder__icon:hover img {' +
-                '-webkit-filter: none !important;' +
-                'filter: none !important;' +
             '}' +
             // Решта стилів
             '.console__tab.focus, .menu__item.focus, .menu__item.traverse, .menu__item.hover, ' +
@@ -472,14 +461,13 @@
         console.log('ColorPlugin: Applying icon_color to top menu: .head__action .icon, .head__settings .icon, .selector.open--search .icon, .head__action.lamp .icon');
         console.log('ColorPlugin: Applying icon_color to settings menu: .settings-folder__icon');
         console.log('ColorPlugin: Applying icon_color to plugin icon: .menu__item[data-component="color_plugin"] .menu__ico');
-        var focusedTopIcons = document.querySelectorAll(
-            '.head__action.focus .icon path[fill], .head__action.traverse .icon path[fill], .head__action:hover .icon path[fill], ' +
-            '.head__action.lamp .icon path[fill], .head__action.lamp.focus .icon path[fill], ' +
-            '.head__settings.focus .icon path[fill], .head__settings.traverse .icon path[fill], .head__settings:hover .icon path[fill], ' +
-            '.selector.open--search.focus .icon path[fill], .selector.open--search.traverse .icon path[fill], .selector.open--search:hover .icon path[fill]'
+        var topIcons = document.querySelectorAll(
+            '.head__action .icon path[fill], .head__action.focus .icon path[fill], .head__action.traverse .icon path[fill], .head__action:hover .icon path[fill], .head__action.lamp .icon path[fill], ' +
+            '.head__settings .icon path[fill], .head__settings.focus .icon path[fill], .head__settings.traverse .icon path[fill], .head__settings:hover .icon path[fill], ' +
+            '.selector.open--search .icon path[fill], .selector.open--search.focus .icon path[fill], .selector.open--search.traverse .icon path[fill], .selector.open--search:hover .icon path[fill]'
         );
-        console.log('ColorPlugin: Found ' + focusedTopIcons.length + ' SVG elements in focused/hovered top menu icons');
-        focusedTopIcons.forEach(function(icon) {
+        console.log('ColorPlugin: Found ' + topIcons.length + ' SVG elements in top menu icons');
+        topIcons.forEach(function(icon) {
             console.log('ColorPlugin: Top menu SVG element style - fill: ' + icon.style.fill);
         });
         var settingsIcons = document.querySelectorAll(
@@ -613,6 +601,7 @@
 
     // Ініціалізація плагіна
     function initPlugin() {
+        console.log('ColorPlugin: Initializing plugin');
         // Завантажуємо збережені налаштування
         ColorPlugin.settings.main_color = Lampa.Storage.get('color_plugin_main_color', '#353535');
         ColorPlugin.settings.background_color = Lampa.Storage.get('color_plugin_background_color', '#1d1f20');
@@ -620,9 +609,11 @@
         ColorPlugin.settings.transparent_white = Lampa.Storage.get('color_plugin_transparent_white', 'rgba(255,255,255,0.2)');
         ColorPlugin.settings.icon_color = Lampa.Storage.get('color_plugin_icon_color', '#000');
         ColorPlugin.settings.enabled = Lampa.Storage.get('color_plugin_enabled', true);
+        console.log('ColorPlugin: Loaded settings:', ColorPlugin.settings);
 
         // Додаємо компонент до меню налаштувань
         if (Lampa.SettingsApi) {
+            console.log('ColorPlugin: Adding component to SettingsApi');
             Lampa.SettingsApi.addComponent({
                 component: 'color_plugin',
                 name: Lampa.Lang.translate('color_plugin'),
@@ -719,6 +710,7 @@
                 onChange: function (value) {
                     ColorPlugin.settings.enabled = value === 'true';
                     Lampa.Storage.set('color_plugin_enabled', ColorPlugin.settings.enabled);
+                    console.log('ColorPlugin: Plugin enabled changed to:', ColorPlugin.settings.enabled);
                     applyStyles();
                     Lampa.Settings.render();
                 }
@@ -726,15 +718,21 @@
 
             // Застосовуємо стилі при ініціалізації
             applyStyles();
+        } else {
+            console.warn('ColorPlugin: Lampa.SettingsApi is not available');
+            applyStyles(); // Застосовуємо стилі навіть без SettingsApi
         }
     }
 
     // Запускаємо плагін після готовності програми
+    console.log('ColorPlugin: Waiting for app ready');
     if (window.appready && Lampa.SettingsApi) {
+        console.log('ColorPlugin: App is ready, initializing');
         initPlugin();
     } else {
         Lampa.Listener.follow('app', function (event) {
-            if (event.type === 'ready' && Lampa.SettingsApi) {
+            console.log('ColorPlugin: App event:', event.type);
+            if (event.type === 'ready') {
                 initPlugin();
             }
         });
@@ -742,6 +740,7 @@
 
     // Оновлюємо стилі при відкритті налаштувань
     Lampa.Listener.follow('settings_component', function (event) {
+        console.log('ColorPlugin: Settings component event:', event.type);
         if (event.type === 'open') {
             applyStyles();
             Lampa.Settings.render();
