@@ -3,56 +3,16 @@
 
     // Додаємо переклади
     Lampa.Lang.add({
-        color_plugin: {
-            ru: 'Настройка цветов',
-            en: 'Color settings',
-            uk: 'Налаштування кольорів'
-        },
-        main_color: {
-            ru: 'Основной цвет',
-            en: 'Main color',
-            uk: 'Основний колір'
-        },
-        background_color: {
-            ru: 'Цвет фона',
-            en: 'Background color',
-            uk: 'Колір фону'
-        },
-        text_color: {
-            ru: 'Цвет текста',
-            en: 'Text color',
-            uk: 'Колір тексту'
-        },
-        transparent_white: {
-            ru: 'Прозрачный фон',
-            en: 'Transparent background',
-            uk: 'Прозорий фон'
-        },
-        icon_color: {
-            ru: 'Цвет иконок',
-            en: 'Icons color',
-            uk: 'Колір іконок'
-        },
-        color_plugin_enabled: {
-            ru: 'Включить плагин',
-            en: 'Enable plugin',
-            uk: 'Увімкнути плагін'
-        },
-        default_color: {
-            ru: 'По умолчанию',
-            en: 'Default',
-            uk: 'За замовчуванням'
-        },
-        custom_hex_input: {
-            ru: 'HEX-код цвета',
-            en: 'HEX color code',
-            uk: 'HEX-код кольору'
-        },
-        hex_input_hint: {
-            ru: 'Используйте формат #FFFFFF, например #123524',
-            en: 'Use the format #FFFFFF, for example #123524',
-            uk: 'Використовуйте формат #FFFFFF, наприклад #123524'
-        }
+        color_plugin: { ru: 'Настройка цветов', en: 'Color settings', uk: 'Налаштування кольорів' },
+        main_color: { ru: 'Основной цвет', en: 'Main color', uk: 'Основний колір' },
+        background_color: { ru: 'Цвет фона', en: 'Background color', uk: 'Колір фону' },
+        text_color: { ru: 'Цвет текста', en: 'Text color', uk: 'Колір тексту' },
+        transparent_white: { ru: 'Прозрачный фон', en: 'Transparent background', uk: 'Прозорий фон' },
+        icon_color: { ru: 'Цвет иконок', en: 'Icons color', uk: 'Колір іконок' },
+        color_plugin_enabled: { ru: 'Включить плагин', en: 'Enable plugin', uk: 'Увімкнути плагін' },
+        default_color: { ru: 'По умолчанию', en: 'Default', uk: 'За замовчуванням' },
+        custom_hex_input: { ru: 'HEX-код цвета', en: 'HEX color code', uk: 'HEX-код кольору' },
+        hex_input_hint: { ru: 'Используйте формат #FFFFFF, например #123524', en: 'Use the format #FFFFFF, for example #123524', uk: 'Використовуйте формат #FFFFFF, наприклад #123524' }
     });
 
     // Об'єкт для зберігання налаштувань
@@ -139,39 +99,41 @@
         console.log('ColorPlugin: Updating plugin icon with color:', ColorPlugin.settings.icon_color);
         var menuItem = document.querySelector('.menu__item[data-component="color_plugin"] .menu__ico');
         if (menuItem) {
-            menuItem.innerHTML = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="' + ColorPlugin.settings.icon_color + '"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
+            menuItem.innerHTML = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path fill="' + ColorPlugin.settings.icon_color + '" fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
             var svg = menuItem.querySelector('svg');
             if (svg) {
-                svg.querySelectorAll('path[fill], rect[fill], circle[fill], polygon[fill], polyline[fill]').forEach(function(el) {
+                svg.querySelectorAll('path, rect, circle, polygon, polyline').forEach(function(el) {
+                    el.setAttribute('fill', ColorPlugin.settings.icon_color);
                     el.style.fill = ColorPlugin.settings.icon_color;
-                    console.log('ColorPlugin: Updated plugin icon fill to', ColorPlugin.settings.icon_color);
-                });
-                svg.querySelectorAll('[stroke]').forEach(function(el) {
-                    el.style.stroke = ColorPlugin.settings.icon_color;
-                    console.log('ColorPlugin: Updated plugin icon stroke to', ColorPlugin.settings.icon_color);
+                    if (el.hasAttribute('stroke')) {
+                        el.setAttribute('stroke', ColorPlugin.settings.icon_color);
+                        el.style.stroke = ColorPlugin.settings.icon_color;
+                    }
+                    console.log('ColorPlugin: Updated plugin icon element:', el.tagName, 'fill:', el.getAttribute('fill'), 'style.fill:', el.style.fill);
                 });
             }
         }
         if (Lampa.SettingsApi && Lampa.SettingsApi.components) {
             var component = Lampa.SettingsApi.components.find(function(c) { return c.component === 'color_plugin'; });
             if (component) {
-                component.icon = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="' + ColorPlugin.settings.icon_color + '"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
+                component.icon = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path fill="' + ColorPlugin.settings.icon_color + '" fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
                 Lampa.Settings.render();
                 console.log('ColorPlugin: Updated plugin icon via SettingsApi');
             }
         }
     }
 
-    // Функція для видалення вбудованих стилів SVG
+    // Функція для видалення вбудованих стилів і атрибутів SVG
     function removeInlineSvgStyles() {
-        console.log('ColorPlugin: Removing inline SVG styles');
+        console.log('ColorPlugin: Removing inline SVG styles and attributes');
         var selectors = [
             '.head__action .icon svg path, .head__action .icon svg rect, .head__action .icon svg circle, .head__action .icon svg polygon, .head__action .icon svg polyline, .head__action .icon svg [stroke]',
             '.head__action.lamp .icon svg path, .head__action.lamp .icon svg rect, .head__action.lamp .icon svg circle, .head__action.lamp .icon svg polygon, .head__action.lamp .icon svg polyline, .head__action.lamp .icon svg [stroke]',
             '.head__settings .icon svg path, .head__settings .icon svg rect, .head__settings .icon svg circle, .head__settings .icon svg polygon, .head__settings .icon svg polyline, .head__settings .icon svg [stroke]',
             '.selector.open--search .icon svg path, .selector.open--search .icon svg rect, .selector.open--search .icon svg circle, .selector.open--search .icon svg polygon, .selector.open--search .icon svg polyline, .selector.open--search .icon svg [stroke]',
             '.settings-folder__icon svg path, .settings-folder__icon svg rect, .settings-folder__icon svg circle, .settings-folder__icon svg polygon, .settings-folder__icon svg polyline, .settings-folder__icon svg [stroke]',
-            '.menu__item[data-component="color_plugin"] .menu__ico svg path, .menu__item[data-component="color_plugin"] .menu__ico svg rect, .menu__item[data-component="color_plugin"] .menu__ico svg circle, .menu__item[data-component="color_plugin"] .menu__ico svg polygon, .menu__item[data-component="color_plugin"] .menu__ico svg polyline, .menu__item[data-component="color_plugin"] .menu__ico svg [stroke]'
+            '.menu__item[data-component="color_plugin"] .menu__ico svg path, .menu__item[data-component="color_plugin"] .menu__ico svg rect, .menu__item[data-component="color_plugin"] .menu__ico svg circle, .menu__item[data-component="color_plugin"] .menu__ico svg polygon, .menu__item[data-component="color_plugin"] .menu__ico svg polyline, .menu__item[data-component="color_plugin"] .menu__ico svg [stroke]',
+            '.head__action .icon, .head__action.lamp .icon, .head__settings .icon, .selector.open--search .icon'
         ];
         selectors.forEach(function(selector) {
             var elements = document.querySelectorAll(selector);
@@ -184,7 +146,26 @@
                     console.log('ColorPlugin: Removing inline stroke for', selector, ':', el.style.stroke);
                     el.style.stroke = '';
                 }
+                if (el.hasAttribute('fill')) {
+                    console.log('ColorPlugin: Removing fill attribute for', selector, ':', el.getAttribute('fill'));
+                    el.setAttribute('fill', ColorPlugin.settings.icon_color);
+                }
+                if (el.hasAttribute('stroke')) {
+                    console.log('ColorPlugin: Removing stroke attribute for', selector, ':', el.getAttribute('stroke'));
+                    el.setAttribute('stroke', ColorPlugin.settings.icon_color);
+                }
+                // Для шрифтових іконок
+                if (el.tagName.toLowerCase() === 'i' || el.classList.contains('icon')) {
+                    console.log('ColorPlugin: Setting color for icon element', selector, ':', el.style.color);
+                    el.style.color = ColorPlugin.settings.icon_color;
+                }
             });
+        });
+        // Додаткове очищення для <i> іконок
+        var iconElements = document.querySelectorAll('.head__action i, .head__action.lamp i, .head__settings i, .selector.open--search i');
+        iconElements.forEach(function(el) {
+            console.log('ColorPlugin: Setting color for <i> icon', el.className, ':', ColorPlugin.settings.icon_color);
+            el.style.color = ColorPlugin.settings.icon_color;
         });
     }
 
@@ -214,42 +195,42 @@
                 '--transparent-white: ' + ColorPlugin.settings.transparent_white + ';' +
             '}' +
             // Стиль для іконок лівого меню
-            '.menu__ico, .menu__ico.focus, .menu__item.focus .menu__ico, ' +
-            '.menu__item.traverse .menu__ico, .menu__item.hover .menu__ico, ' +
-            '.menu__item.focus .menu__ico path[fill], .menu__item.focus .menu__ico rect[fill], .menu__item.focus .menu__ico circle[fill], .menu__item.focus .menu__ico polygon[fill], .menu__item.focus .menu__ico polyline[fill], ' +
-            '.menu__item.traverse .menu__ico path[fill], .menu__item.traverse .menu__ico rect[fill], .menu__item.traverse .menu__ico circle[fill], .menu__item.traverse .menu__ico polygon[fill], .menu__item.traverse .menu__ico polyline[fill], ' +
-            '.menu__item.hover .menu__ico path[fill], .menu__item.hover .menu__ico rect[fill], .menu__item.hover .menu__ico circle[fill], .menu__item.hover .menu__ico polygon[fill], .menu__item.hover .menu__ico polyline[fill] {' +
+            '.menu__ico, .menu__ico.focus, .menu__item.focus .menu__ico, .menu__item.traverse .menu__ico, .menu__item.hover .menu__ico, ' +
+            '.menu__ico path, .menu__ico.focus path, .menu__item.focus .menu__ico path, .menu__item.traverse .menu__ico path, .menu__item.hover .menu__ico path, ' +
+            '.menu__ico rect, .menu__ico.focus rect, .menu__item.focus .menu__ico rect, .menu__item.traverse .menu__ico rect, .menu__item.hover .menu__ico rect, ' +
+            '.menu__ico circle, .menu__ico.focus circle, .menu__item.focus .menu__ico circle, .menu__item.traverse .menu__ico circle, .menu__item.hover .menu__ico circle, ' +
+            '.menu__ico polygon, .menu__ico.focus polygon, .menu__item.focus .menu__ico polygon, .menu__item.traverse .menu__ico polygon, .menu__item.hover .menu__ico polygon, ' +
+            '.menu__ico polyline, .menu__ico.focus polyline, .menu__item.focus .menu__ico polyline, .menu__item.traverse .menu__ico polyline, .menu__item.hover .menu__ico polyline {' +
                 'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
-            '.menu__item.focus .menu__ico [stroke], .menu__item.traverse .menu__ico [stroke], .menu__item.hover .menu__ico [stroke] {' +
+            '.menu__ico [stroke], .menu__ico.focus [stroke], .menu__item.focus .menu__ico [stroke], .menu__item.traverse .menu__ico [stroke], .menu__item.hover .menu__ico [stroke] {' +
                 'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
-            // Стиль для іконки плагіна "Налаштування кольорів"
+            // Стиль для іконки плагіна
             '.menu__item[data-component="color_plugin"] .menu__ico, ' +
             '.menu__item[data-component="color_plugin"].focus .menu__ico, ' +
             '.menu__item[data-component="color_plugin"].traverse .menu__ico, ' +
             '.menu__item[data-component="color_plugin"].hover .menu__ico, ' +
-            '.menu__item[data-component="color_plugin"] .menu__ico path[fill], ' +
-            '.menu__item[data-component="color_plugin"].focus .menu__ico path[fill], ' +
-            '.menu__item[data-component="color_plugin"].traverse .menu__ico path[fill], ' +
-            '.menu__item[data-component="color_plugin"].hover .menu__ico path[fill], ' +
-            '.menu__item[data-component="color_plugin"] .menu__ico rect[fill], ' +
-            '.menu__item[data-component="color_plugin"].focus .menu__ico rect[fill], ' +
-            '.menu__item[data-component="color_plugin"].traverse .menu__ico rect[fill], ' +
-            '.menu__item[data-component="color_plugin"].hover .menu__ico rect[fill], ' +
-            '.menu__item[data-component="color_plugin"] .menu__ico circle[fill], ' +
-            '.menu__item[data-component="color_plugin"].focus .menu__ico circle[fill], ' +
-            '.menu__item[data-component="color_plugin"].traverse .menu__ico circle[fill], ' +
-            '.menu__item[data-component="color_plugin"].hover .menu__ico circle[fill], ' +
-            '.menu__item[data-component="color_plugin"] .menu__ico polygon[fill], ' +
-            '.menu__item[data-component="color_plugin"].focus .menu__ico polygon[fill], ' +
-            '.menu__item[data-component="color_plugin"].traverse .menu__ico polygon[fill], ' +
-            '.menu__item[data-component="color_plugin"].hover .menu__ico polygon[fill], ' +
-            '.menu__item[data-component="color_plugin"] .menu__ico polyline[fill], ' +
-            '.menu__item[data-component="color_plugin"].focus .menu__ico polyline[fill], ' +
-            '.menu__item[data-component="color_plugin"].traverse .menu__ico polyline[fill], ' +
-            '.menu__item[data-component="color_plugin"].hover .menu__ico polyline[fill] {' +
+            '.menu__item[data-component="color_plugin"] .menu__ico path, ' +
+            '.menu__item[data-component="color_plugin"].focus .menu__ico path, ' +
+            '.menu__item[data-component="color_plugin"].traverse .menu__ico path, ' +
+            '.menu__item[data-component="color_plugin"].hover .menu__ico path, ' +
+            '.menu__item[data-component="color_plugin"] .menu__ico rect, ' +
+            '.menu__item[data-component="color_plugin"].focus .menu__ico rect, ' +
+            '.menu__item[data-component="color_plugin"].traverse .menu__ico rect, ' +
+            '.menu__item[data-component="color_plugin"].hover .menu__ico rect, ' +
+            '.menu__item[data-component="color_plugin"] .menu__ico circle, ' +
+            '.menu__item[data-component="color_plugin"].focus .menu__ico circle, ' +
+            '.menu__item[data-component="color_plugin"].traverse .menu__ico circle, ' +
+            '.menu__item[data-component="color_plugin"].hover .menu__ico circle, ' +
+            '.menu__item[data-component="color_plugin"] .menu__ico polygon, ' +
+            '.menu__item[data-component="color_plugin"].focus .menu__ico polygon, ' +
+            '.menu__item[data-component="color_plugin"].traverse .menu__ico polygon, ' +
+            '.menu__item[data-component="color_plugin"].hover .menu__ico polygon, ' +
+            '.menu__item[data-component="color_plugin"] .menu__ico polyline, ' +
+            '.menu__item[data-component="color_plugin"].focus .menu__ico polyline, ' +
+            '.menu__item[data-component="color_plugin"].traverse .menu__ico polyline {' +
                 'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
@@ -259,51 +240,55 @@
             '.menu__item[data-component="color_plugin"].hover .menu__ico [stroke] {' +
                 'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
-            // Стиль для іконок верхнього меню
-            '.head .head__action .icon, .head .head__settings .icon, .head .selector.open--search .icon, ' +
-            '.head .head__action.focus .icon, .head .head__settings.focus .icon, .head .selector.open--search.focus .icon, ' +
-            '.head .head__action.traverse .icon, .head .head__settings.traverse .icon, .head .selector.open--search.traverse .icon, ' +
-            '.head .head__action:hover .icon, .head .head__settings:hover .icon, .head .selector.open--search:hover .icon, ' +
+            // Стиль для іконок верхнього меню (SVG і шрифтові)
+            '.head .head__action .icon, .head .head__action.focus .icon, .head .head__action.traverse .icon, .head .head__action:hover .icon, ' +
             '.head .head__action.lamp .icon, .head .head__action.lamp.focus .icon, .head .head__action.lamp.traverse .icon, .head .head__action.lamp:hover .icon, ' +
-            '.head .head__action .icon path[fill], .head .head__action.focus .icon path[fill], .head .head__action.traverse .icon path[fill], .head .head__action:hover .icon path[fill], .head .head__action.lamp .icon path[fill], ' +
-            '.head .head__settings .icon path[fill], .head .head__settings.focus .icon path[fill], .head .head__settings.traverse .icon path[fill], .head .head__settings:hover .icon path[fill], ' +
-            '.head .selector.open--search .icon path[fill], .head .selector.open--search.focus .icon path[fill], .head .selector.open--search.traverse .icon path[fill], .head .selector.open--search:hover .icon path[fill], ' +
-            '.head .head__action .icon rect[fill], .head .head__action.focus .icon rect[fill], .head .head__action.traverse .icon rect[fill], .head .head__action:hover .icon rect[fill], .head .head__action.lamp .icon rect[fill], ' +
-            '.head .head__settings .icon rect[fill], .head .head__settings.focus .icon rect[fill], .head .head__settings.traverse .icon rect[fill], .head .head__settings:hover .icon rect[fill], ' +
-            '.head .selector.open--search .icon rect[fill], .head .selector.open--search.focus .icon rect[fill], .head .selector.open--search.traverse .icon rect[fill], .head .selector.open--search:hover .icon rect[fill], ' +
-            '.head .head__action .icon circle[fill], .head .head__action.focus .icon circle[fill], .head .head__action.traverse .icon circle[fill], .head .head__action:hover .icon circle[fill], .head .head__action.lamp .icon circle[fill], ' +
-            '.head .head__settings .icon circle[fill], .head .head__settings.focus .icon circle[fill], .head .head__settings.traverse .icon circle[fill], .head .head__settings:hover .icon circle[fill], ' +
-            '.head .selector.open--search .icon circle[fill], .head .selector.open--search.focus .icon circle[fill], .head .selector.open--search.traverse .icon circle[fill], .head .selector.open--search:hover .icon circle[fill], ' +
-            '.head .head__action .icon polygon[fill], .head .head__action.focus .icon polygon[fill], .head .head__action.traverse .icon polygon[fill], .head .head__action:hover .icon polygon[fill], .head .head__action.lamp .icon polygon[fill], ' +
-            '.head .head__settings .icon polygon[fill], .head .head__settings.focus .icon polygon[fill], .head .head__settings.traverse .icon polygon[fill], .head .head__settings:hover .icon polygon[fill], ' +
-            '.head .selector.open--search .icon polygon[fill], .head .selector.open--search.focus .icon polygon[fill], .head .selector.open--search.traverse .icon polygon[fill], .head .selector.open--search:hover .icon polygon[fill], ' +
-            '.head .head__action .icon polyline[fill], .head .head__action.focus .icon polyline[fill], .head .head__action.traverse .icon polyline[fill], .head .head__action:hover .icon polyline[fill], .head .head__action.lamp .icon polyline[fill], ' +
-            '.head .head__settings .icon polyline[fill], .head .head__settings.focus .icon polyline[fill], .head .head__settings.traverse .icon polyline[fill], .head .head__settings:hover .icon polyline[fill], ' +
-            '.head .selector.open--search .icon polyline[fill], .head .selector.open--search.focus .icon polyline[fill], .head .selector.open--search.traverse .icon polyline[fill], .head .selector.open--search:hover .icon polyline[fill] {' +
+            '.head .head__settings .icon, .head .head__settings.focus .icon, .head .head__settings.traverse .icon, .head .head__settings:hover .icon, ' +
+            '.head .selector.open--search .icon, .head .selector.open--search.focus .icon, .head .selector.open--search.traverse .icon, .head .selector.open--search:hover .icon, ' +
+            '.head .head__action i, .head .head__action.focus i, .head .head__action.traverse i, .head .head__action:hover i, ' +
+            '.head .head__action.lamp i, .head .head__action.lamp.focus i, .head .head__action.lamp.traverse i, .head .head__action.lamp:hover i, ' +
+            '.head .head__settings i, .head .head__settings.focus i, .head .head__settings.traverse i, .head .head__settings:hover i, ' +
+            '.head .selector.open--search i, .head .selector.open--search.focus i, .head .selector.open--search.traverse i, .head .selector.open--search:hover i, ' +
+            '.head .head__icon, .head .head__icon.focus, .head .head__icon.traverse, .head .head__icon:hover, ' +
+            '.head .head__action .icon svg, .head .head__action.focus .icon svg, .head .head__action.traverse .icon svg, .head .head__action:hover .icon svg, ' +
+            '.head .head__action.lamp .icon svg, .head .head__action.lamp.focus .icon svg, .head .head__action.lamp.traverse .icon svg, .head .head__action.lamp:hover .icon svg, ' +
+            '.head .head__settings .icon svg, .head .head__settings.focus .icon svg, .head .head__settings.traverse .icon svg, .head .head__settings:hover .icon svg, ' +
+            '.head .selector.open--search .icon svg, .head .selector.open--search.focus .icon svg, .head .selector.open--search.traverse .icon svg, .head .selector.open--search:hover .icon svg, ' +
+            '.head .head__action .icon path, .head .head__action.focus .icon path, .head .head__action.traverse .icon path, .head .head__action:hover .icon path, .head .head__action.lamp .icon path, ' +
+            '.head .head__settings .icon path, .head .head__settings.focus .icon path, .head .head__settings.traverse .icon path, .head .head__settings:hover .icon path, ' +
+            '.head .selector.open--search .icon path, .head .selector.open--search.focus .icon path, .head .selector.open--search.traverse .icon path, .head .selector.open--search:hover .icon path, ' +
+            '.head .head__action .icon rect, .head .head__action.focus .icon rect, .head .head__action.traverse .icon rect, .head .head__action:hover .icon rect, .head .head__action.lamp .icon rect, ' +
+            '.head .head__settings .icon rect, .head .head__settings.focus .icon rect, .head .head__settings.traverse .icon rect, .head .head__settings:hover .icon rect, ' +
+            '.head .selector.open--search .icon rect, .head .selector.open--search.focus .icon rect, .head .selector.open--search.traverse .icon rect, .head .selector.open--search:hover .icon rect, ' +
+            '.head .head__action .icon circle, .head .head__action.focus .icon circle, .head .head__action.traverse .icon circle, .head .head__action:hover .icon circle, .head .head__action.lamp .icon circle, ' +
+            '.head .head__settings .icon circle, .head .head__settings.focus .icon circle, .head .head__settings.traverse .icon circle, .head .head__settings:hover .icon circle, ' +
+            '.head .selector.open--search .icon circle, .head .selector.open--search.focus .icon circle, .head .selector.open--search.traverse .icon circle, .head .selector.open--search:hover .icon circle, ' +
+            '.head .head__action .icon polygon, .head .head__action.focus .icon polygon, .head .head__action.traverse .icon polygon, .head .head__action:hover .icon polygon, .head .head__action.lamp .icon polygon, ' +
+            '.head .head__settings .icon polygon, .head .head__settings.focus .icon polygon, .head .head__settings.traverse .icon polygon, .head .head__settings:hover .icon polygon, ' +
+            '.head .selector.open--search .icon polygon, .head .selector.open--search.focus .icon polygon, .head .selector.open--search.traverse .icon polygon, .head .selector.open--search:hover .icon polygon, ' +
+            '.head .head__action .icon polyline, .head .head__action.focus .icon polyline, .head .head__action.traverse .icon polyline, .head .head__action:hover .icon polyline, .head .head__action.lamp .icon polyline, ' +
+            '.head .head__settings .icon polyline, .head .head__settings.focus .icon polyline, .head .head__settings.traverse .icon polyline, .head .head__settings:hover .icon polyline, ' +
+            '.head .selector.open--search .icon polyline, .head .selector.open--search.focus .icon polyline, .head .selector.open--search.traverse .icon polyline, .head .selector.open--search:hover .icon polyline {' +
                 'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'filter: none !important;' +
+                '-webkit-filter: none !important;' +
             '}' +
             '.head .head__action .icon [stroke], .head .head__action.focus .icon [stroke], .head .head__action.traverse .icon [stroke], .head .head__action:hover .icon [stroke], .head .head__action.lamp .icon [stroke], ' +
             '.head .head__settings .icon [stroke], .head .head__settings.focus .icon [stroke], .head .head__settings.traverse .icon [stroke], .head .head__settings:hover .icon [stroke], ' +
             '.head .selector.open--search .icon [stroke], .head .selector.open--search.focus .icon [stroke], .head .selector.open--search.traverse .icon [stroke], .head .selector.open--search:hover .icon [stroke] {' +
                 'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'filter: none !important;' +
-            '}' +
-            // Вимкнення фільтрів для верхнього меню
-            '.head .head__action .icon, .head .head__action.focus .icon, .head .head__action.traverse .icon, .head .head__action:hover .icon, .head .head__action.lamp .icon, ' +
-            '.head .head__settings .icon, .head .head__settings.focus .icon, .head .head__settings.traverse .icon, .head .head__settings:hover .icon, ' +
-            '.head .selector.open--search .icon, .head .selector.open--search.focus .icon, .head .selector.open--search.traverse .icon, .head .selector.open--search:hover .icon {' +
                 '-webkit-filter: none !important;' +
-                'filter: none !important;' +
             '}' +
-            // Стиль для іконок меню налаштувань праворуч
+            // Стиль для іконок меню налаштувань
             '.settings .settings-folder__icon, .settings .settings-folder__icon.focus, .settings .settings-folder__icon.traverse, .settings .settings-folder__icon:hover, ' +
-            '.settings .settings-folder__icon path[fill], .settings .settings-folder__icon.focus path[fill], .settings .settings-folder__icon.traverse path[fill], .settings .settings-folder__icon:hover path[fill], ' +
-            '.settings .settings-folder__icon rect[fill], .settings .settings-folder__icon.focus rect[fill], .settings .settings-folder__icon.traverse rect[fill], .settings .settings-folder__icon:hover rect[fill], ' +
-            '.settings .settings-folder__icon circle[fill], .settings .settings-folder__icon.focus circle[fill], .settings .settings-folder__icon.traverse circle[fill], .settings .settings-folder__icon:hover circle[fill], ' +
-            '.settings .settings-folder__icon polygon[fill], .settings .settings-folder__icon.focus polygon[fill], .settings .settings-folder__icon.traverse polygon[fill], .settings .settings-folder__icon:hover polygon[fill], ' +
-            '.settings .settings-folder__icon polyline[fill], .settings .settings-folder__icon.focus polyline[fill], .settings .settings-folder__icon.traverse polyline[fill], .settings .settings-folder__icon:hover polyline[fill] {' +
+            '.settings .settings-folder__icon svg, .settings .settings-folder__icon.focus svg, .settings .settings-folder__icon.traverse svg, .settings .settings-folder__icon:hover svg, ' +
+            '.settings .settings-folder__icon path, .settings .settings-folder__icon.focus path, .settings .settings-folder__icon.traverse path, .settings .settings-folder__icon:hover path, ' +
+            '.settings .settings-folder__icon rect, .settings .settings-folder__icon.focus rect, .settings .settings-folder__icon.traverse rect, .settings .settings-folder__icon:hover rect, ' +
+            '.settings .settings-folder__icon circle, .settings .settings-folder__icon.focus circle, .settings .settings-folder__icon.traverse circle, .settings .settings-folder__icon:hover circle, ' +
+            '.settings .settings-folder__icon polygon, .settings .settings-folder__icon.focus polygon, .settings .settings-folder__icon.traverse polygon, .settings .settings-folder__icon:hover polygon, ' +
+            '.settings .settings-folder__icon polyline, .settings .settings-folder__icon.focus polyline, .settings .settings-folder__icon.traverse polyline, .settings .settings-folder__icon:hover polyline {' +
                 'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
@@ -451,38 +436,39 @@
             '}'
         );
 
-        // Видаляємо вбудовані стилі SVG
+        // Видаляємо вбудовані стилі та атрибути SVG
         removeInlineSvgStyles();
         // Оновлюємо іконку плагіна
         updatePluginTcon();
+        // Дебаг-логування для іконок
         console.log('ColorPlugin: Applied styles, icon_color: ' + ColorPlugin.settings.icon_color + ', main_color: ' + ColorPlugin.settings.main_color);
-        // Дебаг-логування для перевірки іконок
         console.log('ColorPlugin: Applying icon_color to left menu: .menu__ico, .menu__item.focus .menu__ico, .menu__item.traverse .menu__ico, .menu__item.hover .menu__ico');
         console.log('ColorPlugin: Applying icon_color to top menu: .head__action .icon, .head__settings .icon, .selector.open--search .icon, .head__action.lamp .icon');
         console.log('ColorPlugin: Applying icon_color to settings menu: .settings-folder__icon');
         console.log('ColorPlugin: Applying icon_color to plugin icon: .menu__item[data-component="color_plugin"] .menu__ico');
         var topIcons = document.querySelectorAll(
-            '.head__action .icon path[fill], .head__action.focus .icon path[fill], .head__action.traverse .icon path[fill], .head__action:hover .icon path[fill], .head__action.lamp .icon path[fill], ' +
-            '.head__settings .icon path[fill], .head__settings.focus .icon path[fill], .head__settings.traverse .icon path[fill], .head__settings:hover .icon path[fill], ' +
-            '.selector.open--search .icon path[fill], .selector.open--search.focus .icon path[fill], .selector.open--search.traverse .icon path[fill], .selector.open--search:hover .icon path[fill]'
+            '.head__action .icon, .head__action.lamp .icon, .head__settings .icon, .selector.open--search .icon, ' +
+            '.head__action .icon svg, .head__action.lamp .icon svg, .head__settings .icon svg, .selector.open--search .icon svg, ' +
+            '.head__action .icon path, .head__action.lamp .icon path, .head__settings .icon path, .selector.open--search .icon path, ' +
+            '.head__action i, .head__action.lamp i, .head__settings i, .selector.open--search i'
         );
-        console.log('ColorPlugin: Found ' + topIcons.length + ' SVG elements in top menu icons');
+        console.log('ColorPlugin: Found ' + topIcons.length + ' elements in top menu icons');
         topIcons.forEach(function(icon) {
-            console.log('ColorPlugin: Top menu SVG element style - fill: ' + icon.style.fill);
+            console.log('ColorPlugin: Top menu icon - tag:', icon.tagName, 'class:', icon.className, 'style.color:', icon.style.color, 'style.fill:', icon.style.fill || 'none');
         });
         var settingsIcons = document.querySelectorAll(
-            '.settings-folder__icon path[fill], .settings-folder__icon.focus path[fill], .settings-folder__icon.traverse path[fill], .settings-folder__icon:hover path[fill]'
+            '.settings-folder__icon, .settings-folder__icon svg, .settings-folder__icon path, .settings-folder__icon rect, .settings-folder__icon circle, .settings-folder__icon polygon, .settings-folder__icon polyline'
         );
-        console.log('ColorPlugin: Found ' + settingsIcons.length + ' SVG elements in settings menu icons');
+        console.log('ColorPlugin: Found ' + settingsIcons.length + ' elements in settings menu icons');
         settingsIcons.forEach(function(icon) {
-            console.log('ColorPlugin: Settings menu SVG element style - fill: ' + icon.style.fill);
+            console.log('ColorPlugin: Settings menu icon - tag:', icon.tagName, 'class:', icon.className, 'style.fill:', icon.style.fill || 'none', 'fill attribute:', icon.getAttribute('fill') || 'none');
         });
         var pluginIcon = document.querySelectorAll(
-            '.menu__item[data-component="color_plugin"] .menu__ico path[fill], .menu__item[data-component="color_plugin"].focus .menu__ico path[fill]'
+            '.menu__item[data-component="color_plugin"] .menu__ico, .menu__item[data-component="color_plugin"] .menu__ico svg, .menu__item[data-component="color_plugin"] .menu__ico path'
         );
-        console.log('ColorPlugin: Found ' + pluginIcon.length + ' SVG elements in plugin icon');
+        console.log('ColorPlugin: Found ' + pluginIcon.length + ' elements in plugin icon');
         pluginIcon.forEach(function(icon) {
-            console.log('ColorPlugin: Plugin icon SVG element style - fill: ' + icon.style.fill);
+            console.log('ColorPlugin: Plugin icon - tag:', icon.tagName, 'class:', icon.className, 'style.fill:', icon.style.fill || 'none', 'fill attribute:', icon.getAttribute('fill') || 'none');
         });
     }
 
@@ -505,7 +491,7 @@
     // Функція для створення модального вікна вибору кольору
     function openColorPicker(paramName, colors, title) {
         var colorKeys = Object.keys(colors);
-        var groupedColors = chunkArray(colorKeys, 5); // Сітка 5x2
+        var groupedColors = chunkArray(colorKeys, 5);
         var colorContent = groupedColors.map(function (group) {
             var groupContent = group.map(function (color) {
                 return createColorHtml(color, colors[color]);
@@ -513,7 +499,6 @@
             return '<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 11.25px; justify-items: center; padding: 10px;">' + groupContent + '</div>';
         }).join('');
 
-        // Блок для введення HEX-коду у стилі color_square
         var hexValue = Lampa.Storage.get('color_plugin_custom_hex', '') || '#000000';
         var inputHtml = '<div style="padding: 10px; display: flex; justify-content: center;">' +
                         '<div class="color_square selector hex-input" tabindex="0" style="background-color: ' + hexValue + ';">' +
@@ -541,8 +526,8 @@
                         var color;
 
                         if (selectedElement.classList.contains('hex-input')) {
-                            Lampa.Noty.show(Lampa.Lang.translate('hex_input_hint')); // Показуємо підказку
-                            Lampa.Modal.close(); // Закриваємо модальне вікно перед викликом клавіатури
+                            Lampa.Noty.show(Lampa.Lang.translate('hex_input_hint'));
+                            Lampa.Modal.close();
                             var inputOptions = {
                                 name: 'color_plugin_custom_hex',
                                 value: Lampa.Storage.get('color_plugin_custom_hex', ''),
@@ -617,96 +602,54 @@
             Lampa.SettingsApi.addComponent({
                 component: 'color_plugin',
                 name: Lampa.Lang.translate('color_plugin'),
-                icon: '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="' + ColorPlugin.settings.icon_color + '"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>'
+                icon: '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path fill="' + ColorPlugin.settings.icon_color + '" fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>'
             });
 
             // Основний колір
             Lampa.SettingsApi.addParam({
                 component: 'color_plugin',
-                param: {
-                    name: 'color_plugin_main_color',
-                    type: 'button'
-                },
-                field: {
-                    name: Lampa.Lang.translate('main_color')
-                },
-                onChange: function () {
-                    openColorPicker('main_color', ColorPlugin.colors.main, 'main_color');
-                }
+                param: { name: 'color_plugin_main_color', type: 'button' },
+                field: { name: Lampa.Lang.translate('main_color') },
+                onChange: function () { openColorPicker('main_color', ColorPlugin.colors.main, 'main_color'); }
             });
 
             // Колір фону
             Lampa.SettingsApi.addParam({
                 component: 'color_plugin',
-                param: {
-                    name: 'color_plugin_background_color',
-                    type: 'button'
-                },
-                field: {
-                    name: Lampa.Lang.translate('background_color')
-                },
-                onChange: function () {
-                    openColorPicker('background_color', ColorPlugin.colors.background, 'background_color');
-                }
+                param: { name: 'color_plugin_background_color', type: 'button' },
+                field: { name: Lampa.Lang.translate('background_color') },
+                onChange: function () { openColorPicker('background_color', ColorPlugin.colors.background, 'background_color'); }
             });
 
             // Колір тексту
             Lampa.SettingsApi.addParam({
                 component: 'color_plugin',
-                param: {
-                    name: 'color_plugin_text_color',
-                    type: 'button'
-                },
-                field: {
-                    name: Lampa.Lang.translate('text_color')
-                },
-                onChange: function () {
-                    openColorPicker('text_color', ColorPlugin.colors.text, 'text_color');
-                }
+                param: { name: 'color_plugin_text_color', type: 'button' },
+                field: { name: Lampa.Lang.translate('text_color') },
+                onChange: function () { openColorPicker('text_color', ColorPlugin.colors.text, 'text_color'); }
             });
 
             // Прозорий фон
             Lampa.SettingsApi.addParam({
                 component: 'color_plugin',
-                param: {
-                    name: 'color_plugin_transparent_white',
-                    type: 'button'
-                },
-                field: {
-                    name: Lampa.Lang.translate('transparent_white')
-                },
-                onChange: function () {
-                    openColorPicker('transparent_white', ColorPlugin.colors.transparent, 'transparent_white');
-                }
+                param: { name: 'color_plugin_transparent_white', type: 'button' },
+                field: { name: Lampa.Lang.translate('transparent_white') },
+                onChange: function () { openColorPicker('transparent_white', ColorPlugin.colors.transparent, 'transparent_white'); }
             });
 
             // Колір іконок
             Lampa.SettingsApi.addParam({
                 component: 'color_plugin',
-                param: {
-                    name: 'color_plugin_icon_color',
-                    type: 'button'
-                },
-                field: {
-                    name: Lampa.Lang.translate('icon_color')
-                },
-                onChange: function () {
-                    openColorPicker('icon_color', ColorPlugin.colors.icon, 'icon_color');
-                }
+                param: { name: 'color_plugin_icon_color', type: 'button' },
+                field: { name: Lampa.Lang.translate('icon_color') },
+                onChange: function () { openColorPicker('icon_color', ColorPlugin.colors.icon, 'icon_color'); }
             });
 
             // Увімкнення/вимкнення плагіна
             Lampa.SettingsApi.addParam({
                 component: 'color_plugin',
-                param: {
-                    name: 'color_plugin_enabled',
-                    type: 'trigger',
-                    default: true
-                },
-                field: {
-                    name: Lampa.Lang.translate('color_plugin_enabled'),
-                    description: 'Увімкнути або вимкнути плагін зміни кольорів'
-                },
+                param: { name: 'color_plugin_enabled', type: 'trigger', default: true },
+                field: { name: Lampa.Lang.translate('color_plugin_enabled'), description: 'Увімкнути або вимкнути плагін зміни кольорів' },
                 onChange: function (value) {
                     ColorPlugin.settings.enabled = value === 'true';
                     Lampa.Storage.set('color_plugin_enabled', ColorPlugin.settings.enabled);
@@ -720,8 +663,20 @@
             applyStyles();
         } else {
             console.warn('ColorPlugin: Lampa.SettingsApi is not available');
-            applyStyles(); // Застосовуємо стилі навіть без SettingsApi
+            applyStyles();
         }
+
+        // Додаємо MutationObserver для динамічного оновлення іконок
+        var observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.addedNodes.length || mutation.removedNodes.length) {
+                    console.log('ColorPlugin: DOM changed, reapplying styles');
+                    removeInlineSvgStyles();
+                    applyStyles();
+                }
+            });
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
     }
 
     // Запускаємо плагін після готовності програми
