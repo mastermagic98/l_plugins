@@ -179,10 +179,17 @@
             '.settings-param__ico, .settings-param__ico.focus, .settings-param__ico:hover, ' +
             '.settings-param__icon, .settings-param__icon.focus, .settings-param__icon:hover, ' +
             '.settings__icon, .settings__icon.focus, .settings__icon:hover, ' +
-            '.settings-param svg, .settings-param.focus svg, .settings-param:hover svg {' +
+            '.settings-param svg, .settings-param.focus svg, .settings-param:hover svg, ' +
+            '.settings svg, .settings.focus svg, .settings:hover svg, ' +
+            '.settings-param__content svg, .settings-param__content.focus svg, .settings-param__content:hover svg {' +
                 'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
+            '}' +
+            // Запобігаємо додаванню контуру для іконок із fill у menu__ico
+            '.menu__ico path[fill], .menu__ico.focus path[fill], .menu__ico:hover path[fill], .menu__ico.traverse path[fill] {' +
+                'stroke: none !important;' +
+                'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
             // Перекриваємо стилі з app.css для SVG-елементів у menu__ico (fill)
             '.menu__item.focus .menu__ico path[fill], .menu__item.focus .menu__ico rect[fill], ' +
@@ -191,6 +198,7 @@
             '.menu__item:hover .menu__ico path[fill], .menu__item:hover .menu__ico rect[fill], ' +
             '.menu__item:hover .menu__ico circle[fill] {' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
+                'stroke: none !important;' +
             '}' +
             // Перекриваємо стилі з app.css для SVG-елементів у menu__ico (stroke)
             '.menu__item.focus .menu__ico [stroke], .menu__item.traverse .menu__ico [stroke], ' +
@@ -202,13 +210,21 @@
             '.settings-param.focus .settings-param__ico circle[fill], .settings-param:hover .settings-param__ico path[fill], ' +
             '.settings-param:hover .settings-param__ico rect[fill], .settings-param:hover .settings-param__ico circle[fill], ' +
             '.settings-param__ico [fill], .settings-param__icon [fill], .settings__icon [fill], ' +
-            '.settings-param svg path[fill], .settings-param svg rect[fill], .settings-param svg circle[fill] {' +
+            '.settings-param svg path[fill], .settings-param svg rect[fill], .settings-param svg circle[fill], ' +
+            '.settings svg path[fill], .settings svg rect[fill], .settings svg circle[fill], ' +
+            '.settings-param__content svg path[fill], .settings-param__content svg rect[fill], .settings-param__content svg circle[fill] {' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
             '.settings-param.focus .settings-param__ico [stroke], .settings-param:hover .settings-param__ico [stroke], ' +
             '.settings-param__ico [stroke], .settings-param__icon [stroke], .settings__icon [stroke], ' +
-            '.settings-param svg [stroke] {' +
+            '.settings-param svg [stroke], .settings svg [stroke], .settings-param__content svg [stroke] {' +
                 'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
+            '}' +
+            // Переконаємося, що масштаб іконок не змінюється
+            '.menu__ico, .menu__item.focus .menu__ico, .menu__item:hover .menu__ico, .menu__item.traverse .menu__ico {' +
+                'transform: none !important;' +
+                'width: 24px !important;' +
+                'height: 24px !important;' +
             '}' +
             '.console__tab.focus, .menu__item.focus, .menu__item.traverse, .menu__item:hover, ' +
             '.full-person.focus, .full-start__button.focus, .full-descr__tag.focus, ' +
