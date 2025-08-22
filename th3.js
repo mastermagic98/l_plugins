@@ -136,6 +136,28 @@
         return filter;
     }
 
+    // Функція для обробки зовнішніх SVG-іконок
+    function updateExternalSvgIcons() {
+        var icons = document.querySelectorAll('.settings-param__ico img[src*=".svg"], .settings-param__icon img[src*=".svg"], .settings__icon img[src*=".svg"], .settings .settings-param svg, .settings .settings-param__content svg');
+        icons.forEach(function (icon) {
+            if (icon.tagName.toLowerCase() === 'img' && icon.src.endsWith('.svg')) {
+                // Для <img src="icon.svg"> застосовуємо фільтр
+                icon.style.filter = createColorFilter(ColorPlugin.settings.icon_color);
+            } else if (icon.tagName.toLowerCase() === 'svg') {
+                // Для вбудованих SVG змінюємо атрибути
+                var elements = icon.querySelectorAll('[fill="white"], [fill="#ffffff"], [stroke="white"]');
+                elements.forEach(function (el) {
+                    if (el.getAttribute('fill') === 'white' || el.getAttribute('fill') === '#ffffff') {
+                        el.setAttribute('fill', ColorPlugin.settings.icon_color);
+                    }
+                    if (el.getAttribute('stroke') === 'white') {
+                        el.setAttribute('stroke', ColorPlugin.settings.icon_color);
+                    }
+                });
+            }
+        });
+    }
+
     // Функція для оновлення іконки плагіну
     function updatePluginIcon() {
         var iconSvg = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="' + ColorPlugin.settings.icon_color + '" stroke="' + ColorPlugin.settings.icon_color + '" stroke-width="1"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
@@ -207,6 +229,11 @@
                 'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
+            '}' +
+            // Фільтр для <img src="icon.svg"> у меню налаштувань
+            '.settings-param__ico img[src*=".svg"], .settings-param__icon img[src*=".svg"], .settings__icon img[src*=".svg"], ' +
+            '.settings .settings-param img[src*=".svg"], .settings .settings-param__content img[src*=".svg"] {' +
+                'filter: ' + createColorFilter(ColorPlugin.settings.icon_color) + ' !important;' +
             '}' +
             // Виправлення товщини і кольору іконки плагіну
             '.menu__item[data-component="color_plugin"] .menu__ico svg, ' +
@@ -420,6 +447,8 @@
 
         // Оновлюємо іконку плагіну
         updatePluginIcon();
+        // Оновлюємо зовнішні SVG-іконки
+        updateExternalSvgIcons();
         console.log('ColorPlugin: Applied styles, icon_color: ' + ColorPlugin.settings.icon_color + ', main_color: ' + ColorPlugin.settings.main_color);
     }
 
@@ -674,21 +703,24 @@
         if (window.appready && Lampa.SettingsApi) {
             initPlugin();
             updatePluginIcon();
+            updateExternalSvgIcons();
         } else {
             Lampa.Listener.follow('app', function (event) {
                 if (event.type === 'ready' && Lampa.SettingsApi) {
                     initPlugin();
                     updatePluginIcon();
+                    updateExternalSvgIcons();
                 }
             });
         }
     }
 
-    // Оновлюємо стилі та іконку при відкритті налаштувань
+    // Оновлюємо стилі, іконку плагіну та зовнішні SVG при відкритті налаштувань
     Lampa.Listener.follow('settings_component', function (event) {
         if (event.type === 'open') {
             applyStyles();
             updatePluginIcon();
+            updateExternalSvgIcons();
             Lampa.Settings.render();
         }
     });
