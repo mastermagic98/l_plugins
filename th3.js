@@ -134,6 +134,38 @@
         return /^#[0-9A-Fa-f]{6}$/.test(color);
     }
 
+    // Функція для заміни <img> на SVG у меню налаштувань
+    function replaceImgWithSvg() {
+        var icons = document.querySelectorAll('.settings-folder__icon img');
+        icons.forEach(function(img) {
+            var src = img.getAttribute('src');
+            // Для іконки panel.svg використовуємо наданий SVG-код
+            if (src.includes('panel.svg')) {
+                var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.setAttribute('width', '58');
+                svg.setAttribute('height', '58');
+                svg.setAttribute('viewBox', '0 0 58 58');
+                svg.setAttribute('fill', 'none');
+                svg.innerHTML = `
+                    <mask id="path-1-inside-1" fill="white">
+                        <rect x="31" width="27" height="27" rx="3"/>
+                    </mask>
+                    <rect x="31" width="27" height="27" rx="3" stroke="${ColorPlugin.settings.icon_color}" stroke-width="8" mask="url(#path-1-inside-1)"/>
+                    <mask id="path-2-inside-2" fill="white">
+                        <rect x="31" y="31" width="27" height="27" rx="3"/>
+                    </mask>
+                    <rect x="31" y="31" width="27" height="27" rx="3" stroke="${ColorPlugin.settings.icon_color}" stroke-width="8" mask="url(#path-2-inside-2)"/>
+                    <mask id="path-3-inside-3" fill="white">
+                        <rect width="27" height="58" rx="3"/>
+                    </mask>
+                    <rect width="27" height="58" rx="3" stroke="${ColorPlugin.settings.icon_color}" stroke-width="8" mask="url(#path-3-inside-3)"/>
+                `;
+                img.parentNode.replaceChild(svg, img);
+            }
+            // Додайте обробку інших SVG-файлів, якщо вони відомі
+        });
+    }
+
     // Функція для оновлення іконки плагіна
     function updatePluginIcon() {
         if (!Lampa.SettingsApi || !Lampa.SettingsApi.components) {
@@ -173,12 +205,9 @@
                 '--text-color: ' + ColorPlugin.settings.text_color + ';' +
                 '--transparent-white: ' + ColorPlugin.settings.transparent_white + ';' +
             '}' +
-            // Іконки меню ліворуч, заголовка і налаштувань праворуч
+            // Іконки меню ліворуч і заголовка
             '.menu__ico, .menu__ico.focus, .menu__ico:hover, .menu__ico.traverse, ' +
-            '.head__action, .head__action.focus, .head__action:hover, ' +
-            '.settings-param__ico, .settings-param__ico.focus, .settings-param__ico:hover, ' +
-            '.settings-param__icon, .settings-param__icon.focus, .settings-param__icon:hover, ' +
-            '.settings__icon, .settings__icon.focus, .settings__icon:hover {' +
+            '.head__action, .head__action.focus, .head__action:hover {' +
                 'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
                 'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
@@ -196,15 +225,21 @@
             '.menu__item:hover .menu__ico [stroke], .menu__ico [stroke] {' +
                 'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
-            // Перекриваємо білий колір для іконок у меню налаштувань
-            '.settings-param.focus .settings-param__ico path[fill], .settings-param.focus .settings-param__ico rect[fill], ' +
-            '.settings-param.focus .settings-param__ico circle[fill], .settings-param:hover .settings-param__ico path[fill], ' +
-            '.settings-param:hover .settings-param__ico rect[fill], .settings-param:hover .settings-param__ico circle[fill], ' +
-            '.settings-param__ico [fill], .settings-param__icon [fill], .settings__icon [fill] {' +
+            // Іконки в меню налаштувань праворуч
+            '.settings-folder__icon svg, .settings-folder.focus .settings-folder__icon svg, ' +
+            '.settings-folder:hover .settings-folder__icon svg {' +
+                'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
+                'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
+            '}' +
+            '.settings-folder__icon svg path[fill], .settings-folder__icon svg rect[fill], ' +
+            '.settings-folder__icon svg circle[fill], .settings-folder.focus .settings-folder__icon svg path[fill], ' +
+            '.settings-folder.focus .settings-folder__icon svg rect[fill], .settings-folder.focus .settings-folder__icon svg circle[fill], ' +
+            '.settings-folder:hover .settings-folder__icon svg path[fill], .settings-folder:hover .settings-folder__icon svg rect[fill], ' +
+            '.settings-folder:hover .settings-folder__icon svg circle[fill] {' +
                 'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
-            '.settings-param.focus .settings-param__ico [stroke], .settings-param:hover .settings-param__ico [stroke], ' +
-            '.settings-param__ico [stroke], .settings-param__icon [stroke], .settings__icon [stroke] {' +
+            '.settings-folder__icon svg [stroke], .settings-folder.focus .settings-folder__icon svg [stroke], ' +
+            '.settings-folder:hover .settings-folder__icon svg [stroke] {' +
                 'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
             '.console__tab.focus, .menu__item.focus, .menu__item.traverse, .menu__item:hover, ' +
@@ -347,6 +382,8 @@
             '}'
         );
 
+        // Замінюємо <img> на SVG у меню налаштувань
+        replaceImgWithSvg();
         // Оновлюємо іконку плагіна
         updatePluginIcon();
         console.log('ColorPlugin: Applied styles, icon_color: ' + ColorPlugin.settings.icon_color + ', main_color: ' + ColorPlugin.settings.main_color);
@@ -594,7 +631,7 @@
         });
     }
 
-    // Оновлюємо стилі при відкритті налаштувань
+    // Оновлюємо стилі та іконки при відкритті налаштувань
     Lampa.Listener.follow('settings_component', function (event) {
         if (event.type === 'open') {
             applyStyles();
