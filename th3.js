@@ -108,7 +108,7 @@
             ':root {' +
                 '--main-color: ' + ColorPlugin.settings.main_color + ';' +
             '}' +
-            // Іконки меню ліворуч, заголовка і налаштувань праворуч - завжди білі
+            // Іконки меню ліворуч і заголовка - завжди білі
             '.menu__ico, .menu__ico.focus, .menu__ico:hover, .menu__ico.traverse, ' +
             '.head__action, .head__action.focus, .head__action:hover, ' +
             '.settings-param__ico, .settings-param__ico.focus, .settings-param__ico:hover, ' +
@@ -118,27 +118,9 @@
                 'fill: #fff !important;' +
                 'stroke: #fff !important;' +
             '}' +
-            // Перекриваємо стилі з app.css для SVG-елементів у menu__ico
-            '.menu__item.focus .menu__ico path[fill], .menu__item.focus .menu__ico rect[fill], ' +
-            '.menu__item.focus .menu__ico circle[fill], .menu__item.traverse .menu__ico path[fill], ' +
-            '.menu__item.traverse .menu__ico rect[fill], .menu__item.traverse .menu__ico circle[fill], ' +
-            '.menu__item:hover .menu__ico path[fill], .menu__item:hover .menu__ico rect[fill], ' +
-            '.menu__item:hover .menu__ico circle[fill], .menu__ico [fill] {' +
-                'fill: #fff !important;' +
-            '}' +
+            // Перекриваємо стилі для stroke у menu__ico
             '.menu__item.focus .menu__ico [stroke], .menu__item.traverse .menu__ico [stroke], ' +
             '.menu__item:hover .menu__ico [stroke], .menu__ico [stroke] {' +
-                'stroke: #fff !important;' +
-            '}' +
-            // Перекриваємо стилі для іконок у меню налаштувань
-            '.settings-param .settings-param__ico path[fill], .settings-param.focus .settings-param__ico path[fill], ' +
-            '.settings-param:hover .settings-param__ico path[fill], .settings-param__ico [fill], ' +
-            '.settings-param__icon [fill], .settings__icon [fill] {' +
-                'fill: #fff !important;' +
-            '}' +
-            '.settings-param .settings-param__ico [stroke], .settings-param.focus .settings-param__ico [stroke], ' +
-            '.settings-param:hover .settings-param__ico [stroke], .settings-param__ico [stroke], ' +
-            '.settings-param__icon [stroke], .settings__icon [stroke] {' +
                 'stroke: #fff !important;' +
             '}' +
             // Текст у всіх елементах - завжди білий
