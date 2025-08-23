@@ -120,11 +120,6 @@
                 '-webkit-filter: none !important;' +
                 'filter: none !important;' +
             '}' +
-            // Іконки лівого меню в стані focus
-            '.menu__item.focus .menu__ico path, .menu__item.focus .menu__ico rect, ' +
-            '.menu__item.focus .menu__ico circle {' +
-                'fill: #fff !important;' +
-            '}' +
             // Іконки лівого меню в станах traverse і hover
             '.menu__item.traverse .menu__ico path, .menu__item.traverse .menu__ico rect, ' +
             '.menu__item.traverse .menu__ico circle, .menu__item:hover .menu__ico path, ' +
