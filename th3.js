@@ -125,11 +125,16 @@
             '.menu__item.focus .menu__ico circle {' +
                 'fill: #fff !important;' +
             '}' +
-            // Іконки лівого меню в станах hover і traverse
+            // Іконки лівого меню в станах traverse і hover
             '.menu__item.traverse .menu__ico path, .menu__item.traverse .menu__ico rect, ' +
             '.menu__item.traverse .menu__ico circle, .menu__item:hover .menu__ico path, ' +
             '.menu__item:hover .menu__ico rect, .menu__item:hover .menu__ico circle {' +
                 'fill: #fff !important;' +
+            '}' +
+            // Біла обводка для іконок у всіх станах
+            '.menu__item.focus .menu__ico [stroke], .menu__item.traverse .menu__ico [stroke], ' +
+            '.menu__item:hover .menu__ico [stroke] {' +
+                'stroke: #fff !important;' +
             '}' +
             // Текст у всіх елементах - завжди білий
             '.menu__item, .menu__item.focus, .menu__item:hover, .menu__item.traverse, ' +
