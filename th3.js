@@ -108,11 +108,10 @@
             ':root {' +
                 '--main-color: ' + ColorPlugin.settings.main_color + ';' +
             '}' +
-            // Іконки меню ліворуч і заголовка - завжди білі
+            // Іконки меню ліворуч і заголовка - білий колір тексту та stroke
             '.menu__ico, .menu__ico.focus, .menu__ico:hover, .menu__ico.traverse, ' +
             '.head__action, .head__action.focus, .head__action:hover {' +
                 'color: #fff !important;' +
-                'fill: #fff !important;' +
                 'stroke: #fff !important;' +
             '}' +
             // Перекриваємо filter: invert(1) для menu__ico
@@ -120,12 +119,10 @@
                 '-webkit-filter: none !important;' +
                 'filter: none !important;' +
             '}' +
-            // Перекриваємо стилі з app.css для SVG-елементів у menu__ico у стані focus
-            '.menu__item.focus .menu__ico path, .menu__item.focus .menu__ico rect, ' +
-            '.menu__item.focus .menu__ico circle, .menu__item.traverse .menu__ico path, ' +
-            '.menu__item.traverse .menu__ico rect, .menu__item.traverse .menu__ico circle, ' +
-            '.menu__item:hover .menu__ico path, .menu__item:hover .menu__ico rect, ' +
-            '.menu__item:hover .menu__ico circle {' +
+            // Іконки лівого меню в станах hover і traverse
+            '.menu__item.traverse .menu__ico path, .menu__item.traverse .menu__ico rect, ' +
+            '.menu__item.traverse .menu__ico circle, .menu__item:hover .menu__ico path, ' +
+            '.menu__item:hover .menu__ico rect, .menu__item:hover .menu__ico circle {' +
                 'fill: #fff !important;' +
                 'stroke: #fff !important;' +
             '}' +
