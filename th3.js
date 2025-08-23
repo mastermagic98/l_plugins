@@ -108,8 +108,7 @@
             ':root {' +
                 '--main-color: ' + ColorPlugin.settings.main_color + ';' +
             '}' +
-            // Іконки меню ліворуч, заголовка і налаштувань - завжди білі
-            '.menu__ico, .menu__ico.focus, .menu__ico:hover, .menu__ico.traverse, ' +
+            // Іконки заголовка і налаштувань праворуч - завжди білі
             '.head__action, .head__action.focus, .head__action:hover, ' +
             '.settings-param__ico, .settings-param__ico.focus, .settings-param__ico:hover, ' +
             '.settings-param__icon, .settings-param__icon.focus, .settings-param__icon:hover, ' +
@@ -117,25 +116,6 @@
                 'color: #fff !important;' +
                 'fill: #fff !important;' +
                 'stroke: #fff !important;' +
-            '}' +
-            // Перекриваємо стилі з app.css для SVG-елементів у menu__ico
-            '.menu__item.focus .menu__ico path[fill], .menu__item.focus .menu__ico rect[fill], ' +
-            '.menu__item.focus .menu__ico circle[fill], .menu__item.traverse .menu__ico path[fill], ' +
-            '.menu__item.traverse .menu__ico rect[fill], .menu__item.traverse .menu__ico circle[fill], ' +
-            '.menu__item:hover .menu__ico path[fill], .menu__item:hover .menu__ico rect[fill], ' +
-            '.menu__item:hover .menu__ico circle[fill], .menu__ico [fill] {' +
-                'fill: #fff !important;' +
-            '}' +
-            '.menu__item.focus .menu__ico [stroke], .menu__item.traverse .menu__ico [stroke], ' +
-            '.menu__item:hover .menu__ico [stroke], .menu__ico [stroke] {' +
-                'stroke: #fff !important;' +
-            '}' +
-            // Іконка Особи - товстіше обведення
-            '.menu__item[data-action="profile"] .menu__ico [stroke], ' +
-            '.menu__item[data-action="profile"].focus .menu__ico [stroke], ' +
-            '.menu__item[data-action="profile"].hover .menu__ico [stroke], ' +
-            '.menu__item[data-action="profile"].traverse .menu__ico [stroke] {' +
-                'stroke-width: 2 !important;' +
             '}' +
             // Перекриваємо стилі для іконок у меню налаштувань
             '.settings-param .settings-param__ico path[fill], .settings-param.focus .settings-param__ico path[fill], ' +
