@@ -108,12 +108,9 @@
             ':root {' +
                 '--main-color: ' + ColorPlugin.settings.main_color + ';' +
             '}' +
-            // Іконки меню ліворуч, заголовка і налаштувань праворуч - завжди білі
+            // Іконки меню ліворуч і заголовка - завжди білі
             '.menu__ico, .menu__ico.focus, .menu__ico:hover, .menu__ico.traverse, ' +
-            '.head__action, .head__action.focus, .head__action:hover, ' +
-            '.settings-param__ico, .settings-param__ico.focus, .settings-param__ico:hover, ' +
-            '.settings-param__icon, .settings-param__icon.focus, .settings-param__icon:hover, ' +
-            '.settings__icon, .settings__icon.focus, .settings__icon:hover {' +
+            '.head__action, .head__action.focus, .head__action:hover {' +
                 'color: #fff !important;' +
                 'fill: #fff !important;' +
                 'stroke: #fff !important;' +
@@ -128,17 +125,6 @@
             '}' +
             '.menu__item.focus .menu__ico [stroke], .menu__item.traverse .menu__ico [stroke], ' +
             '.menu__item:hover .menu__ico [stroke], .menu__ico [stroke] {' +
-                'stroke: #fff !important;' +
-            '}' +
-            // Перекриваємо стилі для іконок у меню налаштувань
-            '.settings-param.focus .settings-param__ico path[fill], .settings-param.focus .settings-param__ico rect[fill], ' +
-            '.settings-param.focus .settings-param__ico circle[fill], .settings-param:hover .settings-param__ico path[fill], ' +
-            '.settings-param:hover .settings-param__ico rect[fill], .settings-param:hover .settings-param__ico circle[fill], ' +
-            '.settings-param__ico [fill], .settings-param__icon [fill], .settings__icon [fill] {' +
-                'fill: #fff !important;' +
-            '}' +
-            '.settings-param.focus .settings-param__ico [stroke], .settings-param:hover .settings-param__ico [stroke], ' +
-            '.settings-param__ico [stroke], .settings-param__icon [stroke], .settings__icon [stroke] {' +
                 'stroke: #fff !important;' +
             '}' +
             // Текст у всіх елементах - завжди білий
