@@ -38,7 +38,7 @@
     // Об'єкт для зберігання налаштувань
     var ColorPlugin = {
         settings: {
-            main_color: '#353535',
+            main_color: '#e40c2b',
             enabled: true
         },
         colors: {
@@ -107,14 +107,13 @@
         style.innerHTML = (
             ':root {' +
                 '--main-color: ' + ColorPlugin.settings.main_color + ';' +
+                '--background-color: #1d1f20;' +
+                '--text-color: #fff;' +
+                '--transparent-white: rgba(255,255,255,0.2);' +
             '}' +
-            // Іконки меню ліворуч і заголовка - завжди білі
+            // Іконки лівого меню та заголовка - завжди білі
             '.menu__ico, .menu__ico.focus, .menu__ico:hover, .menu__ico.traverse, ' +
-            '.head__action, .head__action.focus, .head__action:hover, ' +
-            '.settings-param__ico, .settings-param__ico.focus, .settings-param__ico:hover, ' +
-            '.settings-param__icon, .settings-param__icon.focus, .settings-param__icon:hover, ' +
-            '.settings__icon, .settings__icon.focus, .settings__icon:hover {' +
-                'color: #fff !important;' +
+            '.head__action, .head__action.focus, .head__action:hover {' +
                 'fill: #fff !important;' +
                 'stroke: #fff !important;' +
             '}' +
@@ -123,7 +122,7 @@
             '.menu__item:hover .menu__ico [stroke], .menu__ico [stroke] {' +
                 'stroke: #fff !important;' +
             '}' +
-            // Текст у всіх елементах - завжди білий
+            // Текст у всіх елементах - завжди білий (окрім меню налаштувань)
             '.menu__item, .menu__item.focus, .menu__item:hover, .menu__item.traverse, ' +
             '.console__tab, .console__tab.focus, ' +
             '.full-person, .full-person.focus, .full-start__button, .full-start__button.focus, ' +
@@ -137,7 +136,6 @@
             '.modal__button, .modal__button.focus, .search-history-key, .search-history-key.focus, ' +
             '.simple-keyboard-mic, .simple-keyboard-mic.focus, .full-review-add, .full-review-add.focus, ' +
             '.full-review, .full-review.focus, .tag-count, .tag-count.focus, ' +
-            '.settings-folder, .settings-folder.focus, .settings-param, .settings-param.focus, ' +
             '.selectbox-item, .selectbox-item.focus, .selectbox-item:hover, ' +
             '.broadcast__scan > div, .broadcast__device, .broadcast__device.focus, ' +
             '.noty, .radio-player, .radio-player.focus {' +
@@ -149,20 +147,23 @@
             '.simple-button.focus, .head__action.focus, .head__action:hover, ' +
             '.player-panel .button.focus, .search-source.active {' +
                 'background: var(--main-color);' +
+                'color: #fff;' +
             '}' +
             '.navigation-tabs__button.focus, .time-line > div, .player-panel__position, ' +
             '.player-panel__position > div:after {' +
                 'background-color: var(--main-color);' +
+                'color: #fff;' +
             '}' +
             '.iptv-menu__list-item.focus, .iptv-program__timeline>div {' +
                 'background-color: var(--main-color) !important;' +
+                'color: #fff !important;' +
             '}' +
             '.radio-item.focus, .lang__selector-item.focus, .simple-keyboard .hg-button.focus, ' +
             '.modal__button.focus, .search-history-key.focus, .simple-keyboard-mic.focus, ' +
             '.torrent-serial__progress, .full-review-add.focus, .full-review.focus, ' +
-            '.tag-count.focus, .settings-folder.focus, .settings-param.focus, ' +
-            '.selectbox-item.focus, .selectbox-item:hover {' +
+            '.tag-count.focus, .selectbox-item.focus, .selectbox-item:hover {' +
                 'background: var(--main-color);' +
+                'color: #fff;' +
             '}' +
             '.online.focus {' +
                 'box-shadow: 0 0 0 0.2em var(--main-color);' +
@@ -175,6 +176,9 @@
             '.card-more.focus .card-more__box::after {' +
                 'border: 0.3em solid var(--main-color);' +
             '}' +
+            '.simple-button--filter > div {' +
+                'background-color: var(--transparent-white);' +
+            '}' +
             '.iptv-playlist-item.focus::after, .iptv-playlist-item:hover::after {' +
                 'border-color: var(--main-color) !important;' +
             '}' +
@@ -186,17 +190,33 @@
             '.torrent-item.focus::after, .extensions__block-add.focus:after {' +
                 'border-color: var(--main-color);' +
             '}' +
+            '.extensions__item, .extensions__block-add {' +
+                'background-color: var(--background-color);' +
+            '}' +
+            '.torrent-item__size, .torrent-item__exe, .torrent-item__viewed, .torrent-serial__size {' +
+                'background-color: #fff;' +
+                'color: #000;' +
+            '}' +
+            '.torrent-serial {' +
+                'background-color: var(--transparent-white);' +
+            '}' +
+            '.torrent-file.focus, .torrent-serial.focus {' +
+                'background-color: rgba(255,255,255,0.36);' +
+            '}' +
             '.broadcast__scan > div, .broadcast__device.focus {' +
                 'background-color: var(--main-color);' +
+                'color: #fff;' +
             '}' +
             '.card:hover .card__img, .card.focus .card__img {' +
                 'border-color: var(--main-color);' +
             '}' +
             '.noty {' +
                 'background: var(--main-color);' +
+                'color: #fff;' +
             '}' +
             '.radio-player.focus {' +
                 'background-color: var(--main-color);' +
+                'color: #fff;' +
             '}' +
             '.explorer-card__head-img.focus::after {' +
                 'border: 0.3em solid var(--main-color);' +
@@ -204,11 +224,6 @@
             '.color_square.focus {' +
                 'border: 0.3em solid var(--main-color);' +
                 'transform: scale(1.1);' +
-            '}' +
-            'body.glass--style .selectbox-item.focus, ' +
-            'body.glass--style .settings-folder.focus, ' +
-            'body.glass--style .settings-param.focus {' +
-                'background-color: var(--main-color);' +
             '}' +
             '.color_square.default {' +
                 'background-color: #fff;' +
@@ -363,7 +378,7 @@
                             });
                             return;
                         } else if (selectedElement.classList.contains('default')) {
-                            color = '#353535'; // Значення за замовчуванням для main_color
+                            color = '#e40c2b'; // Значення за замовчуванням для main_color
                         } else {
                             color = selectedElement.style.backgroundColor || ColorPlugin.settings[paramName];
                             color = color.includes('rgb') ? rgbToHex(color) : color;
@@ -387,7 +402,7 @@
     // Ініціалізація плагіна
     function initPlugin() {
         // Завантажуємо збережені налаштування
-        ColorPlugin.settings.main_color = Lampa.Storage.get('color_plugin_main_color', '#353535');
+        ColorPlugin.settings.main_color = Lampa.Storage.get('color_plugin_main_color', '#e40c2b');
         ColorPlugin.settings.enabled = Lampa.Storage.get('color_plugin_enabled', true);
 
         // Додаємо компонент до меню налаштувань
