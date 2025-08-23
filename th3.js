@@ -108,7 +108,7 @@
             ':root {' +
                 '--main-color: ' + ColorPlugin.settings.main_color + ';' +
             '}' +
-            // Іконки меню ліворуч і заголовка - білий колір тексту
+            // Іконки меню ліворуч і шапки - білий колір тексту
             '.menu__ico, .menu__ico.focus, .menu__ico:hover, .menu__ico.traverse, ' +
             '.head__action, .head__action.focus, .head__action:hover {' +
                 'color: #fff !important;' +
@@ -119,17 +119,6 @@
             '.menu__item.hover .menu__ico > img {' +
                 '-webkit-filter: none !important;' +
                 'filter: none !important;' +
-            '}' +
-            // Іконки лівого меню в станах traverse і hover
-            '.menu__item.traverse .menu__ico path, .menu__item.traverse .menu__ico rect, ' +
-            '.menu__item.traverse .menu__ico circle, .menu__item:hover .menu__ico path, ' +
-            '.menu__item:hover .menu__ico rect, .menu__item:hover .menu__ico circle {' +
-                'fill: #fff !important;' +
-            '}' +
-            // Біла обводка для іконок у всіх станах
-            '.menu__item.focus .menu__ico [stroke], .menu__item.traverse .menu__ico [stroke], ' +
-            '.menu__item:hover .menu__ico [stroke] {' +
-                'stroke: #fff !important;' +
             '}' +
             // Текст у всіх елементах - завжди білий
             '.menu__item, .menu__item.focus, .menu__item:hover, .menu__item.traverse, ' +
