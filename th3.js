@@ -120,6 +120,15 @@
                 '-webkit-filter: none !important;' +
                 'filter: none !important;' +
             '}' +
+            // Перекриваємо стилі з app.css для SVG-елементів у menu__ico у стані focus
+            '.menu__item.focus .menu__ico path, .menu__item.focus .menu__ico rect, ' +
+            '.menu__item.focus .menu__ico circle, .menu__item.traverse .menu__ico path, ' +
+            '.menu__item.traverse .menu__ico rect, .menu__item.traverse .menu__ico circle, ' +
+            '.menu__item:hover .menu__ico path, .menu__item:hover .menu__ico rect, ' +
+            '.menu__item:hover .menu__ico circle {' +
+                'fill: #fff !important;' +
+                'stroke: #fff !important;' +
+            '}' +
             // Текст у всіх елементах - завжди білий
             '.menu__item, .menu__item.focus, .menu__item:hover, .menu__item.traverse, ' +
             '.console__tab, .console__tab.focus, ' +
