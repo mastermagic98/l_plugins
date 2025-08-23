@@ -72,6 +72,23 @@
         return /^#[0-9A-Fa-f]{6}$/.test(color);
     }
 
+    // Функція для оновлення іконки плагіна
+    function updatePluginIcon() {
+        if (!Lampa.SettingsApi || !Lampa.SettingsApi.components) {
+            console.warn('ColorPlugin: Lampa.SettingsApi.components is not available.');
+            var menuItem = document.querySelector('.menu__item[data-component="color_plugin"] .menu__ico');
+            if (menuItem) {
+                menuItem.innerHTML = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#fff" stroke-width="2"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
+            }
+            return;
+        }
+        var component = Lampa.SettingsApi.components.find(function(c) { return c.component === 'color_plugin'; });
+        if (component) {
+            component.icon = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#fff" stroke-width="2"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
+            Lampa.Settings.render();
+        }
+    }
+
     // Функція для застосування стилів
     function applyStyles() {
         if (!ColorPlugin.settings.enabled) {
@@ -91,68 +108,92 @@
             ':root {' +
                 '--main-color: ' + ColorPlugin.settings.main_color + ';' +
             '}' +
-            // Іконки та текст лівого меню та шапки
+            // Іконки меню ліворуч, шапки та full-start__button - білий колір тексту
             '.menu__ico, .menu__ico.focus, .menu__ico:hover, .menu__ico.traverse, ' +
-            '.head__action, .head__action.focus, .head__action:hover {' +
-                'fill: #fff !important;' +
-                'stroke: #fff !important;' +
-            '}' +
-            // Перекриваємо стилі для SVG-елементів у menu__ico (fill)
-            '.menu__item.focus .menu__ico path[fill], .menu__item.focus .menu__ico rect[fill], ' +
-            '.menu__item.focus .menu__ico circle[fill], .menu__item.traverse .menu__ico path[fill], ' +
-            '.menu__item.traverse .menu__ico rect[fill], .menu__item.traverse .menu__ico circle[fill], ' +
-            '.menu__item:hover .menu__ico path[fill], .menu__item:hover .menu__ico rect[fill], ' +
-            '.menu__item:hover .menu__ico circle[fill] {' +
-                'fill: #fff !important;' +
-            '}' +
-            // Перекриваємо стилі для SVG-елементів у menu__ico (stroke)
-            '.menu__item.focus .menu__ico [stroke], .menu__item.traverse .menu__ico [stroke], ' +
-            '.menu__item:hover .menu__ico [stroke], .menu__ico [stroke] {' +
-                'stroke: #fff !important;' +
-            '}' +
-            // Текст у меню ліворуч у фокусі, ховері, traverse
-            '.menu__item.focus, .menu__item.traverse, .menu__item:hover {' +
-                'background: ' + ColorPlugin.settings.main_color + ';' +
+            '.head__action, .head__action.focus, .head__action:hover, ' +
+            '.full-start__button, .full-start__button.focus {' +
                 'color: #fff !important;' +
             '}' +
-            // Стилі для інших елементів
-            '.console__tab.focus, .full-person.focus, .full-descr__tag.focus, ' +
+            // Прозора заливка для SVG у всіх станах (меню та full-start__button)
+            '.menu__item.focus .menu__ico path, .menu__item.focus .menu__ico rect, ' +
+            '.menu__item.focus .menu__ico circle, ' +
+            '.menu__item.traverse .menu__ico path, .menu__item.traverse .menu__ico rect, ' +
+            '.menu__item.traverse .menu__ico circle, ' +
+            '.menu__item:hover .menu__ico path, .menu__item:hover .menu__ico rect, ' +
+            '.menu__item:hover .menu__ico circle, ' +
+            '.full-start__button.focus path, .full-start__button.focus rect, ' +
+            '.full-start__button.focus circle {' +
+                'fill: none !important;' +
+            '}' +
+            // Біла обводка для SVG у всіх станах (меню та full-start__button)
+            '.menu__item.focus .menu__ico [stroke], ' +
+            '.menu__item.traverse .menu__ico [stroke], ' +
+            '.menu__item:hover .menu__ico [stroke], ' +
+            '.full-start__button.focus [stroke] {' +
+                'stroke: #fff !important;' +
+            '}' +
+            // Перекриваємо filter: invert(1) для menu__ico, full-start__button та <img>
+            '.menu__ico, .menu__ico.focus, .menu__ico:hover, .menu__ico.traverse, ' +
+            '.menu__item.focus .menu__ico > img, .menu__item.traverse .menu__ico > img, ' +
+            '.menu__item.hover .menu__ico > img, ' +
+            '.full-start__button.focus, .full-start__button.focus > img {' +
+                '-webkit-filter: none !important;' +
+                'filter: none !important;' +
+            '}' +
+            // Текст у всіх елементах - завжди білий
+            '.menu__item, .menu__item.focus, .menu__item:hover, .menu__item.traverse, ' +
+            '.console__tab, .console__tab.focus, ' +
+            '.full-person, .full-person.focus, .full-start__button, .full-start__button.focus, ' +
+            '.full-descr__tag, .full-descr__tag.focus, .simple-button, .simple-button.focus, ' +
+            '.head__action, .head__action.focus, .head__action:hover, ' +
+            '.player-panel .button, .player-panel .button.focus, .search-source, .search-source.active, ' +
+            '.navigation-tabs__button, .navigation-tabs__button.focus, ' +
+            '.iptv-menu__list-item, .iptv-menu__list-item.focus, ' +
+            '.radio-item, .radio-item.focus, .lang__selector-item, .lang__selector-item.focus, ' +
+            '.simple-keyboard .hg-button, .simple-keyboard .hg-button.focus, ' +
+            '.modal__button, .modal__button.focus, .search-history-key, .search-history-key.focus, ' +
+            '.simple-keyboard-mic, .simple-keyboard-mic.focus, .full-review-add, .full-review-add.focus, ' +
+            '.full-review, .full-review.focus, .tag-count, .tag-count.focus, ' +
+            '.settings-folder, .settings-folder.focus, .settings-param, .settings-param.focus, ' +
+            '.selectbox-item, .selectbox-item.focus, .selectbox-item:hover, ' +
+            '.broadcast__scan > div, .broadcast__device, .broadcast__device.focus, ' +
+            '.noty, .radio-player, .radio-player.focus {' +
+                'color: #fff !important;' +
+            '}' +
+            // Стили для main_color
+            '.console__tab.focus, .menu__item.focus, .menu__item.traverse, .menu__item:hover, ' +
+            '.full-person.focus, .full-start__button.focus, .full-descr__tag.focus, ' +
             '.simple-button.focus, .head__action.focus, .head__action:hover, ' +
             '.player-panel .button.focus, .search-source.active {' +
-                'background: ' + ColorPlugin.settings.main_color + ';' +
-            '}' +
-            // Стиль для full-start__button.focus
-            '.full-start__button.focus {' +
-                'background-color: #fff !important;' +
-                'color: #000 !important;' +
+                'background: var(--main-color);' +
             '}' +
             '.navigation-tabs__button.focus, .time-line > div, .player-panel__position, ' +
             '.player-panel__position > div:after {' +
-                'background-color: ' + ColorPlugin.settings.main_color + ';' +
+                'background-color: var(--main-color);' +
             '}' +
             '.iptv-menu__list-item.focus, .iptv-program__timeline>div {' +
-                'background-color: ' + ColorPlugin.settings.main_color + ' !important;' +
+                'background-color: var(--main-color) !important;' +
             '}' +
             '.radio-item.focus, .lang__selector-item.focus, .simple-keyboard .hg-button.focus, ' +
             '.modal__button.focus, .search-history-key.focus, .simple-keyboard-mic.focus, ' +
             '.torrent-serial__progress, .full-review-add.focus, .full-review.focus, ' +
             '.tag-count.focus, .settings-folder.focus, .settings-param.focus, ' +
             '.selectbox-item.focus, .selectbox-item:hover {' +
-                'background: ' + ColorPlugin.settings.main_color + ';' +
+                'background: var(--main-color);' +
             '}' +
             '.online.focus {' +
-                'box-shadow: 0 0 0 0.2em ' + ColorPlugin.settings.main_color + ';' +
+                'box-shadow: 0 0 0 0.2em var(--main-color);' +
             '}' +
             '.online_modss.focus::after, .online-prestige.focus::after, ' +
             '.radio-item.focus .radio-item__imgbox:after, .iptv-channel.focus::before, ' +
             '.iptv-channel.last--focus::before {' +
-                'border-color: ' + ColorPlugin.settings.main_color + ' !important;' +
+                'border-color: var(--main-color) !important;' +
             '}' +
             '.card-more.focus .card-more__box::after {' +
-                'border: 0.3em solid ' + ColorPlugin.settings.main_color + ';' +
+                'border: 0.3em solid var(--main-color);' +
             '}' +
             '.iptv-playlist-item.focus::after, .iptv-playlist-item:hover::after {' +
-                'border-color: ' + ColorPlugin.settings.main_color + ' !important;' +
+                'border-color: var(--main-color) !important;' +
             '}' +
             '.ad-bot.focus .ad-bot__content::after, .ad-bot:hover .ad-bot__content::after, ' +
             '.card-episode.focus .full-episode::after, .register.focus::after, ' +
@@ -160,26 +201,31 @@
             '.full-review-add.focus::after, .card.focus .card__view::after, ' +
             '.card:hover .card__view::after, .extensions__item.focus:after, ' +
             '.torrent-item.focus::after, .extensions__block-add.focus:after {' +
-                'border-color: ' + ColorPlugin.settings.main_color + ';' +
+                'border-color: var(--main-color);' +
             '}' +
             '.broadcast__scan > div, .broadcast__device.focus {' +
-                'background-color: ' + ColorPlugin.settings.main_color + ';' +
+                'background-color: var(--main-color);' +
             '}' +
             '.card:hover .card__img, .card.focus .card__img {' +
-                'border-color: ' + ColorPlugin.settings.main_color + ';' +
+                'border-color: var(--main-color);' +
             '}' +
             '.noty {' +
-                'background: ' + ColorPlugin.settings.main_color + ';' +
+                'background: var(--main-color);' +
             '}' +
             '.radio-player.focus {' +
-                'background-color: ' + ColorPlugin.settings.main_color + ';' +
+                'background-color: var(--main-color);' +
             '}' +
             '.explorer-card__head-img.focus::after {' +
-                'border: 0.3em solid ' + ColorPlugin.settings.main_color + ';' +
+                'border: 0.3em solid var(--main-color);' +
             '}' +
             '.color_square.focus {' +
                 'border: 0.3em solid var(--main-color);' +
                 'transform: scale(1.1);' +
+            '}' +
+            'body.glass--style .selectbox-item.focus, ' +
+            'body.glass--style .settings-folder.focus, ' +
+            'body.glass--style .settings-param.focus {' +
+                'background-color: var(--main-color);' +
             '}' +
             '.color_square.default {' +
                 'background-color: #fff;' +
@@ -242,6 +288,10 @@
                 'font-size: 14px;' +
             '}'
         );
+
+        // Оновлюємо іконку плагіна
+        updatePluginIcon();
+        console.log('ColorPlugin: Applied styles, main_color: ' + ColorPlugin.settings.main_color);
     }
 
     // Функція для створення HTML для вибору кольору
@@ -263,7 +313,7 @@
     // Функція для створення модального вікна вибору кольору
     function openColorPicker(paramName, colors, title) {
         var colorKeys = Object.keys(colors);
-        var groupedColors = chunkArray(colorKeys, 5);
+        var groupedColors = chunkArray(colorKeys, 5); // Сітка 5x2
         var colorContent = groupedColors.map(function (group) {
             var groupContent = group.map(function (color) {
                 return createColorHtml(color, colors[color]);
@@ -271,6 +321,7 @@
             return '<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 11.25px; justify-items: center; padding: 10px;">' + groupContent + '</div>';
         }).join('');
 
+        // Блок для введення HEX-коду у стилі color_square
         var hexValue = Lampa.Storage.get('color_plugin_custom_hex', '') || '#000000';
         var inputHtml = '<div style="padding: 10px; display: flex; justify-content: center;">' +
                         '<div class="color_square selector hex-input" tabindex="0" style="background-color: ' + hexValue + ';">' +
@@ -298,8 +349,8 @@
                         var color;
 
                         if (selectedElement.classList.contains('hex-input')) {
-                            Lampa.Noty.show(Lampa.Lang.translate('hex_input_hint'));
-                            Lampa.Modal.close();
+                            Lampa.Noty.show(Lampa.Lang.translate('hex_input_hint')); // Показуємо підказку
+                            Lampa.Modal.close(); // Закриваємо модальне вікно перед викликом клавіатури
                             var inputOptions = {
                                 name: 'color_plugin_custom_hex',
                                 value: Lampa.Storage.get('color_plugin_custom_hex', ''),
@@ -329,7 +380,7 @@
                             });
                             return;
                         } else if (selectedElement.classList.contains('default')) {
-                            color = '#353535';
+                            color = '#353535'; // Значення за замовчуванням для main_color
                         } else {
                             color = selectedElement.style.backgroundColor || ColorPlugin.settings[paramName];
                             color = color.includes('rgb') ? rgbToHex(color) : color;
@@ -361,7 +412,7 @@
             Lampa.SettingsApi.addComponent({
                 component: 'color_plugin',
                 name: Lampa.Lang.translate('color_plugin'),
-                icon: '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#fff"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>'
+                icon: '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#fff" stroke-width="2"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>'
             });
 
             // Основний колір
