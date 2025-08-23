@@ -108,16 +108,19 @@
             ':root {' +
                 '--main-color: ' + ColorPlugin.settings.main_color + ';' +
             '}' +
-            // Іконки меню ліворуч і заголовка - білий колір тексту та stroke
+            // Іконки меню ліворуч і заголовка - білий колір тексту
             '.menu__ico, .menu__ico.focus, .menu__ico:hover, .menu__ico.traverse, ' +
             '.head__action, .head__action.focus, .head__action:hover {' +
                 'color: #fff !important;' +
-                'stroke: #fff !important;' +
             '}' +
             // Перекриваємо filter: invert(1) для menu__ico
             '.menu__ico, .menu__ico.focus, .menu__ico:hover, .menu__ico.traverse {' +
                 '-webkit-filter: none !important;' +
                 'filter: none !important;' +
+            '}' +
+            // Іконки лівого меню в стані focus
+            '.menu__item.focus .menu__ico rect, .menu__item.focus .menu__ico circle {' +
+                'fill: #fff !important;' +
             '}' +
             // Іконки лівого меню в станах hover і traverse
             '.menu__item.traverse .menu__ico path, .menu__item.traverse .menu__ico rect, ' +
