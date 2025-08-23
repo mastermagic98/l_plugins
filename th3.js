@@ -114,15 +114,18 @@
             '.full-start__button, .full-start__button.focus {' +
                 'color: #fff !important;' +
             '}' +
-            // Біла заливка для SVG у всіх станах (меню та full-start__button)
+            // Біла заливка для SVG у всіх станах (меню та full-start__button), включаючи circle[fill]
             '.menu__item.focus .menu__ico path, .menu__item.focus .menu__ico rect, ' +
             '.menu__item.focus .menu__ico circle, ' +
+            '.menu__item.focus .menu__ico circle[fill], ' +
             '.menu__item.traverse .menu__ico path, .menu__item.traverse .menu__ico rect, ' +
             '.menu__item.traverse .menu__ico circle, ' +
+            '.menu__item.traverse .menu__ico circle[fill], ' +
             '.menu__item:hover .menu__ico path, .menu__item:hover .menu__ico rect, ' +
             '.menu__item:hover .menu__ico circle, ' +
+            '.menu__item:hover .menu__ico circle[fill], ' +
             '.full-start__button.focus path, .full-start__button.focus rect, ' +
-            '.full-start__button.focus circle {' +
+            '.full-start__button.focus circle, .full-start__button.focus circle[fill] {' +
                 'fill: #fff !important;' +
             '}' +
             // Біла обводка для SVG у всіх станах (меню та full-start__button)
