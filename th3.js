@@ -113,8 +113,10 @@
             '.head__action, .head__action.focus, .head__action:hover {' +
                 'color: #fff !important;' +
             '}' +
-            // Перекриваємо filter: invert(1) для menu__ico
-            '.menu__ico, .menu__ico.focus, .menu__ico:hover, .menu__ico.traverse {' +
+            // Перекриваємо filter: invert(1) для menu__ico і <img>
+            '.menu__ico, .menu__ico.focus, .menu__ico:hover, .menu__ico.traverse, ' +
+            '.menu__item.focus .menu__ico > img, .menu__item.traverse .menu__ico > img, ' +
+            '.menu__item.hover .menu__ico > img {' +
                 '-webkit-filter: none !important;' +
                 'filter: none !important;' +
             '}' +
