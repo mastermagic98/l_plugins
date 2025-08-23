@@ -113,6 +113,21 @@
             '.head__action, .head__action.focus, .head__action:hover {' +
                 'color: #fff !important;' +
             '}' +
+            // Біла заливка для SVG у всіх станах
+            '.menu__item.focus .menu__ico path, .menu__item.focus .menu__ico rect, ' +
+            '.menu__item.focus .menu__ico circle, ' +
+            '.menu__item.traverse .menu__ico path, .menu__item.traverse .menu__ico rect, ' +
+            '.menu__item.traverse .menu__ico circle, ' +
+            '.menu__item:hover .menu__ico path, .menu__item:hover .menu__ico rect, ' +
+            '.menu__item:hover .menu__ico circle {' +
+                'fill: #fff !important;' +
+            '}' +
+            // Біла обводка для SVG у всіх станах
+            '.menu__item.focus .menu__ico [stroke], ' +
+            '.menu__item.traverse .menu__ico [stroke], ' +
+            '.menu__item:hover .menu__ico [stroke] {' +
+                'stroke: #fff !important;' +
+            '}' +
             // Перекриваємо filter: invert(1) для menu__ico і <img>
             '.menu__ico, .menu__ico.focus, .menu__ico:hover, .menu__ico.traverse, ' +
             '.menu__item.focus .menu__ico > img, .menu__item.traverse .menu__ico > img, ' +
