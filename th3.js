@@ -341,9 +341,9 @@
             ':root {' +
                 '--main-color: ' + ColorPlugin.settings.main_color + ';' +
             '}' +
-            // Видалення padding для .scroll__content
+            // Повернення padding для .scroll__content
             '.scroll__content {' +
-                'padding: 0 !important;' +
+                'padding: 5px !important;' +
             '}' +
             // Іконки меню ліворуч, а також іконки заголовка і налаштувань
             '.menu__ico, .menu__ico:hover, .menu__ico.traverse, ' +
@@ -461,8 +461,8 @@
             '}' +
             '.color_square.default {' +
                 'background-color: #fff;' +
-                'width: 30px;' +
-                'height: 30px;' +
+                'width: 60px;' +
+                'height: 60px;' +
                 'border-radius: 4px;' +
                 'position: relative;' +
             '}' +
@@ -470,9 +470,9 @@
                 'content: "";' +
                 'position: absolute;' +
                 'top: 50%;' +
-                'left: 5%;' +
-                'right: 5%;' +
-                'height: 2px;' +
+                'left: 10%;' +
+                'right: 10%;' +
+                'height: 3px;' +
                 'background-color: #000;' +
                 'transform: rotate(45deg);' +
             '}' +
@@ -480,9 +480,9 @@
                 'content: "";' +
                 'position: absolute;' +
                 'top: 50%;' +
-                'left: 5%;' +
-                'right: 5%;' +
-                'height: 2px;' +
+                'left: 10%;' +
+                'right: 10%;' +
+                'height: 3px;' +
                 'background-color: #000;' +
                 'transform: rotate(-45deg);' +
             '}' +
@@ -509,7 +509,7 @@
                 'padding: 5px;' +
             '}' +
             '.color-family-name {' +
-                'width: 30px;' +
+                'width: 60px;' +
                 'height: 30px;' +
                 'border-width: 2px;' +
                 'border-style: solid;' +
@@ -641,7 +641,7 @@
                         '<div class="label">' + Lampa.Lang.translate('custom_hex_input') + '</div>' +
                         '<div class="value">' + hexDisplay + '</div>' +
                         '</div>';
-        var topRowHtml = '<div style="display: flex; gap: 16px; padding: 0; justify-content: center;">' +
+        var topRowHtml = '<div style="display: flex; gap: 30px; padding: 0; justify-content: center;">' +
                          defaultButton + inputHtml + '</div>';
 
         // Обгортаємо палітри в сітку з двома стовпчиками
