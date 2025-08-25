@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-
+// іконки ок
     // Додаємо переклади
     Lampa.Lang.add({
         color_plugin: {
