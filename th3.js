@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-
+// без фону
     // Додаємо переклади
     Lampa.Lang.add({
         color_plugin: {
