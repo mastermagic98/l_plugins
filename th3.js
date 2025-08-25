@@ -131,6 +131,31 @@
             '.menu__item.focus .menu__ico [stroke], .menu__item.traverse .menu__ico [stroke], .menu__item:hover .menu__ico [stroke] {' +
                 'stroke: #fff !important;' +
             '}' +
+            // Текстові елементи з білим кольором
+            '.menu__item, .menu__item.focus, .menu__item.traverse, .menu__item:hover, ' +
+            '.console__tab, .console__tab.focus, ' +
+            '.settings-param, .settings-param.focus, ' +
+            '.selectbox-item, .selectbox-item.focus, .selectbox-item:hover, ' +
+            '.full-person, .full-person.focus, ' +
+            '.full-start__button, .full-start__button.focus, ' +
+            '.full-descr__tag, .full-descr__tag.focus, ' +
+            '.simple-button, .simple-button.focus, ' +
+            '.player-panel .button, .player-panel .button.focus, ' +
+            '.search-source, .search-source.active, ' +
+            '.radio-item, .radio-item.focus, ' +
+            '.lang__selector-item, .lang__selector-item.focus, ' +
+            '.modal__button, .modal__button.focus, ' +
+            '.search-history-key, .search-history-key.focus, ' +
+            '.simple-keyboard-mic, .simple-keyboard-mic.focus, ' +
+            '.full-review-add, .full-review-add.focus, ' +
+            '.full-review, .full-review.focus, ' +
+            '.tag-count, .tag-count.focus, ' +
+            '.settings-folder, .settings-folder.focus, ' +
+            '.noty, ' +
+            '.radio-player, .radio-player.focus {' +
+                'color: #ffffff !important;' +
+            '}' +
+            // Елементи з основним кольором для фону та рамок
             '.console__tab.focus, .menu__item.focus, .menu__item.traverse, .menu__item:hover, ' +
             '.full-person.focus, .full-start__button.focus, .full-descr__tag.focus, ' +
             '.simple-button.focus, .head__action.focus, .head__action:hover, ' +
