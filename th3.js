@@ -24,9 +24,9 @@
             uk: 'За замовчуванням'
         },
         custom_hex_input: {
-            ru: 'HEX-код цвета',
-            en: 'HEX color code',
-            uk: 'HEX-код кольору'
+            ru: 'Введи HEX-код цвета',
+            en: 'Enter HEX color code',
+            uk: 'Введи HEX-код кольору'
         },
         hex_input_hint: {
             ru: 'Используйте формат #FFFFFF, например #123524',
@@ -44,138 +44,138 @@
         colors: {
             main: {
                 'default': Lampa.Lang.translate('default_color'),
-                '#fb2c36': 'Red 500',
-                '#e7000b': 'Red 600',
-                '#c10007': 'Red 700',
-                '#9f0712': 'Red 800',
-                '#82181a': 'Red 900',
-                '#460809': 'Red 950',
-                '#ff6900': 'Orange 500',
-                '#f54900': 'Orange 600',
-                '#ca3500': 'Orange 700',
-                '#9f2d00': 'Orange 800',
-                '#7e2a0c': 'Orange 900',
-                '#441306': 'Orange 950',
-                '#fe9a00': 'Amber 500',
-                '#e17100': 'Amber 600',
-                '#bb4d00': 'Amber 700',
-                '#973c00': 'Amber 800',
-                '#7b3306': 'Amber 900',
-                '#461901': 'Amber 950',
-                '#f0b100': 'Yellow 500',
-                '#d08700': 'Yellow 600',
-                '#a65f00': 'Yellow 700',
-                '#894b00': 'Yellow 800',
-                '#733e0a': 'Yellow 900',
-                '#432004': 'Yellow 950',
-                '#7ccf00': 'Lime 500',
-                '#5ea500': 'Lime 600',
-                '#497d00': 'Lime 700',
-                '#3c6300': 'Lime 800',
-                '#35530e': 'Lime 900',
-                '#192e03': 'Lime 950',
-                '#00c950': 'Green 500',
-                '#00a63e': 'Green 600',
-                '#008236': 'Green 700',
-                '#016630': 'Green 800',
-                '#0d542b': 'Green 900',
-                '#032e15': 'Green 950',
-                '#00bc7d': 'Emerald 500',
-                '#009966': 'Emerald 600',
-                '#007a55': 'Emerald 700',
-                '#006045': 'Emerald 800',
-                '#004f3b': 'Emerald 900',
-                '#002c22': 'Emerald 950',
-                '#00bba7': 'Teal 500',
-                '#009689': 'Teal 600',
-                '#00786f': 'Teal 700',
-                '#005f5a': 'Teal 800',
-                '#0b4f4a': 'Teal 900',
-                '#022f2e': 'Teal 950',
-                '#00b8db': 'Cyan 500',
-                '#0092b8': 'Cyan 600',
-                '#007595': 'Cyan 700',
-                '#005f78': 'Cyan 800',
-                '#104e64': 'Cyan 900',
-                '#053345': 'Cyan 950',
-                '#00a6f4': 'Sky 500',
-                '#0084d1': 'Sky 600',
-                '#0069a8': 'Sky 700',
-                '#00598a': 'Sky 800',
-                '#024a70': 'Sky 900',
-                '#052f4a': 'Sky 950',
-                '#2b7fff': 'Blue 500',
-                '#155dfc': 'Blue 600',
-                '#1447e6': 'Blue 700',
-                '#193cb8': 'Blue 800',
-                '#1c398e': 'Blue 900',
-                '#162456': 'Blue 950',
-                '#615fff': 'Indigo 500',
-                '#4f39f6': 'Indigo 600',
-                '#432dd7': 'Indigo 700',
-                '#372aac': 'Indigo 800',
-                '#312c85': 'Indigo 900',
-                '#1e1a4d': 'Indigo 950',
-                '#8e51ff': 'Violet 500',
-                '#7f22fe': 'Violet 600',
-                '#7008e7': 'Violet 700',
-                '#5d0ec0': 'Violet 800',
-                '#4d179a': 'Violet 900',
-                '#2f0d68': 'Violet 950',
-                '#ad46ff': 'Purple 500',
-                '#9810fa': 'Purple 600',
-                '#8200db': 'Purple 700',
-                '#6e11b0': 'Purple 800',
-                '#59168b': 'Purple 900',
-                '#3c0366': 'Purple 950',
-                '#e12afb': 'Fuchsia 500',
-                '#c800de': 'Fuchsia 600',
-                '#a800b7': 'Fuchsia 700',
-                '#8a0194': 'Fuchsia 800',
-                '#721378': 'Fuchsia 900',
-                '#4b004f': 'Fuchsia 950',
-                '#f6339a': 'Pink 500',
-                '#e60076': 'Pink 600',
-                '#c6005c': 'Pink 700',
-                '#a3004c': 'Pink 800',
-                '#861043': 'Pink 900',
-                '#510424': 'Pink 950',
-                '#ff2056': 'Rose 500',
-                '#ec003f': 'Rose 600',
-                '#c70036': 'Rose 700',
-                '#a50036': 'Rose 800',
-                '#8b0836': 'Rose 900',
-                '#4d0218': 'Rose 950',
-                '#62748e': 'Slate 500',
-                '#45556c': 'Slate 600',
-                '#314158': 'Slate 700',
-                '#1d293d': 'Slate 800',
-                '#0f172b': 'Slate 900',
-                '#020618': 'Slate 950',
-                '#6a7282': 'Gray 500',
-                '#4a5565': 'Gray 600',
-                '#364153': 'Gray 700',
-                '#1e2939': 'Gray 800',
-                '#101828': 'Gray 900',
-                '#030712': 'Gray 950',
-                '#71717b': 'Zinc 500',
-                '#52525c': 'Zinc 600',
-                '#3f3f46': 'Zinc 700',
-                '#27272a': 'Zinc 800',
-                '#18181b': 'Zinc 900',
-                '#09090b': 'Zinc 950',
-                '#737373': 'Neutral 500',
-                '#525252': 'Neutral 600',
-                '#404040': 'Neutral 700',
-                '#262626': 'Neutral 800',
-                '#171717': 'Neutral 900',
-                '#0a0a0a': 'Neutral 950',
-                '#79716b': 'Stone 500',
-                '#57534d': 'Stone 600',
-                '#44403b': 'Stone 700',
-                '#292524': 'Stone 800',
-                '#1c1917': 'Stone 900',
-                '#0c0a09': 'Stone 950'
+                '#fb2c36': 'Red 1',
+                '#e7000b': 'Red 2',
+                '#c10007': 'Red 3',
+                '#9f0712': 'Red 4',
+                '#82181a': 'Red 5',
+                '#460809': 'Red 6',
+                '#ff6900': 'Orange 1',
+                '#f54900': 'Orange 2',
+                '#ca3500': 'Orange 3',
+                '#9f2d00': 'Orange 4',
+                '#7e2a0c': 'Orange 5',
+                '#441306': 'Orange 6',
+                '#fe9a00': 'Amber 1',
+                '#e17100': 'Amber 2',
+                '#bb4d00': 'Amber 3',
+                '#973c00': 'Amber 4',
+                '#7b3306': 'Amber 5',
+                '#461901': 'Amber 6',
+                '#f0b100': 'Yellow 1',
+                '#d08700': 'Yellow 2',
+                '#a65f00': 'Yellow 3',
+                '#894b00': 'Yellow 4',
+                '#733e0a': 'Yellow 5',
+                '#432004': 'Yellow 6',
+                '#7ccf00': 'Lime 1',
+                '#5ea500': 'Lime 2',
+                '#497d00': 'Lime 3',
+                '#3c6300': 'Lime 4',
+                '#35530e': 'Lime 5',
+                '#192e03': 'Lime 6',
+                '#00c950': 'Green 1',
+                '#00a63e': 'Green 2',
+                '#008236': 'Green 3',
+                '#016630': 'Green 4',
+                '#0d542b': 'Green 5',
+                '#032e15': 'Green 6',
+                '#00bc7d': 'Emerald 1',
+                '#009966': 'Emerald 2',
+                '#007a55': 'Emerald 3',
+                '#006045': 'Emerald 4',
+                '#004f3b': 'Emerald 5',
+                '#002c22': 'Emerald 6',
+                '#00bba7': 'Teal 1',
+                '#009689': 'Teal 2',
+                '#00786f': 'Teal 3',
+                '#005f5a': 'Teal 4',
+                '#0b4f4a': 'Teal 5',
+                '#022f2e': 'Teal 6',
+                '#00b8db': 'Cyan 1',
+                '#0092b8': 'Cyan 2',
+                '#007595': 'Cyan 3',
+                '#005f78': 'Cyan 4',
+                '#104e64': 'Cyan 5',
+                '#053345': 'Cyan 6',
+                '#00a6f4': 'Sky 1',
+                '#0084d1': 'Sky 2',
+                '#0069a8': 'Sky 3',
+                '#00598a': 'Sky 4',
+                '#024a70': 'Sky 5',
+                '#052f4a': 'Sky 6',
+                '#2b7fff': 'Blue 1',
+                '#155dfc': 'Blue 2',
+                '#1447e6': 'Blue 3',
+                '#193cb8': 'Blue 4',
+                '#1c398e': 'Blue 5',
+                '#162456': 'Blue 6',
+                '#615fff': 'Indigo 1',
+                '#4f39f6': 'Indigo 2',
+                '#432dd7': 'Indigo 3',
+                '#372aac': 'Indigo 4',
+                '#312c85': 'Indigo 5',
+                '#1e1a4d': 'Indigo 6',
+                '#8e51ff': 'Violet 1',
+                '#7f22fe': 'Violet 2',
+                '#7008e7': 'Violet 3',
+                '#5d0ec0': 'Violet 4',
+                '#4d179a': 'Violet 5',
+                '#2f0d68': 'Violet 6',
+                '#ad46ff': 'Purple 1',
+                '#9810fa': 'Purple 2',
+                '#8200db': 'Purple 3',
+                '#6e11b0': 'Purple 4',
+                '#59168b': 'Purple 5',
+                '#3c0366': 'Purple 6',
+                '#e12afb': 'Fuchsia 1',
+                '#c800de': 'Fuchsia 2',
+                '#a800b7': 'Fuchsia 3',
+                '#8a0194': 'Fuchsia 4',
+                '#721378': 'Fuchsia 5',
+                '#4b004f': 'Fuchsia 6',
+                '#f6339a': 'Pink 1',
+                '#e60076': 'Pink 2',
+                '#c6005c': 'Pink 3',
+                '#a3004c': 'Pink 4',
+                '#861043': 'Pink 5',
+                '#510424': 'Pink 6',
+                '#ff2056': 'Rose 1',
+                '#ec003f': 'Rose 2',
+                '#c70036': 'Rose 3',
+                '#a50036': 'Rose 4',
+                '#8b0836': 'Rose 5',
+                '#4d0218': 'Rose 6',
+                '#62748e': 'Slate 1',
+                '#45556c': 'Slate 2',
+                '#314158': 'Slate 3',
+                '#1d293d': 'Slate 4',
+                '#0f172b': 'Slate 5',
+                '#020618': 'Slate 6',
+                '#6a7282': 'Gray 1',
+                '#4a5565': 'Gray 2',
+                '#364153': 'Gray 3',
+                '#1e2939': 'Gray 4',
+                '#101828': 'Gray 5',
+                '#030712': 'Gray 6',
+                '#71717b': 'Zinc 1',
+                '#52525c': 'Zinc 2',
+                '#3f3f46': 'Zinc 3',
+                '#27272a': 'Zinc 4',
+                '#18181b': 'Zinc 5',
+                '#09090b': 'Zinc 6',
+                '#737373': 'Neutral 1',
+                '#525252': 'Neutral 2',
+                '#404040': 'Neutral 3',
+                '#262626': 'Neutral 4',
+                '#171717': 'Neutral 5',
+                '#0a0a0a': 'Neutral 6',
+                '#79716b': 'Stone 1',
+                '#57534d': 'Stone 2',
+                '#44403b': 'Stone 3',
+                '#292524': 'Stone 4',
+                '#1c1917': 'Stone 5',
+                '#0c0a09': 'Stone 6'
             }
         }
     };
@@ -346,28 +346,12 @@
                 'background-color: var(--main-color);' +
             '}' +
             '.color_square.default {' +
-                'background-color: #fff;' +
-                'position: relative;' +
-            '}' +
-            '.color_square.default::after {' +
-                'content: "";' +
-                'position: absolute;' +
-                'top: 50%;' +
-                'left: 5%;' +
-                'right: 5%;' +
-                'height: 2px;' +
-                'background-color: #000;' +
-                'transform: rotate(45deg);' +
-            '}' +
-            '.color_square.default::before {' +
-                'content: "";' +
-                'position: absolute;' +
-                'top: 50%;' +
-                'left: 5%;' +
-                'right: 5%;' +
-                'height: 2px;' +
-                'background-color: #000;' +
-                'transform: rotate(-45deg);' +
+                'background-color: #353535;' +
+                'display: flex;' +
+                'flex-direction: column;' +
+                'justify-content: center;' +
+                'align-items: center;' +
+                'color: #ffffff !important;' +
             '}' +
             '.color_square {' +
                 'width: 30px;' +
@@ -389,11 +373,12 @@
                 'gap: 8px;' +
                 'border-radius: 8px;' +
                 'margin-bottom: 10px;' +
-                'padding: 10px;' +
+                'padding: 5px;' +
             '}' +
             '.color-family-name {' +
                 'width: 60px;' +
                 'height: 60px;' +
+                'border: 1px solid #ddd;' +
                 'border-radius: 4px;' +
                 'display: flex;' +
                 'flex-direction: column;' +
@@ -405,10 +390,6 @@
                 'font-weight: bold;' +
                 'text-align: center;' +
                 'text-transform: capitalize;' +
-            '}' +
-            '.color_square .label {' +
-                'font-size: 10px;' +
-                'font-weight: medium;' +
             '}' +
             '.color_square .hex {' +
                 'font-size: 8px;' +
@@ -445,6 +426,12 @@
                 'position: absolute;' +
                 'bottom: 10px;' +
                 'font-size: 14px;' +
+            '}' +
+            '.color-picker-container {' +
+                'display: grid;' +
+                'grid-template-columns: 1fr 1fr;' +
+                'gap: 10px;' +
+                'padding: 5px;' +
             '}'
         );
 
@@ -456,16 +443,16 @@
     // Функція для створення HTML для вибору кольору
     function createColorHtml(color, name) {
         var className = color === 'default' ? 'color_square selector default' : 'color_square selector';
-        var style = color === 'default' ? '' : 'background-color: ' + color + ';';
-        var label = color === 'default' ? Lampa.Lang.translate('default_color') : name.split(' ')[1]; // Наприклад, "500" із "Red 500"
-        var hex = color === 'default' ? '' : color.replace('#', '');
-        var content = color === 'default' ? '' : '<div class="label">' + label + '</div><div class="hex">' + hex + '</div>';
+        var style = color === 'default' ? 'background-color: #353535;' : 'background-color: ' + color + ';';
+        var label = color === 'default' ? Lampa.Lang.translate('default_color') : '';
+        var hex = color === 'default' ? '353535' : color.replace('#', '');
+        var content = '<div class="hex">' + hex + '</div>';
         return '<div class="' + className + '" tabindex="0" style="' + style + '" title="' + name + '">' + content + '</div>';
     }
 
     // Функція для створення HTML для назви сімейства
-    function createFamilyNameHtml(name, color) {
-        return '<div class="color-family-name" style="background-color: ' + color + ';">' + name + '</div>';
+    function createFamilyNameHtml(name) {
+        return '<div class="color-family-name">' + name + '</div>';
     }
 
     // Функція для розбиття масиву кольорів на групи по 6
@@ -504,8 +491,7 @@
 
         // Формуємо HTML для груп кольорів
         var colorContent = colorsByFamily.map(function(family) {
-            var firstColor = family.colors[0]; // Перший колір для фону назви
-            var familyNameHtml = createFamilyNameHtml(family.name, firstColor);
+            var familyNameHtml = createFamilyNameHtml(family.name);
             var groupContent = family.colors.map(function(color) {
                 return createColorHtml(color, ColorPlugin.colors.main[color]);
             }).join('');
@@ -519,10 +505,12 @@
                         '<div class="label">' + Lampa.Lang.translate('custom_hex_input') + '</div>' +
                         '<div class="value">' + hexValue + '</div>' +
                         '</div>';
-        var topRowHtml = '<div style="display: flex; gap: 8px; padding: 10px; justify-content: center;">' +
+        var topRowHtml = '<div style="display: flex; gap: 8px; padding: 5px; justify-content: center;">' +
                          defaultButton + inputHtml + '</div>';
 
-        var modalHtml = $('<div>' + topRowHtml + colorContent + '</div>');
+        // Обгортаємо палітри в сітку з двома стовпчиками
+        var modalContent = '<div class="color-picker-container">' + colorContent + '</div>';
+        var modalHtml = $('<div>' + topRowHtml + modalContent + '</div>');
 
         try {
             Lampa.Modal.open({
