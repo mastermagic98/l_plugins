@@ -28,11 +28,6 @@
             en: 'Transparent background',
             uk: 'Прозорий фон'
         },
-        icon_color: {
-            ru: 'Цвет иконок',
-            en: 'Icons color',
-            uk: 'Колір іконок'
-        },
         color_plugin_enabled: {
             ru: 'Включить плагин',
             en: 'Enable plugin',
@@ -62,7 +57,6 @@
             background_color: '#1d1f20',
             text_color: '#fff',
             transparent_white: 'rgba(255,255,255,0.2)',
-            icon_color: '#000',
             enabled: true
         },
         colors: {
@@ -106,15 +100,6 @@
                 'rgba(255,255,255,0.1)': 'Прозорий білий 10%',
                 'rgba(255,255,255,0.3)': 'Прозорий білий 30%',
                 'rgba(0,0,0,0.2)': 'Прозорий чорний 20%'
-            },
-            icon: {
-                '#000000': 'Чорний',
-                '#ffffff': 'Білий',
-                '#dddddd': 'Світло-сірий',
-                '#9f0712': 'Темно-червоний',
-                '#fef3c6': 'Світло-жовтий',
-                '#497d00': 'Темно-зелений',
-                '#007595': 'Морський синій'
             }
         }
     };
@@ -140,13 +125,13 @@
             console.warn('ColorPlugin: Lampa.SettingsApi.components is not available.');
             var menuItem = document.querySelector('.menu__item[data-component="color_plugin"] .menu__ico');
             if (menuItem) {
-                menuItem.innerHTML = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#ffffff" stroke="#ffffff" stroke-width="1"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
+                menuItem.innerHTML = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#ffffff" stroke="#ffffff"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
             }
             return;
         }
         var component = Lampa.SettingsApi.components.find(function(c) { return c.component === 'color_plugin'; });
         if (component) {
-            component.icon = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#ffffff" stroke="#ffffff" stroke-width="1"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
+            component.icon = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#ffffff" stroke="#ffffff"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
             Lampa.Settings.render();
         }
     }
@@ -179,26 +164,17 @@
                 'color: #ffffff !important;' +
                 'fill: #ffffff !important;' +
                 'stroke: #ffffff !important;' +
-                'stroke-width: 1 !important;' +
-            '}' +
-            // Іконки налаштувань праворуч використовують icon_color
-            '.settings-param__ico {' +
-                'color: ' + ColorPlugin.settings.icon_color + ' !important;' +
-                'fill: ' + ColorPlugin.settings.icon_color + ' !important;' +
-                'stroke: ' + ColorPlugin.settings.icon_color + ' !important;' +
             '}' +
             // Перекриваємо стилі з app.css для SVG-елементів у menu__ico (fill і stroke)
             '.menu__item.focus .menu__ico path[fill], .menu__item.focus .menu__ico rect[fill], ' +
             '.menu__item.focus .menu__ico circle[fill], .menu__item.traverse .menu__ico path[fill], ' +
             '.menu__item.traverse .menu__ico rect[fill], .menu__item.traverse .menu__ico circle[fill], ' +
             '.menu__item:hover .menu__ico path[fill], .menu__item:hover .menu__ico rect[fill], ' +
-            '.menu__item:hover .menu__ico circle[fill] {' +
-                'fill: #ffffff !important;' +
-            '}' +
+            '.menu__item:hover .menu__ico circle[fill], ' +
             '.menu__item.focus .menu__ico [stroke], .menu__item.traverse .menu__ico [stroke], ' +
             '.menu__item:hover .menu__ico [stroke], .menu__ico [stroke] {' +
+                'fill: #ffffff !important;' +
                 'stroke: #ffffff !important;' +
-                'stroke-width: 1 !important;' +
             '}' +
             '.console__tab.focus, .menu__item.focus, .menu__item.traverse, .menu__item:hover, ' +
             '.full-person.focus, .full-start__button.focus, .full-descr__tag.focus, ' +
@@ -248,7 +224,7 @@
             '}' +
             '.torrent-serial__size {' +
                 'background-color: ' + ColorPlugin.settings.text_color + ';' +
-                'color: ' + ColorPlugin.settings.icon_color + ';' +
+                'color: #ffffff !important;' + // Використовуємо білий для сумісності з іконками
             '}' +
             '.broadcast__scan > div, .broadcast__device.focus {' +
                 'background-color: ' + ColorPlugin.settings.main_color + ';' +
@@ -435,8 +411,7 @@
                                 main_color: '#353535',
                                 background_color: '#1d1f20',
                                 text_color: '#fff',
-                                transparent_white: 'rgba(255,255,255,0.2)',
-                                icon_color: '#000'
+                                transparent_white: 'rgba(255,255,255,0.2)'
                             }[paramName];
                         } else {
                             color = selectedElement.style.backgroundColor || ColorPlugin.settings[paramName];
@@ -465,7 +440,6 @@
         ColorPlugin.settings.background_color = Lampa.Storage.get('color_plugin_background_color', '#1d1f20');
         ColorPlugin.settings.text_color = Lampa.Storage.get('color_plugin_text_color', '#fff');
         ColorPlugin.settings.transparent_white = Lampa.Storage.get('color_plugin_transparent_white', 'rgba(255,255,255,0.2)');
-        ColorPlugin.settings.icon_color = Lampa.Storage.get('color_plugin_icon_color', '#000');
         ColorPlugin.settings.enabled = Lampa.Storage.get('color_plugin_enabled', true);
 
         // Додаємо компонент до меню налаштувань
@@ -473,7 +447,7 @@
             Lampa.SettingsApi.addComponent({
                 component: 'color_plugin',
                 name: Lampa.Lang.translate('color_plugin'),
-                icon: '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#ffffff" stroke="#ffffff" stroke-width="1"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>'
+                icon: '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#ffffff" stroke="#ffffff"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>'
             });
 
             // Основний колір
@@ -533,21 +507,6 @@
                 },
                 onChange: function () {
                     openColorPicker('transparent_white', ColorPlugin.colors.transparent, 'transparent_white');
-                }
-            });
-
-            // Колір іконок (тільки для settings-param__ico)
-            Lampa.SettingsApi.addParam({
-                component: 'color_plugin',
-                param: {
-                    name: 'color_plugin_icon_color',
-                    type: 'button'
-                },
-                field: {
-                    name: Lampa.Lang.translate('icon_color')
-                },
-                onChange: function () {
-                    openColorPicker('icon_color', ColorPlugin.colors.icon, 'icon_color');
                 }
             });
 
