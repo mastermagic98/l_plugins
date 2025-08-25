@@ -324,7 +324,7 @@
             '.broadcast__scan > div, .broadcast__device.focus {' +
                 'background-color: var(--main-color);' +
             '}' +
-            '.card:hover .card__img, .card.focus .card__img {' +
+            '.card:hover .card__view, .card.focus .card__view {' +
                 'border-color: var(--main-color);' +
             '}' +
             '.noty {' +
@@ -346,12 +346,31 @@
                 'background-color: var(--main-color);' +
             '}' +
             '.color_square.default {' +
-                'background-color: #353535;' +
-                'display: flex;' +
-                'flex-direction: column;' +
-                'justify-content: center;' +
-                'align-items: center;' +
-                'color: #ffffff !important;' +
+                'background-color: #fff;' +
+                'width: 60px;' +
+                'height: 60px;' +
+                'border-radius: 4px;' +
+                'position: relative;' +
+            '}' +
+            '.color_square.default::after {' +
+                'content: "";' +
+                'position: absolute;' +
+                'top: 50%;' +
+                'left: 5%;' +
+                'right: 5%;' +
+                'height: 2px;' +
+                'background-color: #000;' +
+                'transform: rotate(45deg);' +
+            '}' +
+            '.color_square.default::before {' +
+                'content: "";' +
+                'position: absolute;' +
+                'top: 50%;' +
+                'left: 5%;' +
+                'right: 5%;' +
+                'height: 2px;' +
+                'background-color: #000;' +
+                'transform: rotate(-45deg);' +
             '}' +
             '.color_square {' +
                 'width: 30px;' +
@@ -378,7 +397,8 @@
             '.color-family-name {' +
                 'width: 60px;' +
                 'height: 60px;' +
-                'border: 1px solid #ddd;' +
+                'border-width: 2px;' +
+                'border-style: solid;' +
                 'border-radius: 4px;' +
                 'display: flex;' +
                 'flex-direction: column;' +
@@ -443,16 +463,16 @@
     // Функція для створення HTML для вибору кольору
     function createColorHtml(color, name) {
         var className = color === 'default' ? 'color_square selector default' : 'color_square selector';
-        var style = color === 'default' ? 'background-color: #353535;' : 'background-color: ' + color + ';';
-        var label = color === 'default' ? Lampa.Lang.translate('default_color') : '';
-        var hex = color === 'default' ? '353535' : color.replace('#', '');
-        var content = '<div class="hex">' + hex + '</div>';
+        var style = color === 'default' ? '' : 'background-color: ' + color + ';';
+        var label = color === 'default' ? '' : '';
+        var hex = color === 'default' ? '' : color.replace('#', '');
+        var content = color === 'default' ? '' : '<div class="hex">' + hex + '</div>';
         return '<div class="' + className + '" tabindex="0" style="' + style + '" title="' + name + '">' + content + '</div>';
     }
 
     // Функція для створення HTML для назви сімейства
-    function createFamilyNameHtml(name) {
-        return '<div class="color-family-name">' + name + '</div>';
+    function createFamilyNameHtml(name, color) {
+        return '<div class="color-family-name" style="border-color: ' + color + ';">' + name + '</div>';
     }
 
     // Функція для розбиття масиву кольорів на групи по 6
@@ -491,7 +511,8 @@
 
         // Формуємо HTML для груп кольорів
         var colorContent = colorsByFamily.map(function(family) {
-            var familyNameHtml = createFamilyNameHtml(family.name);
+            var firstColor = family.colors[0]; // Перший колір для border-color
+            var familyNameHtml = createFamilyNameHtml(family.name, firstColor);
             var groupContent = family.colors.map(function(color) {
                 return createColorHtml(color, ColorPlugin.colors.main[color]);
             }).join('');
