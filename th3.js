@@ -341,6 +341,14 @@
             ':root {' +
                 '--main-color: ' + ColorPlugin.settings.main_color + ';' +
             '}' +
+            // Стиль для заголовка модального вікна
+            '.modal__title {' +
+                'font-size: 1.7em !important;' +
+            '}' +
+            // Стиль для .scroll__content у модальному вікні
+            '.modal .scroll__content {' +
+                'padding: 1.0em 0 !important;' +
+            '}' +
             // Іконки меню ліворуч, а також іконки заголовка і налаштувань
             '.menu__ico, .menu__ico:hover, .menu__ico.traverse, ' +
             '.head__action, .head__action.focus, .head__action:hover, .settings-param__ico {' +
@@ -447,7 +455,7 @@
                 'border: 0.3em solid var(--main-color);' +
             '}' +
             '.color_square.focus {' +
-                'border: 0.2em solid var(--main-color);' +
+                'border: 0.3em solid var(--main-color);' +
                 'transform: scale(1.1);' +
             '}' +
             'body.glass--style .selectbox-item.focus, ' +
@@ -525,10 +533,11 @@
                 'font-size: 7px;' +
                 'opacity: 0.9;' +
                 'text-transform: uppercase;' +
+                'z-index: 1;' +
             '}' +
             '.hex-input {' +
                 'width: 360px;' +
-                'height: 60px;' +
+                'height: 66px;' +
                 'border-radius: 8px;' +
                 'border: 2px solid #ddd;' +
                 'position: relative;' +
@@ -650,6 +659,7 @@
                 size: 'medium',
                 align: 'center',
                 html: modalHtml,
+                className: 'color-picker-modal', // Додаємо клас для стилізації заголовка
                 onBack: function () {
                     Lampa.Modal.close();
                     Lampa.Controller.toggle('settings_component');
