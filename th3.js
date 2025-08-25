@@ -465,8 +465,8 @@
             '}' +
             '.color_square.default {' +
                 'background-color: #fff;' +
-                'width: 50px;' +
-                'height: 50px;' +
+                'width: 30px;' +
+                'height: 30px;' +
                 'border-radius: 4px;' +
                 'position: relative;' +
             '}' +
@@ -477,7 +477,7 @@
                 'left: 10%;' +
                 'right: 10%;' +
                 'height: 3px;' +
-                'background-color: #000;' +
+                'background-color: #353535;' +
                 'transform: rotate(45deg);' +
             '}' +
             '.color_square.default::before {' +
@@ -487,7 +487,7 @@
                 'left: 10%;' +
                 'right: 10%;' +
                 'height: 3px;' +
-                'background-color: #000;' +
+                'background-color: #353535;' +
                 'transform: rotate(-45deg);' +
             '}' +
             '.color_square {' +
@@ -537,7 +537,7 @@
             '}' +
             '.hex-input {' +
                 'width: 360px;' +
-                'height: 50px;' +
+                'height: 30px;' +
                 'border-radius: 8px;' +
                 'border: 2px solid #ddd;' +
                 'position: relative;' +
@@ -563,8 +563,9 @@
             '}' +
             '.hex-input .value {' +
                 'position: absolute;' +
-                'bottom: 10px;' +
-                'font-size: 14px;' +
+                'bottom: 4px;' +
+                'top: 1px;' +
+                'font-size: 10px;' +
             '}' +
             '.color-picker-container {' +
                 'display: grid;' +
