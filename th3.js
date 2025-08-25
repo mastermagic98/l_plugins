@@ -637,7 +637,7 @@
                         '<div class="label">' + Lampa.Lang.translate('custom_hex_input') + '</div>' +
                         '<div class="value">' + hexDisplay + '</div>' +
                         '</div>';
-        var topRowHtml = '<div style="display: flex; gap: 30px; padding: 0; justify-content: center;">' +
+        var topRowHtml = '<div style="display: flex; gap: 30px; padding: 0; justify-content: center; margin-bottom: 10px;">' +
                          defaultButton + inputHtml + '</div>';
 
         // Обгортаємо палітри в сітку з двома стовпчиками
