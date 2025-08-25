@@ -341,10 +341,6 @@
             ':root {' +
                 '--main-color: ' + ColorPlugin.settings.main_color + ';' +
             '}' +
-            // Повернення padding для .scroll__content
-            '.scroll__content {' +
-                'padding: 5px !important;' +
-            '}' +
             // Іконки меню ліворуч, а також іконки заголовка і налаштувань
             '.menu__ico, .menu__ico:hover, .menu__ico.traverse, ' +
             '.head__action, .head__action.focus, .head__action:hover, .settings-param__ico {' +
@@ -451,7 +447,7 @@
                 'border: 0.3em solid var(--main-color);' +
             '}' +
             '.color_square.focus {' +
-                'border: 0.3em solid var(--main-color);' +
+                'border: 0.2em solid var(--main-color);' +
                 'transform: scale(1.1);' +
             '}' +
             'body.glass--style .selectbox-item.focus, ' +
@@ -503,13 +499,13 @@
                 'display: flex;' +
                 'flex-direction: row;' +
                 'overflow: hidden;' +
-                'gap: 8px;' +
+                'gap: 10px;' +
                 'border-radius: 8px;' +
                 'margin-bottom: 10px;' +
                 'padding: 5px;' +
             '}' +
             '.color-family-name {' +
-                'width: 60px;' +
+                'width: 80px;' +
                 'height: 30px;' +
                 'border-width: 2px;' +
                 'border-style: solid;' +
@@ -526,7 +522,7 @@
                 'text-transform: capitalize;' +
             '}' +
             '.color_square .hex {' +
-                'font-size: 8px;' +
+                'font-size: 7px;' +
                 'opacity: 0.9;' +
                 'text-transform: uppercase;' +
             '}' +
@@ -534,7 +530,7 @@
                 'width: 360px;' +
                 'height: 60px;' +
                 'border-radius: 8px;' +
-                'border: 1px solid #ddd;' +
+                'border: 2px solid #ddd;' +
                 'position: relative;' +
                 'cursor: pointer;' +
                 'display: flex;' +
