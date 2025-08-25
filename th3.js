@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-// іконки ок
+
     // Додаємо переклади
     Lampa.Lang.add({
         color_plugin: {
@@ -12,21 +12,6 @@
             ru: 'Основной цвет',
             en: 'Main color',
             uk: 'Основний колір'
-        },
-        background_color: {
-            ru: 'Цвет фона',
-            en: 'Background color',
-            uk: 'Колір фону'
-        },
-        text_color: {
-            ru: 'Цвет текста',
-            en: 'Text color',
-            uk: 'Колір тексту'
-        },
-        transparent_white: {
-            ru: 'Прозрачный фон',
-            en: 'Transparent background',
-            uk: 'Прозорий фон'
         },
         color_plugin_enabled: {
             ru: 'Включить плагин',
@@ -54,9 +39,6 @@
     var ColorPlugin = {
         settings: {
             main_color: '#353535',
-            background_color: '#1d1f20',
-            text_color: '#fff',
-            transparent_white: 'rgba(255,255,255,0.2)',
             enabled: true
         },
         colors: {
@@ -71,35 +53,6 @@
                 '#008d8b': 'Бірюзовий',
                 '#823398': 'Фуксія',
                 '#944729': 'Охра'
-            },
-            background: {
-                '#4A0C0C': 'Темно-червоний',
-                '#4A2400': 'Темно-помаранчевий',
-                '#4A3600': 'Темно-золотий',
-                '#0F2E1A': 'Темно-зелений',
-                '#0C2A17': 'Темно-салатовий',
-                '#0A1E29': 'Темно-блакитний',
-                '#001433': 'Темно-синій',
-                '#001C33': 'Темно-яскраво-синій',
-                '#1A1833': 'Темно-фіолетовий',
-                '#2D1742': 'Темно-ліловий',
-                '#4A0F24': 'Темно-малиновий',
-                '#4A1E29': 'Темно-кораловий',
-                '#4A3D00': 'Темно-жовтий',
-                '#0A2733': 'Темно-аквамарин',
-                '#0A2333': 'Темно-бірюзовий'
-            },
-            text: {
-                '#ffffff': 'Білий',
-                '#dddddd': 'Світло-сірий',
-                '#b0b0b0': 'Сірий',
-                '#000000': 'Чорний'
-            },
-            transparent: {
-                'rgba(255,255,255,0.2)': 'Прозорий білий 20%',
-                'rgba(255,255,255,0.1)': 'Прозорий білий 10%',
-                'rgba(255,255,255,0.3)': 'Прозорий білий 30%',
-                'rgba(0,0,0,0.2)': 'Прозорий чорний 20%'
             }
         }
     };
@@ -154,9 +107,6 @@
         style.innerHTML = (
             ':root {' +
                 '--main-color: ' + ColorPlugin.settings.main_color + ';' +
-                '--background-color: ' + ColorPlugin.settings.background_color + ';' +
-                '--text-color: ' + ColorPlugin.settings.text_color + ';' +
-                '--transparent-white: ' + ColorPlugin.settings.transparent_white + ';' +
             '}' +
             // Іконки меню ліворуч, а також іконки заголовка і налаштувань
             '.menu__ico, .menu__ico:hover, .menu__ico.traverse, ' +
@@ -185,39 +135,35 @@
             '.full-person.focus, .full-start__button.focus, .full-descr__tag.focus, ' +
             '.simple-button.focus, .head__action.focus, .head__action:hover, ' +
             '.player-panel .button.focus, .search-source.active {' +
-                'background: ' + ColorPlugin.settings.main_color + ';' +
-                'color: ' + ColorPlugin.settings.text_color + ';' +
+                'background: var(--main-color);' +
             '}' +
             '.navigation-tabs__button.focus, .time-line > div, .player-panel__position, ' +
             '.player-panel__position > div:after {' +
-                'background-color: ' + ColorPlugin.settings.main_color + ';' +
-                'color: ' + ColorPlugin.settings.text_color + ';' +
+                'background-color: var(--main-color);' +
             '}' +
             '.iptv-menu__list-item.focus, .iptv-program__timeline>div {' +
-                'background-color: ' + ColorPlugin.settings.main_color + ' !important;' +
-                'color: ' + ColorPlugin.settings.text_color + ' !important;' +
+                'background-color: var(--main-color) !important;' +
             '}' +
             '.radio-item.focus, .lang__selector-item.focus, .simple-keyboard .hg-button.focus, ' +
             '.modal__button.focus, .search-history-key.focus, .simple-keyboard-mic.focus, ' +
-            '.torrent-serial__progress, .full-review-add.focus, .full-review.focus, ' +
+            '.full-review-add.focus, .full-review.focus, ' +
             '.tag-count.focus, .settings-folder.focus, .settings-param.focus, ' +
             '.selectbox-item.focus, .selectbox-item:hover {' +
-                'background: ' + ColorPlugin.settings.main_color + ';' +
-                'color: ' + ColorPlugin.settings.text_color + ';' +
+                'background: var(--main-color);' +
             '}' +
             '.online.focus {' +
-                'box-shadow: 0 0 0 0.2em ' + ColorPlugin.settings.main_color + ';' +
+                'box-shadow: 0 0 0 0.2em var(--main-color);' +
             '}' +
             '.online_modss.focus::after, .online-prestige.focus::after, ' +
             '.radio-item.focus .radio-item__imgbox:after, .iptv-channel.focus::before, ' +
             '.iptv-channel.last--focus::before {' +
-                'border-color: ' + ColorPlugin.settings.main_color + ' !important;' +
+                'border-color: var(--main-color) !important;' +
             '}' +
             '.card-more.focus .card-more__box::after {' +
-                'border: 0.3em solid ' + ColorPlugin.settings.main_color + ';' +
+                'border: 0.3em solid var(--main-color);' +
             '}' +
             '.iptv-playlist-item.focus::after, .iptv-playlist-item:hover::after {' +
-                'border-color: ' + ColorPlugin.settings.main_color + ' !important;' +
+                'border-color: var(--main-color) !important;' +
             '}' +
             '.ad-bot.focus .ad-bot__content::after, .ad-bot:hover .ad-bot__content::after, ' +
             '.card-episode.focus .full-episode::after, .register.focus::after, ' +
@@ -225,29 +171,22 @@
             '.full-review-add.focus::after, .card.focus .card__view::after, ' +
             '.card:hover .card__view::after, .extensions__item.focus:after, ' +
             '.torrent-item.focus::after, .extensions__block-add.focus:after {' +
-                'border-color: ' + ColorPlugin.settings.main_color + ';' +
-            '}' +
-            '.torrent-serial__size {' +
-                'background-color: ' + ColorPlugin.settings.text_color + ';' +
-                'color: #ffffff;' +
+                'border-color: var(--main-color);' +
             '}' +
             '.broadcast__scan > div, .broadcast__device.focus {' +
-                'background-color: ' + ColorPlugin.settings.main_color + ';' +
-                'color: ' + ColorPlugin.settings.text_color + ';' +
+                'background-color: var(--main-color);' +
             '}' +
             '.card:hover .card__img, .card.focus .card__img {' +
-                'border-color: ' + ColorPlugin.settings.main_color + ';' +
+                'border-color: var(--main-color);' +
             '}' +
             '.noty {' +
-                'background: ' + ColorPlugin.settings.main_color + ';' +
-                'color: ' + ColorPlugin.settings.text_color + ';' +
+                'background: var(--main-color);' +
             '}' +
             '.radio-player.focus {' +
-                'background-color: ' + ColorPlugin.settings.main_color + ';' +
-                'color: ' + ColorPlugin.settings.text_color + ';' +
+                'background-color: var(--main-color);' +
             '}' +
             '.explorer-card__head-img.focus::after {' +
-                'border: 0.3em solid ' + ColorPlugin.settings.main_color + ';' +
+                'border: 0.3em solid var(--main-color);' +
             '}' +
             '.color_square.focus {' +
                 'border: 0.3em solid var(--main-color);' +
@@ -256,8 +195,7 @@
             'body.glass--style .selectbox-item.focus, ' +
             'body.glass--style .settings-folder.focus, ' +
             'body.glass--style .settings-param.focus {' +
-                'background-color: ' + ColorPlugin.settings.main_color + ';' +
-                'color: ' + ColorPlugin.settings.text_color + ';' +
+                'background-color: var(--main-color);' +
             '}' +
             '.color_square.default {' +
                 'background-color: #fff;' +
@@ -343,12 +281,12 @@
     }
 
     // Функція для створення модального вікна вибору кольору
-    function openColorPicker(paramName, colors, title) {
-        var colorKeys = Object.keys(colors);
+    function openColorPicker() {
+        var colorKeys = Object.keys(ColorPlugin.colors.main);
         var groupedColors = chunkArray(colorKeys, 5); // Сітка 5x2
         var colorContent = groupedColors.map(function (group) {
             var groupContent = group.map(function (color) {
-                return createColorHtml(color, colors[color]);
+                return createColorHtml(color, ColorPlugin.colors.main[color]);
             }).join('');
             return '<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 11.25px; justify-items: center; padding: 10px;">' + groupContent + '</div>';
         }).join('');
@@ -366,7 +304,7 @@
 
         try {
             Lampa.Modal.open({
-                title: Lampa.Lang.translate(title),
+                title: Lampa.Lang.translate('main_color'),
                 size: 'medium',
                 align: 'center',
                 html: modalHtml,
@@ -403,8 +341,8 @@
                                     return;
                                 }
                                 Lampa.Storage.set('color_plugin_custom_hex', value);
-                                ColorPlugin.settings[paramName] = value;
-                                Lampa.Storage.set('color_plugin_' + paramName, value);
+                                ColorPlugin.settings.main_color = value;
+                                Lampa.Storage.set('color_plugin_main_color', value);
                                 applyStyles();
                                 Lampa.Controller.toggle('settings_component');
                                 Lampa.Controller.enable('menu');
@@ -412,19 +350,14 @@
                             });
                             return;
                         } else if (selectedElement.classList.contains('default')) {
-                            color = {
-                                main_color: '#353535',
-                                background_color: '#1d1f20',
-                                text_color: '#fff',
-                                transparent_white: 'rgba(255,255,255,0.2)'
-                            }[paramName];
+                            color = '#353535';
                         } else {
-                            color = selectedElement.style.backgroundColor || ColorPlugin.settings[paramName];
+                            color = selectedElement.style.backgroundColor || ColorPlugin.settings.main_color;
                             color = color.includes('rgb') ? rgbToHex(color) : color;
                         }
 
-                        ColorPlugin.settings[paramName] = color;
-                        Lampa.Storage.set('color_plugin_' + paramName, color);
+                        ColorPlugin.settings.main_color = color;
+                        Lampa.Storage.set('color_plugin_main_color', color);
                         applyStyles();
                         Lampa.Modal.close();
                         Lampa.Controller.toggle('settings_component');
@@ -442,9 +375,6 @@
     function initPlugin() {
         // Завантажуємо збережені налаштування
         ColorPlugin.settings.main_color = Lampa.Storage.get('color_plugin_main_color', '#353535');
-        ColorPlugin.settings.background_color = Lampa.Storage.get('color_plugin_background_color', '#1d1f20');
-        ColorPlugin.settings.text_color = Lampa.Storage.get('color_plugin_text_color', '#fff');
-        ColorPlugin.settings.transparent_white = Lampa.Storage.get('color_plugin_transparent_white', 'rgba(255,255,255,0.2)');
         ColorPlugin.settings.enabled = Lampa.Storage.get('color_plugin_enabled', true);
 
         // Додаємо компонент до меню налаштувань
@@ -466,52 +396,7 @@
                     name: Lampa.Lang.translate('main_color')
                 },
                 onChange: function () {
-                    openColorPicker('main_color', ColorPlugin.colors.main, 'main_color');
-                }
-            });
-
-            // Колір фону
-            Lampa.SettingsApi.addParam({
-                component: 'color_plugin',
-                param: {
-                    name: 'color_plugin_background_color',
-                    type: 'button'
-                },
-                field: {
-                    name: Lampa.Lang.translate('background_color')
-                },
-                onChange: function () {
-                    openColorPicker('background_color', ColorPlugin.colors.background, 'background_color');
-                }
-            });
-
-            // Колір тексту
-            Lampa.SettingsApi.addParam({
-                component: 'color_plugin',
-                param: {
-                    name: 'color_plugin_text_color',
-                    type: 'button'
-                },
-                field: {
-                    name: Lampa.Lang.translate('text_color')
-                },
-                onChange: function () {
-                    openColorPicker('text_color', ColorPlugin.colors.text, 'text_color');
-                }
-            });
-
-            // Прозорий фон
-            Lampa.SettingsApi.addParam({
-                component: 'color_plugin',
-                param: {
-                    name: 'color_plugin_transparent_white',
-                    type: 'button'
-                },
-                field: {
-                    name: Lampa.Lang.translate('transparent_white')
-                },
-                onChange: function () {
-                    openColorPicker('transparent_white', ColorPlugin.colors.transparent, 'transparent_white');
+                    openColorPicker();
                 }
             });
 
