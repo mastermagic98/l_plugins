@@ -158,22 +158,24 @@
                 '--text-color: ' + ColorPlugin.settings.text_color + ';' +
                 '--transparent-white: ' + ColorPlugin.settings.transparent_white + ';' +
             '}' +
-            // Іконки меню ліворуч і вгорі завжди білі
+            // Іконки меню ліворуч, включаючи SVG-елементи у всіх станах, а також іконки заголовка і налаштувань
             '.menu__ico, .menu__ico.focus, .menu__ico:hover, .menu__ico.traverse, ' +
-            '.head__action, .head__action.focus, .head__action:hover {' +
+            '.head__action, .head__action.focus, .head__action:hover, .settings-param__ico {' +
                 'color: #ffffff !important;' +
                 'fill: #ffffff !important;' +
                 'stroke: #ffffff !important;' +
             '}' +
-            // Перекриваємо стилі з app.css для SVG-елементів у menu__ico (fill і stroke)
+            // Перекриваємо стилі з app.css для SVG-елементів у menu__ico (fill)
             '.menu__item.focus .menu__ico path[fill], .menu__item.focus .menu__ico rect[fill], ' +
             '.menu__item.focus .menu__ico circle[fill], .menu__item.traverse .menu__ico path[fill], ' +
             '.menu__item.traverse .menu__ico rect[fill], .menu__item.traverse .menu__ico circle[fill], ' +
             '.menu__item:hover .menu__ico path[fill], .menu__item:hover .menu__ico rect[fill], ' +
-            '.menu__item:hover .menu__ico circle[fill], ' +
+            '.menu__item:hover .menu__ico circle[fill] {' +
+                'fill: #ffffff !important;' +
+            '}' +
+            // Перекриваємо стилі з app.css для SVG-елементів у menu__ico (stroke)
             '.menu__item.focus .menu__ico [stroke], .menu__item.traverse .menu__ico [stroke], ' +
             '.menu__item:hover .menu__ico [stroke], .menu__ico [stroke] {' +
-                'fill: #ffffff !important;' +
                 'stroke: #ffffff !important;' +
             '}' +
             '.console__tab.focus, .menu__item.focus, .menu__item.traverse, .menu__item:hover, ' +
@@ -224,7 +226,7 @@
             '}' +
             '.torrent-serial__size {' +
                 'background-color: ' + ColorPlugin.settings.text_color + ';' +
-                'color: #ffffff !important;' + // Використовуємо білий для сумісності з іконками
+                'color: #ffffff;' + // Змінено з icon_color на білий
             '}' +
             '.broadcast__scan > div, .broadcast__device.focus {' +
                 'background-color: ' + ColorPlugin.settings.main_color + ';' +
