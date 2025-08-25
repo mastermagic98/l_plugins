@@ -163,7 +163,6 @@
             '.head__action, .head__action.focus, .head__action:hover, .settings-param__ico {' +
                 'color: #ffffff !important;' +
                 'fill: #ffffff !important;' +
-                'stroke: none !important;' +
             '}' +
             '.menu__ico.focus {' +
                 'color: #ffffff !important;' +
@@ -178,9 +177,9 @@
             '.menu__item:hover .menu__ico circle[fill] {' +
                 'fill: #ffffff !important;' +
             '}' +
-            // Перекриваємо стилі з app.css для SVG-елементів у menu__ico (stroke)
-            '.menu__item.traverse .menu__ico [stroke], .menu__item:hover .menu__ico [stroke], .menu__ico [stroke] {' +
-                'stroke: none !important;' +
+            // Перекриваємо стилі для stroke у станах focus, traverse, hover
+            '.menu__item.focus .menu__ico [stroke], .menu__item.traverse .menu__ico [stroke], .menu__item:hover .menu__ico [stroke] {' +
+                'stroke: #000;' +
             '}' +
             '.console__tab.focus, .menu__item.focus, .menu__item.traverse, .menu__item:hover, ' +
             '.full-person.focus, .full-start__button.focus, .full-descr__tag.focus, ' +
