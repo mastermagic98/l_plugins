@@ -465,8 +465,8 @@
             '}' +
             '.color_square.default {' +
                 'background-color: #fff;' +
-                'width: 60px;' +
-                'height: 60px;' +
+                'width: 50px;' +
+                'height: 50px;' +
                 'border-radius: 4px;' +
                 'position: relative;' +
             '}' +
@@ -537,7 +537,7 @@
             '}' +
             '.hex-input {' +
                 'width: 360px;' +
-                'height: 66px;' +
+                'height: 50px;' +
                 'border-radius: 8px;' +
                 'border: 2px solid #ddd;' +
                 'position: relative;' +
@@ -553,7 +553,7 @@
                 'background-color: #353535;' +
             '}' +
             '.hex-input.focus {' +
-                'border: 0.3em solid var(--main-color);' +
+                'border: 0.2em solid var(--main-color);' +
                 'transform: scale(1.1);' +
             '}' +
             '.hex-input .label {' +
@@ -659,7 +659,7 @@
                 size: 'medium',
                 align: 'center',
                 html: modalHtml,
-                className: 'color-picker-modal', // Додаємо клас для стилізації заголовка
+                className: 'color-picker-modal',
                 onBack: function () {
                     Lampa.Modal.close();
                     Lampa.Controller.toggle('settings_component');
