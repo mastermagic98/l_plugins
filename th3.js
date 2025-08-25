@@ -1,6 +1,6 @@
 (function () {
     'use strict';
-// без фону
+
     // Додаємо переклади
     Lampa.Lang.add({
         color_plugin: {
@@ -290,6 +290,15 @@
         }
     };
 
+    // Функція для конвертації HEX у RGB
+    function hexToRgb(hex) {
+        var cleanHex = hex.replace('#', '');
+        var r = parseInt(cleanHex.substring(0, 2), 16);
+        var g = parseInt(cleanHex.substring(2, 4), 16);
+        var b = parseInt(cleanHex.substring(4, 6), 16);
+        return r + ', ' + g + ', ' + b;
+    }
+
     // Функція для конвертації RGB у HEX
     function rgbToHex(rgb) {
         var matches = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
@@ -337,9 +346,13 @@
             document.head.appendChild(style);
         }
 
+        // Конвертуємо HEX у RGB для використання в rgba
+        var rgbColor = hexToRgb(ColorPlugin.settings.main_color);
+
         style.innerHTML = (
             ':root {' +
                 '--main-color: ' + ColorPlugin.settings.main_color + ';' +
+                '--main-color-rgb: ' + rgbColor + ';' +
             '}' +
             // Стиль для заголовка модального вікна
             '.modal__title {' +
@@ -397,6 +410,9 @@
                 'color: #ffffff !important;' +
             '}' +
             // Елементи з основним кольором для фону та рамок
+            '.console__tab {' +
+                'background-color: var(--main-color);' +
+            '}' +
             '.console__tab.focus, .menu__item.focus, .menu__item.traverse, .menu__item:hover, ' +
             '.full-person.focus, .full-start__button.focus, .full-descr__tag.focus, ' +
             '.simple-button.focus, .head__action.focus, .head__action:hover, ' +
@@ -463,6 +479,37 @@
             'body.glass--style .settings-param.focus {' +
                 'background-color: var(--main-color);' +
             '}' +
+            // Нові стилі з app.css
+            '.full-start__rate > div:first-child {' +
+                'background: rgba(var(--main-color-rgb), 0.15);' +
+            '}' +
+            '.reaction {' +
+                'background-color: rgba(var(--main-color-rgb), 0.3);' +
+            '}' +
+            '.full-start__button {' +
+                'margin-right: 0.75em;' +
+                'font-size: 1.3em;' +
+                'background-color: rgba(var(--main-color-rgb), 0.3);' +
+            '}' +
+            '.card__vote {' +
+                'background: rgba(var(--main-color-rgb), 0.5);' +
+            '}' +
+            '.items-line__more {' +
+                'background: rgba(var(--main-color-rgb), 0.3);' +
+            '}' +
+            '.items-line__more.focus {' +
+                'background-color: var(--main-color);' +
+            '}' +
+            '.simple-button--filter > div {' +
+                'background-color: rgba(var(--main-color-rgb), 0.3);' +
+            '}' +
+            '.time-line {' +
+                'background-color: rgba(var(--main-color-rgb), 0.3);' +
+            '}' +
+            '.navigation-tabs__button.focus {' +
+                'color: #fff;' +
+            '}' +
+            // Стилі для палітри кольорів
             '.color_square.default {' +
                 'background-color: #fff;' +
                 'width: 30px;' +
