@@ -411,9 +411,14 @@
             '}' +
             // Елементи з основним кольором для фону та рамок
             '.console__tab {' +
-                'background-color: var(--main-color);' +
+                'background-color: rgba(221, 221, 221, 0.06);' +
             '}' +
-            '.console__tab.focus, .menu__item.focus, .menu__item.traverse, .menu__item:hover, ' +
+            '.console__tab.focus {' +
+                'background: rgba(221, 221, 221, 0.3);' +
+                'opacity: 1;' +
+                'box-shadow: inset 0 0 0 0.15em #fff;' +
+            '}' +
+            '.menu__item.focus, .menu__item.traverse, .menu__item:hover, ' +
             '.full-person.focus, .full-start__button.focus, .full-descr__tag.focus, ' +
             '.simple-button.focus, .head__action.focus, .head__action:hover, ' +
             '.player-panel .button.focus, .search-source.active {' +
@@ -422,6 +427,9 @@
             '.navigation-tabs__button.focus, .time-line > div, .player-panel__position, ' +
             '.player-panel__position > div:after {' +
                 'background-color: var(--main-color);' +
+            '}' +
+            '.navigation-tabs__button.focus {' +
+                'color: #fff;' +
             '}' +
             '.iptv-menu__list-item.focus, .iptv-program__timeline>div {' +
                 'background-color: var(--main-color) !important;' +
@@ -479,7 +487,10 @@
             'body.glass--style .settings-param.focus {' +
                 'background-color: var(--main-color);' +
             '}' +
-            // Нові стилі з app.css
+            // Попередні стилі з app.css
+            '.full-start__rate {' +
+                'background: rgba(var(--main-color-rgb), 0.15);' +
+            '}' +
             '.full-start__rate > div:first-child {' +
                 'background: rgba(var(--main-color-rgb), 0.15);' +
             '}' +
@@ -506,8 +517,21 @@
             '.time-line {' +
                 'background-color: rgba(var(--main-color-rgb), 0.3);' +
             '}' +
-            '.navigation-tabs__button.focus {' +
-                'color: #fff;' +
+            // Нові стилі з app.css
+            '.timetable__item--any::before {' +
+                'background-color: rgba(var(--main-color-rgb), 0.3);' +
+            '}' +
+            '.timetable__item.focus::before {' +
+                'background-color: var(--main-color);' +
+            '}' +
+            '.element {' +
+                'background: var(--main-color);' +
+            '}' +
+            '.bookmarks-folder__layer {' +
+                'background-color: var(--main-color);' +
+            '}' +
+            '.card__icons-inner {' +
+                'background: rgba(var(--main-color-rgb), 0.5);' +
             '}' +
             // Стилі для палітри кольорів
             '.color_square.default {' +
