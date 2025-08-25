@@ -158,16 +158,17 @@
                 '--text-color: ' + ColorPlugin.settings.text_color + ';' +
                 '--transparent-white: ' + ColorPlugin.settings.transparent_white + ';' +
             '}' +
-            // Іконки меню ліворуч (без stroke для .menu__ico.focus), а також іконки заголовка і налаштувань
-            '.menu__ico, .menu__ico:hover, .menu__ico.traverse, ' +
+            // Іконки меню ліворуч (stroke: none для всіх станів)
+            '.menu__ico, .menu__ico.focus, .menu__ico:hover, .menu__ico.traverse {' +
+                'color: #ffffff !important;' +
+                'fill: #ffffff !important;' +
+                'stroke: none !important;' +
+            '}' +
+            // Іконки заголовка і налаштувань
             '.head__action, .head__action.focus, .head__action:hover, .settings-param__ico {' +
                 'color: #ffffff !important;' +
                 'fill: #ffffff !important;' +
                 'stroke: #ffffff !important;' +
-            '}' +
-            '.menu__ico.focus {' +
-                'color: #ffffff !important;' +
-                'fill: #ffffff !important;' +
             '}' +
             // Перекриваємо стилі з app.css для SVG-елементів у menu__ico (fill)
             '.menu__item.focus .menu__ico path[fill], .menu__item.focus .menu__ico rect[fill], ' +
@@ -177,9 +178,10 @@
             '.menu__item:hover .menu__ico circle[fill] {' +
                 'fill: #ffffff !important;' +
             '}' +
-            // Перекриваємо стилі з app.css для SVG-елементів у menu__ico (stroke, без focus)
-            '.menu__item.traverse .menu__ico [stroke], .menu__item:hover .menu__ico [stroke], .menu__ico [stroke] {' +
-                'stroke: #ffffff !important;' +
+            // Перекриваємо стилі з app.css для SVG-елементів у menu__ico (stroke: none)
+            '.menu__item.focus .menu__ico [stroke], .menu__item.traverse .menu__ico [stroke], ' +
+            '.menu__item:hover .menu__ico [stroke], .menu__ico [stroke] {' +
+                'stroke: none !important;' +
             '}' +
             '.console__tab.focus, .menu__item.focus, .menu__item.traverse, .menu__item:hover, ' +
             '.full-person.focus, .full-start__button.focus, .full-descr__tag.focus, ' +
