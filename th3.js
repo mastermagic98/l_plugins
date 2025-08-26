@@ -314,6 +314,25 @@
         return /^#[0-9A-Fa-f]{6}$/.test(color);
     }
 
+    // Функція для оновлення inline-стилів елемента з датою
+    function updateDateElementStyles() {
+        var elements = document.querySelectorAll('div[style*="position: absolute; left: 1em; top: 1em;"]');
+        for (var i = 0; i < elements.length; i++) {
+            var element = elements[i];
+            if (element.querySelector('div[style*="font-size: 2.6em"]')) {
+                element.style.background = 'var(--main-color)';
+            }
+        }
+    }
+
+    // Функція для оновлення canvas fillStyle
+    function updateCanvasFillStyle(context) {
+        if (context && context.fillStyle) {
+            var rgbColor = hexToRgb(ColorPlugin.settings.main_color);
+            context.fillStyle = 'rgba(' + rgbColor + ', 1)';
+        }
+    }
+
     // Функція для оновлення іконки плагіна
     function updatePluginIcon() {
         if (!Lampa.SettingsApi || !Lampa.SettingsApi.components) {
@@ -414,9 +433,8 @@
                 'background-color: rgba(221, 221, 221, 0.06);' +
             '}' +
             '.console__tab.focus {' +
-                'background: rgba(221, 221, 221, 0.3);' +
-                'opacity: 1;' +
-                'box-shadow: inset 0 0 0 0.15em #fff;' +
+                'background: var(--main-color);' +
+                'color: #fff;' +
             '}' +
             '.menu__item.focus, .menu__item.traverse, .menu__item:hover, ' +
             '.full-person.focus, .full-start__button.focus, .full-descr__tag.focus, ' +
@@ -429,6 +447,13 @@
                 'background-color: var(--main-color);' +
             '}' +
             '.navigation-tabs__button.focus {' +
+                'color: #fff;' +
+            '}' +
+            '.items-line__more.focus {' +
+                'color: #fff;' +
+                'background-color: var(--main-color);' +
+            '}' +
+            '.timetable__item.focus {' +
                 'color: #fff;' +
             '}' +
             '.iptv-menu__list-item.focus, .iptv-program__timeline>div {' +
@@ -508,16 +533,12 @@
             '.items-line__more {' +
                 'background: rgba(var(--main-color-rgb), 0.3);' +
             '}' +
-            '.items-line__more.focus {' +
-                'background-color: var(--main-color);' +
-            '}' +
             '.simple-button--filter > div {' +
                 'background-color: rgba(var(--main-color-rgb), 0.3);' +
             '}' +
             '.time-line {' +
                 'background-color: rgba(var(--main-color-rgb), 0.3);' +
             '}' +
-            // Нові стилі з app.css
             '.timetable__item--any::before {' +
                 'background-color: rgba(var(--main-color-rgb), 0.3);' +
             '}' +
@@ -646,6 +667,9 @@
             '}'
         );
 
+        // Оновлюємо inline-стилі для елементів із датою
+        updateDateElementStyles();
+
         // Оновлюємо іконку плагіна
         updatePluginIcon();
         console.log('ColorPlugin: Applied styles, main_color: ' + ColorPlugin.settings.main_color);
@@ -768,6 +792,8 @@
                                 ColorPlugin.settings.main_color = value;
                                 Lampa.Storage.set('color_plugin_main_color', value);
                                 applyStyles();
+                                // Оновлюємо canvas після зміни кольору
+                                updateCanvasFillStyle(window.draw_context);
                                 Lampa.Controller.toggle('settings_component');
                                 Lampa.Controller.enable('menu');
                                 Lampa.Settings.render();
@@ -783,6 +809,8 @@
                         ColorPlugin.settings.main_color = color;
                         Lampa.Storage.set('color_plugin_main_color', color);
                         applyStyles();
+                        // Оновлюємо canvas після зміни кольору
+                        updateCanvasFillStyle(window.draw_context);
                         Lampa.Modal.close();
                         Lampa.Controller.toggle('settings_component');
                         Lampa.Controller.enable('menu');
@@ -840,12 +868,16 @@
                     ColorPlugin.settings.enabled = value === 'true';
                     Lampa.Storage.set('color_plugin_enabled', ColorPlugin.settings.enabled);
                     applyStyles();
+                    // Оновлюємо canvas після зміни стану плагіна
+                    updateCanvasFillStyle(window.draw_context);
                     Lampa.Settings.render();
                 }
             });
 
             // Застосовуємо стилі при ініціалізації
             applyStyles();
+            // Оновлюємо canvas при ініціалізації
+            updateCanvasFillStyle(window.draw_context);
         }
     }
 
@@ -860,10 +892,11 @@
         });
     }
 
-    // Оновлюємо стилі при відкритті налаштувань
+    // Оновлюємо стилі та canvas при відкритті налаштувань
     Lampa.Listener.follow('settings_component', function (event) {
         if (event.type === 'open') {
             applyStyles();
+            updateCanvasFillStyle(window.draw_context);
             Lampa.Settings.render();
         }
     });
