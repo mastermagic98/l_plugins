@@ -193,7 +193,7 @@
                 '#7ccf00': 'Lime 1',
                 '#5ea500': 'Lime 2',
                 '#497d00': 'Lime 3',
-                '#3c63': 'Lime 4',
+                '#3c6300': 'Lime 4',
                 '#35530e': 'Lime 5',
                 '#192e03': 'Lime 6',
                 '#00c950': 'Green 1',
@@ -424,43 +424,38 @@
             '}'
         ) : '';
 
-        style.innerHTML = (
+        // Розбиваємо style.innerHTML на частини для зручності
+        var styles = [
             ':root {' +
                 '--main-color: ' + ColorPlugin.settings.main_color + ';' +
                 '--main-color-rgb: ' + rgbColor + ';' +
-            '}' +
-            // Стиль для заголовка модального вікна
+            '}',
             '.modal__title {' +
                 'font-size: 1.7em !important;' +
-            '}' +
-            // Стиль для .scroll__content у модальному вікні
+            '}',
             '.modal .scroll__content {' +
                 'padding: 1.0em 0 !important;' +
-            '}' +
-            // Іконки меню ліворуч, а також іконки заголовка і налаштувань
+            '}',
             '.menu__ico, .menu__ico:hover, .menu__ico.traverse, ' +
             '.head__action, .head__action.focus, .head__action:hover, .settings-param__ico {' +
                 'color: #ffffff !important;' +
                 'fill: #ffffff !important;' +
-            '}' +
+            '}',
             '.menu__ico.focus {' +
                 'color: #ffffff !important;' +
                 'fill: #ffffff !important;' +
                 'stroke: none !important;' +
-            '}' +
-            // Перекриваємо стилі з app.css для SVG-елементів у menu__ico (fill)
+            '}',
             '.menu__item.focus .menu__ico path[fill], .menu__item.focus .menu__ico rect[fill], ' +
             '.menu__item.focus .menu__ico circle[fill], .menu__item.traverse .menu__ico path[fill], ' +
             '.menu__item.traverse .menu__ico rect[fill], .menu__item.traverse .menu__ico circle[fill], ' +
             '.menu__item:hover .menu__ico path[fill], .menu__item:hover .menu__ico rect[fill], ' +
             '.menu__item:hover .menu__ico circle[fill] {' +
                 'fill: #ffffff !important;' +
-            '}' +
-            // Перекриваємо стилі для stroke у станах focus, traverse, hover
+            '}',
             '.menu__item.focus .menu__ico [stroke], .menu__item.traverse .menu__ico [stroke], .menu__item:hover .menu__ico [stroke] {' +
                 'stroke: #fff !important;' +
-            '}' +
-            // Текстові елементи з білим кольором
+            '}',
             '.menu__item, .menu__item.focus, .menu__item.traverse, .menu__item:hover, ' +
             '.console__tab, .console__tab.focus, ' +
             '.settings-param, .settings-param.focus, ' +
@@ -483,71 +478,70 @@
             '.noty, ' +
             '.radio-player, .radio-player.focus {' +
                 'color: #ffffff !important;' +
-            '}' +
-            // Елементи з основним кольором для фону та рамок
+            '}',
             '.console__tab {' +
                 'background-color: rgba(221, 221, 221, 0.06);' +
-            '}' +
+            '}',
             '.console__tab.focus {' +
                 'background: var(--main-color);' +
                 'color: #fff;' +
                 highlightStyles +
-            '}' +
+            '}',
             '.menu__item.focus, .menu__item.traverse, .menu__item:hover, ' +
             '.full-person.focus, .full-start__button.focus, .full-descr__tag.focus, ' +
             '.simple-button.focus, .head__action.focus, .head__action:hover, ' +
             '.player-panel .button.focus, .search-source.active {' +
                 'background: var(--main-color);' +
-            '}' +
+            '}',
             '.full-start__button.focus, .settings-param.focus, .items-line__more.focus, ' +
             '.menu__item.focus, .settings-folder.focus, .head__action.focus, ' +
             '.selectbox-item.focus, .simple-button.focus, .navigation-tabs__button.focus {' +
                 highlightStyles +
-            '}' +
+            '}',
             '.timetable__item.focus::before {' +
                 'background-color: var(--main-color);' +
                 highlightStyles +
-            '}' +
+            '}',
             '.navigation-tabs__button.focus {' +
                 'background-color: var(--main-color);' +
                 'color: #fff;' +
                 highlightStyles +
-            '}' +
+            '}',
             '.items-line__more.focus {' +
                 'color: #fff;' +
                 'background-color: var(--main-color);' +
-            '}' +
+            '}',
             '.timetable__item.focus {' +
                 'color: #fff;' +
-            '}' +
+            '}',
             '.broadcast__device.focus {' +
                 'background-color: var(--main-color);' +
                 'color: #fff;' +
-            '}' +
+            '}',
             '.iptv-menu__list-item.focus, .iptv-program__timeline>div {' +
                 'background-color: var(--main-color) !important;' +
-            '}' +
+            '}',
             '.radio-item.focus, .lang__selector-item.focus, .simple-keyboard .hg-button.focus, ' +
             '.modal__button.focus, .search-history-key.focus, .simple-keyboard-mic.focus, ' +
             '.full-review-add.focus, .full-review.focus, ' +
             '.tag-count.focus, .settings-folder.focus, .settings-param.focus, ' +
             '.selectbox-item.focus, .selectbox-item:hover {' +
                 'background: var(--main-color);' +
-            '}' +
+            '}',
             '.online.focus {' +
                 'box-shadow: 0 0 0 0.2em var(--main-color);' +
-            '}' +
+            '}',
             '.online_modss.focus::after, .online-prestige.focus::after, ' +
             '.radio-item.focus .radio-item__imgbox:after, .iptv-channel.focus::before, ' +
             '.iptv-channel.last--focus::before {' +
                 'border-color: var(--main-color) !important;' +
-            '}' +
+            '}',
             '.card-more.focus .card-more__box::after {' +
                 'border: 0.3em solid var(--main-color);' +
-            '}' +
+            '}',
             '.iptv-playlist-item.focus::after, .iptv-playlist-item:hover::after {' +
                 'border-color: var(--main-color) !important;' +
-            '}' +
+            '}',
             '.ad-bot.focus .ad-bot__content::after, .ad-bot:hover .ad-bot__content::after, ' +
             '.card-episode.focus .full-episode::after, .register.focus::after, ' +
             '.season-episode.focus::after, .full-episode.focus::after, ' +
@@ -555,51 +549,48 @@
             '.card:hover .card__view::after, .extensions__item.focus:after, ' +
             '.torrent-item.focus::after, .extensions__block-add.focus:after {' +
                 'border-color: var(--main-color);' +
-            '}' +
+            '}',
             '.broadcast__scan > div {' +
                 'background-color: var(--main-color);' +
-            '}' +
+            '}',
             '.card:hover .card__view, .card.focus .card__view {' +
                 'border-color: var(--main-color);' +
-            '}' +
+            '}',
             '.noty {' +
                 'background: var(--main-color);' +
-            '}' +
+            '}',
             '.radio-player.focus {' +
                 'background-color: var(--main-color);' +
-            '}' +
+            '}',
             '.explorer-card__head-img.focus::after {' +
                 'border: 0.3em solid var(--main-color);' +
-            '}' +
+            '}',
             '.color_square.focus {' +
                 'border: 0.3em solid var(--main-color);' +
                 'transform: scale(1.1);' +
-            '}' +
+            '}',
             'body.glass--style .selectbox-item.focus, ' +
             'body.glass--style .settings-folder.focus, ' +
             'body.glass--style .settings-param.focus {' +
                 'background-color: var(--main-color);' +
-            '}' +
-            // Умовні стилі затемнення
-            dimmingStyles +
-            // Попередні стилі з app.css
+            '}',
+            dimmingStyles,
             '.timetable__item--any::before {' +
                 'background-color: rgba(var(--main-color-rgb), 0.3);' +
-            '}' +
+            '}',
             '.element {' +
                 'background: var(--main-color);' +
-            '}' +
+            '}',
             '.bookmarks-folder__layer {' +
                 'background-color: var(--main-color);' +
-            '}' +
-            // Стилі для палітри кольорів
+            '}',
             '.color_square.default {' +
                 'background-color: #fff;' +
                 'width: 30px;' +
                 'height: 30px;' +
                 'border-radius: 4px;' +
                 'position: relative;' +
-            '}' +
+            '}',
             '.color_square.default::after {' +
                 'content: "";' +
                 'position: absolute;' +
@@ -609,7 +600,7 @@
                 'height: 3px;' +
                 'background-color: #353535;' +
                 'transform: rotate(45deg);' +
-            '}' +
+            '}',
             '.color_square.default::before {' +
                 'content: "";' +
                 'position: absolute;' +
@@ -619,7 +610,7 @@
                 'height: 3px;' +
                 'background-color: #353535;' +
                 'transform: rotate(-45deg);' +
-            '}' +
+            '}',
             '.color_square {' +
                 'width: 30px;' +
                 'height: 30px;' +
@@ -632,7 +623,7 @@
                 'color: #ffffff !important;' +
                 'font-size: 10px;' +
                 'text-align: center;' +
-            '}' +
+            '}',
             '.color-family-outline {' +
                 'display: flex;' +
                 'flex-direction: row;' +
@@ -641,7 +632,7 @@
                 'border-radius: 8px;' +
                 'margin-bottom: 10px;' +
                 'padding: 5px;' +
-            '}' +
+            '}',
             '.color-family-name {' +
                 'width: 80px;' +
                 'height: 30px;' +
@@ -658,13 +649,13 @@
                 'font-weight: bold;' +
                 'text-align: center;' +
                 'text-transform: capitalize;' +
-            '}' +
+            '}',
             '.color_square .hex {' +
                 'font-size: 7px;' +
                 'opacity: 0.9;' +
                 'text-transform: uppercase;' +
                 'z-index: 1;' +
-            '}' +
+            '}',
             '.hex-input {' +
                 'width: 360px;' +
                 'height: 30px;' +
@@ -681,29 +672,31 @@
                 'font-weight: bold;' +
                 'text-shadow: 0 0 2px #000;' +
                 'background-color: #353535;' +
-            '}' +
+            '}',
             '.hex-input.focus {' +
                 'border: 0.2em solid var(--main-color);' +
                 'transform: scale(1.1);' +
-            '}' +
+            '}',
             '.hex-input .label {' +
                 'position: absolute;' +
                 'top: 10px;' +
                 'font-size: 12px;' +
-            '}' +
+            '}',
             '.hex-input .value {' +
                 'position: absolute;' +
                 'bottom: 4px;' +
-                'top: 1px;' +
                 'font-size: 10px;' +
-            '}' +
+            '}',
             '.color-picker-container {' +
                 'display: grid;' +
                 'grid-template-columns: 1fr 1fr;' +
                 'gap: 10px;' +
                 'padding: 0;' +
             '}'
-        );
+        ];
+
+        // Об'єднуємо стилі в один рядок
+        style.innerHTML = styles.join('');
 
         // Оновлюємо inline-стилі для елементів із датою
         updateDateElementStyles();
@@ -745,8 +738,8 @@
     function openColorPicker() {
         var colorKeys = Object.keys(ColorPlugin.colors.main);
         var families = [
-            'Red', 'Orange', 'Amber', 'Yellow', 'Lime', 'Green', 'Emerald', 'Teal', 'Cyan', 
-            'Sky', 'Blue', 'Indigo', 'Violet', 'Purple', 'Fuchsia', 'Pink', 'Rose', 'Slate', 
+            'Red', 'Orange', 'Amber', 'Yellow', 'Lime', 'Green', 'Emerald', 'Teal', 'Cyan',
+            'Sky', 'Blue', 'Indigo', 'Violet', 'Purple', 'Fuchsia', 'Pink', 'Rose', 'Slate',
             'Gray', 'Zinc', 'Neutral', 'Stone'
         ];
         var colorsByFamily = [];
@@ -768,7 +761,7 @@
 
         // Формуємо HTML для груп кольорів
         var colorContent = colorsByFamily.map(function(family) {
-            var firstColor = family.colors[0]; // Перший колір для border-color
+            var firstColor = family.colors[0];
             var familyNameHtml = createFamilyNameHtml(family.name, firstColor);
             var groupContent = family.colors.map(function(color) {
                 return createColorHtml(color, ColorPlugin.colors.main[color]);
@@ -809,8 +802,8 @@
                         var color;
 
                         if (selectedElement.classList.contains('hex-input')) {
-                            Lampa.Noty.show(Lampa.Lang.translate('hex_input_hint')); // Показуємо підказку
-                            Lampa.Modal.close(); // Закриваємо модальне вікно перед викликом клавіатури
+                            Lampa.Noty.show(Lampa.Lang.translate('hex_input_hint'));
+                            Lampa.Modal.close();
                             var inputOptions = {
                                 name: 'color_plugin_custom_hex',
                                 value: Lampa.Storage.get('color_plugin_custom_hex', ''),
@@ -834,7 +827,6 @@
                                 ColorPlugin.settings.main_color = value;
                                 Lampa.Storage.set('color_plugin_main_color', value);
                                 applyStyles();
-                                // Оновлюємо canvas після зміни кольору
                                 updateCanvasFillStyle(window.draw_context);
                                 Lampa.Controller.toggle('settings_component');
                                 Lampa.Controller.enable('menu');
@@ -851,7 +843,6 @@
                         ColorPlugin.settings.main_color = color;
                         Lampa.Storage.set('color_plugin_main_color', color);
                         applyStyles();
-                        // Оновлюємо canvas після зміни кольору
                         updateCanvasFillStyle(window.draw_context);
                         Lampa.Modal.close();
                         Lampa.Controller.toggle('settings_component');
@@ -897,7 +888,6 @@
                     ColorPlugin.settings.enabled = value === 'true';
                     Lampa.Storage.set('color_plugin_enabled', ColorPlugin.settings.enabled);
                     applyStyles();
-                    // Оновлюємо canvas після зміни стану плагіна
                     updateCanvasFillStyle(window.draw_context);
                     Lampa.Settings.render();
                 }
@@ -960,24 +950,27 @@
 
             // Застосовуємо стилі при ініціалізації
             applyStyles();
-            // Оновлюємо canvas при cdecl
+            updateCanvasFillStyle(window.draw_context);
+        }
+    }
 
-     Lampa.SettingsApi.addParam({
-         component: 'color_plugin',
-         param: {
-             name: 'color_plugin_enabled',
-             type: 'trigger',
-             default: ColorPlugin.settings.enabled
-         },
-         field: {
-             name: Lampa.Lang.translate('color_plugin_enabled'),
-             description: 'Увімкнути або вимкнути плагін зміни кольорів'
-         },
-         onChange: function (value) {
-             ColorPlugin.settings.enabled = value === 'true';
-             Lampa.Storage.set('color_plugin_enabled', ColorPlugin.settings.enabled);
-             applyStyles();
-             updateCanvasFillStyle(window.draw_context);
-             Lampa.Settings.render();
-         }
-     });
+    // Запускаємо плагін після готовності програми
+    if (window.appready && Lampa.SettingsApi) {
+        initPlugin();
+    } else {
+        Lampa.Listener.follow('app', function (event) {
+            if (event.type === 'ready' && Lampa.SettingsApi) {
+                initPlugin();
+            }
+        });
+    }
+
+    // Оновлюємо стилі та canvas при відкритті налаштувань
+    Lampa.Listener.follow('settings_component', function (event) {
+        if (event.type === 'open') {
+            applyStyles();
+            updateCanvasFillStyle(window.draw_context);
+            Lampa.Settings.render();
+        }
+    });
+})();
