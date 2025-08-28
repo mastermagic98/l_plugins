@@ -161,7 +161,7 @@
             main_color: '#353535',
             enabled: true,
             highlight_enabled: true,
-            dimming_enabled: true // Нова настройка для затемнення
+            dimming_enabled: true
         },
         colors: {
             main: {
@@ -193,7 +193,7 @@
                 '#7ccf00': 'Lime 1',
                 '#5ea500': 'Lime 2',
                 '#497d00': 'Lime 3',
-                '#3c6300': 'Lime 4',
+                '#3c63': 'Lime 4',
                 '#35530e': 'Lime 5',
                 '#192e03': 'Lime 6',
                 '#00c950': 'Green 1',
@@ -714,7 +714,7 @@
         // Перевіряємо стилі body.black--style
         checkBodyStyles();
 
-        console.log('ColorPlugin: Applied styles, main_color: ' + ColorPlugin.settings.main_color + ', highlight_enabled: ' + ColorPlugin.settings.highlight_enabled + ', dimming_enabled: ' + ColorPlugin.settings.dimming_enabled);
+        console.log('ColorPlugin: Applied styles, main_color: ' + ColorPlugin.settings.main_color + ', enabled: ' + ColorPlugin.settings.enabled + ', highlight_enabled: ' + ColorPlugin.settings.highlight_enabled + ', dimming_enabled: ' + ColorPlugin.settings.dimming_enabled);
     }
 
     // Функція для створення HTML для вибору кольору
@@ -867,7 +867,7 @@
 
     // Ініціалізація плагіна
     function initPlugin() {
-        // Завантажуємо збережені налаштування
+        // Завантажуємо збережені налаштування через Lampa.Storage
         ColorPlugin.settings.main_color = Lampa.Storage.get('color_plugin_main_color', '#353535');
         ColorPlugin.settings.enabled = Lampa.Storage.get('color_plugin_enabled', true);
         ColorPlugin.settings.highlight_enabled = Lampa.Storage.get('color_plugin_highlight_enabled', true);
@@ -879,6 +879,28 @@
                 component: 'color_plugin',
                 name: Lampa.Lang.translate('color_plugin'),
                 icon: '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#ffffff"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>'
+            });
+
+            // Увімкнення/вимкнення плагіна (перший параметр)
+            Lampa.SettingsApi.addParam({
+                component: 'color_plugin',
+                param: {
+                    name: 'color_plugin_enabled',
+                    type: 'trigger',
+                    default: ColorPlugin.settings.enabled
+                },
+                field: {
+                    name: Lampa.Lang.translate('color_plugin_enabled'),
+                    description: 'Увімкнути або вимкнути плагін зміни кольорів'
+                },
+                onChange: function (value) {
+                    ColorPlugin.settings.enabled = value === 'true';
+                    Lampa.Storage.set('color_plugin_enabled', ColorPlugin.settings.enabled);
+                    applyStyles();
+                    // Оновлюємо canvas після зміни стану плагіна
+                    updateCanvasFillStyle(window.draw_context);
+                    Lampa.Settings.render();
+                }
             });
 
             // Основний колір
@@ -896,35 +918,13 @@
                 }
             });
 
-            // Увімкнення/вимкнення плагіна
-            Lampa.SettingsApi.addParam({
-                component: 'color_plugin',
-                param: {
-                    name: 'color_plugin_enabled',
-                    type: 'trigger',
-                    default: true
-                },
-                field: {
-                    name: Lampa.Lang.translate('color_plugin_enabled'),
-                    description: 'Увімкнути або вимкнути плагін зміни кольорів'
-                },
-                onChange: function (value) {
-                    ColorPlugin.settings.enabled = value === 'true';
-                    Lampa.Storage.set('color_plugin_enabled', ColorPlugin.settings.enabled);
-                    applyStyles();
-                    // Оновлюємо canvas після зміни стану плагіна
-                    updateCanvasFillStyle(window.draw_context);
-                    Lampa.Settings.render();
-                }
-            });
-
             // Увімкнення/вимкнення виділення
             Lampa.SettingsApi.addParam({
                 component: 'color_plugin',
                 param: {
                     name: 'color_plugin_highlight_enabled',
                     type: 'trigger',
-                    default: true
+                    default: ColorPlugin.settings.highlight_enabled
                 },
                 field: {
                     name: Lampa.Lang.translate('enable_highlight'),
@@ -944,7 +944,7 @@
                 param: {
                     name: 'color_plugin_dimming_enabled',
                     type: 'trigger',
-                    default: true
+                    default: ColorPlugin.settings.dimming_enabled
                 },
                 field: {
                     name: Lampa.Lang.translate('enable_dimming'),
@@ -960,28 +960,24 @@
 
             // Застосовуємо стилі при ініціалізації
             applyStyles();
-            // Оновлюємо canvas при ініціалізації
-            updateCanvasFillStyle(window.draw_context);
-        }
-    }
+            // Оновлюємо canvas при cdecl
 
-    // Запускаємо плагін після готовності програми
-    if (window.appready && Lampa.SettingsApi) {
-        initPlugin();
-    } else {
-        Lampa.Listener.follow('app', function (event) {
-            if (event.type === 'ready' && Lampa.SettingsApi) {
-                initPlugin();
-            }
-        });
-    }
-
-    // Оновлюємо стилі та canvas при відкритті налаштувань
-    Lampa.Listener.follow('settings_component', function (event) {
-        if (event.type === 'open') {
-            applyStyles();
-            updateCanvasFillStyle(window.draw_context);
-            Lampa.Settings.render();
-        }
-    });
-})();
+     Lampa.SettingsApi.addParam({
+         component: 'color_plugin',
+         param: {
+             name: 'color_plugin_enabled',
+             type: 'trigger',
+             default: ColorPlugin.settings.enabled
+         },
+         field: {
+             name: Lampa.Lang.translate('color_plugin_enabled'),
+             description: 'Увімкнути або вимкнути плагін зміни кольорів'
+         },
+         onChange: function (value) {
+             ColorPlugin.settings.enabled = value === 'true';
+             Lampa.Storage.set('color_plugin_enabled', ColorPlugin.settings.enabled);
+             applyStyles();
+             updateCanvasFillStyle(window.draw_context);
+             Lampa.Settings.render();
+         }
+     });
