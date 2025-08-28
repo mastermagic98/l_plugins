@@ -23,6 +23,11 @@
             en: 'Enable highlight',
             uk: 'Увімкнути виділення'
         },
+        enable_dimming: {
+            ru: 'Включить изменение цвета затемнения',
+            en: 'Enable dimming color change',
+            uk: 'Увімкнути зміну кольору затемнення'
+        },
         default_color: {
             ru: 'По умолчанию',
             en: 'Default',
@@ -155,7 +160,8 @@
         settings: {
             main_color: '#353535',
             enabled: true,
-            highlight_enabled: true // Нова настройка для виділення
+            highlight_enabled: true,
+            dimming_enabled: true // Нова настройка для затемнення
         },
         colors: {
             main: {
@@ -356,6 +362,15 @@
         }
     }
 
+    // Функція для перевірки стилів body.black--style
+    function checkBodyStyles() {
+        var body = document.body;
+        var hasBlackStyle = body.classList.contains('black--style');
+        var computedStyle = window.getComputedStyle(body);
+        var background = computedStyle.background || computedStyle.backgroundColor;
+        console.log('ColorPlugin: body.black--style present: ' + hasBlackStyle + ', background: ' + background);
+    }
+
     // Функція для застосування стилів
     function applyStyles() {
         if (!ColorPlugin.settings.enabled) {
@@ -379,6 +394,34 @@
             '-webkit-box-shadow: inset 0 0 0 0.15em #fff;' +
             '-moz-box-shadow: inset 0 0 0 0.15em #fff;' +
             'box-shadow: inset 0 0 0 0.15em #fff;'
+        ) : '';
+
+        // Умовне застосування затемнення
+        var dimmingStyles = ColorPlugin.settings.dimming_enabled ? (
+            '.full-start__rate {' +
+                'background: rgba(var(--main-color-rgb), 0.15);' +
+            '}' +
+            '.full-start__rate > div:first-child {' +
+                'background: rgba(var(--main-color-rgb), 0.15);' +
+            '}' +
+            '.reaction {' +
+                'background-color: rgba(var(--main-color-rgb), 0.3);' +
+            '}' +
+            '.full-start__button {' +
+                'background-color: rgba(var(--main-color-rgb), 0.3);' +
+            '}' +
+            '.card__vote {' +
+                'background: rgba(var(--main-color-rgb), 0.5);' +
+            '}' +
+            '.items-line__more {' +
+                'background: rgba(var(--main-color-rgb), 0.3);' +
+            '}' +
+            '.card__icons-inner {' +
+                'background: rgba(var(--main-color-rgb), 0.5);' +
+            '}' +
+            '.simple-button--filter > div {' +
+                'background-color: rgba(var(--main-color-rgb), 0.3);' +
+            '}'
         ) : '';
 
         style.innerHTML = (
@@ -458,25 +501,27 @@
             '}' +
             '.full-start__button.focus, .settings-param.focus, .items-line__more.focus, ' +
             '.menu__item.focus, .settings-folder.focus, .head__action.focus, ' +
-            '.selectbox-item.focus, .simple-button.focus {' +
+            '.selectbox-item.focus, .simple-button.focus, .navigation-tabs__button.focus {' +
                 highlightStyles +
             '}' +
             '.timetable__item.focus::before {' +
                 'background-color: var(--main-color);' +
                 highlightStyles +
             '}' +
-            '.navigation-tabs__button.focus, .time-line > div, .player-panel__position, ' +
-            '.player-panel__position > div:after {' +
-                'background-color: var(--main-color);' +
-            '}' +
             '.navigation-tabs__button.focus {' +
+                'background-color: var(--main-color);' +
                 'color: #fff;' +
+                highlightStyles +
             '}' +
             '.items-line__more.focus {' +
                 'color: #fff;' +
                 'background-color: var(--main-color);' +
             '}' +
             '.timetable__item.focus {' +
+                'color: #fff;' +
+            '}' +
+            '.broadcast__device.focus {' +
+                'background-color: var(--main-color);' +
                 'color: #fff;' +
             '}' +
             '.iptv-menu__list-item.focus, .iptv-program__timeline>div {' +
@@ -511,7 +556,7 @@
             '.torrent-item.focus::after, .extensions__block-add.focus:after {' +
                 'border-color: var(--main-color);' +
             '}' +
-            '.broadcast__scan > div, .broadcast__device.focus {' +
+            '.broadcast__scan > div {' +
                 'background-color: var(--main-color);' +
             '}' +
             '.card:hover .card__view, .card.focus .card__view {' +
@@ -535,47 +580,17 @@
             'body.glass--style .settings-param.focus {' +
                 'background-color: var(--main-color);' +
             '}' +
+            // Умовні стилі затемнення
+            dimmingStyles +
             // Попередні стилі з app.css
-            '.full-start__rate {' +
-                'background: rgba(var(--main-color-rgb), 0.15);' +
-            '}' +
-            '.full-start__rate > div:first-child {' +
-                'background: rgba(var(--main-color-rgb), 0.15);' +
-            '}' +
-            '.reaction {' +
-                'background-color: rgba(var(--main-color-rgb), 0.3);' +
-            '}' +
-            '.full-start__button {' +
-                'margin-right: 0.75em;' +
-                'font-size: 1.3em;' +
-                'background-color: rgba(var(--main-color-rgb), 0.3);' +
-            '}' +
-            '.card__vote {' +
-                'background: rgba(var(--main-color-rgb), 0.5);' +
-            '}' +
-            '.items-line__more {' +
-                'background: rgba(var(--main-color-rgb), 0.3);' +
-            '}' +
-            '.simple-button--filter > div {' +
-                'background-color: rgba(var(--main-color-rgb), 0.3);' +
-            '}' +
-            '.time-line {' +
-                'background-color: rgba(var(--main-color-rgb), 0.3);' +
-            '}' +
             '.timetable__item--any::before {' +
                 'background-color: rgba(var(--main-color-rgb), 0.3);' +
-            '}' +
-            '.timetable__item.focus::before {' +
-                'background-color: var(--main-color);' +
             '}' +
             '.element {' +
                 'background: var(--main-color);' +
             '}' +
             '.bookmarks-folder__layer {' +
                 'background-color: var(--main-color);' +
-            '}' +
-            '.card__icons-inner {' +
-                'background: rgba(var(--main-color-rgb), 0.5);' +
             '}' +
             // Стилі для палітри кольорів
             '.color_square.default {' +
@@ -695,7 +710,11 @@
 
         // Оновлюємо іконку плагіна
         updatePluginIcon();
-        console.log('ColorPlugin: Applied styles, main_color: ' + ColorPlugin.settings.main_color + ', highlight_enabled: ' + ColorPlugin.settings.highlight_enabled);
+
+        // Перевіряємо стилі body.black--style
+        checkBodyStyles();
+
+        console.log('ColorPlugin: Applied styles, main_color: ' + ColorPlugin.settings.main_color + ', highlight_enabled: ' + ColorPlugin.settings.highlight_enabled + ', dimming_enabled: ' + ColorPlugin.settings.dimming_enabled);
     }
 
     // Функція для створення HTML для вибору кольору
@@ -852,6 +871,7 @@
         ColorPlugin.settings.main_color = Lampa.Storage.get('color_plugin_main_color', '#353535');
         ColorPlugin.settings.enabled = Lampa.Storage.get('color_plugin_enabled', true);
         ColorPlugin.settings.highlight_enabled = Lampa.Storage.get('color_plugin_highlight_enabled', true);
+        ColorPlugin.settings.dimming_enabled = Lampa.Storage.get('color_plugin_dimming_enabled', true);
 
         // Додаємо компонент до меню налаштувань
         if (Lampa.SettingsApi) {
@@ -913,6 +933,26 @@
                 onChange: function (value) {
                     ColorPlugin.settings.highlight_enabled = value === 'true';
                     Lampa.Storage.set('color_plugin_highlight_enabled', ColorPlugin.settings.highlight_enabled);
+                    applyStyles();
+                    Lampa.Settings.render();
+                }
+            });
+
+            // Увімкнення/вимкнення зміни кольору затемнення
+            Lampa.SettingsApi.addParam({
+                component: 'color_plugin',
+                param: {
+                    name: 'color_plugin_dimming_enabled',
+                    type: 'trigger',
+                    default: true
+                },
+                field: {
+                    name: Lampa.Lang.translate('enable_dimming'),
+                    description: 'Увімкнути або вимкнути зміну кольору затемнення елементів'
+                },
+                onChange: function (value) {
+                    ColorPlugin.settings.dimming_enabled = value === 'true';
+                    Lampa.Storage.set('color_plugin_dimming_enabled', ColorPlugin.settings.dimming_enabled);
                     applyStyles();
                     Lampa.Settings.render();
                 }
