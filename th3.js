@@ -18,7 +18,7 @@
             en: 'Enable plugin',
             uk: 'Увімкнути плагін'
         },
-        highlight_enabled: {
+        enable_highlight: {
             ru: 'Включить выделение',
             en: 'Enable highlight',
             uk: 'Увімкнути виділення'
@@ -155,7 +155,7 @@
         settings: {
             main_color: '#353535',
             enabled: true,
-            highlight_enabled: true // Новий параметр для box-shadow
+            highlight_enabled: true // Нова настройка для виділення
         },
         colors: {
             main: {
@@ -374,10 +374,12 @@
         // Конвертуємо HEX у RGB для використання в rgba
         var rgbColor = hexToRgb(ColorPlugin.settings.main_color);
 
-        // Умовне застосування box-shadow залежно від highlight_enabled
-        var boxShadow = ColorPlugin.settings.highlight_enabled
-            ? '-webkit-box-shadow: inset 0 0 0 0.15em #fff; -moz-box-shadow: inset 0 0 0 0.15em #fff; box-shadow: inset 0 0 0 0.15em #fff;'
-            : '';
+        // Умовне застосування box-shadow
+        var highlightStyles = ColorPlugin.settings.highlight_enabled ? (
+            '-webkit-box-shadow: inset 0 0 0 0.15em #fff;' +
+            '-moz-box-shadow: inset 0 0 0 0.15em #fff;' +
+            'box-shadow: inset 0 0 0 0.15em #fff;'
+        ) : '';
 
         style.innerHTML = (
             ':root {' +
@@ -446,7 +448,7 @@
             '.console__tab.focus {' +
                 'background: var(--main-color);' +
                 'color: #fff;' +
-                boxShadow +
+                highlightStyles +
             '}' +
             '.menu__item.focus, .menu__item.traverse, .menu__item:hover, ' +
             '.full-person.focus, .full-start__button.focus, .full-descr__tag.focus, ' +
@@ -454,29 +456,14 @@
             '.player-panel .button.focus, .search-source.active {' +
                 'background: var(--main-color);' +
             '}' +
-            '.menu__item.focus {' +
-                boxShadow +
-            '}' +
-            '.full-start__button.focus {' +
-                boxShadow +
-            '}' +
-            '.settings-param.focus {' +
-                boxShadow +
-            '}' +
-            '.items-line__more.focus {' +
-                'color: #fff;' +
-                'background-color: var(--main-color);' +
-                boxShadow +
-            '}' +
-            '.timetable__item.focus {' +
-                'color: #fff;' +
+            '.full-start__button.focus, .settings-param.focus, .items-line__more.focus, ' +
+            '.menu__item.focus, .settings-folder.focus, .head__action.focus, ' +
+            '.selectbox-item.focus, .simple-button.focus {' +
+                highlightStyles +
             '}' +
             '.timetable__item.focus::before {' +
                 'background-color: var(--main-color);' +
-                boxShadow +
-            '}' +
-            '.settings-folder.focus {' +
-                boxShadow +
+                highlightStyles +
             '}' +
             '.navigation-tabs__button.focus, .time-line > div, .player-panel__position, ' +
             '.player-panel__position > div:after {' +
@@ -485,13 +472,21 @@
             '.navigation-tabs__button.focus {' +
                 'color: #fff;' +
             '}' +
+            '.items-line__more.focus {' +
+                'color: #fff;' +
+                'background-color: var(--main-color);' +
+            '}' +
+            '.timetable__item.focus {' +
+                'color: #fff;' +
+            '}' +
             '.iptv-menu__list-item.focus, .iptv-program__timeline>div {' +
                 'background-color: var(--main-color) !important;' +
             '}' +
             '.radio-item.focus, .lang__selector-item.focus, .simple-keyboard .hg-button.focus, ' +
             '.modal__button.focus, .search-history-key.focus, .simple-keyboard-mic.focus, ' +
             '.full-review-add.focus, .full-review.focus, ' +
-            '.tag-count.focus, .selectbox-item.focus, .selectbox-item:hover {' +
+            '.tag-count.focus, .settings-folder.focus, .settings-param.focus, ' +
+            '.selectbox-item.focus, .selectbox-item:hover {' +
                 'background: var(--main-color);' +
             '}' +
             '.online.focus {' +
@@ -569,6 +564,9 @@
             '}' +
             '.timetable__item--any::before {' +
                 'background-color: rgba(var(--main-color-rgb), 0.3);' +
+            '}' +
+            '.timetable__item.focus::before {' +
+                'background-color: var(--main-color);' +
             '}' +
             '.element {' +
                 'background: var(--main-color);' +
@@ -900,7 +898,7 @@
                 }
             });
 
-            // Увімкнення/вимкнення виділення (box-shadow)
+            // Увімкнення/вимкнення виділення
             Lampa.SettingsApi.addParam({
                 component: 'color_plugin',
                 param: {
@@ -909,7 +907,7 @@
                     default: true
                 },
                 field: {
-                    name: Lampa.Lang.translate('highlight_enabled'),
+                    name: Lampa.Lang.translate('enable_highlight'),
                     description: 'Увімкнути або вимкнути ефект виділення елементів'
                 },
                 onChange: function (value) {
