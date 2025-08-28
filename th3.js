@@ -158,10 +158,10 @@
     // Об'єкт для зберігання налаштувань і палітри
     var ColorPlugin = {
         settings: {
-            main_color: '#353535',
-            enabled: true,
-            highlight_enabled: true,
-            dimming_enabled: true
+            main_color: Lampa.Storage.get('color_plugin_main_color', '#353535'),
+            enabled: Lampa.Storage.get('color_plugin_enabled', true),
+            highlight_enabled: Lampa.Storage.get('color_plugin_highlight_enabled', true),
+            dimming_enabled: Lampa.Storage.get('color_plugin_dimming_enabled', true)
         },
         colors: {
             main: {
@@ -371,6 +371,20 @@
         console.log('ColorPlugin: body.black--style present: ' + hasBlackStyle + ', background: ' + background);
     }
 
+    // Функція для збереження всіх налаштувань
+    function saveSettings() {
+        Lampa.Storage.set('color_plugin_main_color', ColorPlugin.settings.main_color);
+        Lampa.Storage.set('color_plugin_enabled', ColorPlugin.settings.enabled);
+        Lampa.Storage.set('color_plugin_highlight_enabled', ColorPlugin.settings.highlight_enabled);
+        Lampa.Storage.set('color_plugin_dimming_enabled', ColorPlugin.settings.dimming_enabled);
+        console.log('ColorPlugin: Settings saved', {
+            main_color: ColorPlugin.settings.main_color,
+            enabled: ColorPlugin.settings.enabled,
+            highlight_enabled: ColorPlugin.settings.highlight_enabled,
+            dimming_enabled: ColorPlugin.settings.dimming_enabled
+        });
+    }
+
     // Функція для застосування стилів
     function applyStyles() {
         if (!ColorPlugin.settings.enabled) {
@@ -424,7 +438,7 @@
             '}'
         ) : '';
 
-        // Розбиваємо style.innerHTML на частини для зручності
+        // Розбиваємо style.innerHTML на частини
         var styles = [
             ':root {' +
                 '--main-color: ' + ColorPlugin.settings.main_color + ';' +
@@ -679,8 +693,8 @@
             '}',
             '.hex-input .label {' +
                 'position: absolute;' +
-                'top: 10px;' +
-                'font-size: 12px;' +
+                'top: 5px;' +
+                'font-size: 10px;' +
             '}',
             '.hex-input .value {' +
                 'position: absolute;' +
@@ -707,6 +721,9 @@
         // Перевіряємо стилі body.black--style
         checkBodyStyles();
 
+        // Зберігаємо налаштування після застосування стилів
+        saveSettings();
+
         console.log('ColorPlugin: Applied styles, main_color: ' + ColorPlugin.settings.main_color + ', enabled: ' + ColorPlugin.settings.enabled + ', highlight_enabled: ' + ColorPlugin.settings.highlight_enabled + ', dimming_enabled: ' + ColorPlugin.settings.dimming_enabled);
     }
 
@@ -714,7 +731,6 @@
     function createColorHtml(color, name) {
         var className = color === 'default' ? 'color_square selector default' : 'color_square selector';
         var style = color === 'default' ? '' : 'background-color: ' + color + ';';
-        var label = color === 'default' ? '' : '';
         var hex = color === 'default' ? '' : color.replace('#', '');
         var content = color === 'default' ? '' : '<div class="hex">' + hex + '</div>';
         return '<div class="' + className + '" tabindex="0" style="' + style + '" title="' + name + '">' + content + '</div>';
@@ -743,10 +759,9 @@
             'Gray', 'Zinc', 'Neutral', 'Stone'
         ];
         var colorsByFamily = [];
-        var i;
 
         // Групуємо кольори за сімействами
-        for (i = 0; i < families.length; i++) {
+        for (var i = 0; i < families.length; i++) {
             var family = families[i];
             var familyColors = colorKeys.filter(function(key) {
                 return ColorPlugin.colors.main[key].indexOf(family) === 0 && key !== 'default';
@@ -792,6 +807,7 @@
                 html: modalHtml,
                 className: 'color-picker-modal',
                 onBack: function () {
+                    saveSettings(); // Зберігаємо налаштування перед закриттям
                     Lampa.Modal.close();
                     Lampa.Controller.toggle('settings_component');
                     Lampa.Controller.enable('menu');
@@ -965,12 +981,16 @@
         });
     }
 
-    // Оновлюємо стилі та canvas при відкритті налаштувань
+    // Оновлюємо стилі та зберігаємо налаштування при взаємодії з меню
     Lampa.Listener.follow('settings_component', function (event) {
         if (event.type === 'open') {
             applyStyles();
             updateCanvasFillStyle(window.draw_context);
             Lampa.Settings.render();
+        } else if (event.type === 'close') {
+            saveSettings(); // Зберігаємо налаштування при закритті меню
+            applyStyles();
+            updateCanvasFillStyle(window.draw_context);
         }
     });
 })();
