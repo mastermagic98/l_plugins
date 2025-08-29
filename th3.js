@@ -9,9 +9,9 @@
             uk: 'Налаштування кольорів'
         },
         main_color: {
-            ru: 'Основной цвет',
-            en: 'Main color',
-            uk: 'Основний колір'
+            ru: 'Цвет выделения',
+            en: 'Highlight color',
+            uk: 'Колір виділення'
         },
         color_plugin_enabled: {
             ru: 'Включить плагин',
@@ -19,14 +19,14 @@
             uk: 'Увімкнути плагін'
         },
         enable_highlight: {
-            ru: 'Включить выделение',
-            en: 'Enable highlight',
-            uk: 'Увімкнути виділення'
+            ru: 'Включить рамку',
+            en: 'Enable border',
+            uk: 'Увімкнути рамку'
         },
         enable_dimming: {
-            ru: 'Включить изменение цвета затемнения',
-            en: 'Enable dimming color change',
-            uk: 'Увімкнути зміну кольору затемнення'
+            ru: 'Применить цвет затемнения',
+            en: 'Apply dimming color',
+            uk: 'Застосувати колір затемнення'
         },
         default_color: {
             ru: 'По умолчанию',
@@ -70,7 +70,7 @@
     // Об'єкт для зберігання налаштувань і палітри
     var ColorPlugin = {
         settings: {
-            main_color: Lampa.Storage.get('color_plugin_main_color', '#dddddd'),
+            main_color: Lampa.Storage.get('color_plugin_main_color', '#353535'),
             enabled: Lampa.Storage.get('color_plugin_enabled', 'true') === 'true',
             highlight_enabled: Lampa.Storage.get('color_plugin_highlight_enabled', 'true') === 'true',
             dimming_enabled: Lampa.Storage.get('color_plugin_dimming_enabled', 'true') === 'true'
@@ -536,7 +536,7 @@
 
     // Функція для створення HTML для назви сімейства
     function createFamilyNameHtml(name, color) {
-        return '<div class="color-family-name" style="border-color: ' + (color || '#dddddd') + ';">' + Lampa.Lang.translate(name.toLowerCase()) + '</div>';
+        return '<div class="color-family-name" style="border-color: ' + (color || '#353535') + ';">' + Lampa.Lang.translate(name.toLowerCase()) + '</div>';
     }
 
     // Функція для розбиття масиву кольорів на групи по 6
@@ -581,7 +581,7 @@
         }).join('');
 
         var defaultButton = createColorHtml('default', Lampa.Lang.translate('default_color'));
-        var hexValue = Lampa.Storage.get('color_plugin_custom_hex', '') || '#dddddd';
+        var hexValue = Lampa.Storage.get('color_plugin_custom_hex', '') || '#353535';
         var hexDisplay = hexValue.replace('#', '');
         var inputHtml = '<div class="color_square selector hex-input" tabindex="0" style="background-color: ' + hexValue + ';">' +
                         '<div class="label">' + Lampa.Lang.translate('custom_hex_input') + '</div>' +
@@ -644,7 +644,7 @@
                             });
                             return;
                         } else if (selectedElement.classList.contains('default')) {
-                            color = '#dddddd';
+                            color = '#353535';
                         } else {
                             color = selectedElement.style.backgroundColor || ColorPlugin.settings.main_color;
                             color = color.includes('rgb') ? rgbToHex(color) : color;
@@ -669,7 +669,7 @@
     // Функція для ініціалізації плагіна
     function initPlugin() {
         // Завантажуємо збережені налаштування
-        ColorPlugin.settings.main_color = Lampa.Storage.get('color_plugin_main_color', '#dddddd');
+        ColorPlugin.settings.main_color = Lampa.Storage.get('color_plugin_main_color', '#353535');
         ColorPlugin.settings.enabled = Lampa.Storage.get('color_plugin_enabled', 'true') === 'true';
         ColorPlugin.settings.highlight_enabled = Lampa.Storage.get('color_plugin_highlight_enabled', 'true') === 'true';
         ColorPlugin.settings.dimming_enabled = Lampa.Storage.get('color_plugin_dimming_enabled', 'true') === 'true';
@@ -692,7 +692,7 @@
                 },
                 field: {
                     name: Lampa.Lang.translate('color_plugin_enabled'),
-                    description: 'Увімкнути або вимкнути плагін зміни кольорів'
+                    description: 'Дозволяє змінювати колір виділення та затемнення елементів інтерфейсу'
                 },
                 onChange: function (value) {
                     ColorPlugin.settings.enabled = value === 'true';
@@ -703,7 +703,7 @@
                 }
             });
 
-            // Основний колір
+            // Колір виділення
             Lampa.SettingsApi.addParam({
                 component: 'color_plugin',
                 param: {
@@ -711,24 +711,25 @@
                     type: 'button'
                 },
                 field: {
-                    name: Lampa.Lang.translate('main_color')
+                    name: Lampa.Lang.translate('main_color'),
+                    description: 'Можна вибрати чи вказати колір для виділених елементів'
                 },
                 onChange: function () {
                     openColorPicker();
                 }
             });
 
-            // Увімкнення/вимкнення виділення
+            // Увімкнення/вимкнення рамки
             Lampa.SettingsApi.addParam({
                 component: 'color_plugin',
                 param: {
                     name: 'color_plugin_highlight_enabled',
                     type: 'trigger',
-                    default: ColorPlugin.settings.highlight_enabled.toString()
+                    default: 'true'
                 },
                 field: {
                     name: Lampa.Lang.translate('enable_highlight'),
-                    description: 'Увімкнути або вимкнути ефект виділення елементів'
+                    description: 'Вмикається біла рамка на виділених елементах'
                 },
                 onChange: function (value) {
                     ColorPlugin.settings.highlight_enabled = value === 'true';
@@ -738,7 +739,7 @@
                 }
             });
 
-            // Увімкнення/вимкнення зміни кольору затемнення
+            // Застосувати колір затемнення
             Lampa.SettingsApi.addParam({
                 component: 'color_plugin',
                 param: {
@@ -748,7 +749,7 @@
                 },
                 field: {
                     name: Lampa.Lang.translate('enable_dimming'),
-                    description: 'Увімкнути або вимкнути зміну кольору затемнення елементів'
+                    description: 'Змінюється колір затемних елементів'
                 },
                 onChange: function (value) {
                     ColorPlugin.settings.dimming_enabled = value === 'true';
