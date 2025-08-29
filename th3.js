@@ -207,7 +207,6 @@
 
         var highlightStyles = ColorPlugin.settings.highlight_enabled ? (
             '-webkit-box-shadow: inset 0 0 0 0.15em #fff;' +
-            '-moz-box-shadow: inset 0 0 0 0.15em #fff;' +
             'box-shadow: inset 0 0 0 0.15em #fff;'
         ) : '';
 
@@ -772,6 +771,7 @@
         Lampa.Listener.follow('app', function (event) {
             if (event.type === 'ready' && Lampa.SettingsApi) {
                 initPlugin();
+                updatePluginIcon(); // Спробуємо оновити іконку після ініціалізації
             }
         });
     }
@@ -785,11 +785,13 @@
             ColorPlugin.settings.dimming_enabled = Lampa.Storage.get('color_plugin_dimming_enabled', 'true') === 'true';
             applyStyles();
             updateCanvasFillStyle(window.draw_context);
+            updatePluginIcon(); // Оновлюємо іконку при відкритті налаштувань
             Lampa.Settings.render();
         } else if (event.type === 'close') {
             saveSettings();
             applyStyles();
             updateCanvasFillStyle(window.draw_context);
+            updatePluginIcon(); // Оновлюємо іконку при закритті налаштувань
         }
     });
 })();
