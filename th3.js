@@ -70,7 +70,7 @@
     // Об'єкт для зберігання налаштувань і палітри
     var ColorPlugin = {
         settings: {
-            main_color: Lampa.Storage.get('color_plugin_main_color', '#353535'),
+            main_color: Lampa.Storage.get('color_plugin_main_color', '#dddddd'),
             enabled: Lampa.Storage.get('color_plugin_enabled', 'true') === 'true',
             highlight_enabled: Lampa.Storage.get('color_plugin_highlight_enabled', 'true') === 'true',
             dimming_enabled: Lampa.Storage.get('color_plugin_dimming_enabled', 'true') === 'true'
@@ -509,6 +509,11 @@
                 'grid-template-columns: 1fr 1fr;' +
                 'gap: 10px;' +
                 'padding: 0;' +
+            '}',
+            '@media (max-width: 768px) {' +
+                '.color-picker-container {' +
+                    'grid-template-columns: 1fr;' +
+                '}' +
             '}'
         ].join('');
 
@@ -531,7 +536,7 @@
 
     // Функція для створення HTML для назви сімейства
     function createFamilyNameHtml(name, color) {
-        return '<div class="color-family-name" style="border-color: ' + (color || '#353535') + ';">' + Lampa.Lang.translate(name.toLowerCase()) + '</div>';
+        return '<div class="color-family-name" style="border-color: ' + (color || '#dddddd') + ';">' + Lampa.Lang.translate(name.toLowerCase()) + '</div>';
     }
 
     // Функція для розбиття масиву кольорів на групи по 6
@@ -576,7 +581,7 @@
         }).join('');
 
         var defaultButton = createColorHtml('default', Lampa.Lang.translate('default_color'));
-        var hexValue = Lampa.Storage.get('color_plugin_custom_hex', '') || '#353535';
+        var hexValue = Lampa.Storage.get('color_plugin_custom_hex', '') || '#dddddd';
         var hexDisplay = hexValue.replace('#', '');
         var inputHtml = '<div class="color_square selector hex-input" tabindex="0" style="background-color: ' + hexValue + ';">' +
                         '<div class="label">' + Lampa.Lang.translate('custom_hex_input') + '</div>' +
@@ -639,7 +644,7 @@
                             });
                             return;
                         } else if (selectedElement.classList.contains('default')) {
-                            color = '#353535';
+                            color = '#dddddd';
                         } else {
                             color = selectedElement.style.backgroundColor || ColorPlugin.settings.main_color;
                             color = color.includes('rgb') ? rgbToHex(color) : color;
@@ -664,7 +669,7 @@
     // Функція для ініціалізації плагіна
     function initPlugin() {
         // Завантажуємо збережені налаштування
-        ColorPlugin.settings.main_color = Lampa.Storage.get('color_plugin_main_color', '#353535');
+        ColorPlugin.settings.main_color = Lampa.Storage.get('color_plugin_main_color', '#dddddd');
         ColorPlugin.settings.enabled = Lampa.Storage.get('color_plugin_enabled', 'true') === 'true';
         ColorPlugin.settings.highlight_enabled = Lampa.Storage.get('color_plugin_highlight_enabled', 'true') === 'true';
         ColorPlugin.settings.dimming_enabled = Lampa.Storage.get('color_plugin_dimming_enabled', 'true') === 'true';
