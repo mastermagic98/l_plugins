@@ -18,6 +18,21 @@
             en: 'Enable plugin',
             uk: 'Увімкнути плагін'
         },
+        plugin_status: {
+            ru: 'Статус: {status}',
+            en: 'Status: {status}',
+            uk: 'Статус: {status}'
+        },
+        status_enabled: {
+            ru: 'Да',
+            en: 'Yes',
+            uk: 'Так'
+        },
+        status_disabled: {
+            ru: 'Нет',
+            en: 'No',
+            uk: 'Ні'
+        },
         enable_highlight: {
             ru: 'Включить рамку',
             en: 'Enable border',
@@ -128,16 +143,6 @@
         return /^#[0-9A-Fa-f]{6}$/.test(color);
     }
 
-    // Функція для обчислення яскравості кольору для визначення контрастного тексту
-    function getTextColor(hex) {
-        var cleanHex = hex.replace('#', '');
-        var r = parseInt(cleanHex.substring(0, 2), 16);
-        var g = parseInt(cleanHex.substring(2, 4), 16);
-        var b = parseInt(cleanHex.substring(4, 6), 16);
-        var brightness = (r * 299 + g * 587 + b * 114) / 1000;
-        return brightness > 128 ? '#000000' : '#ffffff';
-    }
-
     // Функція для оновлення inline-стилів елемента з датою
     function updateDateElementStyles() {
         var elements = document.querySelectorAll('div[style*="position: absolute; left: 1em; top: 1em;"]');
@@ -172,6 +177,12 @@
             component.icon = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#ffffff"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
             Lampa.Settings.render();
         }
+    }
+
+    // Функція для перевірки статусу плагіна
+    function getPluginStatus() {
+        var status = ColorPlugin.settings.enabled ? Lampa.Lang.translate('status_enabled') : Lampa.Lang.translate('status_disabled');
+        return Lampa.Lang.translate('plugin_status').replace('{status}', status);
     }
 
     // Функція для перевірки стилів body.black--style
@@ -490,6 +501,7 @@
                 'text-transform: uppercase;' +
                 'z-index: 1;' +
                 'pointer-events: none;' +
+                'color: #ffffff !important;' +
             '}',
             '.hex-input {' +
                 'width: 180px;' +
@@ -559,8 +571,7 @@
         var className = color === 'default' ? 'color_square selector default' : 'color_square selector';
         var style = color === 'default' ? '' : 'background-color: ' + color + ';';
         var hex = color === 'default' ? '' : color.replace('#', '');
-        var textColor = color === 'default' ? '' : 'color: ' + getTextColor(color) + ';';
-        var content = color === 'default' ? '' : '<div class="hex" style="' + textColor + '">' + hex + '</div>';
+        var content = color === 'default' ? '' : '<div class="hex">' + hex + '</div>';
         return '<div class="' + className + '" tabindex="0" style="' + style + '" title="' + name + '">' + content + '</div>';
     }
 
@@ -712,6 +723,19 @@
                 icon: '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#ffffff"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>'
             });
 
+            // Статус плагіна
+            Lampa.SettingsApi.addParam({
+                component: 'color_plugin',
+                param: {
+                    name: 'color_plugin_status',
+                    type: 'static'
+                },
+                field: {
+                    name: getPluginStatus(),
+                    description: 'Показує, чи активний плагін'
+                }
+            });
+
             // Увімкнення/вимкнення плагіна
             Lampa.SettingsApi.addParam({
                 component: 'color_plugin',
@@ -738,7 +762,8 @@
                 component: 'color_plugin',
                 param: {
                     name: 'color_plugin_main_color',
-                    type: 'button'
+                    type: 'button',
+                    hidden: !ColorPlugin.settings.enabled
                 },
                 field: {
                     name: Lampa.Lang.translate('main_color'),
@@ -755,7 +780,8 @@
                 param: {
                     name: 'color_plugin_highlight_enabled',
                     type: 'trigger',
-                    default: 'true'
+                    default: 'true',
+                    hidden: !ColorPlugin.settings.enabled
                 },
                 field: {
                     name: Lampa.Lang.translate('enable_highlight'),
@@ -775,7 +801,8 @@
                 param: {
                     name: 'color_plugin_dimming_enabled',
                     type: 'trigger',
-                    default: ColorPlugin.settings.dimming_enabled.toString()
+                    default: ColorPlugin.settings.dimming_enabled.toString(),
+                    hidden: !ColorPlugin.settings.enabled
                 },
                 field: {
                     name: Lampa.Lang.translate('enable_dimming'),
@@ -802,27 +829,38 @@
         Lampa.Listener.follow('app', function (event) {
             if (event.type === 'ready' && Lampa.SettingsApi) {
                 initPlugin();
-                updatePluginIcon(); // Спробуємо оновити іконку після ініціалізації
+                updatePluginIcon();
             }
         });
     }
 
-    // Оновлюємо стилі та зберігаємо налаштування при взаємодії з меню
+    // Оновлюємо стилі, статус і зберігаємо налаштування при взаємодії з меню
     Lampa.Listener.follow('settings_component', function (event) {
         if (event.type === 'open') {
             // Оновлюємо налаштування перед відображенням меню
             ColorPlugin.settings.enabled = Lampa.Storage.get('color_plugin_enabled', 'true') === 'true';
             ColorPlugin.settings.highlight_enabled = Lampa.Storage.get('color_plugin_highlight_enabled', 'true') === 'true';
             ColorPlugin.settings.dimming_enabled = Lampa.Storage.get('color_plugin_dimming_enabled', 'true') === 'true';
+
+            // Оновлюємо видимість параметрів залежно від статусу плагіна
+            var params = Lampa.SettingsApi.getParams('color_plugin');
+            for (var i = 0; i < params.length; i++) {
+                if (params[i].param.name === 'color_plugin_status') {
+                    params[i].field.name = getPluginStatus();
+                } else if (params[i].param.name !== 'color_plugin_enabled') {
+                    params[i].param.hidden = !ColorPlugin.settings.enabled;
+                }
+            }
+
             applyStyles();
             updateCanvasFillStyle(window.draw_context);
-            updatePluginIcon(); // Оновлюємо іконку при відкритті налаштувань
+            updatePluginIcon();
             Lampa.Settings.render();
         } else if (event.type === 'close') {
             saveSettings();
             applyStyles();
             updateCanvasFillStyle(window.draw_context);
-            updatePluginIcon(); // Оновлюємо іконку при закритті налаштувань
+            updatePluginIcon();
         }
     });
 })();
