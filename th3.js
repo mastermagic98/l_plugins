@@ -128,6 +128,16 @@
         return /^#[0-9A-Fa-f]{6}$/.test(color);
     }
 
+    // Функція для обчислення яскравості кольору для визначення контрастного тексту
+    function getTextColor(hex) {
+        var cleanHex = hex.replace('#', '');
+        var r = parseInt(cleanHex.substring(0, 2), 16);
+        var g = parseInt(cleanHex.substring(2, 4), 16);
+        var b = parseInt(cleanHex.substring(4, 6), 16);
+        var brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        return brightness > 128 ? '#000000' : '#ffffff';
+    }
+
     // Функція для оновлення inline-стилів елемента з датою
     function updateDateElementStyles() {
         var elements = document.querySelectorAll('div[style*="position: absolute; left: 1em; top: 1em;"]');
@@ -247,6 +257,8 @@
             '}',
             '.modal .scroll__content {' +
                 'padding: 1.0em 0 !important;' +
+                'max-height: none !important;' +
+                'overflow-y: auto;' +
             '}',
             '.menu__ico, .menu__ico:hover, .menu__ico.traverse, ' +
             '.head__action, .head__action.focus, .head__action:hover, .settings-param__ico {' +
@@ -406,6 +418,7 @@
                 'height: 30px;' +
                 'border-radius: 4px;' +
                 'position: relative;' +
+                'cursor: pointer;' +
             '}',
             '.color_square.default::after {' +
                 'content: "";' +
@@ -439,15 +452,19 @@
                 'color: #ffffff !important;' +
                 'font-size: 10px;' +
                 'text-align: center;' +
+                'position: relative;' +
+                'flex-shrink: 0;' +
             '}',
             '.color-family-outline {' +
                 'display: flex;' +
                 'flex-direction: row;' +
-                'overflow: hidden;' +
+                'align-items: center;' +
                 'gap: 10px;' +
                 'border-radius: 8px;' +
                 'margin-bottom: 10px;' +
                 'padding: 5px;' +
+                'flex-wrap: nowrap;' +
+                'background-color: rgba(255, 255, 255, 0.05);' +
             '}',
             '.color-family-name {' +
                 'width: 80px;' +
@@ -465,15 +482,17 @@
                 'font-weight: bold;' +
                 'text-align: center;' +
                 'text-transform: capitalize;' +
+                'flex-shrink: 0;' +
             '}',
             '.color_square .hex {' +
                 'font-size: 7px;' +
                 'opacity: 0.9;' +
                 'text-transform: uppercase;' +
                 'z-index: 1;' +
+                'pointer-events: none;' +
             '}',
             '.hex-input {' +
-                'width: 360px;' +
+                'width: 180px;' +
                 'height: 30px;' +
                 'border-radius: 8px;' +
                 'border: 2px solid #ddd;' +
@@ -484,34 +503,45 @@
                 'align-items: center;' +
                 'justify-content: center;' +
                 'color: #fff !important;' +
-                'font-size: 12px;' +
+                'font-size: 10px;' +
                 'font-weight: bold;' +
                 'text-shadow: 0 0 2px #000;' +
                 'background-color: #353535;' +
+                'flex-shrink: 0;' +
             '}',
             '.hex-input.focus {' +
-                'border: 0.2em solid var(--main-color);' +
+                'border: 0.3em solid var(--main-color);' +
                 'transform: scale(1.1);' +
             '}',
             '.hex-input .label {' +
                 'position: absolute;' +
                 'top: 1px;' +
                 'font-size: 10px;' +
+                'pointer-events: none;' +
             '}',
             '.hex-input .value {' +
                 'position: absolute;' +
                 'bottom: 1px;' +
                 'font-size: 10px;' +
+                'pointer-events: none;' +
             '}',
             '.color-picker-container {' +
                 'display: grid;' +
-                'grid-template-columns: 1fr 1fr;' +
+                'grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));' +
                 'gap: 10px;' +
-                'padding: 0;' +
+                'padding: 10px;' +
+                'width: 100%;' +
+                'box-sizing: border-box;' +
             '}',
             '@media (max-width: 768px) {' +
                 '.color-picker-container {' +
                     'grid-template-columns: 1fr;' +
+                '}' +
+                '.color-family-outline {' +
+                    'flex-wrap: wrap;' +
+                '}' +
+                '.hex-input {' +
+                    'width: 120px;' +
                 '}' +
             '}'
         ].join('');
@@ -529,7 +559,8 @@
         var className = color === 'default' ? 'color_square selector default' : 'color_square selector';
         var style = color === 'default' ? '' : 'background-color: ' + color + ';';
         var hex = color === 'default' ? '' : color.replace('#', '');
-        var content = color === 'default' ? '' : '<div class="hex">' + hex + '</div>';
+        var textColor = color === 'default' ? '' : 'color: ' + getTextColor(color) + ';';
+        var content = color === 'default' ? '' : '<div class="hex" style="' + textColor + '">' + hex + '</div>';
         return '<div class="' + className + '" tabindex="0" style="' + style + '" title="' + name + '">' + content + '</div>';
     }
 
@@ -586,7 +617,7 @@
                         '<div class="label">' + Lampa.Lang.translate('custom_hex_input') + '</div>' +
                         '<div class="value">' + hexDisplay + '</div>' +
                         '</div>';
-        var topRowHtml = '<div style="display: flex; gap: 30px; padding: 0; justify-content: center; margin-bottom: 10px;">' +
+        var topRowHtml = '<div style="display: flex; gap: 20px; padding: 10px; justify-content: center; margin-bottom: 10px; flex-wrap: wrap;">' +
                          defaultButton + inputHtml + '</div>';
 
         var modalContent = '<div class="color-picker-container">' + colorContent + '</div>';
