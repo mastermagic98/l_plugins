@@ -18,21 +18,6 @@
             en: 'Enable plugin',
             uk: 'Увімкнути плагін'
         },
-        plugin_status: {
-            ru: 'Статус: {status}',
-            en: 'Status: {status}',
-            uk: 'Статус: {status}'
-        },
-        status_enabled: {
-            ru: 'Да',
-            en: 'Yes',
-            uk: 'Так'
-        },
-        status_disabled: {
-            ru: 'Нет',
-            en: 'No',
-            uk: 'Ні'
-        },
         enable_highlight: {
             ru: 'Включить рамку',
             en: 'Enable border',
@@ -177,12 +162,6 @@
             component.icon = '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#ffffff"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>';
             Lampa.Settings.render();
         }
-    }
-
-    // Функція для перевірки статусу плагіна
-    function getPluginStatus() {
-        var status = ColorPlugin.settings.enabled ? Lampa.Lang.translate('status_enabled') : Lampa.Lang.translate('status_disabled');
-        return Lampa.Lang.translate('plugin_status').replace('{status}', status);
     }
 
     // Функція для перевірки стилів body.black--style
@@ -723,19 +702,6 @@
                 icon: '<svg width="24px" height="24px" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="#ffffff"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 1.003a7 7 0 0 0-7 7v.43c.09 1.51 1.91 1.79 3 .7a1.87 1.87 0 0 1 2.64 2.64c-1.1 1.16-.79 3.07.8 3.2h.6a7 7 0 1 0 0-14l-.04.03zm0 13h-.52a.58.58 0 0 1-.36-.14.56.56 0 0 1-.15-.3 1.24 1.24 0 0 1 .35-1.08 2.87 2.87 0 0 0 0-4 2.87 2.87 0 0 0-4.06 0 1 1 0 0 1-.9.34.41.41 0 0 1-.22-.12.42.42 0 0 1-.1-.29v-.37a6 6 0 1 1 6 6l-.04-.04zM9 3.997a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 7.007a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-7-5a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM13 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>'
             });
 
-            // Статус плагіна
-            Lampa.SettingsApi.addParam({
-                component: 'color_plugin',
-                param: {
-                    name: 'color_plugin_status',
-                    type: 'static'
-                },
-                field: {
-                    name: getPluginStatus(),
-                    description: 'Показує, чи активний плагін'
-                }
-            });
-
             // Увімкнення/вимкнення плагіна
             Lampa.SettingsApi.addParam({
                 component: 'color_plugin',
@@ -753,6 +719,12 @@
                     Lampa.Storage.set('color_plugin_enabled', ColorPlugin.settings.enabled.toString());
                     applyStyles();
                     updateCanvasFillStyle(window.draw_context);
+                    var params = Lampa.SettingsApi.getParams('color_plugin');
+                    for (var i = 0; i < params.length; i++) {
+                        if (params[i].param.name !== 'color_plugin_enabled') {
+                            params[i].param.hidden = !ColorPlugin.settings.enabled;
+                        }
+                    }
                     Lampa.Settings.render();
                 }
             });
@@ -834,7 +806,7 @@
         });
     }
 
-    // Оновлюємо стилі, статус і зберігаємо налаштування при взаємодії з меню
+    // Оновлюємо стилі та видимість параметрів при взаємодії з меню
     Lampa.Listener.follow('settings_component', function (event) {
         if (event.type === 'open') {
             // Оновлюємо налаштування перед відображенням меню
@@ -845,9 +817,7 @@
             // Оновлюємо видимість параметрів залежно від статусу плагіна
             var params = Lampa.SettingsApi.getParams('color_plugin');
             for (var i = 0; i < params.length; i++) {
-                if (params[i].param.name === 'color_plugin_status') {
-                    params[i].field.name = getPluginStatus();
-                } else if (params[i].param.name !== 'color_plugin_enabled') {
+                if (params[i].param.name !== 'color_plugin_enabled') {
                     params[i].param.hidden = !ColorPlugin.settings.enabled;
                 }
             }
