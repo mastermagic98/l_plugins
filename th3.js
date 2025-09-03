@@ -686,29 +686,6 @@
         }
     }
 
-    // Функція для приховування/відображення параметрів через DOM
-    function updateSettingsVisibility() {
-        var settingsContainer = document.querySelector('.settings--component');
-        if (!settingsContainer) {
-            console.warn('ColorPlugin: Settings container not found');
-            return;
-        }
-
-        var paramElements = settingsContainer.querySelectorAll('.settings-param');
-        for (var i = 0; i < paramElements.length; i++) {
-            var paramElement = paramElements[i];
-            var paramName = paramElement.getAttribute('data-name');
-            if (paramName === 'color_plugin_enabled') {
-                paramElement.style.display = 'block';
-            } else if (paramName === 'color_plugin_main_color' ||
-                       paramName === 'color_plugin_highlight_enabled' ||
-                       paramName === 'color_plugin_dimming_enabled') {
-                paramElement.style.display = ColorPlugin.settings.enabled ? 'block' : 'none';
-            }
-        }
-        console.log('ColorPlugin: Updated settings visibility, enabled:', ColorPlugin.settings.enabled);
-    }
-
     // Функція для ініціалізації плагіна
     function initPlugin() {
         // Завантажуємо збережені налаштування
@@ -742,7 +719,6 @@
                     Lampa.Storage.set('color_plugin_enabled', ColorPlugin.settings.enabled.toString());
                     applyStyles();
                     updateCanvasFillStyle(window.draw_context);
-                    updateSettingsVisibility();
                     Lampa.Settings.render();
                 }
             });
@@ -757,6 +733,13 @@
                 field: {
                     name: Lampa.Lang.translate('main_color'),
                     description: 'Можна вибрати чи вказати колір для виділених елементів'
+                },
+                onRender: function (item) {
+                    if (!Lampa.Storage.get('color_plugin_enabled', 'true') === 'true') {
+                        item.css('display', 'none');
+                    } else {
+                        item.css('display', 'block');
+                    }
                 },
                 onChange: function () {
                     openColorPicker();
@@ -774,6 +757,13 @@
                 field: {
                     name: Lampa.Lang.translate('enable_highlight'),
                     description: 'Вмикається біла рамка на виділених елементах'
+                },
+                onRender: function (item) {
+                    if (!Lampa.Storage.get('color_plugin_enabled', 'true') === 'true') {
+                        item.css('display', 'none');
+                    } else {
+                        item.css('display', 'block');
+                    }
                 },
                 onChange: function (value) {
                     ColorPlugin.settings.highlight_enabled = value === 'true';
@@ -795,6 +785,13 @@
                     name: Lampa.Lang.translate('enable_dimming'),
                     description: 'Змінюється колір затемних елементів'
                 },
+                onRender: function (item) {
+                    if (!Lampa.Storage.get('color_plugin_enabled', 'true') === 'true') {
+                        item.css('display', 'none');
+                    } else {
+                        item.css('display', 'block');
+                    }
+                },
                 onChange: function (value) {
                     ColorPlugin.settings.dimming_enabled = value === 'true';
                     Lampa.Storage.set('color_plugin_dimming_enabled', ColorPlugin.settings.dimming_enabled.toString());
@@ -806,7 +803,6 @@
             // Застосовуємо стилі при ініціалізації
             applyStyles();
             updateCanvasFillStyle(window.draw_context);
-            updateSettingsVisibility();
         }
     }
 
@@ -822,7 +818,25 @@
         });
     }
 
-    // Оновлюємо стилі та видимість параметрів при взаємодії з меню
+    // Оновлюємо видимість параметрів при зміні color_plugin_enabled
+    Lampa.Storage.listener.follow('change', function (e) {
+        if (e.name === 'color_plugin_enabled') {
+            var params = [
+                $('.settings-param[data-name="color_plugin_main_color"]'),
+                $('.settings-param[data-name="color_plugin_highlight_enabled"]'),
+                $('.settings-param[data-name="color_plugin_dimming_enabled"]')
+            ];
+            for (var i = 0; i < params.length; i++) {
+                var param = params[i];
+                if (param.length) {
+                    param.css('display', Lampa.Storage.get('color_plugin_enabled', 'true') === 'true' ? 'block' : 'none');
+                }
+            }
+            Lampa.Settings.render();
+        }
+    });
+
+    // Оновлюємо стилі та іконку при взаємодії з меню
     Lampa.Listener.follow('settings_component', function (event) {
         if (event.type === 'open') {
             // Оновлюємо налаштування перед відображенням меню
@@ -830,9 +844,7 @@
             ColorPlugin.settings.highlight_enabled = Lampa.Storage.get('color_plugin_highlight_enabled', 'true') === 'true';
             ColorPlugin.settings.dimming_enabled = Lampa.Storage.get('color_plugin_dimming_enabled', 'true') === 'true';
 
-            // Оновлюємо видимість параметрів
-            updateSettingsVisibility();
-
+            // Оновлюємо стилі та іконку
             applyStyles();
             updateCanvasFillStyle(window.draw_context);
             updatePluginIcon();
