@@ -71,7 +71,7 @@
     var ColorPlugin = {
         settings: {
             main_color: Lampa.Storage.get('color_plugin_main_color', '#353535'),
-            enabled: Lampa.Storage.get('color_plugin_enabled', 'true') === 'true',
+            enabled: Lampa.Storage.get('color_plugin_enabled', 'false') === 'true',
             highlight_enabled: Lampa.Storage.get('color_plugin_highlight_enabled', 'true') === 'true',
             dimming_enabled: Lampa.Storage.get('color_plugin_dimming_enabled', 'true') === 'true'
         },
@@ -82,7 +82,8 @@
                 '#ff6900': 'Orange 1', '#f54900': 'Orange 2', '#ca3500': 'Orange 3', '#9f2d00': 'Orange 4', '#7e2a0c': 'Orange 5', '#441306': 'Orange 6',
                 '#fe9a00': 'Amber 1', '#e17100': 'Amber 2', '#bb4d00': 'Amber 3', '#973c00': 'Amber 4', '#7b3306': 'Amber 5', '#461901': 'Amber 6',
                 '#f0b100': 'Yellow 1', '#d08700': 'Yellow 2', '#a65f00': 'Yellow 3', '#894b00': 'Yellow 4', '#733e0a': 'Yellow 5', '#432004': 'Yellow 6',
-                '#7ccf00': 'Lime 1', '#5ea500': 'Lime 2', '#497d00': 'Lime 3', '#3c6300': 'Lime 4', '#35530e': 'Lime 5', '#192e03': 'Lime 6',
+                '#7ccf00': 'Lime 1', '#5ea500': 'Lime 2', '#497d00': 'Lime 3', '#3c63
+System: 00': 'Lime 4', '#35530e': 'Lime 5', '#192e03': 'Lime 6',
                 '#00c950': 'Green 1', '#00a63e': 'Green 2', '#008236': 'Green 3', '#016630': 'Green 4', '#0d542b': 'Green 5', '#032e15': 'Green 6',
                 '#00bc7d': 'Emerald 1', '#009966': 'Emerald 2', '#007a55': 'Emerald 3', '#006045': 'Emerald 4', '#004f3b': 'Emerald 5', '#002c22': 'Emerald 6',
                 '#00bba7': 'Teal 1', '#009689': 'Teal 2', '#00786f': 'Teal 3', '#005f5a': 'Teal 4', '#0b4f4a': 'Teal 5', '#022f2e': 'Teal 6',
@@ -690,7 +691,7 @@
     function initPlugin() {
         // Завантажуємо збережені налаштування
         ColorPlugin.settings.main_color = Lampa.Storage.get('color_plugin_main_color', '#353535');
-        ColorPlugin.settings.enabled = Lampa.Storage.get('color_plugin_enabled', 'true') === 'true';
+        ColorPlugin.settings.enabled = Lampa.Storage.get('color_plugin_enabled', 'false') === 'true';
         ColorPlugin.settings.highlight_enabled = Lampa.Storage.get('color_plugin_highlight_enabled', 'true') === 'true';
         ColorPlugin.settings.dimming_enabled = Lampa.Storage.get('color_plugin_dimming_enabled', 'true') === 'true';
 
@@ -735,7 +736,7 @@
                     description: 'Можна вибрати чи вказати колір для виділених елементів'
                 },
                 onRender: function (item) {
-                    if (!Lampa.Storage.get('color_plugin_enabled', 'true') === 'true') {
+                    if (!Lampa.Storage.get('color_plugin_enabled', 'false') === 'true') {
                         item.css('display', 'none');
                     } else {
                         item.css('display', 'block');
@@ -759,7 +760,7 @@
                     description: 'Вмикається біла рамка на виділених елементах'
                 },
                 onRender: function (item) {
-                    if (!Lampa.Storage.get('color_plugin_enabled', 'true') === 'true') {
+                    if (!Lampa.Storage.get('color_plugin_enabled', 'false') === 'true') {
                         item.css('display', 'none');
                     } else {
                         item.css('display', 'block');
@@ -786,7 +787,7 @@
                     description: 'Змінюється колір затемних елементів'
                 },
                 onRender: function (item) {
-                    if (!Lampa.Storage.get('color_plugin_enabled', 'true') === 'true') {
+                    if (!Lampa.Storage.get('color_plugin_enabled', 'false') === 'true') {
                         item.css('display', 'none');
                     } else {
                         item.css('display', 'block');
@@ -829,7 +830,7 @@
             for (var i = 0; i < params.length; i++) {
                 var param = params[i];
                 if (param.length) {
-                    param.css('display', Lampa.Storage.get('color_plugin_enabled', 'true') === 'true' ? 'block' : 'none');
+                    param.css('display', Lampa.Storage.get('color_plugin_enabled', 'false') === 'true' ? 'block' : 'none');
                 }
             }
             Lampa.Settings.render();
@@ -840,7 +841,7 @@
     Lampa.Listener.follow('settings_component', function (event) {
         if (event.type === 'open') {
             // Оновлюємо налаштування перед відображенням меню
-            ColorPlugin.settings.enabled = Lampa.Storage.get('color_plugin_enabled', 'true') === 'true';
+            ColorPlugin.settings.enabled = Lampa.Storage.get('color_plugin_enabled', 'false') === 'true';
             ColorPlugin.settings.highlight_enabled = Lampa.Storage.get('color_plugin_highlight_enabled', 'true') === 'true';
             ColorPlugin.settings.dimming_enabled = Lampa.Storage.get('color_plugin_dimming_enabled', 'true') === 'true';
 
