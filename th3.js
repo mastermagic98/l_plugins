@@ -762,8 +762,13 @@
                     }
                 },
                 onRender: function (item) {
+                    console.log('ColorPlugin: Rendering color_plugin_enabled, item:', item);
+                    if (!item || !item.style) {
+                        console.warn('ColorPlugin: item is invalid in color_plugin_enabled onRender', item);
+                        return;
+                    }
                     var display = Lampa.Storage.get('color_plugin_enabled', 'false') === 'true' ? 'block' : 'none';
-                    console.log('ColorPlugin: Rendering color_plugin_enabled, display:', display, 'enabled:', Lampa.Storage.get('color_plugin_enabled', 'false'), 'element:', item);
+                    console.log('ColorPlugin: Setting display:', display, 'enabled:', Lampa.Storage.get('color_plugin_enabled', 'false'));
                     item.style.display = display;
                 }
             });
@@ -781,8 +786,13 @@
                     description: 'Можна вибрати чи вказати колір для виділених елементів'
                 },
                 onRender: function (item) {
+                    console.log('ColorPlugin: Rendering color_plugin_main_color, item:', item);
+                    if (!item || !item.style) {
+                        console.warn('ColorPlugin: item is invalid in color_plugin_main_color onRender', item);
+                        return;
+                    }
                     var display = Lampa.Storage.get('color_plugin_enabled', 'false') === 'true' ? 'block' : 'none';
-                    console.log('ColorPlugin: Rendering color_plugin_main_color, display:', display, 'enabled:', Lampa.Storage.get('color_plugin_enabled', 'false'), 'element:', item);
+                    console.log('ColorPlugin: Setting display:', display, 'enabled:', Lampa.Storage.get('color_plugin_enabled', 'false'));
                     item.style.display = display;
                 },
                 onChange: function () {
@@ -805,8 +815,13 @@
                     description: 'Вмикається біла рамка на виділених елементах'
                 },
                 onRender: function (item) {
+                    console.log('ColorPlugin: Rendering color_plugin_highlight_enabled, item:', item);
+                    if (!item || !item.style) {
+                        console.warn('ColorPlugin: item is invalid in color_plugin_highlight_enabled onRender', item);
+                        return;
+                    }
                     var display = Lampa.Storage.get('color_plugin_enabled', 'false') === 'true' ? 'block' : 'none';
-                    console.log('ColorPlugin: Rendering color_plugin_highlight_enabled, display:', display, 'enabled:', Lampa.Storage.get('color_plugin_enabled', 'false'), 'element:', item);
+                    console.log('ColorPlugin: Setting display:', display, 'enabled:', Lampa.Storage.get('color_plugin_enabled', 'false'));
                     item.style.display = display;
                 },
                 onChange: function (value) {
@@ -834,8 +849,13 @@
                     description: 'Змінюється колір затемних елементів'
                 },
                 onRender: function (item) {
+                    console.log('ColorPlugin: Rendering color_plugin_dimming_enabled, item:', item);
+                    if (!item || !item.style) {
+                        console.warn('ColorPlugin: item is invalid in color_plugin_dimming_enabled onRender', item);
+                        return;
+                    }
                     var display = Lampa.Storage.get('color_plugin_enabled', 'false') === 'true' ? 'block' : 'none';
-                    console.log('ColorPlugin: Rendering color_plugin_dimming_enabled, display:', display, 'enabled:', Lampa.Storage.get('color_plugin_enabled', 'false'), 'element:', item);
+                    console.log('ColorPlugin: Setting display:', display, 'enabled:', Lampa.Storage.get('color_plugin_enabled', 'false'));
                     item.style.display = display;
                 },
                 onChange: function (value) {
@@ -885,12 +905,12 @@
             console.log('ColorPlugin: Found params:', params.map(function(p) { return p ? p.getAttribute('data-name') : null; }));
             for (var i = 0; i < params.length; i++) {
                 var param = params[i];
-                if (param) {
+                if (param && param.style) {
                     var display = Lampa.Storage.get('color_plugin_enabled', 'false') === 'true' ? 'block' : 'none';
                     param.style.display = display;
                     console.log('ColorPlugin: Set display to', display, 'for param', param.getAttribute('data-name'));
                 } else {
-                    console.warn('ColorPlugin: Param not found:', params[i] ? params[i].getAttribute('data-name') : 'index ' + i);
+                    console.warn('ColorPlugin: Param not found or invalid:', params[i] ? params[i].getAttribute('data-name') : 'index ' + i);
                 }
             }
             if (Lampa.Settings && typeof Lampa.Settings.render === 'function') {
