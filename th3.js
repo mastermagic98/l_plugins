@@ -728,7 +728,10 @@
                     applyStyles();
                     updateCanvasFillStyle(window.draw_context);
                     console.log('ColorPlugin: color_plugin_enabled changed to', ColorPlugin.settings.enabled);
-                    Lampa.Settings.render();
+                    // Примусово оновлюємо меню налаштувань
+                    setTimeout(function () {
+                        Lampa.Settings.render();
+                    }, 0);
                 }
             });
 
@@ -834,9 +837,14 @@
                 var param = params[i];
                 if (param.length) {
                     param.css('display', Lampa.Storage.get('color_plugin_enabled', 'false') === 'true' ? 'block' : 'none');
+                } else {
+                    console.warn('ColorPlugin: Param not found in DOM:', params[i].selector);
                 }
             }
-            Lampa.Settings.render();
+            // Примусово оновлюємо меню налаштувань
+            setTimeout(function () {
+                Lampa.Settings.render();
+            }, 0);
         }
     });
 
@@ -852,7 +860,10 @@
             applyStyles();
             updateCanvasFillStyle(window.draw_context);
             updatePluginIcon();
-            Lampa.Settings.render();
+            // Примусово оновлюємо меню налаштувань
+            setTimeout(function () {
+                Lampa.Settings.render();
+            }, 0);
         } else if (event.type === 'close') {
             saveSettings();
             applyStyles();
