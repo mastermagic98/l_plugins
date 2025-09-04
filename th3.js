@@ -1,32 +1,52 @@
 (function () {
     'use strict';
 
-    // Додаємо переклади
+    // Додаємо переклади для назв, описів опцій і кольорів
     Lampa.Lang.add({
         color_plugin: {
             ru: 'Настройка цветов',
             en: 'Color settings',
             uk: 'Налаштування кольорів'
         },
+        color_plugin_enabled: {
+            ru: 'Включить плагин',
+            en: 'Enable plugin',
+            uk: 'Увімкнути плагін'
+        },
+        color_plugin_enabled_description: {
+            ru: 'Дозволяє змінювати колір виділення та затемнення елементів інтерфейсу',
+            en: 'Allows changing the highlight and dimming color of interface elements',
+            uk: 'Дозволяє змінювати колір виділення та затемнення елементів інтерфейсу'
+        },
         main_color: {
             ru: 'Цвет выделения',
             en: 'Highlight color',
             uk: 'Колір виділення'
         },
-        color_plugin_enabled: {
-            ru: 'Включить плагин',
-            en: 'Enable plugin',
-            uk: 'Увімкнути плагін'
+        main_color_description: {
+            ru: 'Можна вибрати чи вказати колір для виділених елементів',
+            en: 'You can select or specify a color for highlighted elements',
+            uk: 'Можна вибрати чи вказати колір для виділених елементів'
         },
         enable_highlight: {
             ru: 'Включить рамку',
             en: 'Enable border',
             uk: 'Увімкнути рамку'
         },
+        enable_highlight_description: {
+            ru: 'Вмикається біла рамка на виділених елементах',
+            en: 'Enables a white border on highlighted elements',
+            uk: 'Вмикається біла рамка на виділених елементах'
+        },
         enable_dimming: {
             ru: 'Применить цвет затемнения',
             en: 'Apply dimming color',
             uk: 'Застосувати колір затемнення'
+        },
+        enable_dimming_description: {
+            ru: 'Змінюється колір затемних елементів',
+            en: 'Changes the color of dimmed elements',
+            uk: 'Змінюється колір затемнених елементів'
         },
         default_color: {
             ru: 'По умолчанию',
@@ -521,9 +541,17 @@
                 'gap: 10px;' +
                 'padding: 0;' +
             '}',
+            '.color-picker-container > div:nth-child(2) {' +
+                'display: flex;' +
+                'flex-direction: column;' +
+                'justify-content: flex-end;' +
+            '}',
             '@media (max-width: 768px) {' +
                 '.color-picker-container {' +
                     'grid-template-columns: 1fr;' +
+                '}' +
+                '.color-picker-container > div:nth-child(2) {' +
+                    'justify-content: flex-start;' +
                 '}' +
             '}'
         ].join('');
@@ -586,7 +614,12 @@
                 return createColorHtml(color, ColorPlugin.colors.main[color]);
             }).join('');
             return '<div class="color-family-outline">' + familyNameHtml + groupContent + '</div>';
-        }).join('');
+        });
+
+        // Розподіляємо кольори між двома колонками
+        var midPoint = Math.ceil(colorContent.length / 2);
+        var leftColumn = colorContent.slice(0, midPoint).join('');
+        var rightColumn = colorContent.slice(midPoint).join('');
 
         var defaultButton = createColorHtml('default', Lampa.Lang.translate('default_color'));
         var hexValue = Lampa.Storage.get('color_plugin_custom_hex', '') || '#353535';
@@ -598,7 +631,10 @@
         var topRowHtml = '<div style="display: flex; gap: 30px; padding: 0; justify-content: center; margin-bottom: 10px;">' +
                          defaultButton + inputHtml + '</div>';
 
-        var modalContent = '<div class="color-picker-container">' + colorContent + '</div>';
+        var modalContent = '<div class="color-picker-container">' +
+                           '<div>' + leftColumn + '</div>' +
+                           '<div>' + rightColumn + '</div>' +
+                           '</div>';
         var modalHtml = $('<div>' + topRowHtml + modalContent + '</div>');
 
         try {
@@ -733,7 +769,7 @@
                 },
                 field: {
                     name: Lampa.Lang.translate('color_plugin_enabled'),
-                    description: 'Дозволяє змінювати колір виділення та затемнення елементів інтерфейсу'
+                    description: Lampa.Lang.translate('color_plugin_enabled_description')
                 },
                 onChange: function (value) {
                     console.log('ColorPlugin: color_plugin_enabled changed to', value);
@@ -766,7 +802,7 @@
                 },
                 field: {
                     name: Lampa.Lang.translate('main_color'),
-                    description: 'Можна вибрати чи вказати колір для виділених елементів'
+                    description: Lampa.Lang.translate('main_color_description')
                 },
                 onRender: function (item) {
                     if (item && typeof item.css === 'function') {
@@ -791,7 +827,7 @@
                 },
                 field: {
                     name: Lampa.Lang.translate('enable_highlight'),
-                    description: 'Вмикається біла рамка на виділених елементах'
+                    description: Lampa.Lang.translate('enable_highlight_description')
                 },
                 onRender: function (item) {
                     if (item && typeof item.css === 'function') {
@@ -822,7 +858,7 @@
                 },
                 field: {
                     name: Lampa.Lang.translate('enable_dimming'),
-                    description: 'Змінюється колір затемних елементів'
+                    description: Lampa.Lang.translate('enable_dimming_description')
                 },
                 onRender: function (item) {
                     if (item && typeof item.css === 'function') {
