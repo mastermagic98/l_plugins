@@ -104,6 +104,9 @@
         }
     };
 
+    // Змінна для запобігання рекурсії
+    var isSaving = false;
+
     // Функція для конвертації HEX у RGB
     function hexToRgb(hex) {
         var cleanHex = hex.replace('#', '');
@@ -179,16 +182,22 @@
 
     // Функція для збереження всіх налаштувань
     function saveSettings() {
-        Lampa.Storage.set('color_plugin_main_color', ColorPlugin.settings.main_color);
-        Lampa.Storage.set('color_plugin_enabled', ColorPlugin.settings.enabled.toString());
-        Lampa.Storage.set('color_plugin_highlight_enabled', ColorPlugin.settings.highlight_enabled.toString());
-        Lampa.Storage.set('color_plugin_dimming_enabled', ColorPlugin.settings.dimming_enabled.toString());
-        console.log('ColorPlugin: Settings saved', {
+        if (isSaving) {
+            console.log('ColorPlugin: saveSettings skipped to prevent recursion');
+            return;
+        }
+        isSaving = true;
+        console.log('ColorPlugin: Saving settings', {
             main_color: ColorPlugin.settings.main_color,
             enabled: ColorPlugin.settings.enabled,
             highlight_enabled: ColorPlugin.settings.highlight_enabled,
             dimming_enabled: ColorPlugin.settings.dimming_enabled
         });
+        Lampa.Storage.set('color_plugin_main_color', ColorPlugin.settings.main_color);
+        Lampa.Storage.set('color_plugin_enabled', ColorPlugin.settings.enabled.toString());
+        Lampa.Storage.set('color_plugin_highlight_enabled', ColorPlugin.settings.highlight_enabled.toString());
+        Lampa.Storage.set('color_plugin_dimming_enabled', ColorPlugin.settings.dimming_enabled.toString());
+        isSaving = false;
     }
 
     // Функція для застосування стилів
@@ -521,8 +530,6 @@
 
         updateDateElementStyles();
         checkBodyStyles();
-        saveSettings();
-
         console.log('ColorPlugin: Applied styles, main_color: ' + ColorPlugin.settings.main_color + ', enabled: ' + ColorPlugin.settings.enabled + ', highlight_enabled: ' + ColorPlugin.settings.highlight_enabled + ', dimming_enabled: ' + ColorPlugin.settings.dimming_enabled);
     }
 
@@ -639,6 +646,7 @@
                                 Lampa.Storage.set('color_plugin_main_color', value);
                                 applyStyles();
                                 updateCanvasFillStyle(window.draw_context);
+                                saveSettings();
                                 Lampa.Controller.toggle('settings_component');
                                 Lampa.Controller.enable('menu');
                                 if (Lampa.Settings && Lampa.Settings.render) {
@@ -657,6 +665,7 @@
                         Lampa.Storage.set('color_plugin_main_color', color);
                         applyStyles();
                         updateCanvasFillStyle(window.draw_context);
+                        saveSettings();
                         Lampa.Modal.close();
                         Lampa.Controller.toggle('settings_component');
                         Lampa.Controller.enable('menu');
@@ -674,25 +683,27 @@
     // Функція для оновлення видимості параметрів
     function updateParamsVisibility(body) {
         var params = [
-            '[data-name="color_plugin_main_color"]',
-            '[data-name="color_plugin_highlight_enabled"]',
-            '[data-name="color_plugin_dimming_enabled"]'
+            '.settings-param[data-name="color_plugin_main_color"]',
+            '.settings-param[data-name="color_plugin_highlight_enabled"]',
+            '.settings-param[data-name="color_plugin_dimming_enabled"]'
         ];
         console.log('ColorPlugin: updateParamsVisibility called, enabled:', ColorPlugin.settings.enabled);
-        for (var i = 0; i < params.length; i++) {
-            var selector = params[i];
-            var elements = body ? body.find(selector) : $(selector);
-            console.log('ColorPlugin: Selector', selector, 'found', elements.length, 'elements');
-            if (elements.length > 0) {
-                var displayValue = ColorPlugin.settings.enabled ? 'block' : 'none';
-                elements.each(function(index, element) {
-                    $(element).css('display', displayValue);
-                    console.log('ColorPlugin: Set display to', displayValue, 'for element with data-name:', selector);
-                });
-            } else {
-                console.warn('ColorPlugin: No elements found for selector', selector);
+        setTimeout(function() {
+            for (var i = 0; i < params.length; i++) {
+                var selector = params[i];
+                var elements = body ? body.find(selector) : $(selector);
+                console.log('ColorPlugin: Selector', selector, 'found', elements.length, 'elements');
+                if (elements.length) {
+                    var displayValue = ColorPlugin.settings.enabled ? 'block' : 'none';
+                    elements.each(function(index, element) {
+                        $(element).css('display', displayValue);
+                        console.log('ColorPlugin: Set display to', displayValue, 'for element with data-name:', selector);
+                    });
+                } else {
+                    console.warn('ColorPlugin: No elements found for selector', selector);
+                }
             }
-        }
+        }, 100);
     }
 
     // Функція для ініціалізації плагіна
@@ -731,6 +742,7 @@
                     applyStyles();
                     updateCanvasFillStyle(window.draw_context);
                     updateParamsVisibility();
+                    saveSettings();
                     if (Lampa.Settings && Lampa.Settings.render) {
                         Lampa.Settings.render();
                     }
@@ -793,6 +805,7 @@
                     ColorPlugin.settings.highlight_enabled = value === 'true';
                     Lampa.Storage.set('color_plugin_highlight_enabled', ColorPlugin.settings.highlight_enabled.toString());
                     applyStyles();
+                    saveSettings();
                     if (Lampa.Settings && Lampa.Settings.render) {
                         Lampa.Settings.render();
                     }
@@ -823,6 +836,7 @@
                     ColorPlugin.settings.dimming_enabled = value === 'true';
                     Lampa.Storage.set('color_plugin_dimming_enabled', ColorPlugin.settings.dimming_enabled.toString());
                     applyStyles();
+                    saveSettings();
                     if (Lampa.Settings && Lampa.Settings.render) {
                         Lampa.Settings.render();
                     }
@@ -840,9 +854,7 @@
         Lampa.Settings.listener.follow('open', function (e) {
             if (e.name === 'color_plugin') {
                 console.log('ColorPlugin: Settings opened for color_plugin');
-                setTimeout(function() {
-                    updateParamsVisibility(e.body);
-                }, 100);
+                updateParamsVisibility(e.body);
             }
         });
     }
@@ -866,9 +878,6 @@
             applyStyles();
             updateCanvasFillStyle(window.draw_context);
             updateParamsVisibility();
-            if (Lampa.Settings && Lampa.Settings.render) {
-                Lampa.Settings.render();
-            }
         }
     });
 
@@ -879,7 +888,6 @@
             ColorPlugin.settings.enabled = Lampa.Storage.get('color_plugin_enabled', 'true') === 'true';
             ColorPlugin.settings.highlight_enabled = Lampa.Storage.get('color_plugin_highlight_enabled', 'true') === 'true';
             ColorPlugin.settings.dimming_enabled = Lampa.Storage.get('color_plugin_dimming_enabled', 'true') === 'true';
-            updateParamsVisibility();
             applyStyles();
             updateCanvasFillStyle(window.draw_context);
             updatePluginIcon();
