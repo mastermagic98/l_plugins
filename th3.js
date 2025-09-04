@@ -672,36 +672,33 @@
     }
 
     // Функція для оновлення видимості параметрів
-    function updateParamsVisibility() {
+    function updateParamsVisibility(body) {
         var params = [
-            '.settings-param[data-name="color_plugin_main_color"]',
-            '.settings-param[data-name="color_plugin_highlight_enabled"]',
-            '.settings-param[data-name="color_plugin_dimming_enabled"]'
+            '[data-name="color_plugin_main_color"]',
+            '[data-name="color_plugin_highlight_enabled"]',
+            '[data-name="color_plugin_dimming_enabled"]'
         ];
         console.log('ColorPlugin: updateParamsVisibility called, enabled:', ColorPlugin.settings.enabled);
         for (var i = 0; i < params.length; i++) {
             var selector = params[i];
-            var elements = $(selector);
+            var elements = body ? body.find(selector) : $(selector);
             console.log('ColorPlugin: Selector', selector, 'found', elements.length, 'elements');
             if (elements.length > 0) {
+                var displayValue = ColorPlugin.settings.enabled ? 'block' : 'none';
                 elements.each(function(index, element) {
-                    var displayValue = ColorPlugin.settings.enabled ? 'block' : 'none';
                     $(element).css('display', displayValue);
-                    console.log('ColorPlugin: Set display to', displayValue, 'for element', element);
+                    console.log('ColorPlugin: Set display to', displayValue, 'for element with data-name:', selector);
                 });
             } else {
                 console.warn('ColorPlugin: No elements found for selector', selector);
             }
         }
-        // Додаємо затримку для асинхронного рендерингу
-        setTimeout(function() {
-            if (Lampa.Settings && Lampa.Settings.render) {
-                console.log('ColorPlugin: Calling Lampa.Settings.render');
-                Lampa.Settings.render();
-            } else {
-                console.warn('ColorPlugin: Lampa.Settings.render is not available');
-            }
-        }, 100);
+        if (Lampa.Settings && Lampa.Settings.render) {
+            console.log('ColorPlugin: Calling Lampa.Settings.render');
+            Lampa.Settings.render();
+        } else {
+            console.warn('ColorPlugin: Lampa.Settings.render is not available');
+        }
     }
 
     // Функція для ініціалізації плагіна
@@ -840,6 +837,16 @@
             updateCanvasFillStyle(window.draw_context);
             updateParamsVisibility();
         }
+
+        // Додаємо слухач для оновлення видимості при відкритті налаштувань
+        Lampa.Settings.listener.follow('open', function (e) {
+            if (e.name === 'color_plugin') {
+                console.log('ColorPlugin: Settings opened for color_plugin');
+                setTimeout(function() {
+                    updateParamsVisibility(e.body);
+                }, 100);
+            }
+        });
     }
 
     // Запускаємо плагін після готовності програми
@@ -859,9 +866,9 @@
         if (e.name === 'color_plugin_enabled') {
             console.log('ColorPlugin: Storage change detected for color_plugin_enabled, value:', e.value);
             ColorPlugin.settings.enabled = e.value === 'true';
-            updateParamsVisibility();
             applyStyles();
             updateCanvasFillStyle(window.draw_context);
+            updateParamsVisibility();
             if (Lampa.Settings && Lampa.Settings.render) {
                 Lampa.Settings.render();
             }
