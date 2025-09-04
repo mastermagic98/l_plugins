@@ -665,20 +665,80 @@
         }
     }
 
-    // Функція для оновлення видимості параметрів у DOM
-    function updateParamsVisibility() {
-        var params = [
-            'color_plugin_main_color',
-            'color_plugin_highlight_enabled',
-            'color_plugin_dimming_enabled'
-        ];
+    // Функція для видалення параметрів
+    function removeParams() {
+        var params = ['color_plugin_main_color', 'color_plugin_highlight_enabled', 'color_plugin_dimming_enabled'];
         for (var i = 0; i < params.length; i++) {
             var paramName = params[i];
-            var paramElement = document.querySelector('.settings-param[data-name="' + paramName + '"]');
-            if (paramElement) {
-                paramElement.style.display = ColorPlugin.settings.enabled ? '' : 'none';
+            var index = Lampa.SettingsApi.components.findIndex(function(c) {
+                return c.component === 'color_plugin' && c.param && c.param.name === paramName;
+            });
+            if (index !== -1) {
+                Lampa.SettingsApi.components.splice(index, 1);
             }
         }
+        Lampa.Settings.render();
+    }
+
+    // Функція для додавання параметрів
+    function addParams() {
+        // Колір виділення
+        Lampa.SettingsApi.addParam({
+            component: 'color_plugin',
+            param: {
+                name: 'color_plugin_main_color',
+                type: 'button'
+            },
+            field: {
+                name: Lampa.Lang.translate('main_color'),
+                description: 'Можна вибрати чи вказати колір для виділених елементів'
+            },
+            onChange: function () {
+                openColorPicker();
+            }
+        });
+
+        // Увімкнення/вимкнення рамки
+        Lampa.SettingsApi.addParam({
+            component: 'color_plugin',
+            param: {
+                name: 'color_plugin_highlight_enabled',
+                type: 'trigger',
+                default: ColorPlugin.settings.highlight_enabled.toString()
+            },
+            field: {
+                name: Lampa.Lang.translate('enable_highlight'),
+                description: 'Вмикається біла рамка на виділених елементах'
+            },
+            onChange: function (value) {
+                ColorPlugin.settings.highlight_enabled = value === 'true';
+                Lampa.Storage.set('color_plugin_highlight_enabled', ColorPlugin.settings.highlight_enabled.toString());
+                applyStyles();
+                Lampa.Settings.render();
+            }
+        });
+
+        // Застосувати колір затемнення
+        Lampa.SettingsApi.addParam({
+            component: 'color_plugin',
+            param: {
+                name: 'color_plugin_dimming_enabled',
+                type: 'trigger',
+                default: ColorPlugin.settings.dimming_enabled.toString()
+            },
+            field: {
+                name: Lampa.Lang.translate('enable_dimming'),
+                description: 'Змінюється колір затемних елементів'
+            },
+            onChange: function (value) {
+                ColorPlugin.settings.dimming_enabled = value === 'true';
+                Lampa.Storage.set('color_plugin_dimming_enabled', ColorPlugin.settings.dimming_enabled.toString());
+                applyStyles();
+                Lampa.Settings.render();
+            }
+        });
+
+        Lampa.Settings.render();
     }
 
     // Функція для ініціалізації плагіна
@@ -712,73 +772,25 @@
                 onChange: function (value) {
                     ColorPlugin.settings.enabled = value === 'true';
                     Lampa.Storage.set('color_plugin_enabled', ColorPlugin.settings.enabled.toString());
+                    if (ColorPlugin.settings.enabled) {
+                        addParams();
+                    } else {
+                        removeParams();
+                    }
                     applyStyles();
                     updateCanvasFillStyle(window.draw_context);
-                    updateParamsVisibility(); // Оновлюємо видимість параметрів у DOM
                     Lampa.Settings.render();
                 }
             });
 
-            // Колір виділення
-            Lampa.SettingsApi.addParam({
-                component: 'color_plugin',
-                param: {
-                    name: 'color_plugin_main_color',
-                    type: 'button'
-                },
-                field: {
-                    name: Lampa.Lang.translate('main_color'),
-                    description: 'Можна вибрати чи вказати колір для виділених елементів'
-                },
-                onChange: function () {
-                    openColorPicker();
-                }
-            });
-
-            // Увімкнення/вимкнення рамки
-            Lampa.SettingsApi.addParam({
-                component: 'color_plugin',
-                param: {
-                    name: 'color_plugin_highlight_enabled',
-                    type: 'trigger',
-                    default: 'true'
-                },
-                field: {
-                    name: Lampa.Lang.translate('enable_highlight'),
-                    description: 'Вмикається біла рамка на виділених елементах'
-                },
-                onChange: function (value) {
-                    ColorPlugin.settings.highlight_enabled = value === 'true';
-                    Lampa.Storage.set('color_plugin_highlight_enabled', ColorPlugin.settings.highlight_enabled.toString());
-                    applyStyles();
-                    Lampa.Settings.render();
-                }
-            });
-
-            // Застосувати колір затемнення
-            Lampa.SettingsApi.addParam({
-                component: 'color_plugin',
-                param: {
-                    name: 'color_plugin_dimming_enabled',
-                    type: 'trigger',
-                    default: ColorPlugin.settings.dimming_enabled.toString()
-                },
-                field: {
-                    name: Lampa.Lang.translate('enable_dimming'),
-                    description: 'Змінюється колір затемних елементів'
-                },
-                onChange: function (value) {
-                    ColorPlugin.settings.dimming_enabled = value === 'true';
-                    Lampa.Storage.set('color_plugin_dimming_enabled', ColorPlugin.settings.dimming_enabled.toString());
-                    applyStyles();
-                    Lampa.Settings.render();
-                }
-            });
+            // Додаємо параметри, якщо плагін увімкнений
+            if (ColorPlugin.settings.enabled) {
+                addParams();
+            }
 
             // Застосовуємо стилі при ініціалізації
             applyStyles();
             updateCanvasFillStyle(window.draw_context);
-            updateParamsVisibility(); // Оновлюємо видимість параметрів при ініціалізації
         }
     }
 
@@ -794,17 +806,21 @@
         });
     }
 
-    // Оновлюємо стилі, видимість параметрів та зберігаємо налаштування при взаємодії з меню
+    // Оновлюємо стилі та параметри при взаємодії з меню
     Lampa.Listener.follow('settings_component', function (event) {
         if (event.type === 'open') {
             // Оновлюємо налаштування перед відображенням меню
             ColorPlugin.settings.enabled = Lampa.Storage.get('color_plugin_enabled', 'true') === 'true';
             ColorPlugin.settings.highlight_enabled = Lampa.Storage.get('color_plugin_highlight_enabled', 'true') === 'true';
             ColorPlugin.settings.dimming_enabled = Lampa.Storage.get('color_plugin_dimming_enabled', 'true') === 'true';
+            if (ColorPlugin.settings.enabled) {
+                addParams();
+            } else {
+                removeParams();
+            }
             applyStyles();
             updateCanvasFillStyle(window.draw_context);
             updatePluginIcon(); // Оновлюємо іконку при відкритті налаштувань
-            updateParamsVisibility(); // Оновлюємо видимість параметрів
             Lampa.Settings.render();
         } else if (event.type === 'close') {
             saveSettings();
