@@ -673,12 +673,16 @@
             '.settings-param[data-name="color_plugin_dimming_enabled"]'
         ];
         for (var i = 0; i < params.length; i++) {
-            var elements = document.querySelectorAll(params[i]);
-            for (var j = 0; j < elements.length; j++) {
-                elements[j].style.display = ColorPlugin.settings.enabled ? 'block' : 'none';
+            var elements = $(params[i]);
+            if (elements.length > 0) {
+                elements.each(function() {
+                    $(this).css('display', ColorPlugin.settings.enabled ? 'block' : 'none');
+                });
             }
         }
-        Lampa.Settings.render();
+        if (Lampa.Settings && Lampa.Settings.render) {
+            Lampa.Settings.render();
+        }
     }
 
     // Функція для ініціалізації плагіна
@@ -715,7 +719,9 @@
                     applyStyles();
                     updateCanvasFillStyle(window.draw_context);
                     updateParamsVisibility();
-                    Lampa.Settings.render();
+                    if (Lampa.Settings && Lampa.Settings.render) {
+                        Lampa.Settings.render();
+                    }
                 }
             });
 
@@ -731,7 +737,11 @@
                     description: 'Можна вибрати чи вказати колір для виділених елементів'
                 },
                 onRender: function (item) {
-                    item.style.display = ColorPlugin.settings.enabled ? 'block' : 'none';
+                    if (item && typeof item.css === 'function') {
+                        item.css('display', ColorPlugin.settings.enabled ? 'block' : 'none');
+                    } else {
+                        console.warn('ColorPlugin: item.css is not a function for color_plugin_main_color', item);
+                    }
                 },
                 onChange: function () {
                     openColorPicker();
@@ -751,13 +761,19 @@
                     description: 'Вмикається біла рамка на виділених елементах'
                 },
                 onRender: function (item) {
-                    item.style.display = ColorPlugin.settings.enabled ? 'block' : 'none';
+                    if (item && typeof item.css === 'function') {
+                        item.css('display', ColorPlugin.settings.enabled ? 'block' : 'none');
+                    } else {
+                        console.warn('ColorPlugin: item.css is not a function for color_plugin_highlight_enabled', item);
+                    }
                 },
                 onChange: function (value) {
                     ColorPlugin.settings.highlight_enabled = value === 'true';
                     Lampa.Storage.set('color_plugin_highlight_enabled', ColorPlugin.settings.highlight_enabled.toString());
                     applyStyles();
-                    Lampa.Settings.render();
+                    if (Lampa.Settings && Lampa.Settings.render) {
+                        Lampa.Settings.render();
+                    }
                 }
             });
 
@@ -774,13 +790,19 @@
                     description: 'Змінюється колір затемних елементів'
                 },
                 onRender: function (item) {
-                    item.style.display = ColorPlugin.settings.enabled ? 'block' : 'none';
+                    if (item && typeof item.css === 'function') {
+                        item.css('display', ColorPlugin.settings.enabled ? 'block' : 'none');
+                    } else {
+                        console.warn('ColorPlugin: item.css is not a function for color_plugin_dimming_enabled', item);
+                    }
                 },
                 onChange: function (value) {
                     ColorPlugin.settings.dimming_enabled = value === 'true';
                     Lampa.Storage.set('color_plugin_dimming_enabled', ColorPlugin.settings.dimming_enabled.toString());
                     applyStyles();
-                    Lampa.Settings.render();
+                    if (Lampa.Settings && Lampa.Settings.render) {
+                        Lampa.Settings.render();
+                    }
                 }
             });
 
@@ -810,7 +832,9 @@
             updateParamsVisibility();
             applyStyles();
             updateCanvasFillStyle(window.draw_context);
-            Lampa.Settings.render();
+            if (Lampa.Settings && Lampa.Settings.render) {
+                Lampa.Settings.render();
+            }
         }
     });
 
@@ -824,7 +848,9 @@
             applyStyles();
             updateCanvasFillStyle(window.draw_context);
             updatePluginIcon();
-            Lampa.Settings.render();
+            if (Lampa.Settings && Lampa.Settings.render) {
+                Lampa.Settings.render();
+            }
         } else if (event.type === 'close') {
             saveSettings();
             applyStyles();
