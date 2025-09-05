@@ -277,6 +277,9 @@
             '.modal__title {' +
                 'font-size: 1.7em !important;' +
             '}',
+            '.modal__head {' +
+                'margin-bottom: 0 !important;' +
+            '}',
             '.modal .scroll__content {' +
                 'padding: 1.0em 0 !important;' +
             '}',
@@ -538,7 +541,7 @@
             '.color-picker-container {' +
                 'display: grid;' +
                 'grid-template-columns: 1fr 1fr;' +
-                'gap: 180px;' +
+                'gap: 140px;' +
                 'padding: 0;' +
             '}',
             '.color-picker-container > div:nth-child(2) {' +
@@ -927,7 +930,7 @@
             applyStyles();
             updateCanvasFillStyle(window.draw_context);
             updatePluginIcon();
-            updateParamsVisibility(); // Додано для оновлення видимості параметрів при вході в меню
+            updateParamsVisibility();
         } else if (event.type === 'close') {
             console.log('ColorPlugin: settings_component closed');
             saveSettings();
