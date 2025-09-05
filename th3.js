@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    // Додаємо переклади для назв, описів опцій і кольорів
+    // Додаємо переклади для назв, описів опцій і кольору за замовчуванням
     Lampa.Lang.add({
         color_plugin: {
             ru: 'Настройка цветов',
@@ -14,9 +14,9 @@
             uk: 'Увімкнути плагін'
         },
         color_plugin_enabled_description: {
-            ru: 'Дозволяє змінювати колір виділення та затемнення елементів інтерфейсу',
-            en: 'Allows changing the highlight and dimming color of interface elements',
-            uk: 'Дозволяє змінювати колір виділення та затемнення елементів інтерфейсу'
+            ru: 'Изменяет внешний вид некоторых элементов интерфейса Lampa',
+            en: 'Changes the appearance of some Lampa interface elements',
+            uk: 'Змінює вигляд деяких елементів інтерфейсу Lampa'
         },
         main_color: {
             ru: 'Цвет выделения',
@@ -24,19 +24,19 @@
             uk: 'Колір виділення'
         },
         main_color_description: {
-            ru: 'Можна вибрати чи вказати колір для виділених елементів',
-            en: 'You can select or specify a color for highlighted elements',
-            uk: 'Можна вибрати чи вказати колір для виділених елементів'
+            ru: 'Выберите или укажите цвет',
+            en: 'Select or specify a color',
+            uk: 'Виберіть чи вкажіть колір'
         },
         enable_highlight: {
-            ru: 'Включить рамку',
-            en: 'Enable border',
-            uk: 'Увімкнути рамку'
+            ru: 'Показать рамку',
+            en: 'Show border',
+            uk: 'Показати рамку'
         },
         enable_highlight_description: {
-            ru: 'Вмикається біла рамка на виділених елементах',
-            en: 'Enables a white border on highlighted elements',
-            uk: 'Вмикається біла рамка на виділених елементів'
+            ru: 'Включает белую рамку вокруг некоторых выделенных элементов интерфейса',
+            en: 'Enables a white border around some highlighted interface elements',
+            uk: 'Вмикає білу рамку навколо деяких виділених елементів інтерфейсу'
         },
         enable_dimming: {
             ru: 'Применить цвет затемнения',
@@ -44,29 +44,9 @@
             uk: 'Застосувати колір затемнення'
         },
         enable_dimming_description: {
-            ru: 'Змінюється колір затемних елементів',
-            en: 'Changes the color of dimmed elements',
-            uk: 'Змінюється колір затемнених елементів'
-        },
-        enable_rounding: {
-            ru: 'Заокруглення',
-            en: 'Rounding',
-            uk: 'Заокруглення'
-        },
-        enable_rounding_description: {
-            ru: 'Вмикає заокруглення кутів для виділених елементів',
-            en: 'Enables corner rounding for highlighted elements',
-            uk: 'Вмикає заокруглення кутів для виділених елементів'
-        },
-        enable_background_color: {
-            ru: 'Колір фону',
-            en: 'Background color',
-            uk: 'Колір фону'
-        },
-        enable_background_color_description: {
-            ru: 'Застосовує основний колір для фону сторінки',
-            en: 'Applies the main color to the page background',
-            uk: 'Застосовує основний колір для фону сторінки'
+            ru: 'Изменяет цвет затемненных элементов интерфейса на темный оттенок выбранного цвета выделения',
+            en: 'Changes the color of dimmed interface elements to a dark shade of the selected highlight color',
+            uk: 'Змінює колір затемнених елементів інтерфейсу на темний відтінок вибраного кольору виділення'
         },
         default_color: {
             ru: 'По умолчанию',
@@ -91,9 +71,7 @@
             main_color: Lampa.Storage.get('color_plugin_main_color', '#353535'),
             enabled: Lampa.Storage.get('color_plugin_enabled', 'true') === 'true',
             highlight_enabled: Lampa.Storage.get('color_plugin_highlight_enabled', 'true') === 'true',
-            dimming_enabled: Lampa.Storage.get('color_plugin_dimming_enabled', 'true') === 'true',
-            rounding_enabled: Lampa.Storage.get('color_plugin_rounding_enabled', 'true') === 'true',
-            background_color_enabled: Lampa.Storage.get('color_plugin_background_color_enabled', 'false') === 'true'
+            dimming_enabled: Lampa.Storage.get('color_plugin_dimming_enabled', 'true') === 'true'
         },
         colors: {
             main: {
@@ -166,6 +144,15 @@
         }
     }
 
+    // Функція для перевірки стилів body.black--style
+    function checkBodyStyles() {
+        var body = document.body;
+        var hasBlackStyle = body.classList.contains('black--style');
+        var hasGlassStyle = body.classList.contains('glass--style');
+        var computedStyle = window.getComputedStyle(body);
+        var background = computedStyle.background || computedStyle.backgroundColor;
+    }
+
     // Функція для збереження всіх налаштувань
     function saveSettings() {
         if (isSaving) {
@@ -176,8 +163,6 @@
         Lampa.Storage.set('color_plugin_enabled', ColorPlugin.settings.enabled.toString());
         Lampa.Storage.set('color_plugin_highlight_enabled', ColorPlugin.settings.highlight_enabled.toString());
         Lampa.Storage.set('color_plugin_dimming_enabled', ColorPlugin.settings.dimming_enabled.toString());
-        Lampa.Storage.set('color_plugin_rounding_enabled', ColorPlugin.settings.rounding_enabled.toString());
-        Lampa.Storage.set('color_plugin_background_color_enabled', ColorPlugin.settings.background_color_enabled.toString());
         isSaving = false;
     }
 
@@ -229,74 +214,6 @@
                 'background-color: rgba(var(--main-color-rgb), 0.3);' +
             '}'
         ) : '';
-
-        var roundingStyles = ColorPlugin.settings.rounding_enabled ? (
-            '.card.focus .card__view::after,' +
-            '.card:hover .card__view::after {' +
-                'content: "";' +
-                'position: absolute;' +
-                'top: -0.3em;' +
-                'left: -0.3em;' +
-                'right: -0.3em;' +
-                'bottom: -0.3em;' +
-                'border: 0.3em solid var(--main-color);' +
-                'border-radius: var(--card-radius);' +
-                'z-index: -1;' +
-                'pointer-events: none;' +
-                'background-color: var(--main-color);' +
-            '}' +
-            '.settings-param.focus {' +
-                'color: #fff;' +
-                'border-radius: var(--menu-radius);' +
-                'background: var(--main-color);' +
-            '}' +
-            '.simple-button.focus {' +
-                'color: #fff;' +
-                'background: var(--main-color);' +
-            '}' +
-            '.torrent-serial.focus,' +
-            '.torrent-file.focus {' +
-                'background: var(--main-color);' +
-            '}' +
-            '.torrent-item.focus::after {' +
-                'content: "";' +
-                'position: absolute;' +
-                'top: -0.5em;' +
-                'left: -0.5em;' +
-                'right: -0.5em;' +
-                'bottom: -0.5em;' +
-                'border: 0.3em solid var(--main-color);' +
-                'border-radius: 0.7em;' +
-                'z-index: -1;' +
-                'background: var(--main-color);' +
-            '}' +
-            '.tag-count.focus,' +
-            '.full-person.focus,' +
-            '.full-review.focus {' +
-                'color: #fff;' +
-                'background: var(--main-color);' +
-            '}' +
-            '.selectbox-item.focus {' +
-                'color: #fff;' +
-                'border-radius: var(--menu-radius);' +
-                'background: var(--main-color);' +
-            '}' +
-            '.settings-folder.focus {' +
-                'color: #fff;' +
-                'border-radius: 0em 15em 14em 0em;' +
-                'background: var(--main-color);' +
-            '}'
-        ) : '';
-
-        var backgroundStyles = ColorPlugin.settings.background_color_enabled ? (
-            'body {' +
-                'background: var(--main-color) !important;' +
-            '}'
-        ) : (
-            'body {' +
-                'background: var(--dark-bg) !important;' +
-            '}'
-        );
 
         style.innerHTML = [
             ':root {' +
@@ -455,8 +372,6 @@
                 'filter: none;' +
             '}',
             dimmingStyles,
-            roundingStyles,
-            backgroundStyles,
             '.timetable__item--any::before {' +
                 'background-color: rgba(var(--main-color-rgb), 0.3);' +
             '}',
@@ -464,7 +379,7 @@
                 'background: var(--main-color);' +
             '}',
             '.bookmarks-folder__layer {' +
-                'background: var(--main-color);' +
+                'background-color: var(--main-color);' +
             '}',
             '.color_square.default {' +
                 'background-color: #fff;' +
@@ -506,32 +421,6 @@
                 'font-size: 10px;' +
                 'text-align: center;' +
             '}',
-            '.color-family-outline {' +
-                'display: flex;' +
-                'flex-direction: row;' +
-                'overflow: hidden;' +
-                'gap: 10px;' +
-                'border-radius: 8px;' +
-                'margin-bottom: 1px;' +
-                'padding: 5px;' +
-            '}',
-            '.color-family-name {' +
-                'width: 80px;' +
-                'height: 35px;' +
-                'border-width: 2px;' +
-                'border-style: solid;' +
-                'border-radius: 4px;' +
-                'display: flex;' +
-                'flex-direction: column;' +
-                'justify-content: center;' +
-                'align-items: center;' +
-                'cursor: default;' +
-                'color: #ffffff !important;' +
-                'font-size: 10px;' +
-                'font-weight: bold;' +
-                'text-align: center;' +
-                'text-transform: capitalize;' +
-            '}',
             '.color_square .hex {' +
                 'font-size: 9px;' +
                 'opacity: 0.9;' +
@@ -571,321 +460,19 @@
             '}',
             '.color-picker-container {' +
                 'display: grid;' +
-                'grid-template-columns: 1fr 1fr;' +
+                'grid-template-columns: 1fr;' +
                 'gap: 140px;' +
                 'padding: 0;' +
-            '}',
-            '.color-picker-container > div:nth-child(2) {' +
-                'display: flex;' +
-                'flex-direction: column;' +
-                'justify-content: flex-end;' +
             '}',
             '@media (max-width: 768px) {' +
                 '.color-picker-container {' +
                     'grid-template-columns: 1fr;' +
                 '}' +
-                '.color-picker-container > div:nth-child(2) {' +
-                    'justify-content: flex-start;' +
-                '}' +
-            '}',
-            '.head__action {' +
-                'opacity: 0.80;' +
-            '}',
-            '.navigation-bar__body {' +
-                'background: rgba(0, 0, 0, var(--navigation-bar-opacity));' +
-            '}',
-            '.console {' +
-                'background: var(--dark-bg);' +
-            '}',
-            '.bookmarks-folder__layer {' +
-                'background: rgba(0, 0, 0, var(--bookmarks-layer-opacity));' +
-            '}',
-            '.selector__body, .modal-layer {' +
-                'background-color: var(--dark-bg);' +
-            '}',
-            '.card__marker > span {' +
-                'max-width: 11em;' +
-            '}',
-            '.online.focus {' +
-                'box-shadow: 0 0 0 0.2em var(--main-color);' +
-                'background: var(--main-color);' +
-            '}',
-            '.noty {' +
-                'color: #ffffff;' +
-            '}',
-            '.head__action.focus {' +
-                'background: var(--main-color);' +
-                'color: #fff;' +
-            '}',
-            '.selector:hover {' +
-                'opacity: 0.8;' +
-            '}',
-            '.online-prestige.focus::after {' +
-                'border: solid .3em var(--main-color) !important;' +
-                'background-color: #871818;' +
-            '}',
-            '.full-episode.focus::after,' +
-            '.card-episode.focus .full-episode::after {' +
-                'border: 0.3em solid var(--main-color);' +
-            '}',
-            '.wrap__left {' +
-                'box-shadow: 15px 0px 20px 0px var(--dark-bg) !important;' +
-            '}',
-            '.card__type {' +
-                'background: var(--main-color) !important;' +
-            '}',
-            '.new-interface .card.card--wide+.card-more .card-more__box,' +
-            '.card-more__box {' +
-                'background: rgba(0, 0, 0, var(--card-more-box-opacity));' +
-            '}',
-            '.helper {' +
-                'background: var(--main-color);' +
-            '}',
-            '.extensions__item,' +
-            '.extensions__block-add {' +
-                'background-color: var(--menu-bg);' +
-            '}',
-            '.extensions__item.focus:after,' +
-            '.extensions__block-empty.focus:after,' +
-            '.extensions__block-add.focus:after {' +
-                'border: 0.3em solid var(--main-color);' +
-            '}',
-            '.settings-input--free,' +
-            '.settings-input__content,' +
-            '.extensions {' +
-                'background-color: var(--dark-bg);' +
-            '}',
-            '.modal__content {' +
-                'background-color: var(--darker-bg) !important;' +
-                'max-height: 90vh;' +
-                'overflow: hidden;' +
-                'box-shadow: var(--modal-shadow) !important;' +
-            '}',
-            '.settings__content,' +
-            '.selectbox__content {' +
-                'position: fixed;' +
-                'right: -100%;' +
-                'display: flex;' +
-                'background: var(--darker-bg);' +
-                'top: 1em;' +
-                'left: 98%;' +
-                'max-height: calc(100vh - 2em);' +
-                'border-radius: var(--menu-radius);' +
-                'padding: 0.5em;' +
-                'transform: translateX(100%);' +
-                'transition: transform 0.3s ease;' +
-                'overflow-y: auto;' +
-                'box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;' +
-            '}',
-            '.settings__title,' +
-            '.selectbox__title {' +
-                'font-size: var(--title-size);' +
-                'font-weight: 300;' +
-                'text-align: center;' +
-            '}',
-            '.scroll--mask {' +
-                '-webkit-mask-image: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, rgb(255, 255, 255) 8%, rgb(255, 255, 255) 92%, rgba(255, 255, 255, 0) 100%);' +
-                'mask-image: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, rgb(255, 255, 255) 8%, rgb(255, 255, 255) 92%, rgba(255, 255, 255, 0) 100%);' +
-            '}',
-            '.full-start__button.focus {' +
-                'color: white !important;' +
-                'background: var(--main-color) !important;' +
-            '}',
-            '.menu__list {' +
-                'padding-left: 0;' +
-            '}',
-            'body.advanced--animation .head .head__action.focus,' +
-            'body.advanced--animation .head .head__action:hover,' +
-            'body.advanced--animation .menu .menu__item.focus,' +
-            'body.advanced--animation .menu .menu__item:hover,' +
-            'body.advanced--animation .full-start__button.focus,' +
-            'body.advanced--animation .full-start__button:hover,' +
-            'body.advanced--animation .simple-button.focus,' +
-            'body.advanced--animation .simple-button:hover,' +
-            'body.advanced--animation .full-descr__tag.focus,' +
-            'body.advanced--animation .full-descr__tag:hover,' +
-            'body.advanced--animation .tag-count.focus,' +
-            'body.advanced--animation .tag-count:hover,' +
-            'body.advanced--animation .full-review.focus,' +
-            'body.advanced--animation .full-review:hover,' +
-            'body.advanced--animation .full-review-add.focus,' +
-            'body.advanced--animation .full-review-add:hover {' +
-                'animation: none !important;' +
-            '}',
-            '.full-review-add.focus::after {' +
-                'border: 0.3em solid var(--main-color);' +
-            '}',
-            '.explorer__left {' +
-                'display: none;' +
-            '}',
-            '.explorer__files {' +
-                'width: 100%;' +
-            '}',
-            '.notification-item {' +
-                'border: 2px solid var(--main-color) !important;' +
-            '}',
-            '.notification-date {' +
-                'background: var(--main-color) !important;' +
-            '}',
-            '.card__quality {' +
-                'color: #fff;' +
-                'background: var(--main-color) !important;' +
-            '}',
-            '.modal {' +
-                'position: fixed;' +
-                'top: 0;' +
-                'left: 0;' +
-                'right: 0;' +
-                'bottom: 0;' +
-                'align-items: center;' +
-            '}',
-            '.noty__body {' +
-                'box-shadow: 0 -2px 6px rgb(22 22 22 / 50%);' +
-                'background: var(--main-color);' +
-            '}',
-            '.card__title {' +
-                'text-align: center;' +
-                'font-size: 1.2em;' +
-                'line-height: 1.1;' +
-            '}',
-            '.background__one.visible, .background__two.visible {' +
-                'opacity: 0;' +
-            '}',
-            '.card__age {' +
-                'text-align: center;' +
-                'color: #ffffff7a;' +
-            '}',
-            '.card__vote {' +
-                'position: absolute;' +
-                'top: var(--vote-top);' +
-                'left: var(--vote-left);' +
-                'bottom: var(--vote-bottom);' +
-                'right: var(--vote-right);' +
-                'background: var(--vote-background);' +
-                'color: #ffffff;' +
-                'font-size: var(--vote-font-size);' +
-                'font-weight: 700;' +
-                'padding: 0.5em;' +
-                'border-radius: var(--vote-border-radius);' +
-                'display: flex;' +
-                'flex-direction: column;' +
-                'align-items: center;' +
-            '}',
-            'body.glass--style.platform--browser .card .card__icons-inner,' +
-            'body.glass--style.platform--browser .card .card__marker,' +
-            'body.glass--style.platform--browser .card .card__vote,' +
-            'body.glass--style.platform--browser .card .card-watched,' +
-            'body.glass--style.platform--nw .card .card__icons-inner,' +
-            'body.glass--style.platform--nw .card .card__marker,' +
-            'body.glass--style.platform--nw .card .card__vote,' +
-            'body.glass--style.platform--nw .card .card-watched,' +
-            'body.glass--style.platform--apple .card .card__icons-inner,' +
-            'body.glass--style.platform--apple .card .card__marker,' +
-            'body.glass--style.platform--apple .card .card__vote,' +
-            'body.glass--style.platform--apple .card .card-watched {' +
-                'background-color: rgba(0, 0, 0, 0.3);' +
-                '-webkit-backdrop-filter: blur(1em);' +
-                'backdrop-filter: none;' +
-                'background: var(--main-color);' +
-            '}',
-            '@media screen and (max-width: 480px) {' +
-                '.settings__content,' +
-                '.selectbox__content {' +
-                    'left: 0 !important;' +
-                    'top: unset !important;' +
-                    'border-top-left-radius: 2em !important;' +
-                    'border-top-right-radius: 2em !important;' +
-                '}' +
-                '.ru-title-full,' +
-                '.ru-title-full:hover {' +
-                    'max-width: none !important;' +
-                    'text-align: center !important;' +
-                '}' +
-                '.full-start-new__body {' +
-                    'text-align: center !important;' +
-                '}' +
-                '.full-start-new__rate-line {' +
-                    'padding-top: 0.5em !important;' +
-                    'display: flex;' +
-                    'justify-content: center;' +
-                    'margin-bottom: 0em;' +
-                '}' +
-                '.full-start-new__tagline {' +
-                    'margin-bottom: 0.5em !important;' +
-                    'margin-top: 0.5em !important;' +
-                '}' +
-                '.full-start-new__title img {' +
-                    'object-fit: contain;' +
-                    'max-width: var(--max-image-width) !important;' +
-                    'max-height: 5em !important;' +
-                '}' +
-                '.selectbox.animate .selectbox__content,' +
-                '.settings.animate .settings__content {' +
-                    'background: var(--darker-bg);' +
-                '}' +
-            '}',
-            '@media screen and (max-width: 580px) {' +
-                '.full-descr__text {' +
-                    'text-align: justify;' +
-                '}' +
-                '.items-line__head {' +
-                    'justify-content: var(--center-align-details, center) !important;' +
-                '}' +
-                '.full-descr__details {' +
-                    'justify-content: var(--center-align-details, center) !important;' +
-                '}' +
-            '}',
-            '@media screen and (max-width: 480px) {' +
-                '.full-start-new__details > span:nth-of-type(7) {' +
-                    'display: block;' +
-                    'order: 2;' +
-                    'opacity: 40%;' +
-                '}' +
-                '.full-descr__tags {' +
-                    'justify-content: var(--center-align-details, center) !important;' +
-                '}' +
-                '.items-line__more {' +
-                    'display: none;' +
-                '}' +
-                '.full-descr__info-body {' +
-                    'justify-content: var(--center-align-details, center) !important;' +
-                    'display: flex;' +
-                '}' +
-                '.full-descr__details > * {' +
-                    'text-align: center;' +
-                '}' +
-            '}',
-            '@media screen and (max-width: 580px) {' +
-                '.full-start-new__buttons {' +
-                    'overflow: auto;' +
-                    'display: flex !important;' +
-                    'justify-content: var(--center-align-details, center) !important;' +
-                    'flex-wrap: wrap !important;' +
-                    'max-width: 100% !important;' +
-                    'margin: 0.5em auto !important;' +
-                '}' +
-            '}',
-            '@media screen and (max-width: 767px) {' +
-                '.full-start-new__details {' +
-                    'display: flex !important;' +
-                    'justify-content: var(--center-align-details, center) !important;' +
-                    'flex-wrap: wrap !important;' +
-                    'max-width: 100% !important;' +
-                    'margin: 0.5em auto !important;' +
-                '}' +
-            '}',
-            '@media screen and (max-width: 480px) {' +
-                '.full-start-new__reactions {' +
-                    'display: flex !important;' +
-                    'justify-content: var(--center-align-details, center) !important;' +
-                    'flex-wrap: wrap !important;' +
-                    'max-width: 100% !important;' +
-                    'margin: 0.5em auto !important;' +
-                '}' +
             '}'
         ].join('');
 
         updateDateElementStyles();
+        checkBodyStyles();
     }
 
     // Функція для створення HTML для вибору кольору
@@ -897,27 +484,8 @@
         return '<div class="' + className + '" tabindex="0" style="' + style + '" title="' + name + '">' + content + '</div>';
     }
 
-    // Функція для створення HTML для назви сімейства
-    function createFamilyNameHtml(name, color) {
-        return '<div class="color-family-name" style="border-color: ' + (color || '#353535') + ';">' + Lampa.Lang.translate(name.toLowerCase()) + '</div>';
-    }
-
-    // Функція для розбиття масиву кольорів на групи по 6
-    function chunkArray(arr, size) {
-        var result = [];
-        for (var i = 0; i < arr.length; i += size) {
-            result.push(arr.slice(i, i + size));
-        }
-        return result;
-    }
-
     // Функція для створення модального вікна вибору кольору
     function openColorPicker() {
-        var colorKeys = Object.keys(ColorPlugin.colors.main);
-        var families = [];
-        var colorsByFamily = [];
-
-        // Оскільки всі кольори видалено, модальне вікно міститиме лише кнопку за замовчуванням і поле для HEX-коду
         var defaultButton = createColorHtml('default', Lampa.Lang.translate('default_color'));
         var hexValue = Lampa.Storage.get('color_plugin_custom_hex', '') || '#353535';
         var hexDisplay = hexValue.replace('#', '');
@@ -928,11 +496,8 @@
         var topRowHtml = '<div style="display: flex; gap: 30px; padding: 0; justify-content: center; margin-bottom: 10px;">' +
                          defaultButton + inputHtml + '</div>';
 
-        var modalContent = '<div class="color-picker-container">' +
-                           '<div></div>' +
-                           '<div></div>' +
-                           '</div>';
-        var modalHtml = $('<div>' + topRowHtml + modalContent + '</div>');
+        var modalContent = '<div class="color-picker-container">' + topRowHtml + '</div>';
+        var modalHtml = $('<div>' + modalContent + '</div>');
 
         try {
             Lampa.Modal.open({
@@ -1008,7 +573,8 @@
                     }
                 }
             });
-        } catch (e) {}
+        } catch (e) {
+        }
     }
 
     // Функція для оновлення видимості параметрів
@@ -1016,18 +582,18 @@
         var params = [
             '.settings-param[data-name="color_plugin_main_color"]',
             '.settings-param[data-name="color_plugin_highlight_enabled"]',
-            '.settings-param[data-name="color_plugin_dimming_enabled"]',
-            '.settings-param[data-name="color_plugin_rounding_enabled"]',
-            '.settings-param[data-name="color_plugin_background_color_enabled"]'
+            '.settings-param[data-name="color_plugin_dimming_enabled"]'
         ];
         setTimeout(function() {
             for (var i = 0; i < params.length; i++) {
                 var selector = params[i];
                 var elements = body ? body.find(selector) : $(selector);
-                var displayValue = ColorPlugin.settings.enabled ? 'block' : 'none';
-                elements.each(function(index, element) {
-                    $(element).css('display', displayValue);
-                });
+                if (elements.length) {
+                    var displayValue = ColorPlugin.settings.enabled ? 'block' : 'none';
+                    elements.each(function(index, element) {
+                        $(element).css('display', displayValue);
+                    });
+                }
             }
         }, 100);
     }
@@ -1039,8 +605,6 @@
         ColorPlugin.settings.enabled = Lampa.Storage.get('color_plugin_enabled', 'true') === 'true';
         ColorPlugin.settings.highlight_enabled = Lampa.Storage.get('color_plugin_highlight_enabled', 'true') === 'true';
         ColorPlugin.settings.dimming_enabled = Lampa.Storage.get('color_plugin_dimming_enabled', 'true') === 'true';
-        ColorPlugin.settings.rounding_enabled = Lampa.Storage.get('color_plugin_rounding_enabled', 'true') === 'true';
-        ColorPlugin.settings.background_color_enabled = Lampa.Storage.get('color_plugin_background_color_enabled', 'false') === 'true';
 
         // Додаємо компонент до меню налаштувань
         if (Lampa.SettingsApi) {
@@ -1101,7 +665,7 @@
                 }
             });
 
-            // Увімкнення/вимкнення рамки
+            // Показати рамку
             Lampa.SettingsApi.addParam({
                 component: 'color_plugin',
                 param: {
@@ -1157,62 +721,6 @@
                 }
             });
 
-            // Увімкнення/вимкнення заокруглення
-            Lampa.SettingsApi.addParam({
-                component: 'color_plugin',
-                param: {
-                    name: 'color_plugin_rounding_enabled',
-                    type: 'trigger',
-                    default: ColorPlugin.settings.rounding_enabled.toString()
-                },
-                field: {
-                    name: Lampa.Lang.translate('enable_rounding'),
-                    description: Lampa.Lang.translate('enable_rounding_description')
-                },
-                onRender: function (item) {
-                    if (item && typeof item.css === 'function') {
-                        item.css('display', ColorPlugin.settings.enabled ? 'block' : 'none');
-                    }
-                },
-                onChange: function (value) {
-                    ColorPlugin.settings.rounding_enabled = value === 'true';
-                    Lampa.Storage.set('color_plugin_rounding_enabled', ColorPlugin.settings.rounding_enabled.toString());
-                    applyStyles();
-                    saveSettings();
-                    if (Lampa.Settings && Lampa.Settings.render) {
-                        Lampa.Settings.render();
-                    }
-                }
-            });
-
-            // Увімкнення/вимкнення кольору фону
-            Lampa.SettingsApi.addParam({
-                component: 'color_plugin',
-                param: {
-                    name: 'color_plugin_background_color_enabled',
-                    type: 'trigger',
-                    default: ColorPlugin.settings.background_color_enabled.toString()
-                },
-                field: {
-                    name: Lampa.Lang.translate('enable_background_color'),
-                    description: Lampa.Lang.translate('enable_background_color_description')
-                },
-                onRender: function (item) {
-                    if (item && typeof item.css === 'function') {
-                        item.css('display', ColorPlugin.settings.enabled ? 'block' : 'none');
-                    }
-                },
-                onChange: function (value) {
-                    ColorPlugin.settings.background_color_enabled = value === 'true';
-                    Lampa.Storage.set('color_plugin_background_color_enabled', ColorPlugin.settings.background_color_enabled.toString());
-                    applyStyles();
-                    saveSettings();
-                    if (Lampa.Settings && Lampa.Settings.render) {
-                        Lampa.Settings.render();
-                    }
-                }
-            });
-
             // Застосовуємо стилі при ініціалізації
             applyStyles();
             updateCanvasFillStyle(window.draw_context);
@@ -1255,8 +763,6 @@
             ColorPlugin.settings.enabled = Lampa.Storage.get('color_plugin_enabled', 'true') === 'true';
             ColorPlugin.settings.highlight_enabled = Lampa.Storage.get('color_plugin_highlight_enabled', 'true') === 'true';
             ColorPlugin.settings.dimming_enabled = Lampa.Storage.get('color_plugin_dimming_enabled', 'true') === 'true';
-            ColorPlugin.settings.rounding_enabled = Lampa.Storage.get('color_plugin_rounding_enabled', 'true') === 'true';
-            ColorPlugin.settings.background_color_enabled = Lampa.Storage.get('color_plugin_background_color_enabled', 'false') === 'true';
             applyStyles();
             updateCanvasFillStyle(window.draw_context);
             updatePluginIcon();
