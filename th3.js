@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    // Додаємо переклади для назв, описів опцій, кольору за замовчуванням і сімейств кольорів
+    // Додаємо переклади для назв, описів опцій і кольорів
     Lampa.Lang.add({
         color_plugin: {
             ru: 'Настройка цветов',
@@ -14,7 +14,7 @@
             uk: 'Увімкнути плагін'
         },
         color_plugin_enabled_description: {
-            ru: 'Изменяет внешний вид некоторых элементов интерфейса Lampa',
+            ru: 'Изменяет вид некоторых элементов интерфейса Lampa',
             en: 'Changes the appearance of some Lampa interface elements',
             uk: 'Змінює вигляд деяких елементів інтерфейсу Lampa'
         },
@@ -63,116 +63,28 @@
             en: 'Use the format #FFFFFF, for example #123524',
             uk: 'Використовуйте формат #FFFFFF, наприклад #123524'
         },
-        red: {
-            ru: 'Красный',
-            en: 'Red',
-            uk: 'Червоний'
-        },
-        orange: {
-            ru: 'Оранжевый',
-            en: 'Orange',
-            uk: 'Помаранчевий'
-        },
-        amber: {
-            ru: 'Янтарный',
-            en: 'Amber',
-            uk: 'Бурштиновий'
-        },
-        yellow: {
-            ru: 'Желтый',
-            en: 'Yellow',
-            uk: 'Жовтий'
-        },
-        lime: {
-            ru: 'Лаймовый',
-            en: 'Lime',
-            uk: 'Лаймовий'
-        },
-        green: {
-            ru: 'Зеленый',
-            en: 'Green',
-            uk: 'Зелений'
-        },
-        emerald: {
-            ru: 'Изумрудный',
-            en: 'Emerald',
-            uk: 'Смарагдовий'
-        },
-        teal: {
-            ru: 'Бирюзовый',
-            en: 'Teal',
-            uk: 'Бірюзовий'
-        },
-        cyan: {
-            ru: 'Голубой',
-            en: 'Cyan',
-            uk: 'Блакитний'
-        },
-        sky: {
-            ru: 'Небесный',
-            en: 'Sky',
-            uk: 'Небесний'
-        },
-        blue: {
-            ru: 'Синий',
-            en: 'Blue',
-            uk: 'Синій'
-        },
-        indigo: {
-            ru: 'Индиго',
-            en: 'Indigo',
-            uk: 'Індиго'
-        },
-        violet: {
-            ru: 'Фиолетовый',
-            en: 'Violet',
-            uk: 'Фіолетовий'
-        },
-        purple: {
-            ru: 'Пурпурный',
-            en: 'Purple',
-            uk: 'Пурпуровий'
-        },
-        fuchsia: {
-            ru: 'Фуксия',
-            en: 'Fuchsia',
-            uk: 'Фуксія'
-        },
-        pink: {
-            ru: 'Розовый',
-            en: 'Pink',
-            uk: 'Рожевий'
-        },
-        rose: {
-            ru: 'Розовый',
-            en: 'Rose',
-            uk: 'Трояндовий'
-        },
-        slate: {
-            ru: 'Сланцевый',
-            en: 'Slate',
-            uk: 'Сланцевий'
-        },
-        gray: {
-            ru: 'Серый',
-            en: 'Gray',
-            uk: 'Сірий'
-        },
-        zinc: {
-            ru: 'Цинковый',
-            en: 'Zinc',
-            uk: 'Цинковий'
-        },
-        neutral: {
-            ru: 'Нейтральный',
-            en: 'Neutral',
-            uk: 'Нейтральний'
-        },
-        stone: {
-            ru: 'Каменный',
-            en: 'Stone',
-            uk: 'Кам’яний'
-        }
+        red: { ru: 'Красный', en: 'Red', uk: 'Червоний' },
+        orange: { ru: 'Оранжевый', en: 'Orange', uk: 'Помаранчевий' },
+        amber: { ru: 'Янтарный', en: 'Amber', uk: 'Бурштиновий' },
+        yellow: { ru: 'Желтый', en: 'Yellow', uk: 'Жовтий' },
+        lime: { ru: 'Лаймовый', en: 'Lime', uk: 'Лаймовий' },
+        green: { ru: 'Зеленый', en: 'Green', uk: 'Зелений' },
+        emerald: { ru: 'Изумрудный', en: 'Emerald', uk: 'Смарагдовий' },
+        teal: { ru: 'Бирюзовый', en: 'Teal', uk: 'Бірюзовий' },
+        cyan: { ru: 'Голубой', en: 'Cyan', uk: 'Блакитний' },
+        sky: { ru: 'Небесный', en: 'Sky', uk: 'Небесний' },
+        blue: { ru: 'Синий', en: 'Blue', uk: 'Синій' },
+        indigo: { ru: 'Индиго', en: 'Indigo', uk: 'Індиго' },
+        violet: { ru: 'Фиолетовый', en: 'Violet', uk: 'Фіолетовий' },
+        purple: { ru: 'Пурпурный', en: 'Purple', uk: 'Пурпуровий' },
+        fuchsia: { ru: 'Фуксия', en: 'Fuchsia', uk: 'Фуксія' },
+        pink: { ru: 'Розовый', en: 'Pink', uk: 'Рожевий' },
+        rose: { ru: 'Розовый', en: 'Rose', uk: 'Трояндовий' },
+        slate: { ru: 'Сланцевый', en: 'Slate', uk: 'Сланцевий' },
+        gray: { ru: 'Серый', en: 'Gray', uk: 'Сірий' },
+        zinc: { ru: 'Цинковый', en: 'Zinc', uk: 'Цинковий' },
+        neutral: { ru: 'Нейтральный', en: 'Neutral', uk: 'Нейтральний' },
+        stone: { ru: 'Каменный', en: 'Stone', uk: 'Кам’яний' }
     });
 
     // Об'єкт для зберігання налаштувань і палітри
@@ -190,7 +102,7 @@
                 '#ff6900': 'Orange 1', '#f54900': 'Orange 2', '#ca3500': 'Orange 3', '#9f2d00': 'Orange 4', '#7e2a0c': 'Orange 5', '#441306': 'Orange 6',
                 '#fe9a00': 'Amber 1', '#e17100': 'Amber 2', '#bb4d00': 'Amber 3', '#973c00': 'Amber 4', '#7b3306': 'Amber 5', '#461901': 'Amber 6',
                 '#f0b100': 'Yellow 1', '#d08700': 'Yellow 2', '#a65f00': 'Yellow 3', '#894b00': 'Yellow 4', '#733e0a': 'Yellow 5', '#432004': 'Yellow 6',
-                '#7ccf00': 'Lime 1', '#5ea500': 'Lime 2', '#497d00': 'Lime 3', '#3c63a0': 'Lime 4', '#35530e': 'Lime 5', '#192e03': 'Lime 6',
+                '#7ccf00': 'Lime 1', '#5ea500': 'Lime 2', '#497d00': 'Lime 3', '#3c6300': 'Lime 4', '#35530e': 'Lime 5', '#192e03': 'Lime 6',
                 '#00c950': 'Green 1', '#00a63e': 'Green 2', '#008236': 'Green 3', '#016630': 'Green 4', '#0d542b': 'Green 5', '#032e15': 'Green 6',
                 '#00bc7d': 'Emerald 1', '#009966': 'Emerald 2', '#007a55': 'Emerald 3', '#006045': 'Emerald 4', '#004f3b': 'Emerald 5', '#002c22': 'Emerald 6',
                 '#00bba7': 'Teal 1', '#009689': 'Teal 2', '#00786f': 'Teal 3', '#005f5a': 'Teal 4', '#0b4f4a': 'Teal 5', '#022f2e': 'Teal 6',
@@ -296,21 +208,6 @@
         Lampa.Storage.set('color_plugin_highlight_enabled', ColorPlugin.settings.highlight_enabled.toString());
         Lampa.Storage.set('color_plugin_dimming_enabled', ColorPlugin.settings.dimming_enabled.toString());
         isSaving = false;
-    }
-
-    // Функція для створення HTML для назви сімейства кольорів
-    function createFamilyNameHtml(family) {
-        return '<div class="color-family-name" style="font-size: 14px; font-weight: bold; margin-bottom: 10px; color: #fff;">' +
-               Lampa.Lang.translate(family.toLowerCase()) + '</div>';
-    }
-
-    // Функція для групування масиву на частини
-    function chunkArray(array, size) {
-        var result = [];
-        for (var i = 0; i < array.length; i += size) {
-            result.push(array.slice(i, i + size));
-        }
-        return result;
     }
 
     // Функція для застосування стилів
@@ -568,6 +465,32 @@
                 'font-size: 10px;' +
                 'text-align: center;' +
             '}',
+            '.color-family-outline {' +
+                'display: flex;' +
+                'flex-direction: row;' +
+                'overflow: hidden;' +
+                'gap: 10px;' +
+                'border-radius: 8px;' +
+                'margin-bottom: 1px;' +
+                'padding: 5px;' +
+            '}',
+            '.color-family-name {' +
+                'width: 80px;' +
+                'height: 35px;' +
+                'border-width: 2px;' +
+                'border-style: solid;' +
+                'border-radius: 4px;' +
+                'display: flex;' +
+                'flex-direction: column;' +
+                'justify-content: center;' +
+                'align-items: center;' +
+                'cursor: default;' +
+                'color: #ffffff !important;' +
+                'font-size: 10px;' +
+                'font-weight: bold;' +
+                'text-align: center;' +
+                'text-transform: capitalize;' +
+            '}',
             '.color_square .hex {' +
                 'font-size: 9px;' +
                 'opacity: 0.9;' +
@@ -611,20 +534,17 @@
                 'gap: 140px;' +
                 'padding: 0;' +
             '}',
-            '.color-family-outline {' +
+            '.color-picker-container > div:nth-child(2) {' +
                 'display: flex;' +
                 'flex-direction: column;' +
-                'gap: 10px;' +
-            '}',
-            '.color-family-name {' +
-                'font-size: 14px;' +
-                'font-weight: bold;' +
-                'margin-bottom: 10px;' +
-                'color: #fff;' +
+                'justify-content: flex-end;' +
             '}',
             '@media (max-width: 768px) {' +
                 '.color-picker-container {' +
                     'grid-template-columns: 1fr;' +
+                '}' +
+                '.color-picker-container > div:nth-child(2) {' +
+                    'justify-content: flex-start;' +
                 '}' +
             '}'
         ].join('');
@@ -642,8 +562,57 @@
         return '<div class="' + className + '" tabindex="0" style="' + style + '" title="' + name + '">' + content + '</div>';
     }
 
+    // Функція для створення HTML для назви сімейства
+    function createFamilyNameHtml(name, color) {
+        return '<div class="color-family-name" style="border-color: ' + (color || '#353535') + ';">' + Lampa.Lang.translate(name.toLowerCase()) + '</div>';
+    }
+
+    // Функція для розбиття масиву кольорів на групи по 6
+    function chunkArray(arr, size) {
+        var result = [];
+        for (var i = 0; i < arr.length; i += size) {
+            result.push(arr.slice(i, i + size));
+        }
+        return result;
+    }
+
     // Функція для створення модального вікна вибору кольору
     function openColorPicker() {
+        var colorKeys = Object.keys(ColorPlugin.colors.main);
+        var families = [
+            'Red', 'Orange', 'Amber', 'Yellow', 'Lime', 'Green', 'Emerald', 'Teal', 'Cyan',
+            'Sky', 'Blue', 'Indigo', 'Violet', 'Purple', 'Fuchsia', 'Pink', 'Rose', 'Slate',
+            'Gray', 'Zinc', 'Neutral', 'Stone'
+        ];
+        var colorsByFamily = [];
+
+        for (var i = 0; i < families.length; i++) {
+            var family = families[i];
+            var familyColors = colorKeys.filter(function(key) {
+                return ColorPlugin.colors.main[key].indexOf(family) === 0 && key !== 'default';
+            });
+            if (familyColors.length > 0) {
+                colorsByFamily.push({
+                    name: family,
+                    colors: familyColors
+                });
+            }
+        }
+
+        var colorContent = colorsByFamily.map(function(family) {
+            var firstColor = family.colors[0];
+            var familyNameHtml = createFamilyNameHtml(family.name, firstColor);
+            var groupContent = family.colors.map(function(color) {
+                return createColorHtml(color, ColorPlugin.colors.main[color]);
+            }).join('');
+            return '<div class="color-family-outline">' + familyNameHtml + groupContent + '</div>';
+        });
+
+        // Розподіляємо кольори між двома колонками
+        var midPoint = Math.ceil(colorContent.length / 2);
+        var leftColumn = colorContent.slice(0, midPoint).join('');
+        var rightColumn = colorContent.slice(midPoint).join('');
+
         var defaultButton = createColorHtml('default', Lampa.Lang.translate('default_color'));
         var hexValue = Lampa.Storage.get('color_plugin_custom_hex', '') || '#353535';
         var hexDisplay = hexValue.replace('#', '');
@@ -654,50 +623,11 @@
         var topRowHtml = '<div style="display: flex; gap: 30px; padding: 0; justify-content: center; margin-bottom: 10px;">' +
                          defaultButton + inputHtml + '</div>';
 
-        var families = ['Red', 'Orange', 'Amber', 'Yellow', 'Lime', 'Green', 'Emerald', 'Teal', 'Cyan', 'Sky', 'Blue', 'Indigo', 'Violet', 'Purple', 'Fuchsia', 'Pink', 'Rose', 'Slate', 'Gray', 'Zinc', 'Neutral', 'Stone'];
-        var colorsByFamily = {};
-        for (var color in ColorPlugin.colors.main) {
-            if (color !== 'default') {
-                var family = ColorPlugin.colors.main[color].split(' ')[0];
-                if (!colorsByFamily[family]) {
-                    colorsByFamily[family] = [];
-                }
-                colorsByFamily[family].push({ color: color, name: ColorPlugin.colors.main[color] });
-            }
-        }
-
-        var leftColumn = [];
-        var rightColumn = [];
-        var colorContent = '';
-
-        for (var i = 0; i < families.length; i++) {
-            var family = families[i];
-            if (colorsByFamily[family]) {
-                var familyHtml = createFamilyNameHtml(family);
-                var colors = colorsByFamily[family];
-                var chunks = chunkArray(colors, 3);
-                var familyColors = '';
-                for (var j = 0; j < chunks.length; j++) {
-                    var rowColors = '';
-                    for (var k = 0; k < chunks[j].length; k++) {
-                        rowColors += createColorHtml(chunks[j][k].color, chunks[j][k].name);
-                    }
-                    familyColors += '<div style="display: flex; gap: 30px; padding: 0; justify-content: center;">' + rowColors + '</div>';
-                }
-                var familyBlock = '<div class="color-family-outline">' + familyHtml + familyColors + '</div>';
-                if (i % 2 === 0) {
-                    leftColumn.push(familyBlock);
-                } else {
-                    rightColumn.push(familyBlock);
-                }
-            }
-        }
-
-        colorContent += '<div style="display: flex; flex-direction: column; gap: 30px;">' + leftColumn.join('') + '</div>';
-        colorContent += '<div style="display: flex; flex-direction: column; gap: 30px;">' + rightColumn.join('') + '</div>';
-
-        var modalContent = '<div class="color-picker-container">' + topRowHtml + colorContent + '</div>';
-        var modalHtml = $('<div>' + modalContent + '</div>');
+        var modalContent = '<div class="color-picker-container">' +
+                           '<div>' + leftColumn + '</div>' +
+                           '<div>' + rightColumn + '</div>' +
+                           '</div>';
+        var modalHtml = $('<div>' + topRowHtml + modalContent + '</div>');
 
         try {
             Lampa.Modal.open({
@@ -773,8 +703,7 @@
                     }
                 }
             });
-        } catch (e) {
-        }
+        } catch (e) {}
     }
 
     // Функція для оновлення видимості параметрів
