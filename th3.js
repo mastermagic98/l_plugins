@@ -58,6 +58,16 @@
             en: 'Enables corner rounding for highlighted elements',
             uk: 'Вмикає заокруглення кутів для виділених елементів'
         },
+        enable_background_color: {
+            ru: 'Колір фону',
+            en: 'Background color',
+            uk: 'Колір фону'
+        },
+        enable_background_color_description: {
+            ru: 'Застосовує основний колір для фону сторінки',
+            en: 'Applies the main color to the page background',
+            uk: 'Застосовує основний колір для фону сторінки'
+        },
         default_color: {
             ru: 'По умолчанию',
             en: 'Default',
@@ -72,29 +82,7 @@
             ru: 'Используйте формат #FFFFFF, например #123524',
             en: 'Use the format #FFFFFF, for example #123524',
             uk: 'Використовуйте формат #FFFFFF, наприклад #123524'
-        },
-        red: { ru: 'Красный', en: 'Red', uk: 'Червоний' },
-        orange: { ru: 'Оранжевый', en: 'Orange', uk: 'Помаранчевий' },
-        amber: { ru: 'Янтарный', en: 'Amber', uk: 'Бурштиновий' },
-        yellow: { ru: 'Желтый', en: 'Yellow', uk: 'Жовтий' },
-        lime: { ru: 'Лаймовый', en: 'Lime', uk: 'Лаймовий' },
-        green: { ru: 'Зеленый', en: 'Green', uk: 'Зелений' },
-        emerald: { ru: 'Изумрудный', en: 'Emerald', uk: 'Смарагдовий' },
-        teal: { ru: 'Бирюзовый', en: 'Teal', uk: 'Бірюзовий' },
-        cyan: { ru: 'Голубой', en: 'Cyan', uk: 'Блакитний' },
-        sky: { ru: 'Небесный', en: 'Sky', uk: 'Небесний' },
-        blue: { ru: 'Синий', en: 'Blue', uk: 'Синій' },
-        indigo: { ru: 'Индиго', en: 'Indigo', uk: 'Індиго' },
-        violet: { ru: 'Фиолетовый', en: 'Violet', uk: 'Фіолетовий' },
-        purple: { ru: 'Пурпурный', en: 'Purple', uk: 'Пурпуровий' },
-        fuchsia: { ru: 'Фуксия', en: 'Fuchsia', uk: 'Фуксія' },
-        pink: { ru: 'Розовый', en: 'Pink', uk: 'Рожевий' },
-        rose: { ru: 'Розовый', en: 'Rose', uk: 'Трояндовий' },
-        slate: { ru: 'Сланцевый', en: 'Slate', uk: 'Сланцевий' },
-        gray: { ru: 'Серый', en: 'Gray', uk: 'Сірий' },
-        zinc: { ru: 'Цинковый', en: 'Zinc', uk: 'Цинковий' },
-        neutral: { ru: 'Нейтральный', en: 'Neutral', uk: 'Нейтральний' },
-        stone: { ru: 'Каменный', en: 'Stone', uk: 'Кам’яний' }
+        }
     });
 
     // Об'єкт для зберігання налаштувань і палітри
@@ -104,33 +92,12 @@
             enabled: Lampa.Storage.get('color_plugin_enabled', 'true') === 'true',
             highlight_enabled: Lampa.Storage.get('color_plugin_highlight_enabled', 'true') === 'true',
             dimming_enabled: Lampa.Storage.get('color_plugin_dimming_enabled', 'true') === 'true',
-            rounding_enabled: Lampa.Storage.get('color_plugin_rounding_enabled', 'true') === 'true'
+            rounding_enabled: Lampa.Storage.get('color_plugin_rounding_enabled', 'true') === 'true',
+            background_color_enabled: Lampa.Storage.get('color_plugin_background_color_enabled', 'false') === 'true'
         },
         colors: {
             main: {
-                'default': Lampa.Lang.translate('default_color'),
-                '#fb2c36': 'Red 1', '#e7000b': 'Red 2', '#c10007': 'Red 3', '#9f0712': 'Red 4', '#82181a': 'Red 5', '#460809': 'Red 6',
-                '#ff6900': 'Orange 1', '#f54900': 'Orange 2', '#ca3500': 'Orange 3', '#9f2d00': 'Orange 4', '#7e2a0c': 'Orange 5', '#441306': 'Orange 6',
-                '#fe9a00': 'Amber 1', '#e17100': 'Amber 2', '#bb4d00': 'Amber 3', '#973c00': 'Amber 4', '#7b3306': 'Amber 5', '#461901': 'Amber 6',
-                '#f0b100': 'Yellow 1', '#d08700': 'Yellow 2', '#a65f00': 'Yellow 3', '#894b00': 'Yellow 4', '#733e0a': 'Yellow 5', '#432004': 'Yellow 6',
-                '#7ccf00': 'Lime 1', '#5ea500': 'Lime 2', '#497d00': 'Lime 3', '#3c63a0': 'Lime 4', '#35530e': 'Lime 5', '#192e03': 'Lime 6',
-                '#00c950': 'Green 1', '#00a63e': 'Green 2', '#008236': 'Green 3', '#016630': 'Green 4', '#0d542b': 'Green 5', '#032e15': 'Green 6',
-                '#00bc7d': 'Emerald 1', '#009966': 'Emerald 2', '#007a55': 'Emerald 3', '#006045': 'Emerald 4', '#004f3b': 'Emerald 5', '#002c22': 'Emerald 6',
-                '#00bba7': 'Teal 1', '#009689': 'Teal 2', '#00786f': 'Teal 3', '#005f5a': 'Teal 4', '#0b4f4a': 'Teal 5', '#022f2e': 'Teal 6',
-                '#00b8db': 'Cyan 1', '#0092b8': 'Cyan 2', '#007595': 'Cyan 3', '#005f78': 'Cyan 4', '#104e64': 'Cyan 5', '#053345': 'Cyan 6',
-                '#00a6f4': 'Sky 1', '#0084d1': 'Sky 2', '#0069a8': 'Sky 3', '#00598a': 'Sky 4', '#024a70': 'Sky 5', '#052f4a': 'Sky 6',
-                '#2b7fff': 'Blue 1', '#155dfc': 'Blue 2', '#1447e6': 'Blue 3', '#193cb8': 'Blue 4', '#1c398e': 'Blue 5', '#162456': 'Blue 6',
-                '#615fff': 'Indigo 1', '#4f39f6': 'Indigo 2', '#432dd7': 'Indigo 3', '#372aac': 'Indigo 4', '#312c85': 'Indigo 5', '#1e1a4d': 'Indigo 6',
-                '#8e51ff': 'Violet 1', '#7f22fe': 'Violet 2', '#7008e7': 'Violet 3', '#5d0ec0': 'Violet 4', '#4d179a': 'Violet 5', '#2f0d68': 'Violet 6',
-                '#ad46ff': 'Purple 1', '#9810fa': 'Purple 2', '#8200db': 'Purple 3', '#6e11b0': 'Purple 4', '#59168b': 'Purple 5', '#3c0366': 'Purple 6',
-                '#e12afb': 'Fuchsia 1', '#c800de': 'Fuchsia 2', '#a800b7': 'Fuchsia 3', '#8a0194': 'Fuchsia 4', '#721378': 'Fuchsia 5', '#4b004f': 'Fuchsia 6',
-                '#f6339a': 'Pink 1', '#e60076': 'Pink 2', '#c6005c': 'Pink 3', '#a3004c': 'Pink 4', '#861043': 'Pink 5', '#510424': 'Pink 6',
-                '#ff2056': 'Rose 1', '#ec003f': 'Rose 2', '#c70036': 'Rose 3', '#a50036': 'Rose 4', '#8b0836': 'Rose 5', '#4d0218': 'Rose 6',
-                '#62748e': 'Slate 1', '#45556c': 'Slate 2', '#314158': 'Slate 3', '#1d293d': 'Slate 4', '#0f172b': 'Slate 5', '#020618': 'Slate 6',
-                '#6a7282': 'Gray 1', '#4a5565': 'Gray 2', '#364153': 'Gray 3', '#1e2939': 'Gray 4', '#101828': 'Gray 5', '#030712': 'Gray 6',
-                '#71717b': 'Zinc 1', '#52525c': 'Zinc 2', '#3f3f46': 'Zinc 3', '#27272a': 'Zinc 4', '#18181b': 'Zinc 5', '#09090b': 'Zinc 6',
-                '#737373': 'Neutral 1', '#525252': 'Neutral 2', '#404040': 'Neutral 3', '#262626': 'Neutral 4', '#171717': 'Neutral 5', '#0a0a0a': 'Neutral 6',
-                '#79716b': 'Stone 1', '#57534d': 'Stone 2', '#44403b': 'Stone 3', '#292524': 'Stone 4', '#1c1917': 'Stone 5', '#0c0a09': 'Stone 6'
+                'default': Lampa.Lang.translate('default_color')
             }
         }
     };
@@ -210,6 +177,7 @@
         Lampa.Storage.set('color_plugin_highlight_enabled', ColorPlugin.settings.highlight_enabled.toString());
         Lampa.Storage.set('color_plugin_dimming_enabled', ColorPlugin.settings.dimming_enabled.toString());
         Lampa.Storage.set('color_plugin_rounding_enabled', ColorPlugin.settings.rounding_enabled.toString());
+        Lampa.Storage.set('color_plugin_background_color_enabled', ColorPlugin.settings.background_color_enabled.toString());
         isSaving = false;
     }
 
@@ -315,10 +283,20 @@
             '}' +
             '.settings-folder.focus {' +
                 'color: #fff;' +
-                'border-radius: var(--menu-radius);' +
+                'border-radius: 0em 15em 14em 0em;' +
                 'background: var(--main-color);' +
             '}'
         ) : '';
+
+        var backgroundStyles = ColorPlugin.settings.background_color_enabled ? (
+            'body {' +
+                'background: var(--main-color) !important;' +
+            '}'
+        ) : (
+            'body {' +
+                'background: var(--dark-bg) !important;' +
+            '}'
+        );
 
         style.innerHTML = [
             ':root {' +
@@ -478,6 +456,7 @@
             '}',
             dimmingStyles,
             roundingStyles,
+            backgroundStyles,
             '.timetable__item--any::before {' +
                 'background-color: rgba(var(--main-color-rgb), 0.3);' +
             '}',
@@ -611,11 +590,6 @@
             '}',
             '.head__action {' +
                 'opacity: 0.80;' +
-            '}',
-            '.full-start__rate > div:first-child {' +
-                'color: #1ed5a9;' +
-                'font-weight: var(--rating-weight);' +
-                'background: none;' +
             '}',
             '.navigation-bar__body {' +
                 'background: rgba(0, 0, 0, var(--navigation-bar-opacity));' +
@@ -781,10 +755,6 @@
                 'text-align: center;' +
                 'color: #ffffff7a;' +
             '}',
-            'body {' +
-                'margin: 1 !important;' +
-                'background: var(--dark-bg) !important;' +
-            '}',
             '.card__vote {' +
                 'position: absolute;' +
                 'top: var(--vote-top);' +
@@ -944,40 +914,10 @@
     // Функція для створення модального вікна вибору кольору
     function openColorPicker() {
         var colorKeys = Object.keys(ColorPlugin.colors.main);
-        var families = [
-            'Red', 'Orange', 'Amber', 'Yellow', 'Lime', 'Green', 'Emerald', 'Teal', 'Cyan',
-            'Sky', 'Blue', 'Indigo', 'Violet', 'Purple', 'Fuchsia', 'Pink', 'Rose', 'Slate',
-            'Gray', 'Zinc', 'Neutral', 'Stone'
-        ];
+        var families = [];
         var colorsByFamily = [];
 
-        for (var i = 0; i < families.length; i++) {
-            var family = families[i];
-            var familyColors = colorKeys.filter(function(key) {
-                return ColorPlugin.colors.main[key].indexOf(family) === 0 && key !== 'default';
-            });
-            if (familyColors.length > 0) {
-                colorsByFamily.push({
-                    name: family,
-                    colors: familyColors
-                });
-            }
-        }
-
-        var colorContent = colorsByFamily.map(function(family) {
-            var firstColor = family.colors[0];
-            var familyNameHtml = createFamilyNameHtml(family.name, firstColor);
-            var groupContent = family.colors.map(function(color) {
-                return createColorHtml(color, ColorPlugin.colors.main[color]);
-            }).join('');
-            return '<div class="color-family-outline">' + familyNameHtml + groupContent + '</div>';
-        });
-
-        // Розподіляємо кольори між двома колонками
-        var midPoint = Math.ceil(colorContent.length / 2);
-        var leftColumn = colorContent.slice(0, midPoint).join('');
-        var rightColumn = colorContent.slice(midPoint).join('');
-
+        // Оскільки всі кольори видалено, модальне вікно міститиме лише кнопку за замовчуванням і поле для HEX-коду
         var defaultButton = createColorHtml('default', Lampa.Lang.translate('default_color'));
         var hexValue = Lampa.Storage.get('color_plugin_custom_hex', '') || '#353535';
         var hexDisplay = hexValue.replace('#', '');
@@ -989,8 +929,8 @@
                          defaultButton + inputHtml + '</div>';
 
         var modalContent = '<div class="color-picker-container">' +
-                           '<div>' + leftColumn + '</div>' +
-                           '<div>' + rightColumn + '</div>' +
+                           '<div></div>' +
+                           '<div></div>' +
                            '</div>';
         var modalHtml = $('<div>' + topRowHtml + modalContent + '</div>');
 
@@ -1077,7 +1017,8 @@
             '.settings-param[data-name="color_plugin_main_color"]',
             '.settings-param[data-name="color_plugin_highlight_enabled"]',
             '.settings-param[data-name="color_plugin_dimming_enabled"]',
-            '.settings-param[data-name="color_plugin_rounding_enabled"]'
+            '.settings-param[data-name="color_plugin_rounding_enabled"]',
+            '.settings-param[data-name="color_plugin_background_color_enabled"]'
         ];
         setTimeout(function() {
             for (var i = 0; i < params.length; i++) {
@@ -1099,6 +1040,7 @@
         ColorPlugin.settings.highlight_enabled = Lampa.Storage.get('color_plugin_highlight_enabled', 'true') === 'true';
         ColorPlugin.settings.dimming_enabled = Lampa.Storage.get('color_plugin_dimming_enabled', 'true') === 'true';
         ColorPlugin.settings.rounding_enabled = Lampa.Storage.get('color_plugin_rounding_enabled', 'true') === 'true';
+        ColorPlugin.settings.background_color_enabled = Lampa.Storage.get('color_plugin_background_color_enabled', 'false') === 'true';
 
         // Додаємо компонент до меню налаштувань
         if (Lampa.SettingsApi) {
@@ -1243,6 +1185,34 @@
                 }
             });
 
+            // Увімкнення/вимкнення кольору фону
+            Lampa.SettingsApi.addParam({
+                component: 'color_plugin',
+                param: {
+                    name: 'color_plugin_background_color_enabled',
+                    type: 'trigger',
+                    default: ColorPlugin.settings.background_color_enabled.toString()
+                },
+                field: {
+                    name: Lampa.Lang.translate('enable_background_color'),
+                    description: Lampa.Lang.translate('enable_background_color_description')
+                },
+                onRender: function (item) {
+                    if (item && typeof item.css === 'function') {
+                        item.css('display', ColorPlugin.settings.enabled ? 'block' : 'none');
+                    }
+                },
+                onChange: function (value) {
+                    ColorPlugin.settings.background_color_enabled = value === 'true';
+                    Lampa.Storage.set('color_plugin_background_color_enabled', ColorPlugin.settings.background_color_enabled.toString());
+                    applyStyles();
+                    saveSettings();
+                    if (Lampa.Settings && Lampa.Settings.render) {
+                        Lampa.Settings.render();
+                    }
+                }
+            });
+
             // Застосовуємо стилі при ініціалізації
             applyStyles();
             updateCanvasFillStyle(window.draw_context);
@@ -1286,6 +1256,7 @@
             ColorPlugin.settings.highlight_enabled = Lampa.Storage.get('color_plugin_highlight_enabled', 'true') === 'true';
             ColorPlugin.settings.dimming_enabled = Lampa.Storage.get('color_plugin_dimming_enabled', 'true') === 'true';
             ColorPlugin.settings.rounding_enabled = Lampa.Storage.get('color_plugin_rounding_enabled', 'true') === 'true';
+            ColorPlugin.settings.background_color_enabled = Lampa.Storage.get('color_plugin_background_color_enabled', 'false') === 'true';
             applyStyles();
             updateCanvasFillStyle(window.draw_context);
             updatePluginIcon();
