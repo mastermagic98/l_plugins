@@ -434,8 +434,8 @@
             '}',
             '.color_square.default {' +
                 'background-color: #fff;' +
-                'width: 30px;' +
-                'height: 30px;' +
+                'width: 35px;' +
+                'height: 35px;' +
                 'border-radius: 4px;' +
                 'position: relative;' +
             '}',
@@ -460,8 +460,8 @@
                 'transform: rotate(-45deg);' +
             '}',
             '.color_square {' +
-                'width: 30px;' +
-                'height: 30px;' +
+                'width: 35px;' +
+                'height: 35px;' +
                 'border-radius: 4px;' +
                 'display: flex;' +
                 'flex-direction: column;' +
@@ -478,12 +478,12 @@
                 'overflow: hidden;' +
                 'gap: 10px;' +
                 'border-radius: 8px;' +
-                'margin-bottom: 10px;' +
+                'margin-bottom: 1px;' +
                 'padding: 5px;' +
             '}',
             '.color-family-name {' +
                 'width: 80px;' +
-                'height: 30px;' +
+                'height: 35px;' +
                 'border-width: 2px;' +
                 'border-style: solid;' +
                 'border-radius: 4px;' +
@@ -506,7 +506,7 @@
             '}',
             '.hex-input {' +
                 'width: 360px;' +
-                'height: 30px;' +
+                'height: 35px;' +
                 'border-radius: 8px;' +
                 'border: 2px solid #ddd;' +
                 'position: relative;' +
@@ -538,7 +538,7 @@
             '.color-picker-container {' +
                 'display: grid;' +
                 'grid-template-columns: 1fr 1fr;' +
-                'gap: 10px;' +
+                'gap: 180px;' +
                 'padding: 0;' +
             '}',
             '.color-picker-container > div:nth-child(2) {' +
@@ -927,6 +927,7 @@
             applyStyles();
             updateCanvasFillStyle(window.draw_context);
             updatePluginIcon();
+            updateParamsVisibility(); // Додано для оновлення видимості параметрів при вході в меню
         } else if (event.type === 'close') {
             console.log('ColorPlugin: settings_component closed');
             saveSettings();
