@@ -195,6 +195,7 @@
         var hasGlassStyle = body.classList.contains('glass--style');
         var computedStyle = window.getComputedStyle(body);
         var background = computedStyle.background || computedStyle.backgroundColor;
+        // Тимчасовий коментар для дебагінгу: Перевірено стилі body
     }
 
     // Функція для збереження всіх налаштувань
@@ -726,8 +727,8 @@
                     });
                 }
             }
-        }, 100);
-        // Тимчасовий коментар для дебагінгу: Оновлено видимість параметрів
+            // Тимчасовий коментар для дебагінгу: Оновлено видимість параметрів
+        }, 300); // Збільшено затримку до 300 мс
     }
 
     // Функція для ініціалізації плагіна
@@ -770,6 +771,7 @@
                         if (Lampa.Settings && Lampa.Settings.render) {
                             Lampa.Settings.render();
                         }
+                        // Тимчасовий коментар для дебагінгу: Змінено стан плагіна
                     },
                     onRender: function (item) {
                         if (item && typeof item.css === 'function') {
@@ -903,7 +905,7 @@
             applyStyles();
             updateCanvasFillStyle(window.draw_context);
             updatePluginIcon();
-            updateParamsVisibility();
+            updateParamsVisibility(event.body);
             // Тимчасовий коментар для дебагінгу: Меню налаштувань відкрито
         } else if (event.type === 'close') {
             saveSettings();
