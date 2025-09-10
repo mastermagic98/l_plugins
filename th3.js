@@ -209,7 +209,10 @@
         Lampa.Storage.set('color_plugin_highlight_enabled', ColorPlugin.settings.highlight_enabled.toString());
         Lampa.Storage.set('color_plugin_dimming_enabled', ColorPlugin.settings.dimming_enabled.toString());
         // Резервне збереження через localStorage
+        localStorage.setItem('color_plugin_main_color', ColorPlugin.settings.main_color);
         localStorage.setItem('color_plugin_enabled', ColorPlugin.settings.enabled.toString());
+        localStorage.setItem('color_plugin_highlight_enabled', ColorPlugin.settings.highlight_enabled.toString());
+        localStorage.setItem('color_plugin_dimming_enabled', ColorPlugin.settings.dimming_enabled.toString());
         isSaving = false;
         // Тимчасовий коментар для дебагінгу: Налаштування збережено
     }
@@ -232,41 +235,41 @@
         var rgbColor = hexToRgb(ColorPlugin.settings.main_color);
 
         var highlightStyles = ColorPlugin.settings.highlight_enabled ? (
-            '-webkit-box-shadow: inset 0 0 0 0.15em #fff;' +
-            'box-shadow: inset 0 0 0 0.15em #fff;'
+            '-webkit-box-shadow: inset 0 0 0 0.15em #fff !important;' +
+            'box-shadow: inset 0 0 0 0.15em #fff !important;'
         ) : '';
 
         var dimmingStyles = ColorPlugin.settings.dimming_enabled ? (
             '.full-start__rate {' +
-                'background: rgba(var(--main-color-rgb), 0.15);' +
+                'background: rgba(var(--main-color-rgb), 0.15) !important;' +
             '}' +
             '.full-start__rate > div:first-child {' +
-                'background: rgba(var(--main-color-rgb), 0.15);' +
+                'background: rgba(var(--main-color-rgb), 0.15) !important;' +
             '}' +
             '.reaction {' +
-                'background-color: rgba(var(--main-color-rgb), 0.3);' +
+                'background-color: rgba(var(--main-color-rgb), 0.3) !important;' +
             '}' +
             '.full-start__button {' +
-                'background-color: rgba(var(--main-color-rgb), 0.3);' +
+                'background-color: rgba(var(--main-color-rgb), 0.3) !important;' +
             '}' +
             '.card__vote {' +
-                'background: rgba(var(--main-color-rgb), 0.5);' +
+                'background: rgba(var(--main-color-rgb), 0.5) !important;' +
             '}' +
             '.items-line__more {' +
-                'background: rgba(var(--main-color-rgb), 0.3);' +
+                'background: rgba(var(--main-color-rgb), 0.3) !important;' +
             '}' +
             '.card__icons-inner {' +
-                'background: rgba(var(--main-color-rgb), 0.5);' +
+                'background: rgba(var(--main-color-rgb), 0.5) !important;' +
             '}' +
             '.simple-button--filter > div {' +
-                'background-color: rgba(var(--main-color-rgb), 0.3);' +
+                'background-color: rgba(var(--main-color-rgb), 0.3) !important;' +
             '}'
         ) : '';
 
         style.innerHTML = [
             ':root {' +
-                '--main-color: ' + ColorPlugin.settings.main_color + ';' +
-                '--main-color-rgb: ' + rgbColor + ';' +
+                '--main-color: ' + ColorPlugin.settings.main_color + ' !important;' +
+                '--main-color-rgb: ' + rgbColor + ' !important;' +
             '}',
             '.modal__title {' +
                 'font-size: 1.7em !important;' +
@@ -321,18 +324,18 @@
                 'color: #ffffff !important;' +
             '}',
             '.console__tab {' +
-                'background-color: rgba(221, 221, 221, 0.06);' +
+                'background-color: rgba(221, 221, 221, 0.06) !important;' +
             '}',
             '.console__tab.focus {' +
-                'background: var(--main-color);' +
-                'color: #fff;' +
+                'background: var(--main-color) !important;' +
+                'color: #fff !important;' +
                 highlightStyles +
             '}',
             '.menu__item.focus, .menu__item.traverse, .menu__item:hover, ' +
             '.full-person.focus, .full-start__button.focus, .full-descr__tag.focus, ' +
             '.simple-button.focus, .head__action.focus, .head__action:hover, ' +
             '.player-panel .button.focus, .search-source.active {' +
-                'background: var(--main-color);' +
+                'background: var(--main-color) !important;' +
             '}',
             '.full-start__button.focus, .settings-param.focus, .items-line__more.focus, ' +
             '.menu__item.focus, .settings-folder.focus, .head__action.focus, ' +
@@ -340,24 +343,24 @@
                 highlightStyles +
             '}',
             '.timetable__item.focus::before {' +
-                'background-color: var(--main-color);' +
+                'background-color: var(--main-color) !important;' +
                 highlightStyles +
             '}',
             '.navigation-tabs__button.focus {' +
-                'background-color: var(--main-color);' +
-                'color: #fff;' +
+                'background-color: var(--main-color) !important;' +
+                'color: #fff !important;' +
                 highlightStyles +
             '}',
             '.items-line__more.focus {' +
-                'color: #fff;' +
-                'background-color: var(--main-color);' +
+                'color: #fff !important;' +
+                'background-color: var(--main-color) !important;' +
             '}',
             '.timetable__item.focus {' +
-                'color: #fff;' +
+                'color: #fff !important;' +
             '}',
             '.broadcast__device.focus {' +
-                'background-color: var(--main-color);' +
-                'color: #fff;' +
+                'background-color: var(--main-color) !important;' +
+                'color: #fff !important;' +
             '}',
             '.iptv-menu__list-item.focus, .iptv-program__timeline>div {' +
                 'background-color: var(--main-color) !important;' +
@@ -367,10 +370,10 @@
             '.full-review-add.focus, .full-review.focus, ' +
             '.tag-count.focus, .settings-folder.focus, .settings-param.focus, ' +
             '.selectbox-item.focus, .selectbox-item:hover {' +
-                'background: var(--main-color);' +
+                'background: var(--main-color) !important;' +
             '}',
             '.online.focus {' +
-                'box-shadow: 0 0 0 0.2em var(--main-color);' +
+                'box-shadow: 0 0 0 0.2em var(--main-color) !important;' +
             '}',
             '.online_modss.focus::after, .online-prestige.focus::after, ' +
             '.radio-item.focus .radio-item__imgbox:after, .iptv-channel.focus::before, ' +
@@ -378,7 +381,7 @@
                 'border-color: var(--main-color) !important;' +
             '}',
             '.card-more.focus .card-more__box::after {' +
-                'border: 0.3em solid var(--main-color);' +
+                'border: 0.3em solid var(--main-color) !important;' +
             '}',
             '.iptv-playlist-item.focus::after, .iptv-playlist-item:hover::after {' +
                 'border-color: var(--main-color) !important;' +
@@ -389,166 +392,166 @@
             '.full-review-add.focus::after, .card.focus .card__view::after, ' +
             '.card:hover .card__view::after, .extensions__item.focus:after, ' +
             '.torrent-item.focus::after, .extensions__block-add.focus:after {' +
-                'border-color: var(--main-color);' +
+                'border-color: var(--main-color) !important;' +
             '}',
             '.broadcast__scan > div {' +
-                'background-color: var(--main-color);' +
+                'background-color: var(--main-color) !important;' +
             '}',
             '.card:hover .card__view, .card.focus .card__view {' +
-                'border-color: var(--main-color);' +
+                'border-color: var(--main-color) !important;' +
             '}',
             '.noty {' +
-                'background: var(--main-color);' +
+                'background: var(--main-color) !important;' +
             '}',
             '.radio-player.focus {' +
-                'background-color: var(--main-color);' +
+                'background-color: var(--main-color) !important;' +
             '}',
             '.explorer-card__head-img.focus::after {' +
-                'border: 0.3em solid var(--main-color);' +
+                'border: 0.3em solid var(--main-color) !important;' +
             '}',
             '.color_square.focus {' +
-                'border: 0.3em solid var(--main-color);' +
-                'transform: scale(1.1);' +
+                'border: 0.3em solid var(--main-color) !important;' +
+                'transform: scale(1.1) !important;' +
             '}',
             'body.glass--style .selectbox-item.focus, ' +
             'body.glass--style .settings-folder.focus, ' +
             'body.glass--style .settings-param.focus {' +
-                'background-color: var(--main-color);' +
+                'background-color: var(--main-color) !important;' +
             '}',
             'body.glass--style .settings-folder.focus .settings-folder__icon {' +
-                '-webkit-filter: none;' +
-                'filter: none;' +
+                '-webkit-filter: none !important;' +
+                'filter: none !important;' +
             '}',
             dimmingStyles,
             '.timetable__item--any::before {' +
-                'background-color: rgba(var(--main-color-rgb), 0.3);' +
+                'background-color: rgba(var(--main-color-rgb), 0.3) !important;' +
             '}',
             '.element {' +
-                'background: var(--main-color);' +
+                'background: var(--main-color) !important;' +
             '}',
             '.bookmarks-folder__layer {' +
-                'background-color: var(--main-color);' +
+                'background-color: var(--main-color) !important;' +
             '}',
             '.color_square.default {' +
-                'background-color: #fff;' +
-                'width: 35px;' +
-                'height: 35px;' +
-                'border-radius: 4px;' +
-                'position: relative;' +
+                'background-color: #fff !important;' +
+                'width: 35px !important;' +
+                'height: 35px !important;' +
+                'border-radius: 4px !important;' +
+                'position: relative !important;' +
             '}',
             '.color_square.default::after {' +
-                'content: "";' +
-                'position: absolute;' +
-                'top: 50%;' +
-                'left: 10%;' +
-                'right: 10%;' +
-                'height: 3px;' +
-                'background-color: #353535;' +
-                'transform: rotate(45deg);' +
+                'content: "" !important;' +
+                'position: absolute !important;' +
+                'top: 50% !important;' +
+                'left: 10% !important;' +
+                'right: 10% !important;' +
+                'height: 3px !important;' +
+                'background-color: #353535 !important;' +
+                'transform: rotate(45deg) !important;' +
             '}',
             '.color_square.default::before {' +
-                'content: "";' +
-                'position: absolute;' +
-                'top: 50%;' +
-                'left: 10%;' +
-                'right: 10%;' +
-                'height: 3px;' +
-                'background-color: #353535;' +
-                'transform: rotate(-45deg);' +
+                'content: "" !important;' +
+                'position: absolute !important;' +
+                'top: 50% !important;' +
+                'left: 10% !important;' +
+                'right: 10% !important;' +
+                'height: 3px !important;' +
+                'background-color: #353535 !important;' +
+                'transform: rotate(-45deg) !important;' +
             '}',
             '.color_square {' +
-                'width: 35px;' +
-                'height: 35px;' +
-                'border-radius: 4px;' +
-                'display: flex;' +
-                'flex-direction: column;' +
-                'justify-content: center;' +
-                'align-items: center;' +
-                'cursor: pointer;' +
+                'width: 35px !important;' +
+                'height: 35px !important;' +
+                'border-radius: 4px !important;' +
+                'display: flex !important;' +
+                'flex-direction: column !important;' +
+                'justify-content: center !important;' +
+                'align-items: center !important;' +
+                'cursor: pointer !important;' +
                 'color: #ffffff !important;' +
-                'font-size: 10px;' +
-                'text-align: center;' +
+                'font-size: 10px !important;' +
+                'text-align: center !important;' +
             '}',
             '.color-family-outline {' +
-                'display: flex;' +
-                'flex-direction: row;' +
-                'overflow: hidden;' +
-                'gap: 10px;' +
-                'border-radius: 8px;' +
-                'margin-bottom: 1px;' +
-                'padding: 5px;' +
+                'display: flex !important;' +
+                'flex-direction: row !important;' +
+                'overflow: hidden !important;' +
+                'gap: 10px !important;' +
+                'border-radius: 8px !important;' +
+                'margin-bottom: 1px !important;' +
+                'padding: 5px !important;' +
             '}',
             '.color-family-name {' +
-                'width: 80px;' +
-                'height: 35px;' +
-                'border-width: 2px;' +
-                'border-style: solid;' +
-                'border-radius: 4px;' +
-                'display: flex;' +
-                'flex-direction: column;' +
-                'justify-content: center;' +
-                'align-items: center;' +
-                'cursor: default;' +
+                'width: 80px !important;' +
+                'height: 35px !important;' +
+                'border-width: 2px !important;' +
+                'border-style: solid !important;' +
+                'border-radius: 4px !important;' +
+                'display: flex !important;' +
+                'flex-direction: column !important;' +
+                'justify-content: center !important;' +
+                'align-items: center !important;' +
+                'cursor: default !important;' +
                 'color: #ffffff !important;' +
-                'font-size: 10px;' +
-                'font-weight: bold;' +
-                'text-align: center;' +
-                'text-transform: capitalize;' +
+                'font-size: 10px !important;' +
+                'font-weight: bold !important;' +
+                'text-align: center !important;' +
+                'text-transform: capitalize !important;' +
             '}',
             '.color_square .hex {' +
-                'font-size: 9px;' +
-                'opacity: 0.9;' +
-                'text-transform: uppercase;' +
-                'z-index: 1;' +
+                'font-size: 9px !important;' +
+                'opacity: 0.9 !important;' +
+                'text-transform: uppercase !important;' +
+                'z-index: 1 !important;' +
             '}',
             '.hex-input {' +
-                'width: 360px;' +
-                'height: 35px;' +
-                'border-radius: 8px;' +
-                'border: 2px solid #ddd;' +
-                'position: relative;' +
-                'cursor: pointer;' +
-                'display: flex;' +
-                'flex-direction: column;' +
-                'align-items: center;' +
-                'justify-content: center;' +
+                'width: 360px !important;' +
+                'height: 35px !important;' +
+                'border-radius: 8px !important;' +
+                'border: 2px solid #ddd !important;' +
+                'position: relative !important;' +
+                'cursor: pointer !important;' +
+                'display: flex !important;' +
+                'flex-direction: column !important;' +
+                'align-items: center !important;' +
+                'justify-content: center !important;' +
                 'color: #fff !important;' +
-                'font-size: 12px;' +
-                'font-weight: bold;' +
-                'text-shadow: 0 0 2px #000;' +
-                'background-color: #353535;' +
+                'font-size: 12px !important;' +
+                'font-weight: bold !important;' +
+                'text-shadow: 0 0 2px #000 !important;' +
+                'background-color: #353535 !important;' +
             '}',
             '.hex-input.focus {' +
-                'border: 0.2em solid var(--main-color);' +
-                'transform: scale(1.1);' +
+                'border: 0.2em solid var(--main-color) !important;' +
+                'transform: scale(1.1) !important;' +
             '}',
             '.hex-input .label {' +
-                'position: absolute;' +
-                'top: 1px;' +
-                'font-size: 10px;' +
+                'position: absolute !important;' +
+                'top: 1px !important;' +
+                'font-size: 10px !important;' +
             '}',
             '.hex-input .value {' +
-                'position: absolute;' +
-                'bottom: 1px;' +
-                'font-size: 10px;' +
+                'position: absolute !important;' +
+                'bottom: 1px !important;' +
+                'font-size: 10px !important;' +
             '}',
             '.color-picker-container {' +
-                'display: grid;' +
-                'grid-template-columns: 1fr 1fr;' +
-                'gap: 140px;' +
-                'padding: 0;' +
+                'display: grid !important;' +
+                'grid-template-columns: 1fr 1fr !important;' +
+                'gap: 140px !important;' +
+                'padding: 0 !important;' +
             '}',
             '.color-picker-container > div:nth-child(2) {' +
-                'display: flex;' +
-                'flex-direction: column;' +
-                'justify-content: flex-end;' +
+                'display: flex !important;' +
+                'flex-direction: column !important;' +
+                'justify-content: flex-end !important;' +
             '}',
             '@media (max-width: 768px) {' +
                 '.color-picker-container {' +
-                    'grid-template-columns: 1fr;' +
+                    'grid-template-columns: 1fr !important;' +
                 '}' +
                 '.color-picker-container > div:nth-child(2) {' +
-                    'justify-content: flex-start;' +
+                    'justify-content: flex-start !important;' +
                 '}' +
             '}'
         ].join('');
@@ -677,6 +680,7 @@
                                 Lampa.Storage.set('color_plugin_custom_hex', value);
                                 ColorPlugin.settings.main_color = value;
                                 Lampa.Storage.set('color_plugin_main_color', value);
+                                localStorage.setItem('color_plugin_main_color', value);
                                 applyStyles();
                                 updateCanvasFillStyle(window.draw_context);
                                 saveSettings();
@@ -696,6 +700,7 @@
 
                         ColorPlugin.settings.main_color = color;
                         Lampa.Storage.set('color_plugin_main_color', color);
+                        localStorage.setItem('color_plugin_main_color', color);
                         applyStyles();
                         updateCanvasFillStyle(window.draw_context);
                         saveSettings();
@@ -714,14 +719,14 @@
     // Функція для оновлення видимості параметрів
     function updateParamsVisibility(body) {
         var params = [
-            '.settings-param[data-name="color_plugin_main_color"]',
-            '.settings-param[data-name="color_plugin_highlight_enabled"]',
-            '.settings-param[data-name="color_plugin_dimming_enabled"]'
+            'color_plugin_main_color',
+            'color_plugin_highlight_enabled',
+            'color_plugin_dimming_enabled'
         ];
         setTimeout(function() {
             var container = body || document;
             for (var i = 0; i < params.length; i++) {
-                var selector = params[i];
+                var selector = '.settings-param[data-name="' + params[i] + '"]';
                 var elements = container.querySelectorAll ? container.querySelectorAll(selector) : $(selector);
                 if (elements.length) {
                     var displayValue = ColorPlugin.settings.enabled ? 'block' : 'none';
@@ -735,8 +740,23 @@
                     }
                 }
             }
+            // Альтернативне оновлення через Lampa.SettingsApi
+            if (Lampa.SettingsApi && Lampa.SettingsApi.params) {
+                var componentParams = Lampa.SettingsApi.params.filter(function(p) {
+                    return p.component === 'color_plugin';
+                });
+                for (var k = 0; k < componentParams.length; k++) {
+                    var param = componentParams[k];
+                    if (param.param.name !== 'color_plugin_enabled') {
+                        var paramElement = document.querySelector('.settings-param[data-name="' + param.param.name + '"]');
+                        if (paramElement && paramElement.style) {
+                            paramElement.style.display = ColorPlugin.settings.enabled ? 'block' : 'none';
+                        }
+                    }
+                }
+            }
             // Тимчасовий коментар для дебагінгу: Оновлено видимість параметрів
-        }, 500); // Збільшено затримку до 500 мс
+        }, 1000); // Збільшено затримку до 1000 мс
     }
 
     // Функція для ініціалізації плагіна
@@ -744,10 +764,10 @@
         // Завантажуємо збережені налаштування
         setTimeout(function() {
             // Спроба завантаження з localStorage, якщо Lampa.Storage недоступний
-            ColorPlugin.settings.main_color = Lampa.Storage.get('color_plugin_main_color', '#353535');
+            ColorPlugin.settings.main_color = Lampa.Storage.get('color_plugin_main_color', '#353535') || localStorage.getItem('color_plugin_main_color') || '#353535';
             ColorPlugin.settings.enabled = (Lampa.Storage.get('color_plugin_enabled', 'true') === 'true' || localStorage.getItem('color_plugin_enabled') === 'true');
-            ColorPlugin.settings.highlight_enabled = Lampa.Storage.get('color_plugin_highlight_enabled', 'true') === 'true';
-            ColorPlugin.settings.dimming_enabled = Lampa.Storage.get('color_plugin_dimming_enabled', 'true') === 'true';
+            ColorPlugin.settings.highlight_enabled = (Lampa.Storage.get('color_plugin_highlight_enabled', 'true') === 'true' || localStorage.getItem('color_plugin_highlight_enabled') === 'true');
+            ColorPlugin.settings.dimming_enabled = (Lampa.Storage.get('color_plugin_dimming_enabled', 'true') === 'true' || localStorage.getItem('color_plugin_dimming_enabled') === 'true');
             // Тимчасовий коментар для дебагінгу: Налаштування завантажено
 
             // Додаємо компонент до меню налаштувань
@@ -831,11 +851,13 @@
                     onChange: function (value) {
                         ColorPlugin.settings.highlight_enabled = value === 'true';
                         Lampa.Storage.set('color_plugin_highlight_enabled', ColorPlugin.settings.highlight_enabled.toString());
+                        localStorage.setItem('color_plugin_highlight_enabled', ColorPlugin.settings.highlight_enabled.toString());
                         applyStyles();
                         saveSettings();
                         if (Lampa.Settings && Lampa.Settings.render) {
                             Lampa.Settings.render();
                         }
+                        // Тимчасовий коментар для дебагінгу: Змінено highlight_enabled на: + value
                     }
                 });
 
@@ -859,11 +881,13 @@
                     onChange: function (value) {
                         ColorPlugin.settings.dimming_enabled = value === 'true';
                         Lampa.Storage.set('color_plugin_dimming_enabled', ColorPlugin.settings.dimming_enabled.toString());
+                        localStorage.setItem('color_plugin_dimming_enabled', ColorPlugin.settings.dimming_enabled.toString());
                         applyStyles();
                         saveSettings();
                         if (Lampa.Settings && Lampa.Settings.render) {
                             Lampa.Settings.render();
                         }
+                        // Тимчасовий коментар для дебагінгу: Змінено dimming_enabled на: + value
                     }
                 });
 
@@ -895,9 +919,9 @@
             e.name === 'color_plugin_highlight_enabled' || 
             e.name === 'color_plugin_dimming_enabled') {
             ColorPlugin.settings.enabled = Lampa.Storage.get('color_plugin_enabled', 'true') === 'true' || localStorage.getItem('color_plugin_enabled') === 'true';
-            ColorPlugin.settings.main_color = Lampa.Storage.get('color_plugin_main_color', '#353535');
-            ColorPlugin.settings.highlight_enabled = Lampa.Storage.get('color_plugin_highlight_enabled', 'true') === 'true';
-            ColorPlugin.settings.dimming_enabled = Lampa.Storage.get('color_plugin_dimming_enabled', 'true') === 'true';
+            ColorPlugin.settings.main_color = Lampa.Storage.get('color_plugin_main_color', '#353535') || localStorage.getItem('color_plugin_main_color') || '#353535';
+            ColorPlugin.settings.highlight_enabled = Lampa.Storage.get('color_plugin_highlight_enabled', 'true') === 'true' || localStorage.getItem('color_plugin_highlight_enabled') === 'true';
+            ColorPlugin.settings.dimming_enabled = Lampa.Storage.get('color_plugin_dimming_enabled', 'true') === 'true' || localStorage.getItem('color_plugin_dimming_enabled') === 'true';
             applyStyles();
             updateCanvasFillStyle(window.draw_context);
             updateParamsVisibility();
@@ -909,9 +933,9 @@
     Lampa.Listener.follow('settings_component', function (event) {
         if (event.type === 'open') {
             ColorPlugin.settings.enabled = Lampa.Storage.get('color_plugin_enabled', 'true') === 'true' || localStorage.getItem('color_plugin_enabled') === 'true';
-            ColorPlugin.settings.main_color = Lampa.Storage.get('color_plugin_main_color', '#353535');
-            ColorPlugin.settings.highlight_enabled = Lampa.Storage.get('color_plugin_highlight_enabled', 'true') === 'true';
-            ColorPlugin.settings.dimming_enabled = Lampa.Storage.get('color_plugin_dimming_enabled', 'true') === 'true';
+            ColorPlugin.settings.main_color = Lampa.Storage.get('color_plugin_main_color', '#353535') || localStorage.getItem('color_plugin_main_color') || '#353535';
+            ColorPlugin.settings.highlight_enabled = Lampa.Storage.get('color_plugin_highlight_enabled', 'true') === 'true' || localStorage.getItem('color_plugin_highlight_enabled') === 'true';
+            ColorPlugin.settings.dimming_enabled = Lampa.Storage.get('color_plugin_dimming_enabled', 'true') === 'true' || localStorage.getItem('color_plugin_dimming_enabled') === 'true';
             applyStyles();
             updateCanvasFillStyle(window.draw_context);
             updatePluginIcon();
