@@ -233,6 +233,8 @@
         }
 
         var rgbColor = hexToRgb(ColorPlugin.settings.main_color);
+        // Визначаємо колір рамки для .color_square.focus
+        var focusBorderColor = ColorPlugin.settings.main_color === '#353535' ? '#ffffff' : 'var(--main-color)';
 
         var highlightStyles = ColorPlugin.settings.highlight_enabled ? (
             '-webkit-box-shadow: inset 0 0 0 0.15em #fff !important;' +
@@ -410,7 +412,11 @@
                 'border: 0.3em solid var(--main-color) !important;' +
             '}',
             '.color_square.focus {' +
-                'border: 0.3em solid var(--main-color) !important;' +
+                'border: 0.3em solid ' + focusBorderColor + ' !important;' +
+                'transform: scale(1.1) !important;' +
+            '}',
+            '.hex-input.focus {' +
+                'border: 0.2em solid ' + focusBorderColor + ' !important;' +
                 'transform: scale(1.1) !important;' +
             '}',
             'body.glass--style .selectbox-item.focus, ' +
@@ -522,7 +528,7 @@
                 'background-color: #353535 !important;' +
             '}',
             '.hex-input.focus {' +
-                'border: 0.2em solid var(--main-color) !important;' +
+                'border: 0.2em solid ' + focusBorderColor + ' !important;' +
                 'transform: scale(1.1) !important;' +
             '}',
             '.hex-input .label {' +
@@ -558,7 +564,7 @@
 
         updateDateElementStyles();
         checkBodyStyles();
-        // Тимчасовий коментар для дебагінгу: Стилі застосовано
+        // Тимчасовий коментар для дебагінгу: Стилі застосовано, focusBorderColor: + focusBorderColor
     }
 
     // Функція для створення HTML для вибору кольору
@@ -756,7 +762,7 @@
                 }
             }
             // Тимчасовий коментар для дебагінгу: Оновлено видимість параметрів
-        }, 1000); // Збільшено затримку до 1000 мс
+        }, 1000);
     }
 
     // Функція для ініціалізації плагіна
