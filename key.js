@@ -2,7 +2,7 @@
   'use strict';
 	
 function add() {
-  Lampa.Storage.set('keyboard_default_lang','English')
+  Lampa.Storage.set('keyboard_default_lang',Storage.get('language', 'uk'))
   var elementUA = $('.selectbox-item.selector > div:contains("Русский")');
   if(elementUA.length > 0) elementUA.parent('div').hide();
 //  Lampa.Storage.set('keyboard_default_lang', 'uk-UA')
