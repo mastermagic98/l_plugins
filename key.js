@@ -5,7 +5,7 @@ function add() {
 
   var elementUA = $('.selectbox-item.selector > div:contains("Українська")');
   if(elementUA.length > 0) elementUA.parent('div').hide();
-  Lampa.Storage.set('keyboard_default_lang', 'ru')
+  Lampa.Storage.set('keyboard_default_lang', 'default')
   var elementXZ = $('.selectbox-item.selector > div:contains("עִברִית")');
   if(elementXZ.length > 0) elementXZ.parent('div').hide();
 
