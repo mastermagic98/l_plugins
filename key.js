@@ -20,7 +20,7 @@ setInterval(function() {
     if(elementXZ.length > 0) elementXZ.parent('div').hide();
   }
  }, 0)
-*/
+
 if(window.appready) add();
   else {
     Lampa.Listener.follow('app', function(e) {
