@@ -3,7 +3,7 @@
 	
 function add() {
 
-  var elementUA = $('.selectbox-item.selector > div:contains("Русский")');
+  var elementUA = $('.selectbox-item.selector > div:contains("Українська")');
   if(elementUA.length > 0) elementUA.parent('div').hide();
   Lampa.Storage.set('keyboard_default_lang', 'ru')
   var elementXZ = $('.selectbox-item.selector > div:contains("עִברִית")');
@@ -13,7 +13,7 @@ function add() {
 setInterval(function() {
   var elementCHlang = $('div.hg-button.hg-functionBtn.hg-button-LANG.selector.binded')
   if (elementCHlang.length > 0){
-    var elementUA = $('.selectbox-item.selector > div:contains("Русский")');
+    var elementUA = $('.selectbox-item.selector > div:contains("Українська")');
     if(elementUA.length > 0) elementUA.parent('div').hide();
 //    Lampa.Storage.set('keyboard_default_lang', 'uk-UA')
     var elementXZ = $('.selectbox-item.selector > div:contains("עִברִית")');
