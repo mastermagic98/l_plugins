@@ -3,38 +3,20 @@
     'use strict';
 
     Lampa.Lang.add({
-        maxsm_hints_torrents: {
+        hints_torrents: {
             ru: "Видео не загружается или тормозит? Попробуйте выбрать другую раздачу.",
             en: "Video not loading or lagging? Try a different torrent.",
-            uk: "Відео не завантажується чи гальмує? Спробуйте іншу роздачу.",
-            be: "Відэа не загружаецца ці тармозіць? Паспрабуйце іншую раздачу.",
-            pt: "O vídeo não carrega ou está travando? Experimente outro torrent.",
-            zh: "视频卡顿或加载失败？试试换个种子。",
-            he: "הווידאו לא נטען או נתקע? נסה טורנט אחר.",
-            cs: "Video se nenačítá nebo se seká? Zkuste jiný torrent.",
-            bg: "Видеото не се зарежда или засича? Пробвай друг торент."
+            uk: "Відео не завантажується чи гальмує? Спробуйте іншу роздачу."
         },
-        maxsm_hints_online: {
+        hints_online: {
             ru: "Видео не загружается или тормозит? Попробуйте выбрать другой источник или озвучку.",
             en: "Video not loading or lagging? Try a different source or audio track.",
             uk: "Відео не завантажується чи гальмує? Спробуйте інше джерело або озвучення.",
-            be: "Відэа не загружаецца ці тармозіць? Паспрабуйце іншую крыніцу або агучку.",
-            pt: "O vídeo não carrega ou está travando? Tente outra fonte ou dublagem.",
-            zh: "视频卡顿或加载失败？试试更换来源或音轨。",
-            he: "הווידאו לא נטען או נתקע? נסה מקור או פסקול אחר.",
-            cs: "Video se nenačítá nebo se seká? Zkuste jiný zdroj nebo dabing.",
-            bg: "Видеото не се зарежда или засича? Пробвай друг източник или озвучаване."
         },
-        maxsm_hints_incard: {
+        hints_incard: {
             ru: "Информация о фильме может появиться раньше, чем он станет доступен для просмотра.",
             en: "A film may appear in the catalog before it's available to watch.",
-            uk: "Інформація про фільм може з’явитися раніше, ніж він стане доступним для перегляду.",
-            be: "Інфармацыя пра фільм можа з'явіцца раней, чым ён стане даступны для прагляду.",
-            pt: "As informações sobre o filme podem aparecer antes que ele esteja disponível para assistir.",
-            zh: "电影信息可能会提前显示，但影片本身尚不可观看。",
-            he: "מידע על הסרט עשוי להופיע לפני שהוא זמין לצפייה בפועל.",
-            cs: "Informace o filmu se může objevit dříve, než bude možné ho sledovat.",
-            bg: "Информацията за филма може да се появи преди самият филм да е достъпен за гледане."
+            uk: "Інформація про фільм може з’явитися раніше, ніж він стане доступним для перегляду."
         }
     });
 
@@ -138,7 +120,7 @@
 
                 if (component === 'lampac' && CONFIG.online.enabled && (CONFIG.online.repeat || !shown.online)) {
                     waitForElement('.explorer__files-head', function (el) {
-                        var $hint = $(createHintText(Lampa.Lang.translate('maxsm_hints_online'), CONFIG.online.id));
+                        var $hint = $(createHintText(Lampa.Lang.translate(' hints_online'), CONFIG.online.id));
                         $(el).before($hint);
 
                         setTimeout(function () {
@@ -151,7 +133,7 @@
 
                 if (component === 'torrents' && CONFIG.torrents.enabled && (CONFIG.torrents.repeat || !shown.torrents)) {
                     waitForElement('.explorer__files-head', function (el) {
-                        var $hint = $(createHintText(Lampa.Lang.translate('maxsm_hints_torrents'), CONFIG.torrents.id));
+                        var $hint = $(createHintText(Lampa.Lang.translate('hints_torrents'), CONFIG.torrents.id));
                         $(el).before($hint);
 
                         setTimeout(function () {
@@ -164,7 +146,7 @@
                 
                 if (component === 'full' && CONFIG.incard.enabled && (CONFIG.incard.repeat || !shown.incard)) {
                     waitForElement('.full-start-new__head', function (el) {
-                        var $hint = $(createHintText_incard(Lampa.Lang.translate('maxsm_hints_incard'), CONFIG.incard.id));
+                        var $hint = $(createHintText_incard(Lampa.Lang.translate(' hints_incard'), CONFIG.incard.id));
                         $(el).before($hint);
 
                         setTimeout(function () {
