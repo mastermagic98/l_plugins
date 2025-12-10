@@ -8,7 +8,7 @@ function add() {
 //  Lampa.Storage.set('keyboard_default_lang', 'uk-UA')
   var elementXZ = $('.selectbox-item.selector > div:contains("עִברִית")');
   if(elementXZ.length > 0) elementXZ.parent('div').hide();
-}
+} /*
 
 setInterval(function() {
   var elementCHlang = $('div.hg-button.hg-functionBtn.hg-button-LANG.selector.binded')
@@ -20,7 +20,7 @@ setInterval(function() {
     if(elementXZ.length > 0) elementXZ.parent('div').hide();
   }
  }, 0)
-
+*/
 if(window.appready) add();
   else {
     Lampa.Listener.follow('app', function(e) {
