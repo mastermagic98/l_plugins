@@ -22,8 +22,6 @@ setInterval(function() {
  }, 0)
 
 if(window.appready) add();
-
-Lampa.Storage.set('keyboard_default_lang', 'uk')
   else {
     Lampa.Listener.follow('app', function(e) {
       if(e.type == 'ready') {
