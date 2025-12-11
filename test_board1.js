@@ -7,7 +7,7 @@
     
     // Переклади
    Lampa.Lang.add({
-        kb_title: { uk: 'Клавіатура', ru: 'Клавиатура', en: 'Keyboard' },
+        kb_title: { uk: 'Клавіатура', ru: 'Клавиатура', en: 'board' },
         kb_uk:    { uk: 'Українська', ru: 'Украинская', en: 'Ukrainian' },
         kb_ru:    { uk: 'Російська',  ru: 'Русская',    en: 'Russian' },
         kb_en:    { uk: 'Англійська', ru: 'Английская', en: 'English' },
