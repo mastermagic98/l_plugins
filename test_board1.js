@@ -100,7 +100,7 @@
 */
     // При кожному відкритті пошуку
     Lampa.Listener.follow('full', e=>{
-        if (e.type==='start') setTimeout(hideKeyboards, 300);
+        if (e.type==='start') setTimeout(hideBoards, 300);
     });
 
     // Спостерігач за DOM
