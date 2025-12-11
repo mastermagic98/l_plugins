@@ -82,7 +82,7 @@
             render.append(html);
         }
 */
-        // Вішаємо обробник один раз
+ /*       // Вішаємо обробник один раз
         $(document).off('hover:enter', '[data-kb-hide-plugin]').on('hover:enter', '[data-kb-hide-plugin]', openMenu);
     }
 
@@ -97,7 +97,7 @@
     if (window.appready){
         setTimeout(injectSettingsItem, 600);
     }
-
+*/
     // При кожному відкритті пошуку
     Lampa.Listener.follow('full', e=>{
         if (e.type==='start') setTimeout(hideKeyboards, 300);
