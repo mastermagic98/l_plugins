@@ -24,7 +24,7 @@
 //    var icon_svg = '<svg fill="#fff" width="38px" height="38px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 5H4a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h16a3 3 0 0 0 3-3V8a3 3 0 0 0-3-3Zm1 11a1 1 0 0 1-1-1V8a1 1 0 0 1-1-1H4a1 1 0 0 1-1 1v8a1 1 0 0 1 1 1h16Zm-6-3H9a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2Zm3.5-4h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2Z"/></svg>';
 
     // Приховуємо вибрані клавіатури
-    function hideKeyboards() {
+    function hideBoards() {
         if (Lampa.Storage.get(k.uk,'false')==='true') $('.selectbox-item.selector > div:contains("Українська")').parent().hide();
 //        if (Lampa.Storage.get(k.ru,'true') ==='true') $('.selectbox-item.selector > div:contains("Русский"), .selectbox-item.selector > div:contains("Russian")').parent().hide();
         if (Lampa.Storage.get(k.en,'false')==='true') $('.selectbox-item.selector > div:contains("English")').parent().hide();
