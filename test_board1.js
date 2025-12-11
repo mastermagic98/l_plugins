@@ -90,14 +90,12 @@
     Lampa.Listener.follow('app', function(e){
         if (e.type === 'ready'){
             setTimeout(injectSettingsItem, 600);
-            setTimeout(hideKeyboards, 1200);
         }
     });
 
     // Якщо додаток вже запущений
     if (window.appready){
         setTimeout(injectSettingsItem, 600);
-        setTimeout(hideKeyboards, 1200);
     }
 
     // При кожному відкритті пошуку
@@ -106,6 +104,6 @@
     });
 
     // Спостерігач за DOM
-    new MutationObserver(hideKeyboards).observe(document.body, {childList:true, subtree:true});
+//    new MutationObserver(hideKeyboards).observe(document.body, {childList:true, subtree:true});
 
 })();
