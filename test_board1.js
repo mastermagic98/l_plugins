@@ -2,18 +2,18 @@
     'use strict';
 
     // Уникнення повторного запуску
-/*    if (window.kb_hide_plugin_ready) return;
+    if (window.kb_hide_plugin_ready) return;
     window.kb_hide_plugin_ready = true;
-*/
+    
     // Переклади
-    Lampa.Lang.add({
+/*   Lampa.Lang.add({
         kb_title: { uk: 'Клавіатура', ru: 'Клавиатура', en: 'Keyboard' },
         kb_uk:    { uk: 'Українська', ru: 'Украинская', en: 'Ukrainian' },
         kb_ru:    { uk: 'Російська',  ru: 'Русская',    en: 'Russian' },
         kb_en:    { uk: 'Англійська', ru: 'Английская', en: 'English' },
         kb_he:    { uk: 'עִברִית',      ru: 'עִברִית',      en: 'עִברִית' }
     });
-
+*/
     var k = {
         uk: 'kb_hide_uk_v2',
         ru: 'kb_hide_ru_v2',
