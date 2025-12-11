@@ -1,0 +1,209 @@
+(function () {
+    'use strict';
+
+    // Тільки для Lampa 3.0+
+    if (Lampa.Manifest.app_digital < 300) return;
+
+    var plugin_name = 'hide_menu_items';
+
+    var settings = {
+        hide_sport: false,
+        hide_timeline: false,
+        hide_torrents: false,
+        hide_schedule: false,
+        hide_subscriptions: false,
+        hide_bookmarks: false,
+        hide_anime: false,
+        hide_catalog: false,
+        hide_persons: false,
+        hide_info: false,
+        hide_console: false,
+        hide_settings: false,
+        hide_filter: false
+    };
+
+    function loadSettings() {
+        var saved = Lampa.Storage.get(plugin_name, '{}');
+        try {
+            var parsed = JSON.parse(saved);
+            Object.assign(settings, parsed);
+        } catch (e) {}
+    }
+
+    function saveSettings() {
+        Lampa.Storage.set(plugin_name, JSON.stringify(settings));
+    }
+
+    // === Приховування елементів меню ===
+    function hideMenuItems() {
+        var menuSelectors = {
+            sport: {
+                enabled: settings.hide_sport,
+                selectors: ['.menu__item[data-action="sport"]', '.sidebar__item[data-action="sport"]', '[data-action="sport"]:not(.head__action)', '.navigation__item[data-action="sport"]']
+            },
+            timeline: {
+                enabled: settings.hide_timeline,
+                selectors: ['.menu__item[data-action="timeline"]', '.sidebar__item[data-action="timeline"]', '[data-action="timeline"]:not(.head__action)', '.navigation__item[data-action="timeline"]']
+            },
+            torrents: {
+                enabled: settings.hide_torrents,
+                selectors: ['.menu__item[data-action="torrents"]', '.sidebar__item[data-action="torrents"]', '[data-action="torrents"]:not(.head__action)', '.navigation__item[data-action="torrents"]']
+            },
+            schedule: {
+                enabled: settings.hide_schedule,
+                selectors: ['.menu__item[data-action="schedule"]', '.sidebar__item[data-action="schedule"]', '[data-action="schedule"]:not(.head__action)', '.navigation__item[data-action="schedule"]']
+            },
+            subscriptions: {
+                enabled: settings.hide_subscriptions,
+                selectors: ['.menu__item[data-action="subscriptions"]', '.sidebar__item[data-action="subscriptions"]', '[data-action="subscriptions"]:not(.head__action)', '.navigation__item[data-action="subscriptions"]']
+            },
+            bookmarks: {
+                enabled: settings.hide_bookmarks,
+                selectors: ['.menu__item[data-action="bookmarks"]', '.sidebar__item[data-action="bookmarks"]', '[data-action="bookmarks"]:not(.head__action)', '.navigation__item[data-action="bookmarks"]']
+            },
+            anime: {
+                enabled: settings.hide_anime,
+                selectors: ['.menu__item[data-action="anime"]', '.sidebar__item[data-action="anime"]', '[data-action="anime"]:not(.head__action)', '.navigation__item[data-action="anime"]']
+            },
+            catalog: {
+                enabled: settings.hide_catalog,
+                selectors: ['.menu__item[data-action="catalog"]', '.sidebar__item[data-action="catalog"]', '[data-action="catalog"]:not(.head__action)', '.navigation__item[data-action="catalog"]']
+            },
+            persons: {
+                enabled: settings.hide_persons,
+                selectors: ['.menu__item[data-action="persons"]', '.sidebar__item[data-action="persons"]', '[data-action="persons"]:not(.head__action)', '.navigation__item[data-action="persons"]']
+            },
+            info: {
+                enabled: settings.hide_info,
+                selectors: ['.menu__item[data-action="info"]', '.sidebar__item[data-action="info"]', '[data-action="info"]:not(.head__action)', '.navigation__item[data-action="info"]', '.menu__item[data-component="info"]']
+            },
+            console: {
+                enabled: settings.hide_console,
+                selectors: ['.menu__item[data-action="console"]', '.sidebar__item[data-action="console"]', '[data-action="console"]:not(.head__action)', '.navigation__item[data-action="console"]']
+            },
+            settings: {
+                enabled: settings.hide_settings,
+                selectors: ['.menu__item[data-action="settings"]', '.sidebar__item[data-action="settings"]', '.navigation__item[data-action="settings"]']
+            },
+            filter: {
+                enabled: settings.hide_filter,
+                selectors: ['.menu__item[data-action="filter"]', '.sidebar__item[data-action="filter"]', '[data-action="filter"]:not(.head__action)', '.navigation__item[data-action="filter"]']
+            }
+        };
+
+        Object.keys(menuSelectors).forEach(function (key) {
+            var config = menuSelectors[key];
+            if (config.enabled) {
+                config.selectors.forEach(function (selector) {
+                    $(selector).hide();
+                });
+            } else {
+                config.selectors.forEach(function (selector) {
+                    $(selector).show();
+                });
+            }
+        });
+    }
+
+    // === Показати всі пункти ===
+    function showAllMenuItems() {
+        Object.keys(settings).forEach(function (key) {
+            settings[key] = false;
+        });
+        saveSettings();
+        hideMenuItems();
+    }
+
+    // === Головне меню плагіну ===
+    function openSettingsMenu() {
+        var items = [];
+
+        items.push({ title: 'Приховування пунктів меню', separator: true });
+
+        var menuNames = {
+            hide_sport: 'Спорт',
+            hide_timeline: 'Стрічка',
+            hide_torrents: 'Торренти',
+            hide_schedule: 'Розклад',
+            hide_subscriptions: 'Підписки',
+            hide_bookmarks: 'Вибране',
+            hide_anime: 'Аніме',
+            hide_catalog: 'Каталог',
+            hide_persons: 'Особи',
+            hide_info: 'Інформація',
+            hide_console: 'Консоль',
+            hide_settings: 'Налаштування (в меню)',
+            hide_filter: 'Фільтр'
+        };
+
+        Object.keys(menuNames).forEach(function (key) {
+            items.push({
+                title: menuNames[key],
+                selected: settings[key],
+                key: key
+            });
+        });
+
+        items.push({ title: 'Додатково', separator: true });
+        items.push({
+            title: 'Показати всі пункти',
+            action: 'show_all'
+        });
+
+        Lampa.Select.show({
+            title: 'Приховування меню',
+            items: items,
+            onSelect: function (item) {
+                if (item.action === 'show_all') {
+                    showAllMenuItems();
+                    openSettingsMenu(); // оновлюємо меню
+                    return;
+                }
+
+                if (item.key) {
+                    settings[item.key] = !settings[item.key];
+                    saveSettings();
+                    hideMenuItems();
+                    openSettingsMenu(); // оновлюємо галочки
+                }
+            },
+            onBack: function () {
+                Lampa.Controller.toggle('settings_component');
+            }
+        });
+    }
+
+    // === Додаємо пункт у налаштування ===
+    Lampa.SettingsApi.addComponent({
+        component: 'hide_menu_plugin',
+        name: 'Приховування меню',
+        icon: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z" fill="#fff"/></svg>'
+    });
+
+    Lampa.SettingsApi.addParam({
+        component: 'hide_menu_plugin',
+        param: { name: 'open_hide_menu', type: 'trigger', default: false },
+        field: { name: 'Приховування меню', description: 'Налаштування видимості пунктів меню' },
+        onRender: function (el) {
+            el.off('hover:enter').on('hover:enter', openSettingsMenu);
+        }
+    });
+
+    // === Спостереження за DOM + запуск ===
+    var observer = new MutationObserver(hideMenuItems);
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    Lampa.Listener.follow('app', function (e) {
+        if (e.type === 'ready') {
+            loadSettings();
+            setTimeout(hideMenuItems, 1000);
+        }
+    });
+
+    Lampa.Listener.follow('full', function (e) {
+        if (e.type === 'start') {
+            setTimeout(hideMenuItems, 500);
+        }
+    });
+
+})();
