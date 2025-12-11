@@ -3,16 +3,6 @@
 
     // === Багатомовність плагіну (uk, ru, en) ===
     Lampa.Lang.add({
-        keyboard_lang_disable: {
-            ru: 'Скрытие раскладок клавиатуры',
-            en: 'Hide Keyboard Layouts',
-            uk: 'Приховати розкладки клавіатури'
-        },
-        keyboard_lang_disable_desc: {
-            ru: 'Скрывает ненужные раскладки встроенной клавиатуры Lampa (украинская, русская, английская, иврит)',
-            en: 'Hides unnecessary layouts of the built-in Lampa keyboard (Ukrainian, Russian, English, Hebrew)',
-            uk: 'Приховує непотрібні розкладки вбудованої клавіатури Lampa (українська, російська, англійська, іврит)'
-        },
         keyboard_lang_disable_toggle: {
             ru: 'Приховувати розкладки',
             en: 'Hide layouts',
@@ -26,16 +16,6 @@
     });
 
     function startPlugin() {
-        // === Маніфест плагіну ===
-        var manifest = {
-            type: 'other',
-            version: '1.0.4',
-            name: Lampa.Lang.translate('keyboard_lang_disable'),
-            description: Lampa.Lang.translate('keyboard_lang_disable_desc'),
-            component: 'keyboard_lang_disable'
-        };
-        Lampa.Manifest.plugins = manifest;
-
         // === Функція приховування розкладок ===
         function hideKeyboardLanguages() {
             Lampa.Storage.set('keyboard_default_lang', 'default');
@@ -83,27 +63,32 @@
             }
         }
 
-        // === Функція оновлення видимості та стану ===
+        // === Центральна функція оновлення видимості та стану ===
         function updateVisibilityAndState() {
             var keyboardType = Lampa.Storage.get('keyboard_type', 'lampa');
             var enabled = Lampa.Storage.get('keyboard_lang_disable_enabled', true);
-            var toggleParam = $('.settings-param[data-name="keyboard_lang_disable_enabled"]');
 
-            if (!toggleParam || toggleParam.length === 0) {
+            // Шукаємо всі можливі параметри (може бути кілька через перерендери)
+            var toggleParams = $('.settings-param[data-name="keyboard_lang_disable_enabled"]');
+
+            if (toggleParams.length === 0) {
                 return;
             }
 
             if (keyboardType === 'lampa') {
-                toggleParam.show();
+                toggleParams.show();
                 if (enabled) {
                     startChecking();
                 } else {
                     stopChecking();
                 }
             } else {
-                toggleParam.hide();
+                toggleParams.hide();
                 stopChecking();
             }
+
+            // Оновлюємо стан чекбоксу
+            toggleParams.find('input[type="checkbox"]').prop('checked', enabled);
         }
 
         // === Додаємо toggle в розділ keyboard ===
@@ -122,11 +107,14 @@
                 Lampa.Storage.set('keyboard_lang_disable_enabled', value);
                 updateVisibilityAndState();
             },
+            onBaseRender: function () {
+                // Викликається при кожному рендері всього розділу keyboard
+                setTimeout(updateVisibilityAndState, 100);
+            },
             onRender: function (element, param) {
+                // Викликається для конкретного елемента
                 updateVisibilityAndState();
-
                 var saved = Lampa.Storage.get('keyboard_lang_disable_enabled', true);
-                param.value = saved;
                 element.prop('checked', saved);
             }
         });
@@ -136,17 +124,25 @@
             updateVisibilityAndState();
         });
 
-        // === Початкове застосування (з затримкою та перевіркою) ===
-        setTimeout(function () {
+        // === Декілька спроб ініціалізації для надійності ===
+        var initAttempts = 0;
+        var initInterval = setInterval(function () {
             updateVisibilityAndState();
-        }, 1500);
+            initAttempts++;
+            if (initAttempts > 10) {
+                clearInterval(initInterval);
+            }
+        }, 800);
 
-        // === Додаткова перевірка після повного рендеру налаштувань ===
+        // === Додатковий слухач повного готовності налаштувань ===
         Lampa.Listener.follow('settings', function (e) {
             if (e.type === 'ready') {
-                setTimeout(updateVisibilityAndState, 500);
+                setTimeout(updateVisibilityAndState, 300);
             }
         });
+
+        // === Початкове застосування ===
+        setTimeout(updateVisibilityAndState, 1500);
     }
 
     // === Запуск плагіну ===
