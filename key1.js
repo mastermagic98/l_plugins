@@ -1,7 +1,12 @@
 (function () {
     'use strict';
 
-    // Переклади
+    // Перевірка версії Lampa (для 3.0+)
+    if (Lampa.Manifest.app_digital < 300) {
+        return; // Не запускаємо на старих версіях
+    }
+
+    // Додаємо переклади
     function addTranslates() {
         Lampa.Lang.add({
             keyboard_settings: {
@@ -9,20 +14,40 @@
                 ru: 'Клавиатура',
                 en: 'Keyboard'
             },
-            keyboard_select_title: {
-                uk: 'Вибрати мову розкладки',
-                ru: 'Выбрать язык раскладки',
-                en: 'Select keyboard layout'
+            keyboard_uk: {
+                uk: 'Українська',
+                ru: 'Украинская',
+                en: 'Ukrainian'
+            },
+            keyboard_ru: {
+                uk: 'Російська',
+                ru: 'Русская',
+                en: 'Russian'
+            },
+            keyboard_en: {
+                uk: 'Англійська',
+                ru: 'Английская',
+                en: 'English'
+            },
+            keyboard_he: {
+                uk: 'Іврит (עִברִית)',
+                ru: 'Иврит (עִברִית)',
+                en: 'Hebrew (עִברִית)'
+            },
+            keyboard_select_visibility: {
+                uk: 'Вимкнути відображення в списку розкладок',
+                ru: 'Отключить отображение в списке раскладок',
+                en: 'Disable display in keyboard layout list'
             }
         });
     }
 
-    // Основна функція
+    // Основна функція плагіну
     function startPlugin() {
-        if (window.keyboard_plugin_ready) {
+        if (window.keyboard_plugin_v3_ready) {
             return;
         }
-        window.keyboard_plugin_ready = true;
+        window.keyboard_plugin_v3_ready = true;
 
         addTranslates();
 
@@ -31,111 +56,90 @@
 
         // Додаємо розділ у налаштування
         Lampa.SettingsApi.addComponent({
-            component: 'keyboard_settings',
+            component: 'keyboard_settings_v3',
             name: Lampa.Lang.translate('keyboard_settings'),
             icon: keyboard_icon
         });
 
-        // Ключі збереження
-        var keys = {
-            uk: 'keyboard_hide_uk',
-            ru: 'keyboard_hide_ru',
-            en: 'keyboard_hide_en',
-            he: 'keyboard_hide_he'
-        };
+        // Список мов
+        var languages = [
+            { key: 'hide_uk', title: 'keyboard_uk', default: false },
+            { key: 'hide_ru', title: 'keyboard_ru', default: true },
+            { key: 'hide_en', title: 'keyboard_en', default: false },
+            { key: 'hide_he', title: 'keyboard_he', default: true }
+        ];
 
-        // Функція приховування
-        function applyHiding() {
-            // Українська
-            var el = $('.selectbox-item.selector > div:contains("Українська")').parent('div');
-            if (Lampa.Storage.get(keys.uk, 'false') === 'true') {
-                el.hide();
-            } else {
-                el.show();
-            }
+        languages.forEach(function (lang) {
+            var storageKey = 'keyboard_v3_' + lang.key;
+            var storedValue = Lampa.Storage.get(storageKey, lang.default.toString()) === 'true';
 
-            // Російська
-            el = $('.selectbox-item.selector > div:contains("Русский"), .selectbox-item.selector > div:contains("Russian")').parent('div');
-            if (Lampa.Storage.get(keys.ru, 'true') === 'true') {
-                el.hide();
-            } else {
-                el.show();
-            }
-
-            // Англійська
-            el = $('.selectbox-item.selector > div:contains("English")').parent('div');
-            if (Lampa.Storage.get(keys.en, 'false') === 'true') {
-                el.hide();
-            } else {
-                el.show();
-            }
-
-            // Іврит
-            el = $('.selectbox-item.selector > div:contains("עִברִית")').parent('div');
-            if (Lampa.Storage.get(keys.he, 'true') === 'true') {
-                el.hide();
-            } else {
-                el.show();
-            }
-        }
-
-        // Обробник входу в розділ
-        Lampa.SettingsApi.addComponentHandler('keyboard_settings', function () {
-            var items = [];
-
-            items.push({
-                title: 'Русский',
-                selected: Lampa.Storage.get(keys.ru, 'true') === 'true',
-                lang: 'ru'
-            });
-            items.push({
-                title: 'English',
-                selected: Lampa.Storage.get(keys.en, 'false') === 'true',
-                lang: 'en'
-            });
-            items.push({
-                title: 'Українська',
-                selected: Lampa.Storage.get(keys.uk, 'false') === 'true',
-                lang: 'uk'
-            });
-            items.push({
-                title: 'עִברִית',
-                selected: Lampa.Storage.get(keys.he, 'true') === 'true',
-                lang: 'he'
-            });
-
-            Lampa.Select.show({
-                title: Lampa.Lang.translate('keyboard_select_title'),
-                items: items,
-                onSelect: function (item) {
-                    var key = keys[item.lang];
-                    var current = Lampa.Storage.get(key, 'false');
-                    var newValue = (current === 'true') ? 'false' : 'true';
-                    Lampa.Storage.set(key, newValue);
-                    applyHiding();
+            Lampa.SettingsApi.addParam({
+                component: 'keyboard_settings_v3',
+                param: {
+                    name: storageKey,
+                    type: 'trigger',
+                    default: storedValue
                 },
-                onBack: function () {
-                    Lampa.Controller.toggle('settings_component');
+                field: {
+                    name: Lampa.Lang.translate(lang.title),
+                    description: Lampa.Lang.translate('keyboard_select_visibility')
+                },
+                onChange: function (value) {
+                    Lampa.Storage.set(storageKey, value.toString());
+                    applyKeyboardHiding(); // негайно застосовуємо
                 }
             });
         });
 
-        // Застосовуємо при відкритті пошуку
+        // Надійна функція приховування (MutationObserver + затримки)
+        function applyKeyboardHiding() {
+            // Українська
+            if (Lampa.Storage.get('keyboard_v3_hide_uk', 'false') === 'true') {
+                $('.selectbox-item.selector > div:contains("Українська")').parent('div').hide();
+            }
+            // Російська
+            if (Lampa.Storage.get('keyboard_v3_hide_ru', 'true') === 'true') {
+                $('.selectbox-item.selector > div:contains("Русский")').parent('div').hide();
+                $('.selectbox-item.selector > div:contains("Russian")').parent('div').hide();
+            }
+            // Англійська
+            if (Lampa.Storage.get('keyboard_v3_hide_en', 'false') === 'true') {
+                $('.selectbox-item.selector > div:contains("English")').parent('div').hide();
+            }
+            // Іврит
+            if (Lampa.Storage.get('keyboard_v3_hide_he', 'true') === 'true') {
+                $('.selectbox-item.selector > div:contains("עִברִית")').parent('div').hide();
+            }
+        }
+
+        // Спостерігач за появою списку розкладок
+        var observer = new MutationObserver(function () {
+            applyKeyboardHiding();
+        });
+
+        // Запускаємо спостереження за body (де з'являється список)
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+
+        // Додатково застосовуємо при відкритті пошуку
         Lampa.Listener.follow('full', function (e) {
             if (e.type === 'start') {
-                setTimeout(applyHiding, 200);
-                setTimeout(applyHiding, 600);
-                setTimeout(applyHiding, 1200);
+                setTimeout(applyKeyboardHiding, 200);
+                setTimeout(applyKeyboardHiding, 600);
+                setTimeout(applyKeyboardHiding, 1200);
             }
         });
 
         // Якщо додаток вже запущений
         if (window.appready) {
-            setTimeout(applyHiding, 800);
+            setTimeout(applyKeyboardHiding, 800);
+            setTimeout(applyKeyboardHiding, 1500);
         }
     }
 
-    // Запуск
+    // Запуск плагіну
     if (window.appready) {
         startPlugin();
     } else {
