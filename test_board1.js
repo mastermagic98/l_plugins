@@ -6,7 +6,7 @@
     window.kb_hide_plugin_ready = true;
     
     // Переклади
-/*   Lampa.Lang.add({
+   Lampa.Lang.add({
         kb_title: { uk: 'Клавіатура', ru: 'Клавиатура', en: 'Keyboard' },
         kb_uk:    { uk: 'Українська', ru: 'Украинская', en: 'Ukrainian' },
         kb_ru:    { uk: 'Російська',  ru: 'Русская',    en: 'Russian' },
@@ -20,8 +20,8 @@
         en: 'kb_hide_en_v2',
         he: 'kb_hide_he_v2'
     };
-*/
-//    var icon_svg = '<svg fill="#fff" width="38px" height="38px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 5H4a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h16a3 3 0 0 0 3-3V8a3 3 0 0 0-3-3Zm1 11a1 1 0 0 1-1-1V8a1 1 0 0 1-1-1H4a1 1 0 0 1-1 1v8a1 1 0 0 1 1 1h16Zm-6-3H9a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2Zm3.5-4h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2Z"/></svg>';
+
+   var icon_svg = '<svg fill="#fff" width="38px" height="38px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 5H4a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h16a3 3 0 0 0 3-3V8a3 3 0 0 0-3-3Zm1 11a1 1 0 0 1-1-1V8a1 1 0 0 1-1-1H4a1 1 0 0 1-1 1v8a1 1 0 0 1 1 1h16Zm-6-3H9a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2Zm3.5-4h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2Z"/></svg>';
 
     // Приховуємо вибрані клавіатури
     function hideBoards() {
@@ -32,7 +32,7 @@
     }
 
     // Меню з нативними чекбоксами
-/*    function openMenu = function() {
+   function openMenu = function() {
    var items = [];
 
         items.push({ title: 'Приховати клавіатури', separator: true });
@@ -53,7 +53,7 @@
                 if (a.checkbox && a.code){
                     var k = k[a.code];
                     Lampa.Storage.set(k, Lampa.Storage.get(k,'false')==='true' ? 'false' : 'true');
-                    hideKeyboards();
+                    hideBoards();
                     openMenu(); // оновлюємо галочки
                 }
             },
@@ -81,8 +81,8 @@
         } else {
             render.append(html);
         }
-*/
- /*       // Вішаємо обробник один раз
+
+       // Вішаємо обробник один раз
         $(document).off('hover:enter', '[data-kb-hide-plugin]').on('hover:enter', '[data-kb-hide-plugin]', openMenu);
     }
 
@@ -104,6 +104,6 @@
     });
 
     // Спостерігач за DOM
-//    new MutationObserver(hideKeyboards).observe(document.body, {childList:true, subtree:true});
+    new MutationObserver(hideBoards).observe(document.body, {childList:true, subtree:true});
 
 })();
