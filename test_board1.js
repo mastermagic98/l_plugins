@@ -32,8 +32,8 @@
     }
 
     // Меню з нативними чекбоксами
-    function openMenu = function() {
-    /*    var items = [];
+/*    function openMenu = function() {
+   var items = [];
 
         items.push({ title: 'Приховати клавіатури', separator: true });
 
