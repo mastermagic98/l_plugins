@@ -60,7 +60,7 @@
             onBack: ()=>Lampa.Controller.toggle('settings_component')
         });
     };
-*/
+
     // Додаємо пункт у налаштування (найнадійніший спосіб)
     function injectSettingsItem() {
         var render = Lampa.Settings.main().render();
@@ -81,7 +81,7 @@
         } else {
             render.append(html);
         }
-
+*/
         // Вішаємо обробник один раз
         $(document).off('hover:enter', '[data-kb-hide-plugin]').on('hover:enter', '[data-kb-hide-plugin]', openMenu);
     }
