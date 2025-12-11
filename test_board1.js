@@ -9,12 +9,12 @@
     Lampa.Lang.add({
         kb_title: { uk: 'Клавіатура', ru: 'Клавиатура', en: 'Keyboard' },
         kb_uk:    { uk: 'Українська', ru: 'Украинская', en: 'Ukrainian' },
-        kb_ru:    { uk: 'Російська',   ru: 'Русская',     en: 'Russian' },
-        kb_en:    { uk: 'Англійська', ru: 'Английская',  en: 'English' },
-        kb_he:    { uk: 'Іврит (עִברִית)', ru: 'Иврит (עִברִית)', en: 'Hebrew (עִברִית)' }
+        kb_ru:    { uk: 'Російська',  ru: 'Русская',    en: 'Russian' },
+        kb_en:    { uk: 'Англійська', ru: 'Английская', en: 'English' },
+        kb_he:    { uk: 'עִברִית',      ru: 'עִברִית',      en: 'עִברִית' }
     });
 
-    var keys = {
+    var k = {
         uk: 'kb_hide_uk_v2',
         ru: 'kb_hide_ru_v2',
         en: 'kb_hide_en_v2',
@@ -25,10 +25,10 @@
 
     // Приховуємо вибрані клавіатури
     function hideKeyboards() {
-        if (Lampa.Storage.get(keys.uk,'false')==='true') $('.selectbox-item.selector > div:contains("Українська")').parent().hide();
-        if (Lampa.Storage.get(keys.ru,'true') ==='true') $('.selectbox-item.selector > div:contains("Русский"), .selectbox-item.selector > div:contains("Russian")').parent().hide();
-        if (Lampa.Storage.get(keys.en,'false')==='true') $('.selectbox-item.selector > div:contains("English")').parent().hide();
-        if (Lampa.Storage.get(keys.he,'true') ==='true') $('.selectbox-item.selector > div:contains("עִברִית")').parent().hide();
+        if (Lampa.Storage.get(k.uk,'false')==='true') $('.selectbox-item.selector > div:contains("Українська")').parent().hide();
+        if (Lampa.Storage.get(k.ru,'true') ==='true') $('.selectbox-item.selector > div:contains("Русский"), .selectbox-item.selector > div:contains("Russian")').parent().hide();
+        if (Lampa.Storage.get(k.en,'false')==='true') $('.selectbox-item.selector > div:contains("English")').parent().hide();
+        if (Lampa.Storage.get(k.he,'true') ==='true') $('.selectbox-item.selector > div:contains("עִברִית")').parent().hide();
     }
 
     // Меню з нативними чекбоксами
@@ -41,7 +41,7 @@
             items.push({
                 title: Lampa.Lang.translate('kb_'+code),
                 checkbox: true,
-                checked: Lampa.Storage.get(keys[code], code==='ru'?'true':'false') === 'true',
+                checked: Lampa.Storage.get(k[code], code==='ru'?'true':'false') === 'true',
                 code: code
             });
         });
@@ -51,7 +51,7 @@
             items: items,
             onSelect: function(a)=>{
                 if (a.checkbox && a.code){
-                    var k = keys[a.code];
+                    var k = k[a.code];
                     Lampa.Storage.set(k, Lampa.Storage.get(k,'false')==='true' ? 'false' : 'true');
                     hideKeyboards();
                     openMenu(); // оновлюємо галочки
@@ -60,7 +60,7 @@
             onBack: ()=>Lampa.Controller.toggle('settings_component')
         });
     };
-/*
+
     // Додаємо пункт у налаштування (найнадійніший спосіб)
     function injectSettingsItem() {
         var render = Lampa.Settings.main().render();
@@ -85,7 +85,7 @@
         // Вішаємо обробник один раз
         $(document).off('hover:enter', '[data-kb-hide-plugin]').on('hover:enter', '[data-kb-hide-plugin]', openMenu);
     }
-*/
+
     // Запуск
     Lampa.Listener.follow('app', function(e){
         if (e.type === 'ready'){
