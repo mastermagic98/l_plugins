@@ -9,9 +9,9 @@
             uk: 'Приховати розкладки клавіатури'
         },
         keyboard_lang_disable_desc: {
-            ru: 'Скрывает ненужные раскладки виртуальной клавиатуры (украинская, русская, английская, иврит)',
-            en: 'Hides unnecessary virtual keyboard layouts (Ukrainian, Russian, English, Hebrew)',
-            uk: 'Приховує непотрібні розкладки віртуальної клавіатури (українська, російська, англійська, іврит)'
+            ru: 'Скрывает ненужные раскладки встроенной клавиатуры Lampa (украинская, русская, английская, иврит)',
+            en: 'Hides unnecessary layouts of the built-in Lampa keyboard (Ukrainian, Russian, English, Hebrew)',
+            uk: 'Приховує непотрібні розкладки вбудованої клавіатури Lampa (українська, російська, англійська, іврит)'
         },
         keyboard_lang_disable_toggle: {
             ru: 'Приховувати розкладки',
@@ -19,9 +19,9 @@
             uk: 'Приховувати розкладки'
         },
         keyboard_lang_disable_toggle_desc: {
-            ru: 'Приховує українську, російську, англійську та іврит',
-            en: 'Hides Ukrainian, Russian, English and Hebrew',
-            uk: 'Приховує українську, російську, англійську та іврит'
+            ru: 'Приховує українську, російську, англійську та іврит у вбудованій клавіатурі',
+            en: 'Hides Ukrainian, Russian, English and Hebrew in the built-in keyboard',
+            uk: 'Приховує українську, російську, англійську та іврит у вбудованій клавіатурі'
         }
     });
 
@@ -29,7 +29,7 @@
         // === Маніфест плагіну ===
         var manifest = {
             type: 'other',
-            version: '1.0.2',
+            version: '1.0.3',
             name: Lampa.Lang.translate('keyboard_lang_disable'),
             description: Lampa.Lang.translate('keyboard_lang_disable_desc'),
             component: 'keyboard_lang_disable'
@@ -83,7 +83,7 @@
             }
         }
 
-        // === Додаємо toggle в розділ keyboard (під "Тип клавіатури") ===
+        // === Додаємо toggle в розділ keyboard ===
         Lampa.SettingsApi.addParam({
             component: 'keyboard',
             param: {
@@ -97,47 +97,41 @@
             default: true,
             onChange: function (value) {
                 Lampa.Storage.set('keyboard_lang_disable_enabled', value);
-                if (value && Lampa.Storage.get('keyboard_type', 'virtual') === 'virtual') {
-                    startChecking();
-                } else {
-                    stopChecking();
-                }
+                updateVisibilityAndState();
             },
             onRender: function (element, param) {
-                // Показуємо тільки якщо вибрано вбудовану (virtual) клавіатуру
-                var keyboardType = Lampa.Storage.get('keyboard_type', 'virtual');
-                var enabled = Lampa.Storage.get('keyboard_lang_disable_enabled', true);
-                if (keyboardType !== 'virtual') {
-                    element.closest('.settings-param').hide();
-                } else {
-                    element.closest('.settings-param').show();
-                }
-                param.value = enabled;
-                element.prop('checked', enabled);
+                updateVisibilityAndState();
             }
         });
 
-        // === Слухаємо зміну типу клавіатури ===
-        Lampa.SettingsApi.addListener('keyboard', 'keyboard_type', function (value) {
+        // === Функція оновлення видимості та стану ===
+        function updateVisibilityAndState() {
+            var keyboardType = Lampa.Storage.get('keyboard_type', 'lampa');
+            var enabled = Lampa.Storage.get('keyboard_lang_disable_enabled', true);
+
             var toggleParam = $('.settings-param[data-name="keyboard_lang_disable_enabled"]');
-            if (value === 'virtual') {
+
+            if (keyboardType === 'lampa') {
                 toggleParam.show();
-                if (Lampa.Storage.get('keyboard_lang_disable_enabled', true)) {
+                if (enabled) {
                     startChecking();
+                } else {
+                    stopChecking();
                 }
             } else {
                 toggleParam.hide();
                 stopChecking();
             }
+        }
+
+        // === Слухаємо зміну типу клавіатури ===
+        Lampa.SettingsApi.addListener('keyboard', 'keyboard_type', function (value) {
+            updateVisibilityAndState();
         });
 
         // === Початкове застосування ===
         setTimeout(function () {
-            var keyboardType = Lampa.Storage.get('keyboard_type', 'virtual');
-            var enabled = Lampa.Storage.get('keyboard_lang_disable_enabled', true);
-            if (keyboardType === 'virtual' && enabled) {
-                startChecking();
-            }
+            updateVisibilityAndState();
         }, 1000);
     }
 
