@@ -23,19 +23,17 @@
 
     function loadSettings() {
         var saved = Lampa.Storage.get(plugin_name, '{}');
-        try {
-            Object.assign(settings, JSON.parse(saved));
-        } catch (e) {}
+        try { Object.assign(settings, JSON.parse(saved));
+        catch (e) {}
     }
 
     function saveSettings() {
         Lampa.Storage.set(plugin_name, JSON.stringify(settings));
     }
 
-    // === Приховування елементів ===
     function hideMenuItems() {
         var menuSelectors = {
-            sport: { enabled: settings.hide_sport, selectors: ['.menu__item[data-action="sport"]', '.sidebar__item[data-action="sport"]', '[data-action="sport"]:not(.head__action)'] },
+            sport: { enabled: settings.hide_sport, selectors: ['.menu__item[data-action="sport"], .sidebar__item[data-action="sport"], [data-action="sport"]:not(.head__action)' ] },
             timeline: { enabled: settings.hide_timeline, selectors: ['.menu__item[data-action="timeline"]', '.sidebar__item[data-action="timeline"]', '[data-action="timeline"]:not(.head__action)'] },
             torrents: { enabled: settings.hide_torrents, selectors: ['.menu__item[data-action="torrents"]', '.sidebar__item[data-action="torrents"]', '[data-action="torrents"]:not(.head__action)'] },
             schedule: { enabled: settings.hide_schedule, selectors: ['.menu__item[data-action="schedule"]', '.sidebar__item[data-action="schedule"]', '[data-action="schedule"]:not(.head__action)'] },
@@ -51,30 +49,19 @@
         };
 
         Object.keys(menuSelectors).forEach(function (key) {
-            var config = menuSelectors[key];
-            config.selectors.forEach(function (sel) {
-                $(sel).toggle(!config.enabled);
+            var cfg = menuSelectors[key];
+            cfg.selectors.forEach(function (sel) {
+                $(sel).toggle(!cfg.enabled);
             });
         });
     }
 
-    // === Показати всі ===
     function showAllMenuItems() {
         Object.keys(settings).forEach(function (k) { settings[k] = false; });
         saveSettings();
         hideMenuItems();
     }
 
-    // === Створюємо HTML-квадратик ===
-    function checkboxIcon(active) {
-        if (active) {
-            return '<div style="width:20px;height:20px;border-radius:4px;background:#0075ff;display:inline-flex;align-items:center;justify-content:center;margin-right:12px;flex-shrink:0;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17L4 12" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>';
-        } else {
-            return '<div style="width:20px;height:20px;border-radius:4px;background:#333;border:2px solid #555;display:inline-flex;align-items:center;justify-content:center;margin-right:12px;flex-shrink:0;"></div>';
-        }
-    }
-
-    // === Головне меню з квадратиками ===
     function openSettingsMenu() {
         var items = [];
 
@@ -98,8 +85,9 @@
 
         Object.keys(names).forEach(function (key) {
             items.push({
-                title: checkboxIcon(settings[key]) + names[key],
-                selected: settings[key],
+                title: names[key],
+                checkbox: true,                    // включає квадратний чекбокс
+                checked: settings[key],           // галочка чи ні
                 key: key
             });
         });
@@ -119,11 +107,12 @@
                     openSettingsMenu();
                     return;
                 }
+
                 if (item.key) {
                     settings[item.key] = !settings[item.key];
                     saveSettings();
                     hideMenuItems();
-                    openSettingsMenu(); // оновлюємо квадратики
+                    openSettingsMenu(); // оновлюємо чекбокси
                 }
             },
             onBack: function () {
@@ -132,11 +121,11 @@
         });
     }
 
-    // === Додаємо пункт у налаштування ===
+    // === Додаємо пункт у налаштувань ===
     Lampa.SettingsApi.addComponent({
         component: 'hide_menu_plugin',
         name: 'Приховування меню',
-        icon: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z" fill="#fff"/></svg>'
+        icon: '<svg viewBox="0 0 24 24" fill="none"><path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z" fill="#fff"/></svg>'
     });
 
     Lampa.SettingsApi.addParam({
@@ -148,11 +137,10 @@
         }
     });
 
-    // === Спостерігач за DOM ===
+    // === Спостереження ===
     var observer = new MutationObserver(hideMenuItems);
     observer.observe(document.body, { childList: true, subtree: true });
 
-    // === Запуск ===
     Lampa.Listener.follow('app', function (e) {
         if (e.type === 'ready') {
             loadSettings();
@@ -161,9 +149,7 @@
     });
 
     Lampa.Listener.follow('full', function (e) {
-        if (e.type === 'start') {
-            setTimeout(hideMenuItems, 500);
-        }
+        if (e.type === 'start') setTimeout(hideMenuItems, 500);
     });
 
 })();
