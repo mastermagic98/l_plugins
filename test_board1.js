@@ -26,14 +26,14 @@
     // Приховуємо вибрані клавіатури
     function hideKeyboards() {
         if (Lampa.Storage.get(k.uk,'false')==='true') $('.selectbox-item.selector > div:contains("Українська")').parent().hide();
-        if (Lampa.Storage.get(k.ru,'true') ==='true') $('.selectbox-item.selector > div:contains("Русский"), .selectbox-item.selector > div:contains("Russian")').parent().hide();
+//        if (Lampa.Storage.get(k.ru,'true') ==='true') $('.selectbox-item.selector > div:contains("Русский"), .selectbox-item.selector > div:contains("Russian")').parent().hide();
         if (Lampa.Storage.get(k.en,'false')==='true') $('.selectbox-item.selector > div:contains("English")').parent().hide();
         if (Lampa.Storage.get(k.he,'true') ==='true') $('.selectbox-item.selector > div:contains("עִברִית")').parent().hide();
     }
 
     // Меню з нативними чекбоксами
     function openMenu = function() {
-        var items = [];
+    /*    var items = [];
 
         items.push({ title: 'Приховати клавіатури', separator: true });
 
@@ -45,7 +45,7 @@
                 code: code
             });
         });
-
+*/
         Lampa.Select.show({
             title: Lampa.Lang.translate('kb_title'),
             items: items,
