@@ -3,70 +3,80 @@
 Lampa.Manifest({
     type: 'plugin',
     name: 'Вимкнення розкладок клавіатури',
-    description: 'Дозволяє вимкнути українську, російську та іврит розкладки віртуальної клавіатури. Налаштування в Налаштування → Інше → Під вибором типу клавіатури.',
-    version: '1.0',
+    description: 'Дозволяє вимкнути українську, російську, англійську та іврит розкладки віртуальної клавіатури. Налаштування в Налаштування → Інше → Під вибором типу клавіатури.',
+    version: '1.1',
     author: 'Grok',
     icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjgwMCIgdmlld0JveD0iMCAwIDI0IDI0IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxwYXRoIGQ9Ik02LjIxIDEzLjI5YS45LjkgMCAwIDAtLjMzLS4yMSAxIDEgMCAwIDAtLjc2IDAgLjkuOSAwIDAgMC0uNTQuNTQgMSAxIDAgMSAwIDEuODQgMCAxIDEgMCAwIDAtLjIxLS4zM00xMy41IDExaDFhMSAxIDAgMCAwIDAtMmgxaDEgMCAwIDAgMCAyaC0xaDEgMCAwIDAgMCAyTTloMGgxYTEgMSAwIDAgMCAwLTJoLTFhMSAxIDAgMCAwIDAgMm0tM01oLTFhMSAxIDAgMCAwIDAgMmgxaDEgMCAwIDAgMCAyTTIwIDVINGEzIDMgMCAwIDAtMyAzdjhhMyAzIDAgMCAwIDMgM2gxNmEzIDMgMCAwIDAgMy0zVjhhMyAzIDAgMCAwLTMtM20xIDExYTEgMSAwIDAgMS0xIDFINGExIDEgMCAwIDEtMS0xVjhhMSAxIDAgMCAxIDEtMWgxNmExIDEgMCAwIDEgMXY4Wm0tNkg5YTEgMSAwIDAgMCAwIDJoNmExIDEgMCAwIDAgMC0yTTMuNS03aC0xYTEgMSAwIDAgMCAwIDJoMWExIDEgMCAwIDAgMC0yTTQuMjEgNC4yOWExIDEgMCAwIDAtLjMzLS4yMSAxIDEgMCAwIDAtLjc2IDAgLjkuOSAwIDAgMC0uMzMuMjEgMSAxIDAgMCAwLS4yMS4zMyAxIDEgMCAxIDAgMS45Mi4zOC44NC44NCAwIDAgMC0uMDgtLjM4IDEgMCAwIDAtLjIxLS4zMyIvPjwvc3ZnPg=='
 });
 
-Lampa.Params.select('keyboard_layout_disable', {
-    'none': 'Не вимикати нічого',
-    'ua': 'Вимкнути українську',
-    'ru': 'Вимкнути російську',
-    'he': 'Вимкнути іврит',
-    'ua_ru': 'Вимкнути українську та російську',
-    'ua_he': 'Вимкнути українську та іврит',
-    'ru_he': 'Вимкнути російську та іврит',
-    'all': 'Вимкнути всі три (укр, рос, іврит)'
-}, 'none');
+// Мультиселект параметр (зберігається як масив)
+Lampa.Params.multiselect('keyboard_layout_disable', [
+    {value: 'ua', title: 'Українська'},
+    {value: 'ru', title: 'Російська'},
+    {value: 'en', title: 'English'},
+    {value: 'he', title: 'עִברִית'}
+], []);
 
+// Додаємо параметр до категорії "Інше"
 Lampa.Settings.categories.push({
     name: 'Інше',
     component: 'other',
     params: ['keyboard_layout_disable']
 });
 
+// Вставляємо мультиселект під параметром вибору типу клавіатури
 Lampa.SettingsListener.add(function (component) {
     if (component === 'other') {
-        var select = Lampa.Params.select('keyboard_layout_disable');
-        if (select) {
-            var html = '<div class="settings-param selector" data-type="select" data-name="keyboard_layout_disable" data-title="Вимкнення розкладок клавіатури">' +
-                       '<div class="settings-param__name">Вимкнення розкладок клавіатури</div>' +
-                       '<div class="settings-param__value">' + select[Lampa.Storage.get('keyboard_layout_disable','none')] + '</div>' +
+        var place = $('div[data-name="keyboard_type"]:first').parent();
+        if (place.length && !$('div[data-name="keyboard_layout_disable"]').length) {
+            var currentValue = Lampa.Storage.get('keyboard_layout_disable', '[]');
+            var html = '<div class="settings-param selector" data-type="multiselect" data-name="keyboard_layout_disable">' +
+                       '<div class="settings-param__name">Вимкнути розкладки клавіатури</div>' +
+                       '<div class="settings-param__value">' + (currentValue.length ? currentValue.map(function(v){return Lampa.Params.multiselect('keyboard_layout_disable').find(function(i){return i.value===v}).title;}).join(', ') : 'Нічого не вибрано') + '</div>' +
                        '<div class="settings-param__status">Під вибором типу клавіатури</div></div>';
-            var place = $('div[data-name="keyboard_type"]:first').parent();
-            if (place.length) {
-                place.after(html);
-            }
+            place.after(html);
         }
     }
 });
 
 function hideLayouts() {
-    var value = Lampa.Storage.get('keyboard_layout_disable', 'none');
-    if (value === 'none') return;
+    var disabled = Lampa.Storage.get('keyboard_layout_disable', '[]'); // масив вибраних
 
-    var hideUA = (value === 'ua' || value === 'ua_ru' || value === 'ua_he' || value === 'all');
-    var hideRU = (value === 'ru' || value === 'ua_ru' || value === 'ru_he' || value === 'all');
-    var hideHE = (value === 'he' || value === 'ua_he' || value === 'ru_he' || value === 'all');
-
-    if (hideUA) {
+    // Українська (можливі варіанти написання)
+    if (disabled.indexOf('ua') !== -1) {
         var elementUA = $('.selectbox-item.selector > div:contains("Українська"), .selectbox-item.selector > div:contains("Украинская")');
-        if (elementUA.length > 0) elementUA.parent('div').hide();
+        if (elementUA.length > 0) {
+            elementUA.parent('div').hide();
+        }
     }
 
-    if (hideRU) {
+    // Російська
+    if (disabled.indexOf('ru') !== -1) {
         var elementRU = $('.selectbox-item.selector > div:contains("Русский"), .selectbox-item.selector > div:contains("Російська")');
-        if (elementRU.length > 0) elementRU.parent('div').hide();
+        if (elementRU.length > 0) {
+            elementRU.parent('div').hide();
+        }
     }
 
-    if (hideHE) {
+    // English
+    if (disabled.indexOf('en') !== -1) {
+        var elementEN = $('.selectbox-item.selector > div:contains("English"), .selectbox-item.selector > div:contains("Английский")');
+        if (elementEN.length > 0) {
+            elementEN.parent('div').hide();
+        }
+    }
+
+    // Іврит
+    if (disabled.indexOf('he') !== -1) {
         var elementHE = $('.selectbox-item.selector > div:contains("עִברִית")');
-        if (elementHE.length > 0) elementHE.parent('div').hide();
+        if (elementHE.length > 0) {
+            elementHE.parent('div').hide();
+        }
     }
 }
 
 function initHide() {
+    // Періодична перевірка наявності кнопки зміни мови
     setInterval(function () {
         var langButton = $('div.hg-button.hg-functionBtn.hg-button-LANG.selector.binded');
         if (langButton.length > 0) {
@@ -74,21 +84,21 @@ function initHide() {
         }
     }, 500);
 
-    // Одноразовий запуск при завантаженні
+    // Одноразовий запуск при старті
     hideLayouts();
 }
 
+// Запуск після повного завантаження додатка
 Lampa.Listener.follow('app', function (e) {
     if (e.type === 'ready') {
         initHide();
     }
 });
 
+// Реагуємо на зміну налаштувань
 Lampa.Listener.follow('settings', function (e) {
-    if (e.type === 'update') {
-        if (e.name === 'keyboard_layout_disable') {
-            // Після зміни параметра перезапустимо приховування
-            setTimeout(hideLayouts, 300);
-        }
+    if (e.type === 'update' && e.name === 'keyboard_layout_disable') {
+        // Невелика затримка, щоб меню встигло оновитися
+        setTimeout(hideLayouts, 300);
     }
 });
