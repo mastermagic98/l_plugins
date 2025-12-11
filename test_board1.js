@@ -2,9 +2,9 @@
     'use strict';
 
     // Уникнення повторного запуску
-    if (window.kb_hide_plugin_ready) return;
+/*    if (window.kb_hide_plugin_ready) return;
     window.kb_hide_plugin_ready = true;
-
+*/
     // Переклади
     Lampa.Lang.add({
         kb_title: { uk: 'Клавіатура', ru: 'Клавиатура', en: 'Keyboard' },
