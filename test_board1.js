@@ -1,9 +1,6 @@
 (function () {
     'use strict';
 
-    // Тільки для Lampa 3.0+
-    if (!Lampa.Manifest || Lampa.Manifest.app_digital < 300) return;
-
     // Уникнення повторного запуску
     if (window.kb_hide_plugin_ready) return;
     window.kb_hide_plugin_ready = true;
@@ -63,7 +60,7 @@
             onBack: ()=>Lampa.Controller.toggle('settings_component')
         });
     };
-
+/*
     // Додаємо пункт у налаштування (найнадійніший спосіб)
     function injectSettingsItem() {
         var render = Lampa.Settings.main().render();
@@ -88,7 +85,7 @@
         // Вішаємо обробник один раз
         $(document).off('hover:enter', '[data-kb-hide-plugin]').on('hover:enter', '[data-kb-hide-plugin]', openMenu);
     }
-
+*/
     // Запуск
     Lampa.Listener.follow('app', function(e){
         if (e.type === 'ready'){
