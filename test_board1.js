@@ -45,7 +45,7 @@
                 code: code
             });
         });
-*/
+
         Lampa.Select.show({
             title: Lampa.Lang.translate('kb_title'),
             items: items,
@@ -60,7 +60,7 @@
             onBack: ()=>Lampa.Controller.toggle('settings_component')
         });
     };
-
+*/
     // Додаємо пункт у налаштування (найнадійніший спосіб)
     function injectSettingsItem() {
         var render = Lampa.Settings.main().render();
