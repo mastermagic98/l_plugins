@@ -31,7 +31,7 @@
         if (Lampa.Storage.get(k.he,'true') ==='true') $('.selectbox-item.selector > div:contains("עִברִית")').parent().hide();
     }
 
-    // Меню з нативними чекбоксами
+    /* Меню з нативними чекбоксами
    function openMenu = function() {
    var items = [];
 
