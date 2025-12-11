@@ -29,7 +29,7 @@
         // === Маніфест плагіну ===
         var manifest = {
             type: 'other',
-            version: '1.0.3',
+            version: '1.0.4',
             name: Lampa.Lang.translate('keyboard_lang_disable'),
             description: Lampa.Lang.translate('keyboard_lang_disable_desc'),
             component: 'keyboard_lang_disable'
@@ -83,6 +83,29 @@
             }
         }
 
+        // === Функція оновлення видимості та стану ===
+        function updateVisibilityAndState() {
+            var keyboardType = Lampa.Storage.get('keyboard_type', 'lampa');
+            var enabled = Lampa.Storage.get('keyboard_lang_disable_enabled', true);
+            var toggleParam = $('.settings-param[data-name="keyboard_lang_disable_enabled"]');
+
+            if (!toggleParam || toggleParam.length === 0) {
+                return;
+            }
+
+            if (keyboardType === 'lampa') {
+                toggleParam.show();
+                if (enabled) {
+                    startChecking();
+                } else {
+                    stopChecking();
+                }
+            } else {
+                toggleParam.hide();
+                stopChecking();
+            }
+        }
+
         // === Додаємо toggle в розділ keyboard ===
         Lampa.SettingsApi.addParam({
             component: 'keyboard',
@@ -101,38 +124,29 @@
             },
             onRender: function (element, param) {
                 updateVisibilityAndState();
+
+                var saved = Lampa.Storage.get('keyboard_lang_disable_enabled', true);
+                param.value = saved;
+                element.prop('checked', saved);
             }
         });
-
-        // === Функція оновлення видимості та стану ===
-        function updateVisibilityAndState() {
-            var keyboardType = Lampa.Storage.get('keyboard_type', 'lampa');
-            var enabled = Lampa.Storage.get('keyboard_lang_disable_enabled', true);
-
-            var toggleParam = $('.settings-param[data-name="keyboard_lang_disable_enabled"]');
-
-            if (keyboardType === 'lampa') {
-                toggleParam.show();
-                if (enabled) {
-                    startChecking();
-                } else {
-                    stopChecking();
-                }
-            } else {
-                toggleParam.hide();
-                stopChecking();
-            }
-        }
 
         // === Слухаємо зміну типу клавіатури ===
         Lampa.SettingsApi.addListener('keyboard', 'keyboard_type', function (value) {
             updateVisibilityAndState();
         });
 
-        // === Початкове застосування ===
+        // === Початкове застосування (з затримкою та перевіркою) ===
         setTimeout(function () {
             updateVisibilityAndState();
-        }, 1000);
+        }, 1500);
+
+        // === Додаткова перевірка після повного рендеру налаштувань ===
+        Lampa.Listener.follow('settings', function (e) {
+            if (e.type === 'ready') {
+                setTimeout(updateVisibilityAndState, 500);
+            }
+        });
     }
 
     // === Запуск плагіну ===
