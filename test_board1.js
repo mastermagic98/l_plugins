@@ -1,52 +1,47 @@
 (function () {
     'use strict';
 
-    if (!window.Lampa) return;
-    if (window.kb_full_plugin_ready) return;
-    window.kb_full_plugin_ready = true;
+    if (!Lampa.Manifest || Lampa.Manifest.app_digital < 300) return;
+    if (window.keyboard_multi_hide_plugin) return;
+    window.keyboard_multi_hide_plugin = true;
 
-    const keys = {
-        uk: 'kb_hide_uk',
-        ru: 'kb_hide_ru',
-        en: 'kb_hide_en',
-        he: 'kb_hide_he'
+    const LANGUAGES = ['Українська', 'Русский', 'English', 'עִברִית'];
+    const STORAGE_KEYS = {
+        'Українська': 'keyboard_hide_uk',
+        'Русский': 'keyboard_hide_ru',
+        'English': 'keyboard_hide_en',
+        'עִברִית': 'keyboard_hide_he'
     };
 
-    const languages = [
-        { code: 'uk', title: 'Українська' },
-        { code: 'ru', title: 'Русский' },
-        { code: 'en', title: 'English' },
-        { code: 'he', title: 'עִברִית' }
-    ];
-
-    function applyHidden() {
-        try {
-            $('.selectbox-item').show();
-            languages.forEach(lang => {
-                if (Lampa.Storage.get(keys[lang.code]) === 'true') {
-                    $('.selectbox-item:contains("' + lang.title + '")').hide();
-                }
-            });
-        } catch (e) {}
+    // Функція застосування приховування мов
+    function applyHiding() {
+        LANGUAGES.forEach(lang => {
+            const hide = Lampa.Storage.get(STORAGE_KEYS[lang], 'false') === 'true';
+            const element = $('.selectbox-item.selector > div:contains("' + lang + '")');
+            if (element.length) element.parent().toggle(!hide);
+        });
     }
 
+    // Функція відкриття списку мов
     function openLanguageMenu() {
-        const items = languages.map(lang => ({
-            title: lang.title,
+        const items = LANGUAGES.map(lang => ({
+            title: lang,
             checkbox: true,
-            checked: Lampa.Storage.get(keys[lang.code]) === 'true',
-            code: lang.code
+            selected: Lampa.Storage.get(STORAGE_KEYS[lang], 'false') === 'true',
+            lang: lang
         }));
 
         Lampa.Select.show({
             title: 'Вимкнути розкладку',
             items: items,
             onSelect(item) {
-                if (!item.code) return;
-                const key = item.code;
-                Lampa.Storage.set(key, Lampa.Storage.get(key) === 'true' ? 'false' : 'true');
-                setTimeout(applyHidden, 100);
-                setTimeout(openLanguageMenu, 120);
+                if (item.checkbox && item.lang) {
+                    const key = STORAGE_KEYS[item.lang];
+                    const newVal = Lampa.Storage.get(key, 'false') === 'true' ? 'false' : 'true';
+                    Lampa.Storage.set(key, newVal);
+                    applyHiding();
+                    openLanguageMenu(); // оновлюємо меню
+                }
             },
             onBack() {
                 Lampa.Controller.toggle('settings_component');
@@ -54,41 +49,43 @@
         });
     }
 
-    function askDisableLayout() {
-        Lampa.Modal.confirm('Вимкнути розкладку?', result => {
-            if (result) openLanguageMenu();
-        });
-    }
+    // Додаємо компонент у Налаштування
+    Lampa.SettingsApi.addComponent({
+        component: 'keyboard_multi_hide_plugin',
+        name: 'Вимкнути розкладку',
+        icon: '<svg fill="#fff" width="38px" height="38px" viewBox="0 0 24 24"><path d="M20 5H4a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h16a3 3 0 0 0 3-3V8a3 3 0 0 0-3-3Zm1 11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v8Zm-6-3H9a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2Zm3.5-4h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2Z"/></svg>'
+    });
 
-    // --- Додаємо тригер у SettingsApi ---
+    // Додаємо параметр тригер
     Lampa.SettingsApi.addParam({
-        component: 'keyboard_settings_plugin', 
+        component: 'keyboard_multi_hide_plugin',
         param: {
-            name: 'keyboard_switch_trigger',
+            name: 'select_keyboard_menu',
             type: 'trigger',
             default: false
         },
         field: {
-            name: 'Вбудована клавіатура',
-            description: 'Натисніть для вимкнення розкладки'
+            name: 'Вибір мови',
+            description: 'Вимкнути розкладку для обраних мов'
         },
         onRender(el) {
             el.off('hover:enter').on('hover:enter', function () {
-                // тільки якщо вибрана "Вбудована"
-                const value = Lampa.Storage.get('keyboard_type') || 'Вбудована';
-                if (value === 'Вбудована') {
-                    askDisableLayout();
-                }
+                // Питання перед відкриттям меню мов
+                Lampa.Modal.confirm({
+                    title: 'Вимкнути розкладку?',
+                    text: 'Бажаєте вимкнути одну або декілька мов клавіатури?',
+                    ok: 'Так',
+                    cancel: 'Ні',
+                    onSelect: function (a) {
+                        if (a) openLanguageMenu();
+                    }
+                });
             });
         }
     });
 
-    // Ініціалізація
-    Lampa.Listener.follow('app', e => {
-        if (e.type === 'ready') setTimeout(applyHidden, 300);
-    });
-
-    if (window.appready) setTimeout(applyHidden, 300);
-    new MutationObserver(applyHidden).observe(document.body, { childList: true, subtree: true });
+    // Приховування мов при старті
+    Lampa.Listener.follow('full', e => e.type === 'start' && setTimeout(applyHiding, 300));
+    if (window.appready) setTimeout(applyHiding, 500);
 
 })();
