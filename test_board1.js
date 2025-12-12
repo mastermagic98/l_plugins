@@ -24,10 +24,17 @@
     var icon = '<svg fill="#fff" width="38px" height="38px" viewBox="0 0 24 24"><path d="M20 5H4a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h16a3 3 0 0 0 3-3V8a3 3 0 0 0-3-3Zm1 11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v8Zm-6-3H9a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2Zm3.5-4h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2Z"/></svg>';
 
     function apply() {
-        if (Lampa.Storage.get(keys.uk, 'false') === 'true') $('.selectbox-item.selector > div:contains("Українська")').parent().hide();
-        if (Lampa.Storage.get(keys.ru, 'true')  === 'true') $('.selectbox-item.selector > div:contains("Русский"), .selectbox-item.selector > div:contains("Russian")').parent().hide();
-        if (Lampa.Storage.get(keys.en, 'false') === 'true') $('.selectbox-item.selector > div:contains("English")').parent().hide();
-        if (Lampa.Storage.get(keys.he, 'true')  === 'true') $('.selectbox-item.selector > div:contains("עִברִית")').parent().hide();
+        if (Lampa.Storage.get(keys.uk, 'false') === 'true')
+            $('.selectbox-item.selector > div:contains("Українська")').parent().hide();
+
+        if (Lampa.Storage.get(keys.ru, 'true') === 'true')
+            $('.selectbox-item.selector > div:contains("Русский"), .selectbox-item.selector > div:contains("Russian")').parent().hide();
+
+        if (Lampa.Storage.get(keys.en, 'false') === 'true')
+            $('.selectbox-item.selector > div:contains("English")').parent().hide();
+
+        if (Lampa.Storage.get(keys.he, 'true') === 'true')
+            $('.selectbox-item.selector > div:contains("עִברִית")').parent().hide();
     }
 
     function openMenu() {
@@ -80,11 +87,15 @@
         var more = render.find('[data-component="more"]');
         more.length ? more.before(html) : render.append(html);
 
-        $(document).off('hover:enter', '[data-kb-plugin]').on('hover:enter', '[data-kb-plugin]', openMenu);
+        $(document).off('hover:enter', '[data-kb-plugin]')
+            .on('hover:enter', '[data-kb-plugin]', openMenu);
     }
 
     Lampa.Listener.follow('app', function(e) {
-        if (e.type === 'ready' && setTimeout(addItem, 500) && setTimeout(apply, 1000);
+        if (e.type === 'ready') {
+            setTimeout(addItem, 500);
+            setTimeout(apply, 1000);
+        }
     });
 
     if (window.appready) {
@@ -93,5 +104,9 @@
     }
 
     new MutationObserver(apply).observe(document.body, { childList: true, subtree: true });
-    Lampa.Listener.follow('full', e => e.type === 'start' && setTimeout(apply, 300));
+
+    Lampa.Listener.follow('full', function(e) {
+        if (e.type === 'start') setTimeout(apply, 300);
+    });
+
 })();
