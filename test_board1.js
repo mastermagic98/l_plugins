@@ -19,7 +19,6 @@
         { code: 'he', title: 'עִברִית' }
     ];
 
-    // --- Приховування вибраних мов ---
     function applyHidden() {
         try {
             $('.selectbox-item').show();
@@ -31,7 +30,6 @@
         } catch (e) {}
     }
 
-    // --- Відкриття меню мов ---
     function openLanguageMenu() {
         const items = languages.map(lang => ({
             title: lang.title,
@@ -56,26 +54,36 @@
         });
     }
 
-    // --- Запит про вимкнення розкладки ---
     function askDisableLayout() {
-        setTimeout(() => {
-            Lampa.Modal.confirm('Вимкнути розкладку?', function(result) {
-                if (result) openLanguageMenu();
-            });
-        }, 100); // невелика затримка для коректного відпрацювання
+        Lampa.Modal.confirm('Вимкнути розкладку?', result => {
+            if (result) openLanguageMenu();
+        });
     }
 
-    // --- Слухач на вибір типу клавіатури ---
-    $(document).off('hover:enter', '[data-name="keyboard_type"]').on('hover:enter', '[data-name="keyboard_type"]', function() {
-        const self = $(this);
-        // затримка для того, щоб значення оновилося
-        setTimeout(() => {
-            const value = self.find('.settings-param__value').text().trim();
-            if (value === 'Вбудована') askDisableLayout();
-        }, 50);
+    // --- Додаємо тригер у SettingsApi ---
+    Lampa.SettingsApi.addParam({
+        component: 'keyboard_settings_plugin', 
+        param: {
+            name: 'keyboard_switch_trigger',
+            type: 'trigger',
+            default: false
+        },
+        field: {
+            name: 'Вбудована клавіатура',
+            description: 'Натисніть для вимкнення розкладки'
+        },
+        onRender(el) {
+            el.off('hover:enter').on('hover:enter', function () {
+                // тільки якщо вибрана "Вбудована"
+                const value = Lampa.Storage.get('keyboard_type') || 'Вбудована';
+                if (value === 'Вбудована') {
+                    askDisableLayout();
+                }
+            });
+        }
     });
 
-    // --- Ініціалізація ---
+    // Ініціалізація
     Lampa.Listener.follow('app', e => {
         if (e.type === 'ready') setTimeout(applyHidden, 300);
     });
