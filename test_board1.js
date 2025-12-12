@@ -6,12 +6,12 @@
     window.kb_hide_plugin_ready = true;
 
     Lampa.Lang.add({
-        kb_title:  { uk: 'Клавіатура',            ru: 'Клавиатура',        en: 'Keyboard' },
+        kb_title: { uk: 'Клавіатура', ru: 'Клавиатура', en: 'Keyboard' },
         kb_header: { uk: 'Вимкнути розкладку клавіатури', ru: 'Отключить раскладку клавиатуры', en: 'Disable keyboard layout' },
-        kb_uk:     { uk: 'Українську',            ru: 'Украинскую',        en: 'Ukrainian' },
-        kb_ru:     { uk: 'Російську',             ru: 'Русскую',           en: 'Russian' },
-        kb_en:     { uk: 'Англійську',            ru: 'Английскую',        en: 'English' },
-        kb_he:     { uk: 'Іврит (עִברִית)',       ru: 'Иврит (עִברִית)',   en: 'Hebrew (עִברִית)' }
+        kb_uk: { uk: 'Українську', ru: 'Украинскую', en: 'Ukrainian' },
+        kb_ru: { uk: 'Російську', ru: 'Русскую', en: 'Russian' },
+        kb_en: { uk: 'Англійську', ru: 'Английскую', en: 'English' },
+        kb_he: { uk: 'Іврит (עִברִית)', ru: 'Иврит (עִברִית)', en: 'Hebrew (עִברִית)' }
     });
 
     var keys = {
@@ -24,22 +24,14 @@
     var icon = '<svg fill="#fff" width="38px" height="38px" viewBox="0 0 24 24"><path d="M20 5H4a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h16a3 3 0 0 0 3-3V8a3 3 0 0 0-3-3Zm1 11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v8Zm-6-3H9a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2Zm3.5-4h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2Z"/></svg>';
 
     function apply() {
-        if (Lampa.Storage.get(keys.uk, 'false') === 'true')
-            $('.selectbox-item.selector > div:contains("Українська")').parent().hide();
-
-        if (Lampa.Storage.get(keys.ru, 'true') === 'true')
-            $('.selectbox-item.selector > div:contains("Русский"), .selectbox-item.selector > div:contains("Russian")').parent().hide();
-
-        if (Lampa.Storage.get(keys.en, 'false') === 'true')
-            $('.selectbox-item.selector > div:contains("English")').parent().hide();
-
-        if (Lampa.Storage.get(keys.he, 'true') === 'true')
-            $('.selectbox-item.selector > div:contains("עִברִית")').parent().hide();
+        if (Lampa.Storage.get(keys.uk, 'false') === 'true') $('.selectbox-item.selector > div:contains("Українська")').parent().hide();
+        if (Lampa.Storage.get(keys.ru, 'true') === 'true') $('.selectbox-item.selector > div:contains("Русский"), .selectbox-item.selector > div:contains("Russian")').parent().hide();
+        if (Lampa.Storage.get(keys.en, 'false') === 'true') $('.selectbox-item.selector > div:contains("English")').parent().hide();
+        if (Lampa.Storage.get(keys.he, 'true') === 'true') $('.selectbox-item.selector > div:contains("עִברִית")').parent().hide();
     }
 
     function openMenu() {
         var items = [];
-
         items.push({ title: Lampa.Lang.translate('kb_header'), separator: true });
 
         var list = [
@@ -77,7 +69,7 @@
 
     function addItem() {
         var render = Lampa.Settings.main().render();
-        if (render.find('[data-kb-plugin]').length) return;
+        if (!render || render.find('[data-kb-plugin]').length) return;
 
         var html = '<div class="settings-folder selector" data-kb-plugin>' +
             '<div class="settings-folder__icon">' + icon + '</div>' +
@@ -85,26 +77,36 @@
             '</div>';
 
         var more = render.find('[data-component="more"]');
-        more.length ? more.before(html) : render.append(html);
+        if (more.length) {
+            more.before(html);
+        } else {
+            render.append(html);
+        }
 
-        $(document).off('hover:enter', '[data-kb-plugin]')
-            .on('hover:enter', '[data-kb-plugin]', openMenu);
+        $(document).off('hover:enter', '[data-kb-plugin]').on('hover:enter', '[data-kb-plugin]', openMenu);
     }
 
+    // Основний запуск — при готовності додатка
     Lampa.Listener.follow('app', function(e) {
         if (e.type === 'ready') {
-            setTimeout(addItem, 500);
-            setTimeout(apply, 1000);
+            setTimeout(addItem, 800);
+            setTimeout(apply, 1200);
         }
     });
 
+    // Додатково — при кожному відкритті налаштувань (найнадійніше)
+    Lampa.Listener.follow('settings', function() {
+        setTimeout(addItem, 300);
+    });
+
+    // Якщо додаток вже готовий
     if (window.appready) {
-        setTimeout(addItem, 500);
-        setTimeout(apply, 1000);
+        setTimeout(addItem, 800);
+        setTimeout(apply, 1200);
     }
 
+    // Спостереження за DOM і пошуком
     new MutationObserver(apply).observe(document.body, { childList: true, subtree: true });
-
     Lampa.Listener.follow('full', function(e) {
         if (e.type === 'start') setTimeout(apply, 300);
     });
