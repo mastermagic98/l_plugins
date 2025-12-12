@@ -7,7 +7,7 @@
 
     Lampa.Lang.add({
         kb_title: { uk: 'Клавіатура', ru: 'Клавиатура', en: 'Keyboard' },
-        kb_header: { uk: 'Вимкнути розкладку клавіатури', ru: 'Отключить раскладку клавиатуры', en: 'Disable keyboard layout' },
+        kb_header: { uk: 'Вимкнути розкладку', ru: 'Отключить раскладку', en: 'Disable layout' },
         kb_uk: { uk: 'Українську', ru: 'Украинскую', en: 'Ukrainian' },
         kb_ru: { uk: 'Російську', ru: 'Русскую', en: 'Russian' },
         kb_en: { uk: 'Англійську', ru: 'Английскую', en: 'English' },
@@ -32,6 +32,7 @@
 
     function openMenu() {
         var items = [];
+
         items.push({ title: Lampa.Lang.translate('kb_header'), separator: true });
 
         var list = [
@@ -67,7 +68,6 @@
         });
     }
 
-    // Найбезпечніший спосіб для Lampa 3.0+ — через SettingsApi
     Lampa.SettingsApi.addComponent({
         component: 'keyboard_hide_plugin',
         name: Lampa.Lang.translate('kb_title'),
@@ -90,7 +90,6 @@
         }
     });
 
-    // Приховування при запуску
     Lampa.Listener.follow('app', function(e) {
         if (e.type === 'ready') {
             setTimeout(apply, 1000);
