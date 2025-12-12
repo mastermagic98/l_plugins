@@ -23,10 +23,22 @@
     var icon = '<svg fill="#fff" width="38px" height="38px" viewBox="0 0 24 24"><path d="M20 5H4a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h16a3 3 0 0 0 3-3V8a3 3 0 0 0-3-3Zm1 11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v8Zm-6-3H9a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2Zm3.5-4h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2Z"/></svg>';
 
     function apply() {
-        if (Lampa.Storage.get(keys.uk, 'false') === 'true') $('.selectbox-item.selector > div:contains("Українська")').parent().hide();
-        if (Lampa.Storage.get(keys.ru, 'true') === 'true') $('.selectbox-item.selector > div:contains("Русский"), .selectbox-item.selector > div:contains("Russian")').parent().hide();
-        if (Lampa.Storage.get(keys.en, 'false') === 'true') $('.selectbox-item.selector > div:contains("English")').parent().hide();
-        if (Lampa.Storage.get(keys.he, 'true') === 'true') $('.selectbox-item.selector > div:contains("עִברִית")').parent().hide();
+        if (Lampa.Storage.get(keys.uk, 'false') === 'true') {
+            var el = $('.selectbox-item.selector > div:contains("Українська")').parent('div');
+            if (el.length) el.hide();
+        }
+        if (Lampa.Storage.get(keys.ru, 'true') === 'true') {
+            var elRu = $('.selectbox-item.selector > div:contains("Русский"), .selectbox-item.selector > div:contains("Russian")').parent('div');
+            if (elRu.length) elRu.hide();
+        }
+        if (Lampa.Storage.get(keys.en, 'false') === 'true') {
+            var elEn = $('.selectbox-item.selector > div:contains("English")').parent('div');
+            if (elEn.length) elEn.hide();
+        }
+        if (Lampa.Storage.get(keys.he, 'true') === 'true') {
+            var elHe = $('.selectbox-item.selector > div:contains("עִברִית")').parent('div');
+            if (elHe.length) elHe.hide();
+        }
     }
 
     function openMenu() {
@@ -54,7 +66,8 @@
             onSelect: function(a) {
                 if (a.checkbox && a.code) {
                     var key = keys[a.code];
-                    Lampa.Storage.set(key, Lampa.Storage.get(key, 'false') === 'true' ? 'false' : 'true');
+                    var current = Lampa.Storage.get(key, 'false') === 'true';
+                    Lampa.Storage.set(key, current ? 'false' : 'true');
                     apply();
                     openMenu();
                 }
@@ -99,7 +112,10 @@
 
     new MutationObserver(apply).observe(document.body, { childList: true, subtree: true });
     Lampa.Listener.follow('full', function(e) {
-        if (e.type === 'start') setTimeout(apply, 300);
+        if (e.type === 'start') {
+            setTimeout(apply, 300);
+            setTimeout(apply, 800);
+        }
     });
 
 })();
