@@ -5,7 +5,6 @@
     if (window.kb_full_plugin_ready) return;
     window.kb_full_plugin_ready = true;
 
-    // --- Ключі для збереження стану ---
     const keys = {
         uk: 'kb_hide_uk',
         ru: 'kb_hide_ru',
@@ -59,17 +58,21 @@
 
     // --- Запит про вимкнення розкладки ---
     function askDisableLayout() {
-        Lampa.Modal.confirm('Вимкнути розкладку?', function(result) {
-            if (result) openLanguageMenu();
-        });
+        setTimeout(() => {
+            Lampa.Modal.confirm('Вимкнути розкладку?', function(result) {
+                if (result) openLanguageMenu();
+            });
+        }, 100); // невелика затримка для коректного відпрацювання
     }
 
     // --- Слухач на вибір типу клавіатури ---
     $(document).off('hover:enter', '[data-name="keyboard_type"]').on('hover:enter', '[data-name="keyboard_type"]', function() {
-        const value = $(this).find('.settings-param__value').text().trim();
-        if (value === 'Вбудована') {
-            askDisableLayout();
-        }
+        const self = $(this);
+        // затримка для того, щоб значення оновилося
+        setTimeout(() => {
+            const value = self.find('.settings-param__value').text().trim();
+            if (value === 'Вбудована') askDisableLayout();
+        }, 50);
     });
 
     // --- Ініціалізація ---
