@@ -1,155 +1,109 @@
-(function () {
-    'use strict';
+function startPlugin() {
+    window.view_plugin_ready = true
 
-    if (Lampa.Manifest.app_digital < 300) return;
-
-    var plugin_name = 'hide_menu_items';
-
-    var settings = {
-        hide_sport: false,
-        hide_timeline: false,
-        hide_torrents: false,
-        hide_schedule: false,
-        hide_subscriptions: false,
-        hide_bookmarks: false,
-        hide_anime: false,
-        hide_catalog: false,
-        hide_persons: false,
-        hide_info: false,
-        hide_console: false,
-        hide_settings: false,
-        hide_filter: false
-    };
-
-    function loadSettings() {
-        var saved = Lampa.Storage.get(plugin_name, '{}');
-        try { Object.assign(settings, JSON.parse(saved));
-        catch (e) {}
-    }
-
-    function saveSettings() {
-        Lampa.Storage.set(plugin_name, JSON.stringify(settings));
-    }
-
-    function hideMenuItems() {
-        var menuSelectors = {
-            sport: { enabled: settings.hide_sport, selectors: ['.menu__item[data-action="sport"], .sidebar__item[data-action="sport"], [data-action="sport"]:not(.head__action)' ] },
-            timeline: { enabled: settings.hide_timeline, selectors: ['.menu__item[data-action="timeline"]', '.sidebar__item[data-action="timeline"]', '[data-action="timeline"]:not(.head__action)'] },
-            torrents: { enabled: settings.hide_torrents, selectors: ['.menu__item[data-action="torrents"]', '.sidebar__item[data-action="torrents"]', '[data-action="torrents"]:not(.head__action)'] },
-            schedule: { enabled: settings.hide_schedule, selectors: ['.menu__item[data-action="schedule"]', '.sidebar__item[data-action="schedule"]', '[data-action="schedule"]:not(.head__action)'] },
-            subscriptions: { enabled: settings.hide_subscriptions, selectors: ['.menu__item[data-action="subscriptions"]', '.sidebar__item[data-action="subscriptions"]', '[data-action="subscriptions"]:not(.head__action)'] },
-            bookmarks: { enabled: settings.hide_bookmarks, selectors: ['.menu__item[data-action="bookmarks"]', '.sidebar__item[data-action="bookmarks"]', '[data-action="bookmarks"]:not(.head__action)'] },
-            anime: { enabled: settings.hide_anime, selectors: ['.menu__item[data-action="anime"]', '.sidebar__item[data-action="anime"]', '[data-action="anime"]:not(.head__action)'] },
-            catalog: { enabled: settings.hide_catalog, selectors: ['.menu__item[data-action="catalog"]', '.sidebar__item[data-action="catalog"]', '[data-action="catalog"]:not(.head__action)'] },
-            persons: { enabled: settings.hide_persons, selectors: ['.menu__item[data-action="persons"]', '.sidebar__item[data-action="persons"]', '[data-action="persons"]:not(.head__action)'] },
-            info: { enabled: settings.hide_info, selectors: ['.menu__item[data-action="info"]', '.sidebar__item[data-action="info"]', '[data-action="info"]:not(.head__action)', '.menu__item[data-component="info"]'] },
-            console: { enabled: settings.hide_console, selectors: ['.menu__item[data-action="console"]', '.sidebar__item[data-action="console"]', '[data-action="console"]:not(.head__action)'] },
-            settings: { enabled: settings.hide_settings, selectors: ['.menu__item[data-action="settings"]', '.sidebar__item[data-action="settings"]'] },
-            filter: { enabled: settings.hide_filter, selectors: ['.menu__item[data-action="filter"]', '.sidebar__item[data-action="filter"]', '[data-action="filter"]:not(.head__action)'] }
-        };
-
-        Object.keys(menuSelectors).forEach(function (key) {
-            var cfg = menuSelectors[key];
-            cfg.selectors.forEach(function (sel) {
-                $(sel).toggle(!cfg.enabled);
-            });
-        });
-    }
-
-    function showAllMenuItems() {
-        Object.keys(settings).forEach(function (k) { settings[k] = false; });
-        saveSettings();
-        hideMenuItems();
-    }
-
-    function openSettingsMenu() {
-        var items = [];
-
-        items.push({ title: 'Приховування пунктів меню', separator: true });
-
-        var names = {
-            hide_sport: 'Спорт',
-            hide_timeline: 'Стрічка',
-            hide_torrents: 'Торренти',
-            hide_schedule: 'Розклад',
-            hide_subscriptions: 'Підписки',
-            hide_bookmarks: 'Вибране',
-            hide_anime: 'Аніме',
-            hide_catalog: 'Каталог',
-            hide_persons: 'Особи',
-            hide_info: 'Інформація',
-            hide_console: 'Консоль',
-            hide_settings: 'Налаштування (в меню)',
-            hide_filter: 'Фільтр'
-        };
-
-        Object.keys(names).forEach(function (key) {
-            items.push({
-                title: names[key],
-                checkbox: true,                    // включає квадратний чекбокс
-                checked: settings[key],           // галочка чи ні
-                key: key
-            });
-        });
-
-        items.push({ title: 'Додатково', separator: true });
-        items.push({
-            title: 'Показати всі пункти',
-            action: 'show_all'
-        });
-
-        Lampa.Select.show({
-            title: 'Приховування меню',
-            items: items,
-            onSelect: function (item) {
-                if (item.action === 'show_all') {
-                    showAllMenuItems();
-                    openSettingsMenu();
-                    return;
+    function showList(){
+        Lampa.Account.plugins((plugins)=>{
+            let original = plugins.filter(plugin=>plugin.status).map(plugin=>plugin.url).concat(Lampa.Storage.get('plugins','[]').filter(plugin=>plugin.status).map(plugin=>plugin.url))
+            let include  = []
+    
+            original.forEach(url=>{
+                let encode = url
+                
+                if(!/[0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}/.test(encode)){
+                    encode = encode.replace(/\{storage_(\w+|\d+|_|-)\}/g,(match,key)=>{
+                        return encodeURIComponent(Lampa.Base64.encode(localStorage.getItem(key) || ''))
+                    })
+    
+                    let email = localStorage.getItem('account_email')
+    
+                    if(Lampa.Account.logged() &&  email) encode = Lampa.Utils.addUrlComponent(encode, 'email='+encodeURIComponent(Lampa.Base64.encode(email)))
+    
+                    encode = Lampa.Utils.addUrlComponent(encode, 'logged='+encodeURIComponent(Lampa.Account.logged() ? 'true' : 'false'))
+                    encode = Lampa.Utils.addUrlComponent(encode, 'random='+Math.random())
                 }
+                
+                include.push(encode)
+            })
+    
+            Lampa.Select.show({
+                title: 'Плагины',
+                items: original.map((p,i)=>{return {title: ' ' + p, url: include[i]}}),
+                onSelect: (select)=>{
+                    let html = $('<div></div>')
+                    let iframe = $('<iframe style="width: 100%; height: 28em; background: #fff; pointer-events: none; border: 0; border-radius: 0.3em"></iframe>')
 
-                if (item.key) {
-                    settings[item.key] = !settings[item.key];
-                    saveSettings();
-                    hideMenuItems();
-                    openSettingsMenu(); // оновлюємо чекбокси
+                    html.append('<div style="margin-bottom: 1em">Адрес: '+select.url+'</div>')
+                    html.append(iframe)
+
+                    iframe.attr('src', select.url)
+
+                    Lampa.Controller.toggle('content')
+
+                    Lampa.Modal.open({
+                        title: '',
+                        size: 'large',
+                        html: html,
+                        onBack: ()=>{
+                            Lampa.Modal.close()
+
+                            Lampa.Controller.toggle('content')
+                        }
+                    })
+                },
+                onBack: ()=>{
+                    Lampa.Controller.toggle('menu')
                 }
-            },
-            onBack: function () {
-                Lampa.Controller.toggle('settings_component');
-            }
-        });
+            })
+        })
     }
 
-    // === Додаємо пункт у налаштувань ===
-    Lampa.SettingsApi.addComponent({
-        component: 'hide_menu_plugin',
-        name: 'Приховування меню',
-        icon: '<svg viewBox="0 0 24 24" fill="none"><path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z" fill="#fff"/></svg>'
-    });
 
-    Lampa.SettingsApi.addParam({
-        component: 'hide_menu_plugin',
-        param: { name: 'open_menu', type: 'trigger', default: false },
-        field: { name: 'Приховування меню', description: 'Налаштування видимості пунктів меню' },
-        onRender: function (el) {
-            el.off('hover:enter').on('hover:enter', openSettingsMenu);
-        }
-    });
+    Lampa.Template.add('trailer', `
+        <div class="card selector card--trailer">
+            <div class="card__view">
+                <img src="./img/img_load.svg" class="card__img">
+            </div>
+            <div class="card__promo">
+                <div class="card__promo-text">
+                    <div class="card__title"></div>
+                </div>
+                <div class="card__details"></div>
+            </div>
+            <div class="card__play">
+                <img src="./img/icons/player/play.svg">
+            </div>
+        </div>
+    `)
 
-    // === Спостереження ===
-    var observer = new MutationObserver(hideMenuItems);
-    observer.observe(document.body, { childList: true, subtree: true });
 
-    Lampa.Listener.follow('app', function (e) {
-        if (e.type === 'ready') {
-            loadSettings();
-            setTimeout(hideMenuItems, 1000);
-        }
-    });
+    function add(){
+        let button = $(`<li class="menu__item selector">
+            <div class="menu__ico">
+                <svg height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="21" height="21" rx="2" fill="white"></rect>
+                    <mask id="path-2-inside-1_154:24" fill="white">
+                    <rect x="2" y="27" width="17" height="17" rx="2"></rect>
+                    </mask>
+                    <rect x="2" y="27" width="17" height="17" rx="2" stroke="white" stroke-width="6" mask="url(#path-2-inside-1_154:24)"></rect>
+                    <rect x="27" y="2" width="17" height="17" rx="2" fill="white"></rect>
+                    <rect x="27" y="34" width="17" height="3" fill="white"></rect>
+                    <rect x="34" y="44" width="17" height="3" transform="rotate(-90 34 44)" fill="white"></rect>
+                </svg>
+            </div>
+            <div class="menu__text">Анализ</div>
+        </li>`)
 
-    Lampa.Listener.follow('full', function (e) {
-        if (e.type === 'start') setTimeout(hideMenuItems, 500);
-    });
+        button.on('hover:enter', showList)
 
-})();
+        $('.menu .menu__list').eq(0).append(button)
+    }
+
+    if(window.appready) add()
+    else{
+        Lampa.Listener.follow('app', function (e) {
+            if (e.type == 'ready') add()
+        })
+    }
+}
+
+if(!window.view_plugin_ready) startPlugin()
