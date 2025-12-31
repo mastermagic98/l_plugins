@@ -11,7 +11,15 @@
       baseUrl: 'https://openrouter.ai/api/v1',
       // Получение ключа: https://openrouter.ai/keys → Создай аккаунт → API Keys → Скопируй ключ
     },
-    /* примеры других моделей и их конфигов
+{
+      name: 'Gemini 1.5 Flash',
+      model: 'gemini-1.5-flash',
+      provider: 'openai',
+      apiKey: 'AIzaSyAbJOnoG9otAyQi5CwUlxQMOLcJ5uxtrHI', // Встав свій ключ сюди
+      baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+      // Отримання ключа: https://aistudio.google.com/app/apikey
+    },
+    //     примеры других моделей и их конфигов
     {
       name: 'DeepSeek R1 (HF)',
       model: 'deepseek-ai/DeepSeek-R1',
@@ -28,7 +36,7 @@
       baseUrl: 'https://api.deepseek.com/v1',
       // Получение ключа: https://platform.deepseek.com/api_keys → API Keys → Create new
     }
-    */
+    
   ];
 
   var currentModelIndex = 0;
