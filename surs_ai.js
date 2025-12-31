@@ -4,23 +4,23 @@
   // === МОДЕЛИ ===
   var MODELS = [
     {
-      name: 'myroslav.kuzyshyn',
+      name: 'qwen',
       model: 'qwen/qwen-2.5-72b-instruct:free',
       provider: 'openrouter',
       apiKey: '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', //доьавь ключ сюда
       baseUrl: 'https://openrouter.ai/api/v1',
       // Получение ключа: https://openrouter.ai/keys → Создай аккаунт → API Keys → Скопируй ключ
     },
-{
+/*{
       name: 'Gemini 1.5 Flash',
       model: 'gemini-2.0-flash:generateContent',
       provider: 'openai',
-      apiKey: 'AIzaSyAbJOnoG9otAyQi5CwUlxQMOLcJ5uxtrHI', // Встав свій ключ сюди
+      apiKey: '****', // Встав свій ключ сюди
       baseUrl: 'https://generativelanguage.googleapis.com/v1beta/models/',
       // Отримання ключа: https://aistudio.google.com/app/apikey
     },
     //     примеры других моделей и их конфигов
-/*    {
+    {
       name: 'DeepSeek R1 (HF)',
       model: 'deepseek-ai/DeepSeek-R1',
       provider: 'huggingface',
@@ -29,10 +29,10 @@
       // Получение ключа: https://huggingface.co/settings/tokens → New token → Read access
     },*/
     {
-      name: 'lampa',
+      name: 'deepseek',
       model: 'deepseek-chat',
       provider: 'openai',
-      apiKey: 'sk-d39a3858d1b541fc9164b262689d4e84',
+      apiKey: 'sk-****',
       baseUrl: 'https://api.deepseek.com/v1',
       // Получение ключа: https://platform.deepseek.com/api_keys → API Keys → Create new
     }
