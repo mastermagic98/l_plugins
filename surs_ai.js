@@ -13,10 +13,10 @@
     },
 {
       name: 'Gemini 1.5 Flash',
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.0-flash:generateContent',
       provider: 'openai',
       apiKey: 'AIzaSyAbJOnoG9otAyQi5CwUlxQMOLcJ5uxtrHI', // Встав свій ключ сюди
-      baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+      baseUrl: 'https://generativelanguage.googleapis.com/v1beta/models/',
       // Отримання ключа: https://aistudio.google.com/app/apikey
     },
     //     примеры других моделей и их конфигов
