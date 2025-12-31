@@ -7,7 +7,7 @@
       name: 'Qwen 2.5-72B',
       model: 'qwen/qwen-2.5-72b-instruct:free',
       provider: 'openrouter',
-      apiKey: 'sk-******', //доьавь ключ сюда
+      apiKey: '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', //доьавь ключ сюда
       baseUrl: 'https://openrouter.ai/api/v1',
       // Получение ключа: https://openrouter.ai/keys → Создай аккаунт → API Keys → Скопируй ключ
     },
@@ -24,7 +24,7 @@
       name: 'DeepSeek R1 (Direct)',
       model: 'deepseek-chat',
       provider: 'openai',
-      apiKey: 'sk-*******',
+      apiKey: 'sk-d39a3858d1b541fc9164b262689d4e84',
       baseUrl: 'https://api.deepseek.com/v1',
       // Получение ключа: https://platform.deepseek.com/api_keys → API Keys → Create new
     }
