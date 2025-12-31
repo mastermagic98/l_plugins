@@ -4,7 +4,7 @@
   // === МОДЕЛИ ===
   var MODELS = [
     {
-      name: 'Qwen 2.5-72B',
+      name: 'myroslav.kuzyshyn',
       model: 'qwen/qwen-2.5-72b-instruct:free',
       provider: 'openrouter',
       apiKey: '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', //доьавь ключ сюда
@@ -20,16 +20,16 @@
       // Отримання ключа: https://aistudio.google.com/app/apikey
     },
     //     примеры других моделей и их конфигов
-    {
+/*    {
       name: 'DeepSeek R1 (HF)',
       model: 'deepseek-ai/DeepSeek-R1',
       provider: 'huggingface',
       apiKey: 'hf_******', // Замени на свой
       baseUrl: 'https://router.huggingface.co/hf-inference/models',
       // Получение ключа: https://huggingface.co/settings/tokens → New token → Read access
-    },
+    },*/
     {
-      name: 'DeepSeek R1 (Direct)',
+      name: 'lampa',
       model: 'deepseek-chat',
       provider: 'openai',
       apiKey: 'sk-d39a3858d1b541fc9164b262689d4e84',
