@@ -18,13 +18,12 @@
     // Function to detect language  
     function getLanguage() {  
         // Try to get language from Lampa settings  
-        var lang = Lampa.Storage.get('language') || 'en';  
+        var lang = Lampa.Storage.get('language') || 'ru';  
           
         // Map Lampa language codes to our translations  
         if (lang === 'uk' || lang === 'ua') return 'uk';  
-        if (lang === 'ru') return 'ru';  
         if (lang === 'en') return 'en';  
-        return 'en'; // default to English if language not supported  
+        return 'ru'; // default to Russian  
     }  
       
     Lampa.Listener.follow('full', function(e) {  
@@ -116,11 +115,11 @@
             var time = ' (' + m + ':' + (s < 10 ? '0' : '') + s + ')';  
               
             // Get translated button text  
-            var buttonText = translations[getLanguage()] || translations['en'];  
+            var buttonText = translations[getLanguage()] || translations['ru'];  
               
             var btn = $('<div class="full-start__button selector cp-resume-btn">' +  
-                '<svg width="18" height="18" viewBox="0 0 14 14" fill="currentColor">' +  
-                '<path d="M13.5 2.5v9m-3-9v9m-10-1.21a.7.7 0 0 0 .37.62a.71.71 0 0 0 .73 0l5.08-3.3a.7.7 0 0 0 0-1.18L1.6 3.11a.71.71 0 0 0-.73 0a.7.7 0 0 0-.37.62Z"/></svg>' +  
+                '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">' +  
+                '<path d="M8 5v14l11-7z"/></svg>' +  
                 '<span>' + buttonText + time + '</span></div>');  
               
             btn.on('hover:enter', function() {  
