@@ -1106,6 +1106,10 @@
           "english_name": "United Kingdom",
           "native_name": "United Kingdom"
         }, {
+          "iso_3166_1": "UA",
+          "english_name": "Ukraine",
+          "native_name": "Ukraine"
+        },{
           "iso_3166_1": "RU",
           "english_name": "Russia",
           "native_name": "Russia"
