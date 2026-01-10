@@ -1,7 +1,5 @@
 (function () {
-  //BDVBuriлk.github.io
-  //OST plugin for Lampa
-  //2025
+  //BDVBuriлk
   const OSV3 = "https://opensubtitles-v3.strem.io/",
     cache = {};
   async function fetchSubs(imdb, season, episode) {
@@ -32,7 +30,7 @@
     const filtered = osSubs
       .filter((s) => (s.lang === "eng" || s.lang === "uk" || s.lang === "rus") && s.url)
       .map((s) => ({
-        label: s.lang === "eng" ? "eng" : "rus",
+        label: s.lang === "eng" ? "eng" : "uk" : "rus",
         url: s.url,
         lang: s.lang,
       }));
