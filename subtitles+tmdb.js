@@ -60,7 +60,7 @@
         const season = isSeries ? playdata.season : undefined;
         const episode = isSeries ? playdata.episode : undefined;
 
-        const interfaceLang = getInterfaceLang();
+        const interfaceLang = (Lampa.Storage.get('language') || 'en').toLowerCase();
         const priority = LANG_PRIORITY[interfaceLang] || LANG_PRIORITY.en;
 
         let subs = [];
@@ -78,11 +78,12 @@
         if (!subs.length) return;
 
         let processed = subs
-            .filter(s => s.url && LANG_LABELS[s.lang])
+            .filter(s => s.url && LANG_MAP[s.lang])
             .map(s => ({
                 lang: s.lang,
                 url: s.url,
-                label: LANG_LABELS[s.lang][interfaceLang] || LANG_LABELS[s.lang].en
+                label: LANG_MAP[s.lang].labels[interfaceLang] 
+                    || LANG_MAP[s.lang].labels.en
             }));
 
         const current = (playdata.subtitles || []).map(s => ({
