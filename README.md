@@ -25,8 +25,9 @@
 
 </details>
 
-🔹 [**СУБТИТРИ**](https://mastermagic98.github.io/l_plugins/subtitles.js) – субтитри 
+🔹 [**СУБТИТРИ**](https://mastermagic98.github.io/l_plugins/subtitles.js) – субтитри (дякую BDVBuriлk)
 <details>
+    Додана локалізація, пріритет вибору субтитрів і субтитри українською
 <summary>Скрін</summary>
 
 ![Скрін](cat_ua/cat_ua.png)
