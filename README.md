@@ -30,7 +30,7 @@
     Додана локалізація, пріритет вибору субтитрів і субтитри українською
 <summary>Скрін</summary>
 
-![Скрін](cat_ua/cat_ua.png)
+![Скрін](cat_ua/subtitles.png)
 
 </details>
 
