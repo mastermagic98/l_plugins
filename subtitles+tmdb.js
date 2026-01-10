@@ -4,10 +4,6 @@
     const OSV3 = 'https://opensubtitles-v3.strem.io/';
     const cache = {};
 
-    /* =======================
-       МОВА ІНТЕРФЕЙСУ
-    ======================= */
-
     function getInterfaceLang() {
         return (Lampa.Storage.get('language') || 'en').toLowerCase();
     }
@@ -24,23 +20,20 @@
         en: ['eng', 'ukr', 'rus']
     };
 
-    /* =======================
-       FETCH SUBS
-    ======================= */
-
-    async function fetchSubsById(type, id, season, episode) {
+    async function fetchSubs(id, isTmdb, season, episode) {
         if (!id) return [];
 
-        const key = `${type}_${id}_${season || 0}_${episode || 0}`;
+        const key = `${isTmdb ? 'tmdb' : 'imdb'}_${id}_${season || 0}_${episode || 0}`;
         if (cache[key]) return cache[key];
 
         try {
+            let pathId = isTmdb ? `tmdb:${id}` : id;
             let url;
 
             if (season && episode) {
-                url = `${OSV3}subtitles/series/${type}:${id}:${season}:${episode}.json`;
+                url = `${OSV3}subtitles/series/${pathId}:${season}:${episode}.json`;
             } else {
-                url = `${OSV3}subtitles/movie/${type}:${id}.json`;
+                url = `${OSV3}subtitles/movie/${pathId}.json`;
             }
 
             const r = await fetch(url);
@@ -48,14 +41,10 @@
 
             return (cache[key] = j.subtitles || []);
         } catch (e) {
-            console.warn('[OS Subs]', type, id, e);
+            console.warn('[OS Subs]', e);
             return [];
         }
     }
-
-    /* =======================
-       ОСНОВНА ЛОГІКА
-    ======================= */
 
     async function setupSubs() {
         const activity = Lampa.Activity.active?.();
@@ -78,25 +67,18 @@
 
         /* 1️⃣ IMDB */
         if (imdb) {
-            subs = await fetchSubsById('imdb_id', imdb, season, episode);
+            subs = await fetchSubs(imdb, false, season, episode);
         }
 
-        /* 2️⃣ TMDB (fallback) */
+        /* 2️⃣ TMDB fallback */
         if (!subs.length && tmdb) {
-            subs = await fetchSubsById('tmdb_id', tmdb, season, episode);
+            subs = await fetchSubs(tmdb, true, season, episode);
         }
 
         if (!subs.length) return;
 
-        /* =======================
-           ФІЛЬТРАЦІЯ + МІТКИ
-        ======================= */
-
         let processed = subs
-            .filter(s =>
-                s.url &&
-                LANG_LABELS[s.lang]
-            )
+            .filter(s => s.url && LANG_LABELS[s.lang])
             .map(s => ({
                 lang: s.lang,
                 url: s.url,
@@ -115,23 +97,14 @@
             }
         });
 
-        current.sort((a, b) => {
-            return priority.indexOf(a.lang) - priority.indexOf(b.lang);
-        });
-
-        if (!current.length) return;
-
-        const defaultIndex = current.findIndex(s => s.lang === priority[0]);
-
-        Lampa.Player.subtitles(
-            current,
-            defaultIndex >= 0 ? defaultIndex : 0
+        current.sort((a, b) =>
+            priority.indexOf(a.lang) - priority.indexOf(b.lang)
         );
-    }
 
-    /* =======================
-       ХУК НА СТАРТ ПЛЕЄРА
-    ======================= */
+        const idx = current.findIndex(s => s.lang === priority[0]);
+
+        Lampa.Player.subtitles(current, idx >= 0 ? idx : 0);
+    }
 
     Lampa.Player.listener.follow('start', function () {
         setTimeout(setupSubs, 500);
