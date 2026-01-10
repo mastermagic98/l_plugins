@@ -1,140 +1,83 @@
 (function () {
     'use strict';
 
-    const OPENSUBTITLES_V3 = "https://opensubtitles-v3.strem.io/";
-    const cache = new Map(); // більш сучасний та зручний варіант для кешу
+    const OSV3 = 'https://opensubtitles-v3.strem.io/';
+    const cache = {};
 
-    async function fetchSubtitles(imdb_id, season, episode) {
-        if (!imdb_id) return [];
-
-        const cacheKey = `${imdb_id}_${season || 0}_${episode || 0}`;
-
-        if (cache.has(cacheKey)) {
-            return cache.get(cacheKey);
-        }
-
-        let url;
-
-        if (season && episode) {
-            url = `${OPENSUBTITLES_V3}subtitles/series/${imdb_id}:${season}:${episode}.json`;
-        } else {
-            url = `${OPENSUBTITLES_V3}subtitles/movie/${imdb_id}.json`;
-        }
+    async function fetchSubs(imdb, season, episode) {
+        const key = `${imdb}_${season || 0}_${episode || 0}`;
+        if (cache[key]) return cache[key];
 
         try {
-            const response = await fetch(url, {
-                cache: 'no-cache',
-                headers: {
-                    'Accept': 'application/json'
-                }
-            });
+            const url = season && episode
+                ? `${OSV3}subtitles/series/${imdb}:${season}:${episode}.json`
+                : `${OSV3}subtitles/movie/${imdb}.json`;
 
-            if (!response.ok) return [];
+            const r = await fetch(url);
+            const j = await r.json();
 
-            const data = await response.json();
-            const subtitles = Array.isArray(data.subtitles) ? data.subtitles : [];
-
-            cache.set(cacheKey, subtitles);
-            return subtitles;
-
+            return (cache[key] = j.subtitles || []);
         } catch (e) {
-            console.log('OpenSubtitles v3 fetch error:', e?.message);
+            console.warn('[OS Subs] fetch error', e);
             return [];
         }
     }
 
-    function normalizeLang(lang) {
-        if (!lang) return '';
-        const l = lang.toLowerCase();
-        if (l === 'eng' || l === 'en') return 'eng';
-        if (l === 'ukr' || l === 'uk') return 'ukr';
-        if (l === 'rus' || l === 'ru') return 'rus';
-        return '';
-    }
+    async function setupSubs() {
+        const activity = Lampa.Activity.active?.();
+        const playdata = Lampa.Player.playdata?.();
+        const movie = activity?.movie;
 
-    async function addOpenSubtitles() {
-        try {
-            const activity = Lampa.Activity.active?.();
-            if (!activity) return;
+        if (!activity || !playdata || !movie) return;
+        if (!movie.imdb_id) return;
 
-            const player = Lampa.Player;
-            if (!player.playdata || !player.activity) return;
+        const imdb = movie.imdb_id;
+        const isSeries = !!movie.first_air_date;
 
-            const movie = activity.movie || player.activity.movie;
-            if (!movie?.imdb_id) return;
+        const season = isSeries ? playdata.season : undefined;
+        const episode = isSeries ? playdata.episode : undefined;
 
-            const isSeries = Boolean(movie.first_air_date || movie.number_of_seasons);
-            const season = isSeries ? player.playdata.season : undefined;
-            const episode = isSeries ? player.playdata.episode : undefined;
+        const osSubs = await fetchSubs(imdb, season, episode);
 
-            const rawSubs = await fetchSubtitles(movie.imdb_id, season, episode);
-
-            if (!rawSubs.length) return;
-
-            // Беремо тільки потрібні мови та готуємо до формату Lampa
-            const desiredSubs = rawSubs
-                .filter(s => s.url && s.lang)
-                .map(s => {
-                    const normLang = normalizeLang(s.lang);
-                    if (!['eng', 'ukr', 'rus'].includes(normLang)) return null;
-
-                    return {
-                        label: normLang,           // eng / ukr / rus
-                        url: s.url,
-                        lang: normLang,
-                        default: normLang === 'eng' // англійська за замовчуванням
-                    };
-                })
-                .filter(Boolean);
-
-            if (!desiredSubs.length) return;
-
-            // Поточні субтитри (вже додані плеєром або іншими плагінами)
-            const currentSubs = (player.playdata?.subtitles || []).map(s => ({
-                label: s.label,
+        const filtered = osSubs
+            .filter(s =>
+                s.url &&
+                (s.lang === 'eng' || s.lang === 'ukr' || s.lang === 'rus')
+            )
+            .map(s => ({
+                label:
+                    s.lang === 'eng'
+                        ? 'ENG'
+                        : s.lang === 'ukr'
+                            ? 'UKR'
+                            : 'RUS',
                 url: s.url,
-                lang: normalizeLang(s.lang || s.label)
+                lang: s.lang
             }));
 
-            // Об'єднуємо, уникаємо дублів за url
-            const allSubs = [...currentSubs];
+        const current = (playdata.subtitles || []).map(s => ({
+            label: s.label,
+            url: s.url,
+            lang: s.lang || ''
+        }));
 
-            desiredSubs.forEach(newSub => {
-                if (!allSubs.some(ex => ex.url === newSub.url)) {
-                    allSubs.push(newSub);
-                }
-            });
+        const all = [...current];
 
-            if (allSubs.length <= currentSubs.length) return; // нічого нового не додали
+        filtered.forEach(s => {
+            if (!all.find(x => x.url === s.url)) {
+                all.push(s);
+            }
+        });
 
-            // Сортування: eng → ukr → rus
-            allSubs.sort((a, b) => {
-                const order = { eng: 1, ukr: 2, rus: 3 };
-                return (order[a.lang] || 999) - (order[b.lang] || 999);
-            });
+        if (!all.length) return;
 
-            // Знаходимо індекс англійської (або перший, якщо англ немає)
-            let defaultIndex = allSubs.findIndex(s => s.lang === 'eng');
-            if (defaultIndex === -1) defaultIndex = 0;
+        const idx = all.findIndex(s => s.lang === 'eng');
 
-            // Встановлюємо субтитри
-            player.subtitles(allSubs, defaultIndex);
-
-            console.log(`[OpenSubtitles-v3] додано ${allSubs.length - currentSubs.length} субтитрів`);
-
-        } catch (e) {
-            console.error('OpenSubtitles plugin error:', e);
-        }
+        Lampa.Player.subtitles(all, idx >= 0 ? idx : 0);
     }
 
-    // Запускаємо через невелику затримку після старту плеєра
-    Lampa.Player.listener.follow('start', () => {
-        setTimeout(addOpenSubtitles, 700);
+    Lampa.Player.listener.follow('start', function () {
+        setTimeout(setupSubs, 500);
     });
-
-    // Додатковий захист — якщо плеєр вже запущений при завантаженні плагіна
-    if (Lampa.Player.opened && Lampa.Player.activity) {
-        setTimeout(addOpenSubtitles, 1200);
-    }
 
 })();
