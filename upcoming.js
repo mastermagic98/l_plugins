@@ -410,18 +410,18 @@
             var premiereDate = data.release_date || data.first_air_date || 'N/A';
             var formattedDate = premiereDate !== 'N/A' ? premiereDate.split('-').reverse().join('-') : 'N/A';
             this.card.find('.card__view').append(`
-                <div class="card__premiere-date" style="position: absolute; top: 0.5em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px; opacity: 1; z-index: 10;">${formattedDate}</div>
+                <div class="card__premiere-date" style="position: absolute; top: 0.5em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${formattedDate}</div>
             `);
             this.card.find('.card__view').append(`
-                <div class="card__trailer-lang" style="position: absolute; top: 2.25em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px; opacity: 1; z-index: 10;"></div>
+                <div class="card__trailer-lang" style="position: absolute; top: 2.25em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;"></div>
             `);
             var rating = data.vote_average ? data.vote_average.toFixed(1) : '—';
             this.card.find('.card__view').append(`
-                <div class="card__rating" style="position: absolute; bottom: 0.5em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px; opacity: 1; z-index: 10;">${rating}</div>
+                <div class="card__rating" style="position: absolute; bottom: 0.5em; right: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">${rating}</div>
             `);
             if (data.name && !this.is_youtube) {
                 this.card.find('.card__view').append(`
-                    <div class="card__season-episode" style="position: absolute; bottom: 0.5em; left: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px; opacity: 1; z-index: 10;">—</div>
+                    <div class="card__season-episode" style="position: absolute; bottom: 0.5em; left: 0.5em; color: #fff; background: rgba(0,0,0,0.7); padding: 0.2em 0.5em; border-radius: 3px;">—</div>
                 `);
                 if (params.type === 'upcoming_series' && data.season_number && data.episode_number) {
                     this.card.find('.card__season-episode').text(`S${data.season_number}E${data.episode_number}`);
@@ -482,12 +482,10 @@
                 var lang = '—';
                 if (videos.results && videos.results.length) {
                     lang = videos.results[0].iso_639_1.toUpperCase();
-                    _this.card.find('.card__trailer-lang').text(lang).css('opacity', 1);
-                } else {
-                    _this.card.find('.card__trailer-lang').text('—').css('opacity', 1);
                 }
+                _this.card.find('.card__trailer-lang').text(lang);
             }, function () {
-                _this.card.find('.card__trailer-lang').text('—').css('opacity', 1);
+                _this.card.find('.card__trailer-lang').text('—');
             });
         };
         this.play = function (id) {
@@ -1055,14 +1053,38 @@
                 box-sizing: border-box;
                 margin-right: 1em;
             }
+            .card.card--new-trailer:last-child {
+                margin-right: 0;
+            }
+            .card.card--new-trailer.selector:focus {
+                outline: 2px solid #fff;
+                transform: scale(1.05);
+                z-index: 5;
+                transition: transform 0.2s ease;
+            }
             .card.card--new-trailer .card__view {
                 padding-bottom: 56%;
                 margin-bottom: 0;
+                position: relative;
             }
-            .card.card--new-trailer .card__details{
-                margin-top: 0.8em;
+            .card.card--new-trailer .card__promo {
+                padding-bottom: 2em;
             }
-            .card.card--new-trailer .card__play{
+            .card.card--new-trailer .card__promo-text {
+                position: absolute;
+                bottom: 3em;
+                left: 0.5em;
+                right: 0.5em;
+            }
+            .card.card--new-trailer .card__details {
+                margin-top: 0.5em;
+                position: absolute;
+                bottom: 2em;
+                left: 0.5em;
+                right: 0.5em;
+                color: rgba(255, 255, 255, 0.7);
+            }
+            .card.card--new-trailer .card__play {
                 position: absolute;
                 top: 1.4em;
                 left: 1.5em;
@@ -1073,34 +1095,48 @@
                 text-align: center;
                 padding-top: 0.6em;
             }
-            .card.card--new-trailer .card__play img{
+            .card.card--new-trailer .card__play img {
                 width: 0.9em;
                 height: 1em;
             }
-            .card-more.more--new-trailers .card-more__box{
+            .card-more.more--new-trailers .card-more__box {
                 padding-bottom: 56%;
             }
-            .category-full--new-trailers .card{
-                margin-bottom: 1.5em;
-                width: 33.3%;
+            .scroll__body.items-cards {
+                white-space: nowrap;
+                overflow: hidden;
+            }
+            .items-cards .card.card--new-trailer {
+                display: inline-block;
+                vertical-align: top;
                 margin-right: 1em;
             }
+            .items-cards .card.card--new-trailer:last-child {
+                margin-right: 0;
+            }
+            .category-full--new-trailers {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: space-between;
+            }
+            .category-full--new-trailers .card {
+                flex: 0 0 calc(33.3% - 1em);
+                margin-bottom: 1.5em;
+                box-sizing: border-box;
+            }
             @media screen and (max-width: 767px) {
-                .category-full--new-trailers .card{
-                    width: 50%;
-                    margin-right: 1em;
+                .category-full--new-trailers .card {
+                    flex: 0 0 calc(50% - 1em);
                 }
             }
             @media screen and (max-width: 400px) {
-                .category-full--new-trailers .card{
-                    width: 100%;
-                    margin-right: 0;
+                .category-full--new-trailers .card {
+                    flex: 0 0 100%;
                 }
             }
             .card__premiere-date, .card__trailer-lang, .card__rating, .card__season-episode {
                 font-size: 0.9em;
                 z-index: 10;
-                opacity: 1;
             }
             </style>
         `);
