@@ -1054,35 +1054,14 @@
                 width: 25.7em;
                 box-sizing: border-box;
             }
-            .card.card--new-trailer.selector:focus {
-                outline: 2px solid #fff;
-                transform: scale(1.05);
-                z-index: 5;
-                transition: transform 0.2s ease;
-            }
             .card.card--new-trailer .card__view {
                 padding-bottom: 56%;
                 margin-bottom: 0;
-                position: relative;
             }
-            .card.card--new-trailer .card__promo {
-                padding-bottom: 2em;
+            .card.card--new-trailer .card__details{
+                margin-top: 0.8em;
             }
-            .card.card--new-trailer .card__promo-text {
-                position: absolute;
-                bottom: 3em;
-                left: 0.5em;
-                right: 0.5em;
-            }
-            .card.card--new-trailer .card__details {
-                margin-top: 0.5em;
-                position: absolute;
-                bottom: 2em;
-                left: 0.5em;
-                right: 0.5em;
-                color: rgba(255, 255, 255, 0.7);
-            }
-            .card.card--new-trailer .card__play {
+            .card.card--new-trailer .card__play{
                 position: absolute;
                 top: 1.4em;
                 left: 1.5em;
@@ -1093,25 +1072,24 @@
                 text-align: center;
                 padding-top: 0.6em;
             }
-            .card.card--new-trailer .card__play img {
+            .card.card--new-trailer .card__play img{
                 width: 0.9em;
                 height: 1em;
             }
-            .card-more.more--new-trailers .card-more__box {
+            .card-more.more--new-trailers .card-more__box{
                 padding-bottom: 56%;
             }
-            .category-full--new-trailers .card {
+            .category-full--new-trailers .card{
                 margin-bottom: 1.5em;
                 width: 33.3%;
-                box-sizing: border-box;
             }
             @media screen and (max-width: 767px) {
-                .category-full--new-trailers .card {
+                .category-full--new-trailers .card{
                     width: 50%;
                 }
             }
             @media screen and (max-width: 400px) {
-                .category-full--new-trailers .card {
+                .category-full--new-trailers .card{
                     width: 100%;
                 }
             }
