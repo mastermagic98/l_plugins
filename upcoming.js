@@ -1053,6 +1053,7 @@
             .card-more.more--new-trailers {
                 width: 25.7em;
                 box-sizing: border-box;
+                margin-right: 1em;
             }
             .card.card--new-trailer .card__view {
                 padding-bottom: 56%;
@@ -1082,15 +1083,18 @@
             .category-full--new-trailers .card{
                 margin-bottom: 1.5em;
                 width: 33.3%;
+                margin-right: 1em;
             }
             @media screen and (max-width: 767px) {
                 .category-full--new-trailers .card{
                     width: 50%;
+                    margin-right: 1em;
                 }
             }
             @media screen and (max-width: 400px) {
                 .category-full--new-trailers .card{
                     width: 100%;
+                    margin-right: 0;
                 }
             }
             .card__premiere-date, .card__trailer-lang, .card__rating, .card__season-episode {
