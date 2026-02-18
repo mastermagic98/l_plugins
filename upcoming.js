@@ -621,7 +621,10 @@
         this.bind = function () {
             var maxItems = light ? 6 : data.results.length;
             data.results.slice(0, maxItems).forEach(this.append.bind(this));
-            if (data.results.length > 0) this.more();
+            if (data.results.length > 0 && data.total_pages > 1) this.more();
+            if (items.length > 0) {
+                scroll.step = items[0].render().outerWidth(true);
+            }
             Lampa.Layer.update();
         };
         this.cardImgBackground = function (card_data) {
@@ -1052,6 +1055,8 @@
                 width: 25.7em;
                 box-sizing: border-box;
                 margin-right: 1em;
+                margin-top: 0.5em;
+                margin-bottom: 0.5em;
             }
             .card.card--new-trailer:last-child {
                 margin-right: 0;
@@ -1102,14 +1107,24 @@
             .card-more.more--new-trailers .card-more__box {
                 padding-bottom: 56%;
             }
+            .card-more.more--new-trailers {
+                display: inline-block;
+                vertical-align: top;
+                scroll-snap-align: start;
+                margin-right: 1em;
+            }
             .scroll__body.items-cards {
                 white-space: nowrap;
                 overflow: hidden;
+                padding-top: 1em;
+                padding-bottom: 1em;
+                scroll-snap-type: x proximity;
             }
             .items-cards .card.card--new-trailer {
                 display: inline-block;
                 vertical-align: top;
                 margin-right: 1em;
+                scroll-snap-align: start;
             }
             .items-cards .card.card--new-trailer:last-child {
                 margin-right: 0;
@@ -1121,7 +1136,7 @@
             }
             .category-full--new-trailers .card {
                 flex: 0 0 calc(33.3% - 1em);
-                margin-bottom: 1.5em;
+                margin: 0.5em 0.5em 1.5em 0.5em;
                 box-sizing: border-box;
             }
             @media screen and (max-width: 767px) {
