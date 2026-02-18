@@ -619,9 +619,9 @@
             this.bind();
         };
         this.bind = function () {
-            var maxItems = light ? 6 : data.results.length;
+            var maxItems = light ? 6 : 19;
             data.results.slice(0, maxItems).forEach(this.append.bind(this));
-            if (data.results.length > 0 && data.total_pages > 1) this.more();
+            if (data.results.length >= maxItems) this.more();
             if (items.length > 0) {
                 scroll.step = items[0].render().outerWidth(true);
             }
@@ -1118,7 +1118,8 @@
                 overflow: hidden;
                 padding-top: 1em;
                 padding-bottom: 1em;
-                scroll-snap-type: x proximity;
+                padding-left: 1em;
+                scroll-snap-type: x mandatory;
             }
             .items-cards .card.card--new-trailer {
                 display: inline-block;
