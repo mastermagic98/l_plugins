@@ -619,12 +619,9 @@
             this.bind();
         };
         this.bind = function () {
-            var maxItems = light ? 6 : 19;
+            var maxItems = light ? 6 : data.results.length;
             data.results.slice(0, maxItems).forEach(this.append.bind(this));
-            if (data.results.length >= maxItems) this.more();
-            if (items.length > 0) {
-                scroll.step = items[0].render().outerWidth(true);
-            }
+            if (data.results.length > 0) this.more();
             Lampa.Layer.update();
         };
         this.cardImgBackground = function (card_data) {
@@ -1054,12 +1051,6 @@
             .card-more.more--new-trailers {
                 width: 25.7em;
                 box-sizing: border-box;
-                margin-right: 1em;
-                margin-top: 0.5em;
-                margin-bottom: 0.5em;
-            }
-            .card.card--new-trailer:last-child {
-                margin-right: 0;
             }
             .card.card--new-trailer.selector:focus {
                 outline: 2px solid #fff;
@@ -1107,52 +1098,27 @@
             .card-more.more--new-trailers .card-more__box {
                 padding-bottom: 56%;
             }
-            .card-more.more--new-trailers {
-                display: inline-block;
-                vertical-align: top;
-                scroll-snap-align: start;
-                margin-right: 1em;
-            }
-            .scroll__body.items-cards {
-                white-space: nowrap;
-                overflow: hidden;
-                padding-top: 1em;
-                padding-bottom: 1em;
-                padding-left: 1em;
-                scroll-snap-type: x mandatory;
-            }
-            .items-cards .card.card--new-trailer {
-                display: inline-block;
-                vertical-align: top;
-                margin-right: 1em;
-                scroll-snap-align: start;
-            }
-            .items-cards .card.card--new-trailer:last-child {
-                margin-right: 0;
-            }
-            .category-full--new-trailers {
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: space-between;
-            }
             .category-full--new-trailers .card {
-                flex: 0 0 calc(33.3% - 1em);
-                margin: 0.5em 0.5em 1.5em 0.5em;
+                margin-bottom: 1.5em;
+                width: 33.3%;
                 box-sizing: border-box;
             }
             @media screen and (max-width: 767px) {
                 .category-full--new-trailers .card {
-                    flex: 0 0 calc(50% - 1em);
+                    width: 50%;
                 }
             }
             @media screen and (max-width: 400px) {
                 .category-full--new-trailers .card {
-                    flex: 0 0 100%;
+                    width: 100%;
                 }
             }
             .card__premiere-date, .card__trailer-lang, .card__rating, .card__season-episode {
                 font-size: 0.9em;
                 z-index: 10;
+            }
+            .items-cards .selector {
+                margin-right: 1.5em;
             }
             </style>
         `);
