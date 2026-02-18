@@ -13,14 +13,12 @@
         'עִברִית': 'keyboard_hide_he'  
     };  
   
-    // More robust selector: find any element containing the language text within a selectable item  
     function findLanguageElement(lang) {  
         return $('.selectbox-item.selector').filter(function () {  
             return $(this).text().trim() === lang;  
         });  
     }  
   
-    // Apply hiding  
     function applyHiding() {  
         LANGUAGES.forEach(lang => {  
             const hide = Lampa.Storage.get(STORAGE_KEYS[lang], 'false') === 'true';  
@@ -29,27 +27,35 @@
         });  
     }  
   
-    // Open language selection menu  
     function openLanguageMenu() {  
-        const items = LANGUAGES.map(lang => ({  
-            title: lang,  
-            checkbox: true,  
-            selected: Lampa.Storage.get(STORAGE_KEYS[lang], 'false') === 'true',  
-            lang: lang  
-        }));  
+        function buildItems() {  
+            return LANGUAGES.map(lang => ({  
+                title: lang,  
+                checkbox: true,  
+                selected: Lampa.Storage.get(STORAGE_KEYS[lang], 'false') === 'true',  
+                lang: lang  
+            }));  
+        }  
+  
+        let items = buildItems();  
   
         Lampa.Select.show({  
             title: 'Вимкнути розкладку',  
             items: items,  
             onSelect(item) {  
-                if (item.checkbox && item.lang) {  
-                    const key = STORAGE_KEYS[item.lang];  
-                    const newVal = Lampa.Storage.get(key, 'false') === 'true' ? 'false' : 'true';  
-                    Lampa.Storage.set(key, newVal);  
-                    applyHiding();  
-                    // Re-render menu without recursion  
-                    Lampa.Select.destroy();  
-                    setTimeout(openLanguageMenu, 0);  
+                try {  
+                    if (item.checkbox && item.lang) {  
+                        const key = STORAGE_KEYS[item.lang];  
+                        const newVal = Lampa.Storage.get(key, 'false') === 'true' ? 'false' : 'true';  
+                        Lampa.Storage.set(key, newVal);  
+                        applyHiding();  
+                        // Оновлюємо список без закриття меню  
+                        items = buildItems();  
+                        Lampa.Select.update(items);  
+                    }  
+                } catch (e) {  
+                    console.error('keyboard_multi_hide_plugin onSelect error:', e);  
+                    Lampa.Noty.show('Помилка при зміні мови: ' + e.message);  
                 }  
             },  
             onBack() {  
@@ -58,14 +64,12 @@
         });  
     }  
   
-    // Add component to Settings  
     Lampa.SettingsApi.addComponent({  
         component: 'keyboard_multi_hide_plugin',  
         name: 'Вимкнути розкладку',  
         icon: '<svg fill="#fff" width="38px" height="38px" viewBox="0 0 24 24"><path d="M20 5H4a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h16a3 3 0 0 0 3-3V8a3 3 0 0 0-3-3Zm1 11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v8Zm-6-3H9a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2Zm3.5-4h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2Z"/></svg>'  
     });  
   
-    // Add trigger parameter  
     Lampa.SettingsApi.addParam({  
         component: 'keyboard_multi_hide_plugin',  
         param: {  
@@ -92,7 +96,6 @@
         }  
     });  
   
-    // Apply hiding on start and when app is ready  
     Lampa.Listener.follow('full', e => e.type === 'start' && setTimeout(applyHiding, 300));  
     if (window.appready) setTimeout(applyHiding, 500);  
 })();
