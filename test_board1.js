@@ -1,3 +1,14 @@
+Спочатку я проаналізую проблему: наданий HTML фрагмент показує, що структура меню вибору мов клавіатури в Lampa складається з елементів <div class="selectbox-item selector">, всередині яких є <div class="selectbox-item__title"> з назвою мови. У попередній версії коду селектор був помилковим ("selectbox-item__text"), тому елементи не знаходилися і не приховувалися. Крім того, меню є динамічним і рендериться при відкритті клавіатури, тому listener на подію 'select' з типом 'open' повинен допомогти застосовувати приховування вчасно.
+
+Дії, які я виконаю:
+1. Виправлю селектор в функції applyHiding на $('.selectbox-item.selector > div.selectbox-item__title:contains("' + lang + '")'), щоб точно знаходити елементи за новою структурою.
+2. Додам більше консольного логування в applyHiding для відладки: виводитиму, чи знайдено елемент і чи застосоване приховування.
+3. Зберігаю listener на 'select' з затримкою 100 мс, щоб дати час на рендеринг DOM.
+4. Перевірю інші частини коду: підтвердження через Lampa.Select.show замість Modal.confirm, оновлення меню після змін, додавання компонента в налаштування.
+5. Надаю повний код плагіна без скорочень.
+
+Ось повний виправлений код JavaScript для плагіна в Lampa v3.0:
+
 (function () {
     'use strict';
     if (!Lampa.Manifest || Lampa.Manifest.app_digital < 300) return;
@@ -14,7 +25,7 @@
     function applyHiding() {
         LANGUAGES.forEach(lang => {
             const hide = Lampa.Storage.get(STORAGE_KEYS[lang], 'false') === 'true';
-            const element = $('.selectbox-item.selector > div.selectbox-item__text:contains("' + lang + '")');
+            const element = $('.selectbox-item.selector > div.selectbox-item__title:contains("' + lang + '")');
             if (element.length) {
                 element.parent().toggle(!hide);
                 console.log('Keyboard Hide: Applying hide for ' + lang + ' - ' + (hide ? 'hidden' : 'shown'));
