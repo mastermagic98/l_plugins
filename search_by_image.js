@@ -49,6 +49,11 @@
             uk: 'Фільм не знайдено. Спробуйте інше фото',
             en: 'Movie not found. Try another photo'
         },
+        photo_search_server_error: {
+            ru: 'Сервер повернув помилку. Деталі в консолі.',
+            uk: 'Сервер повернув помилку. Деталі в консолі.',
+            en: 'Server error. Check console for details.'
+        },
         photo_search_network_error: {
             ru: 'Помилка мережі: ',
             uk: 'Помилка мережі: ',
@@ -59,7 +64,7 @@
     function startPlugin() {
         var manifest = {
             type: 'other',
-            version: '1.1.0',
+            version: '1.1.1',
             name: Lampa.Lang.translate('photo_search_title'),
             description: Lampa.Lang.translate('photo_search_description'),
             component: 'photo_search'
@@ -77,7 +82,6 @@
                 return;
             }
 
-            // Ваша іконка без жодних змін
             var svgIcon = '' +
                 '<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" fill="none">' +
                 ' <g>' +
@@ -116,11 +120,11 @@
             selectedFile = null;
 
             var htmlString = '' +
-                '<div style="padding:20px;text-align:center;">' +
-                '  <div id="photo-preview" style="width:280px;height:280px;margin:0 auto 20px;border:2px dashed #666;border-radius:8px;display:flex;align-items:center;justify-content:center;background:#1c1c1c;color:#888;font-size:14px;">' +
+                '<div style="padding:40px 20px 100px 20px;text-align:center;min-height:420px;display:flex;flex-direction:column;justify-content:center;">' +
+                '  <div id="photo-preview" style="width:280px;height:280px;margin:0 auto 30px;border:2px dashed #666;border-radius:8px;display:flex;align-items:center;justify-content:center;background:#1c1c1c;color:#888;font-size:14px;">' +
                 '    Прев’ю зображення' +
                 '  </div>' +
-                '  <div style="margin-bottom:20px;color:#aaa;font-size:13px;">' +
+                '  <div style="margin-bottom:30px;color:#aaa;font-size:13px;">' +
                 '    Натисніть «Завантажити», щоб вибрати фото з пристрою<br>(Windows, Mac, Android)' +
                 '  </div>' +
                 '</div>';
@@ -128,7 +132,7 @@
             Lampa.Modal.open({
                 title: Lampa.Lang.translate('photo_search_title'),
                 html: $(htmlString),
-                size: 'medium',
+                size: 'large',
                 buttons: [
                     {
                         name: Lampa.Lang.translate('photo_search_load'),
@@ -184,17 +188,32 @@
             Lampa.Noty.show(Lampa.Lang.translate('photo_search_uploading'));
 
             var formData = new FormData();
-            formData.append('video', selectedFile);   // ← саме так в оригінальному коді сайту (навіть для фото!)
+            formData.append('video', selectedFile);
 
             fetch('https://movie-identifier.com/api/process-video-clip', {
                 method: 'POST',
                 body: formData
             })
             .then(function(response) {
-                if (!response.ok) throw new Error('HTTP ' + response.status);
-                return response.json();
+                return response.text();
             })
-            .then(function(data) {
+            .then(function(text) {
+                console.log('[Movie-Identifier] Raw response:', text.substring(0, 500));
+
+                if (text.includes('Not found') || text.includes('not found')) {
+                    Lampa.Noty.show(Lampa.Lang.translate('photo_search_not_found'));
+                    return;
+                }
+
+                var data;
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    Lampa.Noty.show(Lampa.Lang.translate('photo_search_server_error'));
+                    console.error('JSON parse failed. Response was:', text);
+                    return;
+                }
+
                 if (!data.filmData || data.filmData.includes('Not found')) {
                     Lampa.Noty.show(Lampa.Lang.translate('photo_search_not_found'));
                     return;
@@ -208,12 +227,11 @@
                     return;
                 }
 
-                var best = results[0]; // найкращий результат (найвищий confidence)
+                var best = results[0];
                 var title = best.name.trim();
 
                 Lampa.Noty.show(Lampa.Lang.translate('photo_search_success') + title + ' (' + best.confidence + '%)');
 
-                // Відкриваємо стандартний пошук Lampa
                 Lampa.Activity.push({
                     component: 'search',
                     query: title,
