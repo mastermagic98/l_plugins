@@ -64,7 +64,7 @@
     function startPlugin() {
         var manifest = {
             type: 'other',
-            version: '1.1.3',
+            version: '1.1.4',
             name: Lampa.Lang.translate('photo_search_title'),
             description: Lampa.Lang.translate('photo_search_description'),
             component: 'photo_search'
@@ -141,7 +141,7 @@
 
             Lampa.Modal.open({
                 title: Lampa.Lang.translate('photo_search_title'),
-                html: htmlString,
+                html: $(htmlString),   // ← ОБОВ’ЯЗКОВО jQuery-об’єкт (фікс помилки where.find)
                 size: 'medium',
                 onBack: function() {
                     setTimeout(function() { Lampa.Modal.close(); }, 150);
