@@ -64,7 +64,7 @@
     function startPlugin() {
         var manifest = {
             type: 'other',
-            version: '1.1.2',
+            version: '1.1.3',
             name: Lampa.Lang.translate('photo_search_title'),
             description: Lampa.Lang.translate('photo_search_description'),
             component: 'photo_search'
@@ -120,37 +120,39 @@
             selectedFile = null;
 
             var htmlString = '' +
-                '<div style="padding:30px 20px 80px 20px;text-align:center;">' +
-                '  <div id="photo-preview" style="width:280px;height:280px;margin:0 auto 40px;border:2px dashed #666;border-radius:8px;display:flex;align-items:center;justify-content:center;background:#1c1c1c;color:#888;font-size:14px;">' +
-                '    Прев’ю зображення' +
-                '  </div>' +
-                '  <div style="margin-bottom:40px;color:#aaa;font-size:13px;">' +
-                '    Натисніть «Завантажити», щоб вибрати фото з пристрою<br>(Windows, Mac, Android)' +
-                '  </div>' +
+                '<div class="scroll scroll--over">' +
+                '    <div class="scroll__content">' +
+                '        <div class="scroll__body">' +
+                '            <div style="text-align:center;">' +
+                '                <div id="photo-preview" style="width:300px;height:169px;margin:0 auto 20px;border:2px dashed #666;border-radius:8px;display:flex;align-items:center;justify-content:center;background:#1c1c1c;color:#888;font-size:18px;">' +
+                '                    Прев’ю зображення' +
+                '                </div>' +
+                '                <div style="color:#aaa;font-size:16px;">' +
+                '                    Натисніть «Завантажити», щоб вибрати фото з пристрою<br>(Windows, Mac, Android)' +
+                '                </div>' +
+                '            </div>' +
+                '            <div class="modal__footer" style="justify-content:center;">' +
+                '                <div id="btn-load" class="modal__button selector">' + Lampa.Lang.translate('photo_search_load') + '</div>' +
+                '                <div id="btn-send" class="modal__button selector">' + Lampa.Lang.translate('photo_search_send') + '</div>' +
+                '            </div>' +
+                '        </div>' +
+                '    </div>' +
                 '</div>';
 
             Lampa.Modal.open({
                 title: Lampa.Lang.translate('photo_search_title'),
-                html: $(htmlString),
+                html: htmlString,
                 size: 'medium',
-                buttons: [
-                    {
-                        name: Lampa.Lang.translate('photo_search_load'),
-                        onSelect: function() {
-                            selectImageFromDevice();
-                        }
-                    },
-                    {
-                        name: Lampa.Lang.translate('photo_search_send'),
-                        onSelect: function() {
-                            sendImageToIdentifier();
-                        }
-                    }
-                ],
                 onBack: function() {
                     setTimeout(function() { Lampa.Modal.close(); }, 150);
                 }
             });
+
+            // Прив’язуємо кнопки після відкриття вікна
+            setTimeout(function() {
+                $('#btn-load').on('click', selectImageFromDevice);
+                $('#btn-send').on('click', sendImageToIdentifier);
+            }, 100);
         }
 
         function selectImageFromDevice() {
