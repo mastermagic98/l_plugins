@@ -64,7 +64,7 @@
     function startPlugin() {
         var manifest = {
             type: 'other',
-            version: '1.1.6',
+            version: '1.1.7',
             name: Lampa.Lang.translate('photo_search_title'),
             description: Lampa.Lang.translate('photo_search_description'),
             component: 'photo_search'
@@ -221,10 +221,9 @@
 
                 Lampa.Noty.show(Lampa.Lang.translate('photo_search_success') + title + ' (' + best.confidence + '%)');
 
-                // Закриваємо модалку
                 Lampa.Modal.close();
 
-                // Відкриваємо повноцінну сторінку пошуку з картками (як при звичайному пошуку)
+                // Відкриваємо сторінку пошуку
                 setTimeout(() => {
                     Lampa.Activity.push({
                         component: 'search',
@@ -233,6 +232,17 @@
                         page: 1,
                         clear: true
                     });
+
+                    // Примусово запускаємо пошук (фікс відсутності карток)
+                    setTimeout(() => {
+                        var searchInput = $('.search__input input, .search input').first();
+                        if (searchInput.length) {
+                            searchInput.val(title);
+                            searchInput.trigger('input');
+                            searchInput.trigger($.Event('keyup', { keyCode: 13 }));
+                            console.log('[Photo Search] Примусовий запуск пошуку виконано');
+                        }
+                    }, 400);
                 }, 300);
             })
             .catch(err => {
