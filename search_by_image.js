@@ -44,10 +44,10 @@
             uk: 'Знайдено: ',
             en: 'Found: '
         },
-        photo_search_error: {
-            ru: 'Не вдалося розпізнати фільм',
-            uk: 'Не вдалося розпізнати фільм',
-            en: 'Failed to identify the movie'
+        photo_search_not_found: {
+            ru: 'Фільм не знайдено. Спробуйте інше фото',
+            uk: 'Фільм не знайдено. Спробуйте інше фото',
+            en: 'Movie not found. Try another photo'
         },
         photo_search_network_error: {
             ru: 'Помилка мережі: ',
@@ -59,7 +59,7 @@
     function startPlugin() {
         var manifest = {
             type: 'other',
-            version: '1.0.2',
+            version: '1.1.0',
             name: Lampa.Lang.translate('photo_search_title'),
             description: Lampa.Lang.translate('photo_search_description'),
             component: 'photo_search'
@@ -68,22 +68,33 @@
         Lampa.Manifest.plugins = manifest;
 
         function addHeaderButton() {
-            // Захист від дублювання кнопки
             if ($('.open--photo-search').length > 0) return;
 
-            // Надійний пошук кнопки «лупа» (пошук)
             var searchButton = $('.head .open--search, .head__button.open--search');
             
             if (searchButton.length === 0) {
-                console.log('[Photo Search] Кнопка пошуку ще не завантажена, повторюю через 1 сек...');
                 setTimeout(addHeaderButton, 1000);
                 return;
             }
 
-            // НОВА ІКОНКА (яку ви надали, очищена і адаптована)
+            // Ваша іконка без жодних змін
             var svgIcon = '' +
-                '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
-                '  <path d="m3,3l2,0l0,2l-2,0l0,-2zm4,0l2,0l0,2l-2,0l0,-2zm4,0l2,0l0,2l-2,0l0,-2zm4,0l2,0l0,2l-2,0l0,-2zm4,0l2,0l0,2l-2,0l0,-2zm0,4l2,0l0,2l-2,0l0,-2zm-16,12l2,0l0,2l-2,0l0,-2zm0,-4l2,0l0,2l-2,0l0,-2zm0,-4l2,0l0,2l-2,0l0,-2zm0,-4l2,0l0,2l-2,0l0,-2zm7.667,4l1.036,-1.555a1,1 0 0 1 0.832,-0.445l2.93,0a1,1 0 0 1 0.832,0.445l1.036,1.555l2.667,0a1,1 0 0 1 1,1l0,8a1,1 0 0 1 -1,1l-12,0a1,1 0 0 1 -1,-1l0,-8a1,1 0 0 1 1,-1l2.667,0zm-1.667,8l10,0l0,-6l-2.737,0l-1.333,-2l-1.86,0l-1.333,2l-2.737,0l0,6zm5,-1a2,2 0 1 1 0,-4a2,2 0 0 1 0,4z" fill="currentColor"/>' +
+                '<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" fill="none">' +
+                ' <g>' +
+                '  <title>Layer 1</title>' +
+                '  <g id="svg_17" transform="matrix(0.539435, 0, 0, 0.554343, 18.8769, 18.1628)">' +
+                '   <svg width="64px" height="64px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="#000000" id="svg_4" x="-41.22351" y="-38.89616">' +
+                '    <g id="svg_13" stroke-width="0"/>' +
+                '    <g id="svg_12" stroke-linecap="round" stroke-linejoin="round"/>' +
+                '    <g id="svg_5">' +
+                '     <g id="svg_9">' +
+                '      <path fill="none" d="m0,0l24,0l0,24l-24,0l0,-24z" id="svg_11"/>' +
+                '      <path d="m3,3l2,0l0,2l-2,0l0,-2zm4,0l2,0l0,2l-2,0l0,-2zm4,0l2,0l0,2l-2,0l0,-2zm4,0l2,0l0,2l-2,0l0,-2zm4,0l2,0l0,2l-2,0l0,-2zm0,4l2,0l0,2l-2,0l0,-2zm-16,12l2,0l0,2l-2,0l0,-2zm0,-4l2,0l0,2l-2,0l0,-2zm0,-4l2,0l0,2l-2,0l0,-2zm0,-4l2,0l0,2l-2,0l0,-2zm7.667,4l1.036,-1.555a1,1 0 0 1 0.832,-0.445l2.93,0a1,1 0 0 1 0.832,0.445l1.036,1.555l2.667,0a1,1 0 0 1 1,1l0,8a1,1 0 0 1 -1,1l-12,0a1,1 0 0 1 -1,-1l0,-8a1,1 0 0 1 1,-1l2.667,0zm-1.667,8l10,0l0,-6l-2.737,0l-1.333,-2l-1.86,0l-1.333,2l-2.737,0l0,6zm5,-1a2,2 0 1 1 0,-4a2,2 0 0 1 0,4z" id="svg_10" fill="currentColor"/>' +
+                '     </g>' +
+                '    </g>' +
+                '   </svg>' +
+                '  </g>' +
+                ' </g>' +
                 '</svg>';
 
             var buttonHtml = '' +
@@ -94,21 +105,17 @@
                 '</div>';
 
             var button = $(buttonHtml);
-
-            // Розміщуємо СТРОГО після кнопки пошуку (лупи)
             searchButton.after(button);
 
             button.on('click', function() {
                 openPhotoSearchWindow();
             });
-
-            console.log('[Photo Search] Кнопка з новою іконкою успішно додана після лупи');
         }
 
         function openPhotoSearchWindow() {
             selectedFile = null;
 
-            var html = '' +
+            var htmlString = '' +
                 '<div style="padding:20px;text-align:center;">' +
                 '  <div id="photo-preview" style="width:280px;height:280px;margin:0 auto 20px;border:2px dashed #666;border-radius:8px;display:flex;align-items:center;justify-content:center;background:#1c1c1c;color:#888;font-size:14px;">' +
                 '    Прев’ю зображення' +
@@ -120,7 +127,8 @@
 
             Lampa.Modal.open({
                 title: Lampa.Lang.translate('photo_search_title'),
-                html: html,
+                html: $(htmlString),
+                size: 'medium',
                 buttons: [
                     {
                         name: Lampa.Lang.translate('photo_search_load'),
@@ -134,7 +142,10 @@
                             sendImageToIdentifier();
                         }
                     }
-                ]
+                ],
+                onBack: function() {
+                    setTimeout(function() { Lampa.Modal.close(); }, 150);
+                }
             });
         }
 
@@ -148,14 +159,12 @@
                 var file = event.target.files[0];
                 if (file) {
                     selectedFile = file;
-
                     var reader = new FileReader();
                     reader.onload = function(e) {
                         $('#photo-preview').html('<img src="' + e.target.result + '" style="max-width:100%;max-height:100%;border-radius:6px;">');
                     };
                     reader.readAsDataURL(file);
-
-                    Lampa.Noty.show('Зображення успішно вибрано');
+                    Lampa.Noty.show('Зображення вибрано');
                 }
             };
 
@@ -175,50 +184,50 @@
             Lampa.Noty.show(Lampa.Lang.translate('photo_search_uploading'));
 
             var formData = new FormData();
-            formData.append('file', selectedFile);   // ← якщо поле на сайті інше — змініть тут
+            formData.append('video', selectedFile);   // ← саме так в оригінальному коді сайту (навіть для фото!)
 
-            fetch('https://www.movie-identifier.com/upload', {   // ← замініть на точний endpoint після перевірки в DevTools
+            fetch('https://movie-identifier.com/api/process-video-clip', {
                 method: 'POST',
                 body: formData
             })
             .then(function(response) {
                 if (!response.ok) throw new Error('HTTP ' + response.status);
-                return response.text();
+                return response.json();
             })
             .then(function(data) {
-                var title = null;
-
-                try {
-                    var json = JSON.parse(data);
-                    title = json.title || json.movie || json.name || null;
-                } catch (e) {
-                    var match = data.match(/<h1[^>]*>([^<]+)<\/h1>/i) ||
-                                data.match(/movie[:\s]+([^<]+)/i) ||
-                                data.match(/title[:\s]+([^<]+)/i);
-                    if (match) title = match[1].trim();
+                if (!data.filmData || data.filmData.includes('Not found')) {
+                    Lampa.Noty.show(Lampa.Lang.translate('photo_search_not_found'));
+                    return;
                 }
 
-                if (title) {
-                    Lampa.Noty.show(Lampa.Lang.translate('photo_search_success') + title);
+                var parsed = JSON.parse(data.filmData);
+                var results = Array.isArray(parsed) ? parsed : [parsed];
 
-                    Lampa.Activity.push({
-                        component: 'search',
-                        query: title,
-                        title: Lampa.Lang.translate('photo_search_title') + ': ' + title,
-                        page: 1
-                    });
-
-                    setTimeout(function() {
-                        Lampa.Modal.close();
-                    }, 150);
-                } else {
-                    Lampa.Noty.show(Lampa.Lang.translate('photo_search_error'));
-                    console.log('Відповідь сайту:', data);
+                if (results.length === 0) {
+                    Lampa.Noty.show(Lampa.Lang.translate('photo_search_not_found'));
+                    return;
                 }
+
+                var best = results[0]; // найкращий результат (найвищий confidence)
+                var title = best.name.trim();
+
+                Lampa.Noty.show(Lampa.Lang.translate('photo_search_success') + title + ' (' + best.confidence + '%)');
+
+                // Відкриваємо стандартний пошук Lampa
+                Lampa.Activity.push({
+                    component: 'search',
+                    query: title,
+                    title: 'Пошук за фото: ' + title,
+                    page: 1
+                });
+
+                setTimeout(function() {
+                    Lampa.Modal.close();
+                }, 200);
             })
             .catch(function(error) {
                 Lampa.Noty.show(Lampa.Lang.translate('photo_search_network_error') + error.message);
-                console.error('Помилка відправки:', error);
+                console.error('Movie-Identifier error:', error);
             });
         }
 
@@ -226,9 +235,7 @@
             addHeaderButton();
         } else {
             Lampa.Listener.follow('app', function(e) {
-                if (e.type === 'ready') {
-                    addHeaderButton();
-                }
+                if (e.type === 'ready') addHeaderButton();
             });
         }
     }
@@ -237,9 +244,7 @@
         startPlugin();
     } else {
         Lampa.Listener.follow('app', function(e) {
-            if (e.type === 'ready') {
-                startPlugin();
-            }
+            if (e.type === 'ready') startPlugin();
         });
     }
 
