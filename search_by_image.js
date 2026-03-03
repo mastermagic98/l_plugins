@@ -76,7 +76,6 @@
             if ($('.open--photo-search').length > 0) return;
 
             var searchButton = $('.head .open--search, .head__button.open--search');
-            
             if (searchButton.length === 0) {
                 setTimeout(addHeaderButton, 1000);
                 return;
@@ -195,48 +194,23 @@
                 method: 'POST',
                 body: formData
             })
-            .then(function(response) {
-                return response.text();
-            })
-            .then(function(text) {
-                console.log('[Movie-Identifier] Raw response:', text.substring(0, 500));
+            .then(r => r.text())
+            .then(text => {
+                console.log('[Movie-Identifier] Raw:', text.substring(0, 500));
 
                 if (text.includes('Not found') || text.includes('not found')) {
                     Lampa.Noty.show(Lampa.Lang.translate('photo_search_not_found'));
                     return;
                 }
 
-                var data;
-                try {
-                    data = JSON.parse(text);
-                } catch (e) {
-                    Lampa.Noty.show(Lampa.Lang.translate('photo_search_server_error'));
-                    console.error('JSON parse failed. Response was:', text);
-                    return;
-                }
-
-                if (!data.filmData) {
+                var data = JSON.parse(text);
+                if (!data.filmData || data.filmData.includes('Not found')) {
                     Lampa.Noty.show(Lampa.Lang.translate('photo_search_not_found'));
                     return;
                 }
 
-                // ←←← ФІКС ПОМИЛКИ ←←←
-                let filmDataClean = data.filmData.trim()
-                    .replace(/^```json
-                    .replace(/\s*```$/i, '')       // видаляємо кінець markdown
-                    .trim();
-
-                var parsed;
-                try {
-                    parsed = JSON.parse(filmDataClean);
-                } catch (e) {
-                    Lampa.Noty.show(Lampa.Lang.translate('photo_search_server_error'));
-                    console.error('JSON parse failed after cleanup. Clean data:', filmDataClean);
-                    return;
-                }
-
+                var parsed = JSON.parse(data.filmData);
                 var results = Array.isArray(parsed) ? parsed : [parsed];
-
                 if (results.length === 0) {
                     Lampa.Noty.show(Lampa.Lang.translate('photo_search_not_found'));
                     return;
@@ -247,20 +221,48 @@
 
                 Lampa.Noty.show(Lampa.Lang.translate('photo_search_success') + title + ' (' + best.confidence + '%)');
 
-                Lampa.Activity.push({
-                    component: 'search',
-                    query: title,
-                    title: 'Пошук за фото: ' + title,
-                    page: 1
-                });
+                // Закриваємо модалку
+                Lampa.Modal.close();
 
-                setTimeout(function() {
-                    Lampa.Modal.close();
-                }, 200);
+                // Використовуємо deepwiki TMDB API для повноцінних карток у Lampa
+                setTimeout(() => {
+                    var deepUrl = 'https://deepwiki.com/search/-api-tmdb_ba64e966-a4f3-4563-a8c7-77eee4247126?mode=fast&query=' + encodeURIComponent(title);
+
+                    fetch(deepUrl)
+                    .then(r => r.json())
+                    .then(deepData => {
+                        if (deepData && (deepData.results || deepData.movies || deepData.series)) {
+                            var resultsArray = deepData.results || deepData.movies || deepData.series || [];
+                            Lampa.Activity.push({
+                                component: 'catalog',
+                                results: resultsArray,
+                                title: 'Пошук за фото: ' + title,
+                                cardType: 'full'
+                            });
+                        } else {
+                            // fallback на звичайний пошук
+                            Lampa.Activity.push({
+                                component: 'search',
+                                query: title,
+                                title: 'Пошук за фото: ' + title,
+                                page: 1
+                            });
+                        }
+                    })
+                    .catch(() => {
+                        // якщо deepwiki не спрацював — стандартний пошук
+                        Lampa.Activity.push({
+                            component: 'search',
+                            query: title,
+                            title: 'Пошук за фото: ' + title,
+                            page: 1
+                        });
+                    });
+                }, 400);
             })
-            .catch(function(error) {
-                Lampa.Noty.show(Lampa.Lang.translate('photo_search_network_error') + error.message);
-                console.error('Movie-Identifier error:', error);
+            .catch(err => {
+                Lampa.Noty.show(Lampa.Lang.translate('photo_search_network_error') + err.message);
+                console.error('Movie-Identifier error:', err);
             });
         }
 
