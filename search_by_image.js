@@ -64,7 +64,7 @@
     function startPlugin() {
         var manifest = {
             type: 'other',
-            version: '1.1.1',
+            version: '1.1.2',
             name: Lampa.Lang.translate('photo_search_title'),
             description: Lampa.Lang.translate('photo_search_description'),
             component: 'photo_search'
@@ -120,11 +120,11 @@
             selectedFile = null;
 
             var htmlString = '' +
-                '<div style="padding:40px 20px 100px 20px;text-align:center;min-height:420px;display:flex;flex-direction:column;justify-content:center;">' +
-                '  <div id="photo-preview" style="width:280px;height:280px;margin:0 auto 30px;border:2px dashed #666;border-radius:8px;display:flex;align-items:center;justify-content:center;background:#1c1c1c;color:#888;font-size:14px;">' +
+                '<div style="padding:30px 20px 80px 20px;text-align:center;">' +
+                '  <div id="photo-preview" style="width:280px;height:280px;margin:0 auto 40px;border:2px dashed #666;border-radius:8px;display:flex;align-items:center;justify-content:center;background:#1c1c1c;color:#888;font-size:14px;">' +
                 '    Прев’ю зображення' +
                 '  </div>' +
-                '  <div style="margin-bottom:30px;color:#aaa;font-size:13px;">' +
+                '  <div style="margin-bottom:40px;color:#aaa;font-size:13px;">' +
                 '    Натисніть «Завантажити», щоб вибрати фото з пристрою<br>(Windows, Mac, Android)' +
                 '  </div>' +
                 '</div>';
@@ -132,7 +132,7 @@
             Lampa.Modal.open({
                 title: Lampa.Lang.translate('photo_search_title'),
                 html: $(htmlString),
-                size: 'large',
+                size: 'medium',
                 buttons: [
                     {
                         name: Lampa.Lang.translate('photo_search_load'),
