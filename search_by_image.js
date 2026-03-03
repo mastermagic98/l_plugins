@@ -64,7 +64,7 @@
     function startPlugin() {
         var manifest = {
             type: 'other',
-            version: '1.1.5',
+            version: '1.1.6',
             name: Lampa.Lang.translate('photo_search_title'),
             description: Lampa.Lang.translate('photo_search_description'),
             component: 'photo_search'
@@ -224,41 +224,16 @@
                 // Закриваємо модалку
                 Lampa.Modal.close();
 
-                // Використовуємо deepwiki TMDB API для повноцінних карток у Lampa
+                // Відкриваємо повноцінну сторінку пошуку з картками (як при звичайному пошуку)
                 setTimeout(() => {
-                    var deepUrl = 'https://deepwiki.com/search/-api-tmdb_ba64e966-a4f3-4563-a8c7-77eee4247126?mode=fast&query=' + encodeURIComponent(title);
-
-                    fetch(deepUrl)
-                    .then(r => r.json())
-                    .then(deepData => {
-                        if (deepData && (deepData.results || deepData.movies || deepData.series)) {
-                            var resultsArray = deepData.results || deepData.movies || deepData.series || [];
-                            Lampa.Activity.push({
-                                component: 'catalog',
-                                results: resultsArray,
-                                title: 'Пошук за фото: ' + title,
-                                cardType: 'full'
-                            });
-                        } else {
-                            // fallback на звичайний пошук
-                            Lampa.Activity.push({
-                                component: 'search',
-                                query: title,
-                                title: 'Пошук за фото: ' + title,
-                                page: 1
-                            });
-                        }
-                    })
-                    .catch(() => {
-                        // якщо deepwiki не спрацював — стандартний пошук
-                        Lampa.Activity.push({
-                            component: 'search',
-                            query: title,
-                            title: 'Пошук за фото: ' + title,
-                            page: 1
-                        });
+                    Lampa.Activity.push({
+                        component: 'search',
+                        query: title,
+                        title: 'Пошук за фото: ' + title,
+                        page: 1,
+                        clear: true
                     });
-                }, 400);
+                }, 300);
             })
             .catch(err => {
                 Lampa.Noty.show(Lampa.Lang.translate('photo_search_network_error') + err.message);
