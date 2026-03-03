@@ -15,56 +15,56 @@
             en: 'Search movie or series by photo'
         },
         photo_search_button: {
-            ru: 'Пошук за фото',
+            ru: 'Поиск по фото',
             uk: 'Пошук за фото',
             en: 'Search by photo'
         },
-        photo_search_load: {
-            ru: 'Завантажити',
-            uk: 'Завантажити',
-            en: 'Load'
-        },
         photo_search_send: {
-            ru: 'Відправити',
-            uk: 'Відправити',
-            en: 'Send'
+            ru: 'Поиск',
+            uk: 'Пошук',
+            en: 'Search'
+        },
+        photo_search_close: {
+            ru: 'Закрыть',
+            uk: 'Закрити',
+            en: 'Close'
         },
         photo_search_no_file: {
-            ru: 'Спочатку завантажте зображення',
-            uk: 'Спочатку завантажте зображення',
+            ru: 'Сначала выберите изображение',
+            uk: 'Спочатку виберіть зображення',
             en: 'First select an image'
         },
         photo_search_uploading: {
-            ru: 'Відправка на movie-identifier.com...',
+            ru: 'Отправка на movie-identifier.com...',
             uk: 'Відправка на movie-identifier.com...',
             en: 'Sending to movie-identifier.com...'
         },
         photo_search_success: {
-            ru: 'Знайдено: ',
+            ru: 'Найдено: ',
             uk: 'Знайдено: ',
             en: 'Found: '
         },
         photo_search_not_found: {
-            ru: 'Фільм не знайдено. Спробуйте інше фото',
+            ru: 'Фильм не найден. Попробуйте другое фото',
             uk: 'Фільм не знайдено. Спробуйте інше фото',
             en: 'Movie not found. Try another photo'
         },
-        photo_search_server_error: {
-            ru: 'Сервер повернув помилку. Деталі в консолі.',
-            uk: 'Сервер повернув помилку. Деталі в консолі.',
-            en: 'Server error. Check console for details.'
-        },
         photo_search_network_error: {
-            ru: 'Помилка мережі: ',
+            ru: 'Ошибка сети: ',
             uk: 'Помилка мережі: ',
             en: 'Network error: '
+        },
+        photo_search_click_hint: {
+            ru: 'Нажмите, чтобы выбрать фото',
+            uk: 'Натисніть, щоб вибрати фото',
+            en: 'Click to select photo'
         }
     });
 
     function startPlugin() {
         var manifest = {
             type: 'other',
-            version: '1.1.7',
+            version: '1.2.0',
             name: Lampa.Lang.translate('photo_search_title'),
             description: Lampa.Lang.translate('photo_search_description'),
             component: 'photo_search'
@@ -72,6 +72,7 @@
 
         Lampa.Manifest.plugins = manifest;
 
+        /* ── Додаємо кнопку у шапку ── */
         function addHeaderButton() {
             if ($('.open--photo-search').length > 0) return;
 
@@ -81,7 +82,7 @@
                 return;
             }
 
-            var svgIcon = '' +
+            var svgIcon =
                 '<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" fill="none">' +
                 ' <g>' +
                 '  <title>Layer 1</title>' +
@@ -100,85 +101,125 @@
                 ' </g>' +
                 '</svg>';
 
-            var buttonHtml = '' +
-                '<div class="head__button head__action open--photo-search selector" ' +
-                'style="display:flex;align-items:center;justify-content:center;width:48px;height:48px;margin:0 4px;cursor:pointer;" ' +
-                'title="' + Lampa.Lang.translate('photo_search_button') + '">' +
+            var button = $(
+                '<div class="head__button head__action open--photo-search selector"' +
+                ' style="display:flex;align-items:center;justify-content:center;width:48px;height:48px;margin:0 4px;cursor:pointer;"' +
+                ' title="' + Lampa.Lang.translate('photo_search_button') + '">' +
                 svgIcon +
-                '</div>';
+                '</div>'
+            );
 
-            var button = $(buttonHtml);
             searchButton.after(button);
-
-            button.on('click', function() {
-                openPhotoSearchWindow();
-            });
+            button.on('click', openPhotoSearchWindow);
         }
 
+        /* ── Модальне вікно ── */
         function openPhotoSearchWindow() {
             selectedFile = null;
 
-            var htmlString = '' +
+            var html = $(
                 '<div class="scroll scroll--over">' +
-                '    <div class="scroll__content">' +
-                '        <div class="scroll__body">' +
-                '            <div style="text-align:center;">' +
-                '                <div id="photo-preview" style="width:300px;height:169px;margin:0 auto 20px;border:2px dashed #666;border-radius:8px;display:flex;align-items:center;justify-content:center;background:#1c1c1c;color:#888;font-size:18px;">' +
-                '                    Прев’ю зображення' +
-                '                </div>' +
-                '                <div style="color:#aaa;font-size:16px;">' +
-                '                    Натисніть «Завантажити», щоб вибрати фото з пристрою<br>(Windows, Mac, Android)' +
-                '                </div>' +
-                '            </div>' +
-                '            <div class="modal__footer" style="justify-content:center;">' +
-                '                <div id="btn-load" class="modal__button selector">' + Lampa.Lang.translate('photo_search_load') + '</div>' +
-                '                <div id="btn-send" class="modal__button selector">' + Lampa.Lang.translate('photo_search_send') + '</div>' +
-                '            </div>' +
+                '  <div class="scroll__content">' +
+                '    <div class="scroll__body">' +
+
+                /* Зона попереднього перегляду — кліком відкриває вибір файлу */
+                '      <div id="photo-preview-wrap" class="selector"' +
+                '           style="width:300px;height:169px;margin:0 auto 12px;' +
+                '                  border:2px dashed #555;border-radius:10px;' +
+                '                  display:flex;flex-direction:column;align-items:center;justify-content:center;' +
+                '                  background:#1a1a1a;color:#888;font-size:14px;cursor:pointer;' +
+                '                  transition:border-color .2s,background .2s;' +
+                '                  user-select:none;overflow:hidden;">' +
+                '        <div id="photo-preview-inner">' +
+                '          <svg width="48" height="48" viewBox="0 0 24 24" fill="none"' +
+                '               stroke="#555" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"' +
+                '               style="display:block;margin:0 auto 8px">' +
+                '            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>' +
+                '            <circle cx="12" cy="13" r="4"/>' +
+                '          </svg>' +
+                '          <span>' + Lampa.Lang.translate('photo_search_click_hint') + '</span>' +
                 '        </div>' +
+                '      </div>' +
+
+                /* Кнопки: Пошук | Закрити */
+                '      <div class="modal__footer" style="justify-content:center;gap:12px;">' +
+                '        <div id="btn-search" class="modal__button selector">' + Lampa.Lang.translate('photo_search_send') + '</div>' +
+                '        <div id="btn-close"  class="modal__button selector">' + Lampa.Lang.translate('photo_search_close') + '</div>' +
+                '      </div>' +
+
                 '    </div>' +
-                '</div>';
+                '  </div>' +
+                '</div>'
+            );
 
             Lampa.Modal.open({
                 title: Lampa.Lang.translate('photo_search_title'),
-                html: $(htmlString),
+                html: html,
                 size: 'medium',
                 onBack: function() {
-                    setTimeout(function() { Lampa.Modal.close(); }, 150);
+                    Lampa.Modal.close();
                 }
             });
 
             setTimeout(function() {
-                $('#btn-load').on('click', selectImageFromDevice);
-                $('#btn-send').on('click', sendImageToIdentifier);
+                /* Клік / наведення на прев'ю — вибір файлу */
+                var wrap = document.getElementById('photo-preview-wrap');
+                if (wrap) {
+                    wrap.addEventListener('click', selectImageFromDevice);
+                    wrap.addEventListener('mouseenter', function() {
+                        wrap.style.borderColor = '#fff';
+                        wrap.style.background  = '#222';
+                    });
+                    wrap.addEventListener('mouseleave', function() {
+                        wrap.style.borderColor = '#555';
+                        wrap.style.background  = '#1a1a1a';
+                    });
+                }
+
+                $('#btn-search').on('click', sendImageToIdentifier);
+                $('#btn-close').on('click', function() { Lampa.Modal.close(); });
             }, 100);
         }
 
+        /* ── Вибір файлу ── */
         function selectImageFromDevice() {
             var input = document.createElement('input');
-            input.type = 'file';
+            input.type   = 'file';
             input.accept = 'image/*';
             input.style.display = 'none';
 
             input.onchange = function(event) {
                 var file = event.target.files[0];
-                if (file) {
-                    selectedFile = file;
-                    var reader = new FileReader();
-                    reader.onload = function(e) {
-                        $('#photo-preview').html('<img src="' + e.target.result + '" style="max-width:100%;max-height:100%;border-radius:6px;">');
-                    };
-                    reader.readAsDataURL(file);
-                    Lampa.Noty.show('Зображення вибрано');
-                }
+                if (!file) return;
+
+                selectedFile = file;
+
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var wrap  = document.getElementById('photo-preview-wrap');
+                    var inner = document.getElementById('photo-preview-inner');
+                    if (inner) {
+                        inner.innerHTML =
+                            '<img src="' + e.target.result + '"' +
+                            ' style="max-width:100%;max-height:165px;' +
+                            '        border-radius:6px;display:block;pointer-events:none;">';
+                    }
+                    if (wrap) {
+                        wrap.style.borderColor = '#4da6ff';
+                        wrap.style.borderStyle = 'solid';
+                    }
+                };
+                reader.readAsDataURL(file);
             };
 
             document.body.appendChild(input);
             input.click();
             setTimeout(function() {
                 if (input.parentNode) document.body.removeChild(input);
-            }, 1000);
+            }, 60000);
         }
 
+        /* ── Відправка та пошук ── */
         function sendImageToIdentifier() {
             if (!selectedFile) {
                 Lampa.Noty.show(Lampa.Lang.translate('photo_search_no_file'));
@@ -194,63 +235,114 @@
                 method: 'POST',
                 body: formData
             })
-            .then(r => r.text())
-            .then(text => {
+            .then(function(r) { return r.text(); })
+            .then(function(text) {
                 console.log('[Movie-Identifier] Raw:', text.substring(0, 500));
 
-                if (text.includes('Not found') || text.includes('not found')) {
+                /* Перевірка «не знайдено» */
+                if (!text || text.toLowerCase().includes('not found')) {
                     Lampa.Noty.show(Lampa.Lang.translate('photo_search_not_found'));
                     return;
                 }
 
-                var data = JSON.parse(text);
-                if (!data.filmData || data.filmData.includes('Not found')) {
+                var data;
+                try { data = JSON.parse(text); }
+                catch(e) {
                     Lampa.Noty.show(Lampa.Lang.translate('photo_search_not_found'));
                     return;
                 }
 
-                var parsed = JSON.parse(data.filmData);
+                if (!data.filmData || data.filmData.toLowerCase().includes('not found')) {
+                    Lampa.Noty.show(Lampa.Lang.translate('photo_search_not_found'));
+                    return;
+                }
+
+                var parsed;
+                try { parsed = JSON.parse(data.filmData); }
+                catch(e) {
+                    Lampa.Noty.show(Lampa.Lang.translate('photo_search_not_found'));
+                    return;
+                }
+
                 var results = Array.isArray(parsed) ? parsed : [parsed];
-                if (results.length === 0) {
+                if (!results.length) {
                     Lampa.Noty.show(Lampa.Lang.translate('photo_search_not_found'));
                     return;
                 }
 
-                var best = results[0];
-                var title = best.name.trim();
+                var best  = results[0];
+                var title = (best.name || best.title || '').trim();
 
-                Lampa.Noty.show(Lampa.Lang.translate('photo_search_success') + title + ' (' + best.confidence + '%)');
+                if (!title) {
+                    Lampa.Noty.show(Lampa.Lang.translate('photo_search_not_found'));
+                    return;
+                }
+
+                Lampa.Noty.show(
+                    Lampa.Lang.translate('photo_search_success') +
+                    title +
+                    (best.confidence ? ' (' + best.confidence + '%)' : '')
+                );
 
                 Lampa.Modal.close();
 
-                // Відкриваємо сторінку пошуку
-                setTimeout(() => {
-                    Lampa.Activity.push({
-                        component: 'search',
-                        query: title,
-                        title: 'Пошук за фото: ' + title,
-                        page: 1,
-                        clear: true
-                    });
-
-                    // Примусово запускаємо пошук (фікс відсутності карток)
-                    setTimeout(() => {
-                        var searchInput = $('.search__input input, .search input').first();
-                        if (searchInput.length) {
-                            searchInput.val(title);
-                            searchInput.trigger('input');
-                            searchInput.trigger($.Event('keyup', { keyCode: 13 }));
-                            console.log('[Photo Search] Примусовий запуск пошуку виконано');
-                        }
-                    }, 400);
+                /* ── Відкриваємо результати через Lampa ── */
+                setTimeout(function() {
+                    openSearchResults(title);
                 }, 300);
             })
-            .catch(err => {
+            .catch(function(err) {
                 Lampa.Noty.show(Lampa.Lang.translate('photo_search_network_error') + err.message);
-                console.error('Movie-Identifier error:', err);
+                console.error('[Movie-Identifier] error:', err);
             });
         }
 
+        /* ── Відображення результатів через нативний пошук Lampa ── */
+        function openSearchResults(title) {
+            /* Спосіб 1: компонент search з автозапуском */
+            try {
+                Lampa.Activity.push({
+                    component: 'search',
+                    search: title,
+                    search_auto: true,
+                    title: title,
+                    page: 1
+                });
+                return;
+            } catch(e) {
+                console.warn('[Movie-Identifier] Activity.push search failed:', e);
+            }
+
+            /* Спосіб 2: Lampa.Search API */
+            try {
+                if (Lampa.Search && typeof Lampa.Search.open === 'function') {
+                    Lampa.Search.open(title);
+                    return;
+                }
+            } catch(e) {
+                console.warn('[Movie-Identifier] Lampa.Search.open failed:', e);
+            }
+
+            /* Спосіб 3: емуляція вводу в поле пошуку */
+            try {
+                var btn = $('.open--search').first();
+                if (btn.length) btn.trigger('click');
+
+                setTimeout(function() {
+                    var input = $('input[name="search"], .search__input input, .search input').first();
+                    if (input.length) {
+                        input.val(title).trigger('input');
+                        setTimeout(function() {
+                            input.trigger($.Event('keyup', { keyCode: 13, which: 13 }));
+                        }, 200);
+                    }
+                }, 500);
+            } catch(e) {
+                console.warn('[Movie-Identifier] fallback search failed:', e);
+            }
+        }
+
+        /* ── Ініціалізація ── */
         if (window.appready) {
             addHeaderButton();
         } else {
