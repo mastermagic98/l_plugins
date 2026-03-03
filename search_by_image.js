@@ -64,7 +64,7 @@
     function startPlugin() {
         var manifest = {
             type: 'other',
-            version: '1.1.4',
+            version: '1.1.5',
             name: Lampa.Lang.translate('photo_search_title'),
             description: Lampa.Lang.translate('photo_search_description'),
             component: 'photo_search'
@@ -141,14 +141,13 @@
 
             Lampa.Modal.open({
                 title: Lampa.Lang.translate('photo_search_title'),
-                html: $(htmlString),   // ← ОБОВ’ЯЗКОВО jQuery-об’єкт (фікс помилки where.find)
+                html: $(htmlString),
                 size: 'medium',
                 onBack: function() {
                     setTimeout(function() { Lampa.Modal.close(); }, 150);
                 }
             });
 
-            // Прив’язуємо кнопки після відкриття вікна
             setTimeout(function() {
                 $('#btn-load').on('click', selectImageFromDevice);
                 $('#btn-send').on('click', sendImageToIdentifier);
@@ -216,12 +215,26 @@
                     return;
                 }
 
-                if (!data.filmData || data.filmData.includes('Not found')) {
+                if (!data.filmData) {
                     Lampa.Noty.show(Lampa.Lang.translate('photo_search_not_found'));
                     return;
                 }
 
-                var parsed = JSON.parse(data.filmData);
+                // ←←← ФІКС ПОМИЛКИ ←←←
+                let filmDataClean = data.filmData.trim()
+                    .replace(/^```json
+                    .replace(/\s*```$/i, '')       // видаляємо кінець markdown
+                    .trim();
+
+                var parsed;
+                try {
+                    parsed = JSON.parse(filmDataClean);
+                } catch (e) {
+                    Lampa.Noty.show(Lampa.Lang.translate('photo_search_server_error'));
+                    console.error('JSON parse failed after cleanup. Clean data:', filmDataClean);
+                    return;
+                }
+
                 var results = Array.isArray(parsed) ? parsed : [parsed];
 
                 if (results.length === 0) {
