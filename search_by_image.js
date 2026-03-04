@@ -204,18 +204,28 @@
                 '  <div class="scroll__content">' +
                 '    <div class="scroll__body">' +
 
-                /* Зона прев'ю — клас card + card__view для нативних стилів Lampa */
-                '      <div id="ps-wrap" class="selector">' +
+                /* Зона прев'ю — реальний <input type="file"> займає всю площу,
+                   тап/клік по зоні = прямий тап по input → системне вікно відкривається
+                   на будь-якому пристрої без жодного JS .click() */
+                '      <div id="ps-wrap" class="selector" style="position:relative;">' +
 
-                /* Стан 1: іконка + підказка */
+                '        <input type="file" id="ps-file-input" accept="image/*"' +
+                '               style="position:absolute;inset:0;width:100%;height:100%;' +
+                '                      opacity:0;cursor:pointer;z-index:2;' +
+                '                      -webkit-appearance:none;">' +
+
+                /* Стан 1: текст (pointer-events:none — не заважає input зверху) */
                 '        <div id="ps-inner"' +
                 '             style="display:flex;flex-direction:column;align-items:center;' +
-                '                    gap:8px;color:rgba(255,255,255,.55);font-size:24px;font-weight:500;text-align:center;padding:0 16px;">' +
+                '                    gap:8px;color:rgba(255,255,255,.55);font-size:24px;' +
+                '                    font-weight:500;text-align:center;padding:0 16px;' +
+                '                    pointer-events:none;position:relative;z-index:1;">' +
                 '          <span>' + Lampa.Lang.translate('photo_search_upload_label') + '</span>' +
                 '        </div>' +
 
-                /* Стан 2: лоадер Lampa (./img/loader.svg) */
-                '        <div id="ps-loader">' +
+                /* Стан 2: лоадер */
+                '        <div id="ps-loader"' +
+                '             style="pointer-events:none;position:relative;z-index:1;">' +
                 '          <div style="width:3em;height:3em;' +
                 '                      background:url(./img/loader.svg) no-repeat 50% 50%;' +
                 '                      background-size:contain;"></div>' +
@@ -248,21 +258,40 @@
             });
 
             setTimeout(function() {
-                var wrap = document.getElementById('ps-wrap');
+                var wrap     = document.getElementById('ps-wrap');
+                var fileInput = document.getElementById('ps-file-input');
+
+                /* Hover/focus для ::after ефекту */
                 if (wrap) {
-                    /* Hover — стандартний ::after через CSS-клас */
                     wrap.addEventListener('mouseenter', function() { wrap.classList.add('ps-hover'); });
                     wrap.addEventListener('mouseleave', function() { wrap.classList.remove('ps-hover'); });
-
-                    /* Клік — відкриваємо файловий діалог */
-                    wrap.addEventListener('click', function() {
-                        if (document.getElementById('ps-loader').classList.contains('ps-show')) return;
-                        selectImageFromDevice();
-                    });
-
-                    /* Focus для TV-пульта */
                     wrap.addEventListener('focus',  function() { wrap.classList.add('ps-focus'); });
                     wrap.addEventListener('blur',   function() { wrap.classList.remove('ps-focus'); });
+                }
+
+                /* Обробляємо вибір файлу прямо з вбудованого input */
+                if (fileInput) {
+                    fileInput.addEventListener('change', function() {
+                        var file = fileInput.files && fileInput.files[0];
+                        if (!file) return;
+                        selectedFile = file;
+
+                        var nr = document.getElementById('ps-no-result');
+                        if (nr) nr.style.display = 'none';
+
+                        var reader = new FileReader();
+                        reader.onload = function(e) {
+                            var inner = document.getElementById('ps-inner');
+                            if (inner) {
+                                inner.innerHTML =
+                                    '<img src="' + e.target.result + '"' +
+                                    ' style="max-width:100%;max-height:165px;border-radius:8px;' +
+                                    '        display:block;pointer-events:none;">';
+                            }
+                            if (wrap) wrap.classList.add('ps-focus');
+                        };
+                        reader.readAsDataURL(file);
+                    });
                 }
 
                 $('#ps-btn-search').on('click', sendImageToIdentifier);
@@ -272,14 +301,17 @@
 
         /* ── LOADER HELPERS ────────────────────────── */
         function showLoader(text) {
-            var inner  = document.getElementById('ps-inner');
-            var loader = document.getElementById('ps-loader');
-            var ltxt   = document.getElementById('ps-loader-text');
-            var btnS   = document.getElementById('ps-btn-search');
-            if (inner)  inner.style.display = 'none';
-            if (loader) loader.classList.add('ps-show');
-            if (ltxt)   ltxt.textContent = text || '';
-            if (btnS)   { btnS.style.opacity = '.4'; btnS.style.pointerEvents = 'none'; }
+            var inner     = document.getElementById('ps-inner');
+            var loader    = document.getElementById('ps-loader');
+            var ltxt      = document.getElementById('ps-loader-text');
+            var btnS      = document.getElementById('ps-btn-search');
+            var fileInput = document.getElementById('ps-file-input');
+            if (inner)     inner.style.display = 'none';
+            if (loader)    loader.classList.add('ps-show');
+            if (ltxt)      ltxt.textContent = text || '';
+            if (btnS)      { btnS.style.opacity = '.4'; btnS.style.pointerEvents = 'none'; }
+            /* Ховаємо input під час пошуку щоб не заважав */
+            if (fileInput) fileInput.style.display = 'none';
         }
 
         function updateLoaderText(text) {
@@ -288,12 +320,14 @@
         }
 
         function hideLoader() {
-            var inner  = document.getElementById('ps-inner');
-            var loader = document.getElementById('ps-loader');
-            var btnS   = document.getElementById('ps-btn-search');
-            if (loader) loader.classList.remove('ps-show');
-            if (inner)  inner.style.display = '';
-            if (btnS)   { btnS.style.opacity = '1'; btnS.style.pointerEvents = ''; }
+            var inner     = document.getElementById('ps-inner');
+            var loader    = document.getElementById('ps-loader');
+            var btnS      = document.getElementById('ps-btn-search');
+            var fileInput = document.getElementById('ps-file-input');
+            if (loader)    loader.classList.remove('ps-show');
+            if (inner)     inner.style.display = '';
+            if (btnS)      { btnS.style.opacity = '1'; btnS.style.pointerEvents = ''; }
+            if (fileInput) fileInput.style.display = '';
         }
 
         function showNoResult(text) {
@@ -301,57 +335,6 @@
             var nr = document.getElementById('ps-no-result');
             if (nr) { nr.textContent = text; nr.style.display = 'block'; }
             Lampa.Noty.show(text);
-        }
-
-        /* ── FILE SELECT — Android-сумісний варіант ── */
-        function selectImageFromDevice() {
-            /* Видаляємо попередній input якщо лишився */
-            var old = document.getElementById('ps-file-input');
-            if (old && old.parentNode) old.parentNode.removeChild(old);
-
-            var input = document.createElement('input');
-            input.type     = 'file';
-            input.id       = 'ps-file-input';
-            input.accept   = 'image/*';
-            /* На Android input МАЄ бути у DOM і видимим (хоча б 1×1px)
-               до моменту кліку, інакше системне вікно не відкривається */
-            input.style.cssText =
-                'position:fixed;left:0;top:0;width:1px;height:1px;' +
-                'opacity:0;z-index:-1;overflow:hidden;';
-
-            input.addEventListener('change', function(event) {
-                var file = event.target.files && event.target.files[0];
-                if (!file) return;
-                selectedFile = file;
-
-                /* Ховаємо повідомлення «не знайдено» якщо було */
-                var nr = document.getElementById('ps-no-result');
-                if (nr) nr.style.display = 'none';
-
-                var reader = new FileReader();
-                reader.onload = function(e) {
-                    var inner = document.getElementById('ps-inner');
-                    var wrap  = document.getElementById('ps-wrap');
-                    if (inner) {
-                        inner.innerHTML =
-                            '<img src="' + e.target.result + '"' +
-                            ' style="max-width:100%;max-height:165px;border-radius:8px;' +
-                            'display:block;pointer-events:none;">';
-                    }
-                    if (wrap) wrap.classList.add('ps-focus');
-                };
-                reader.readAsDataURL(file);
-
-                /* Прибираємо input після використання */
-                setTimeout(function() {
-                    if (input.parentNode) input.parentNode.removeChild(input);
-                }, 500);
-            });
-
-            document.body.appendChild(input);
-
-            /* Невелика затримка потрібна на Android щоб DOM встиг оновитись */
-            setTimeout(function() { input.click(); }, 50);
         }
 
         /* ── STEP 1: MOVIE-IDENTIFIER ──────────────── */
