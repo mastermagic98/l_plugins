@@ -162,18 +162,17 @@
             var searchButton = $('.head .open--search, .head__button.open--search');
             if (searchButton.length === 0) { setTimeout(addHeaderButton, 1000); return; }
 
+            /* Чистий SVG без трансформацій — відповідає стилю нативних іконок Lampa */
             var svgIcon =
-                '<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" fill="none">' +
-                '<g><g transform="matrix(0.539435,0,0,0.554343,18.8769,18.1628)">' +
-                '<svg width="64px" height="64px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" x="-41.22351" y="-38.89616">' +
-                '<g stroke-width="0"/><g stroke-linecap="round" stroke-linejoin="round"/><g><g>' +
-                '<path fill="none" d="m0,0l24,0l0,24l-24,0l0,-24z"/>' +
-                '<path d="m3,3l2,0l0,2l-2,0l0,-2zm4,0l2,0l0,2l-2,0l0,-2zm4,0l2,0l0,2l-2,0l0,-2zm4,0l2,0l0,2l-2,0l0,-2zm4,0l2,0l0,2l-2,0l0,-2zm0,4l2,0l0,2l-2,0l0,-2zm-16,12l2,0l0,2l-2,0l0,-2zm0,-4l2,0l0,2l-2,0l0,-2zm0,-4l2,0l0,2l-2,0l0,-2zm0,-4l2,0l0,2l-2,0l0,-2zm7.667,4l1.036,-1.555a1,1 0 0 1 0.832,-0.445l2.93,0a1,1 0 0 1 0.832,0.445l1.036,1.555l2.667,0a1,1 0 0 1 1,1l0,8a1,1 0 0 1 -1,1l-12,0a1,1 0 0 1 -1,-1l0,-8a1,1 0 0 1 1,-1l2.667,0zm-1.667,8l10,0l0,-6l-2.737,0l-1.333,-2l-1.86,0l-1.333,2l-2.737,0l0,6zm5,-1a2,2 0 1 1 0,-4a2,2 0 0 1 0,4z" fill="currentColor"/>' +
-                '</g></g></g></svg></g></g></svg>';
+                '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+                '<path d="M9 3L7.17 5H4C2.9 5 2 5.9 2 7V19C2 20.1 2.9 21 4 21H20C21.1 21 22 20.1 22 19V7C22 5.9 21.1 5 20 5H16.83L15 3H9Z" fill="currentColor" opacity="0.3"/>' +
+                '<path d="M20 5H16.83L15 3H9L7.17 5H4C2.9 5 2 5.9 2 7V19C2 20.1 2.9 21 4 21H20C21.1 21 22 20.1 22 19V7C22 5.9 21.1 5 20 5ZM12 18C9.24 18 7 15.76 7 13C7 10.24 9.24 8 12 8C14.76 8 17 10.24 17 13C17 15.76 14.76 18 12 18Z" fill="currentColor"/>' +
+                '<circle cx="12" cy="13" r="3" fill="currentColor"/>' +
+                '</svg>';
 
+            /* Без inline width/height — клас head__action сам задає розмір як у сусідів */
             var button = $(
-                '<div class="head__button head__action open--photo-search selector"' +
-                ' style="display:flex;align-items:center;justify-content:center;width:48px;height:48px;margin:0 4px;cursor:pointer;"' +
+                '<div class="head__action open--photo-search selector"' +
                 ' title="' + Lampa.Lang.translate('photo_search_button') + '">' +
                 svgIcon + '</div>'
             );
