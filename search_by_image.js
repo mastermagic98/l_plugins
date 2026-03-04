@@ -63,6 +63,11 @@
             ru: 'Нажмите, чтобы выбрать фото',
             uk: 'Натисніть, щоб вибрати фото',
             en: 'Click to select photo'
+        },
+        photo_search_upload_label: {
+            ru: 'Загрузить изображение',
+            uk: 'Завантажити зображення',
+            en: 'Upload image'
         }
     });
 
@@ -191,15 +196,8 @@
                 /* Стан 1: іконка + підказка */
                 '        <div id="ps-inner"' +
                 '             style="display:flex;flex-direction:column;align-items:center;' +
-                '                    gap:8px;color:rgba(255,255,255,.45);font-size:14px;">' +
-                '          <svg width="48" height="48" viewBox="0 0 24 24" fill="none"' +
-                '               stroke="currentColor" stroke-width="1.5"' +
-                '               stroke-linecap="round" stroke-linejoin="round"' +
-                '               style="opacity:.35">' +
-                '            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>' +
-                '            <circle cx="12" cy="13" r="4"/>' +
-                '          </svg>' +
-                '          <span>' + Lampa.Lang.translate('photo_search_click_hint') + '</span>' +
+                '                    gap:8px;color:rgba(255,255,255,.55);font-size:16px;font-weight:500;text-align:center;padding:0 16px;">' +
+                '          <span>' + Lampa.Lang.translate('photo_search_upload_label') + '</span>' +
                 '        </div>' +
 
                 /* Стан 2: лоадер Lampa (./img/loader.svg) */
@@ -375,33 +373,69 @@
             });
         }
 
-        /* ── STEP 2: TMDB SEARCH ───────────────────────
-           Використовуємо прямий fetch до TMDB API
-           з ключем, витягнутим з Lampa
-        ──────────────────────────────────────────────── */
+        /* ══════════════════════════════════════════════
+           STEP 2: TMDB SEARCH
+           Уточнення пошуку за допомогою Year та Director,
+           які повертає movie-identifier
+        ══════════════════════════════════════════════ */
         function searchTmdb(title, identifierResult) {
             var lang   = getTmdbLang();
             var apiKey = getTmdbApiKey();
 
-            var url = 'https://api.themoviedb.org/3/search/multi' +
-                      '?api_key=' + apiKey +
-                      '&query='    + encodeURIComponent(title) +
-                      '&language=' + lang +
-                      '&page=1' +
-                      '&include_adult=false';
+            /* Витягуємо рік і режисера з відповіді movie-identifier */
+            var year     = identifierResult.year     || identifierResult.Year     || null;
+            var director = identifierResult.director || identifierResult.Director || null;
 
-            fetch(url)
-            .then(function(r) {
-                if (!r.ok) throw new Error('TMDB HTTP ' + r.status);
-                return r.json();
-            })
-            .then(function(json) {
-                var results = (json && json.results) ? json.results : [];
+            /* Нормалізуємо рік — беремо лише цифри (може бути "2012" або "2012-2015") */
+            if (year) year = String(year).replace(/\D.*$/, '').trim();
 
+            console.log('[Movie-Identifier] Extra data — year:', year, '| director:', director);
+
+            /* Будуємо URL з усіма уточненнями */
+            function buildUrl(withYear) {
+                var u = 'https://api.themoviedb.org/3/search/multi' +
+                        '?api_key='    + apiKey +
+                        '&query='      + encodeURIComponent(title) +
+                        '&language='   + lang +
+                        '&page=1' +
+                        '&include_adult=false';
+                if (withYear && year) u += '&year=' + year;
+                return u;
+            }
+
+            /* Функція оцінки відповідності картки по режисеру/року */
+            function scoreCard(card) {
+                var score = 0;
+
+                /* Відповідність по року */
+                if (year) {
+                    var releaseDate = card.release_date || card.first_air_date || '';
+                    var cardYear = releaseDate ? String(releaseDate).slice(0, 4) : '';
+                    if (cardYear === String(year)) score += 10;
+                }
+
+                /* Відповідність по режисеру шукаємо в crew (якщо вже є) або просто даємо бонус */
+                /* TMDB search/multi не повертає crew, тому орієнтуємось тільки по року */
+
+                return score;
+            }
+
+            /* Функція обробки результатів TMDB */
+            function handleResults(results, usedYear) {
                 /* Залишаємо тільки фільми і серіали */
                 results = results.filter(function(r) {
                     return r.media_type === 'movie' || r.media_type === 'tv';
                 });
+
+                /* Якщо з роком нічого не знайшли — повторюємо без року */
+                if (!results.length && usedYear && year) {
+                    console.log('[Movie-Identifier] No results with year, retrying without year...');
+                    fetch(buildUrl(false))
+                    .then(function(r) { if (!r.ok) throw new Error('TMDB HTTP ' + r.status); return r.json(); })
+                    .then(function(json) { handleResults((json && json.results) ? json.results : [], false); })
+                    .catch(onTmdbError);
+                    return;
+                }
 
                 if (!results.length) {
                     hideLoader();
@@ -409,27 +443,45 @@
                     return;
                 }
 
+                /* Сортуємо за score (рік збігається = вище) */
+                results.sort(function(a, b) { return scoreCard(b) - scoreCard(a); });
+
+                var best = results[0];
+
+                /* Якщо перший результат однозначно відповідає по року — одразу відкриваємо картку */
+                var topScore  = scoreCard(best);
+                var secondScore = results[1] ? scoreCard(results[1]) : -1;
+                var unique = topScore > 0 && (results.length === 1 || topScore > secondScore);
+
                 var confidence = identifierResult.confidence ? ' (' + identifierResult.confidence + '%)' : '';
-                Lampa.Noty.show(Lampa.Lang.translate('photo_search_success') + title + confidence);
+                var infoStr    = [title, year, director].filter(Boolean).join(', ');
+                Lampa.Noty.show(Lampa.Lang.translate('photo_search_success') + infoStr + confidence);
 
                 hideLoader();
                 Lampa.Modal.close();
 
                 setTimeout(function() {
-                    if (results.length === 1) {
-                        openFullCard(results[0]);
+                    if (unique || results.length === 1) {
+                        openFullCard(best);
                     } else {
-                        openCategoryPage(title, apiKey, lang);
+                        /* Кілька кандидатів — відкриваємо сторінку з усіма результатами */
+                        openCategoryPage(title, year, apiKey, lang);
                     }
                 }, 300);
-            })
-            .catch(function(err) {
+            }
+
+            function onTmdbError(err) {
                 console.error('[Movie-Identifier] TMDB search error:', err);
                 hideLoader();
                 Lampa.Modal.close();
-                /* Fallback — відкриваємо звичайний пошук Lampa */
                 setTimeout(function() { fallbackSearch(title); }, 300);
-            });
+            }
+
+            /* Перший запит — з роком (якщо є) */
+            fetch(buildUrl(true))
+            .then(function(r) { if (!r.ok) throw new Error('TMDB HTTP ' + r.status); return r.json(); })
+            .then(function(json) { handleResults((json && json.results) ? json.results : [], !!year); })
+            .catch(onTmdbError);
         }
 
         /* ── ВІДКРИВАЄМО ПОВНУ КАРТКУ ──────────────── */
@@ -452,11 +504,13 @@
         }
 
         /* ── ВІДКРИВАЄМО СТОРІНКУ РЕЗУЛЬТАТІВ ─────── */
-        function openCategoryPage(title, apiKey, lang) {
+        function openCategoryPage(title, year, apiKey, lang) {
+            var url = 'search/multi?query=' + encodeURIComponent(title) +
+                      '&language=' + lang + '&page=1&include_adult=false';
+            if (year) url += '&year=' + year;
             Lampa.Activity.push({
-                url       : 'search/multi?query=' + encodeURIComponent(title) +
-                            '&language=' + lang + '&page=1&include_adult=false',
-                title     : title,
+                url       : url,
+                title     : title + (year ? ' (' + year + ')' : ''),
                 component : 'category_full',
                 source    : 'tmdb',
                 card_type : true,
