@@ -67,60 +67,104 @@
     });
 
     /* ══════════════════════════════════════════════
-       LAMPA LANGUAGE → TMDB LANGUAGE CODE
+       INJECT CSS
+       Використовуємо ті ж ::after-стилі що і Lampa
+       .card.focus .card__view::after  →  overlay з glow
+    ══════════════════════════════════════════════ */
+    function injectCSS() {
+        if (document.getElementById('ps-css')) return;
+        var s = document.createElement('style');
+        s.id = 'ps-css';
+        s.textContent = [
+            /* Зона прев'ю — структура як у .card / .card__view */
+            '#ps-wrap{',
+                'position:relative;',
+                'width:300px;height:169px;',
+                'margin:0 auto 12px;',
+                'border-radius:10px;',
+                'overflow:hidden;',
+                'cursor:pointer;',
+                'background:#1a1a1a;',
+                'display:flex;align-items:center;justify-content:center;',
+            '}',
+
+            /* ::after — точна копія Lampa card focus/hover overlay */
+            '#ps-wrap::after{',
+                'content:"";',
+                'position:absolute;',
+                'inset:0;',
+                'border-radius:inherit;',
+                'opacity:0;',
+                'transition:opacity .2s;',
+                'pointer-events:none;',
+                'box-shadow:inset 0 0 0 3px #fff;',
+            '}',
+            '#ps-wrap.ps-hover::after{ opacity:.45; }',
+            '#ps-wrap.ps-focus::after{ opacity:1;  }',
+
+            /* Лоадер */
+            '#ps-loader{',
+                'display:none;',
+                'flex-direction:column;',
+                'align-items:center;',
+                'gap:10px;',
+                'pointer-events:none;',
+            '}',
+            '#ps-loader.ps-show{ display:flex; }',
+            '#ps-loader-text{',
+                'color:rgba(255,255,255,.6);',
+                'font-size:13px;',
+                'text-align:center;',
+            '}',
+        ].join('');
+        document.head.appendChild(s);
+    }
+
+    /* ══════════════════════════════════════════════
+       TMDB LANG
     ══════════════════════════════════════════════ */
     function getTmdbLang() {
         var lang = Lampa.Storage.field('language') || 'en';
-        var map = {
-            ru: 'ru-RU',
-            uk: 'uk-UA',
-            en: 'en-US',
-            de: 'de-DE',
-            fr: 'fr-FR',
-            es: 'es-ES',
-            pl: 'pl-PL',
-            it: 'it-IT',
-            zh: 'zh-CN'
-        };
+        var map = { ru:'ru-RU', uk:'uk-UA', en:'en-US', de:'de-DE', fr:'fr-FR', es:'es-ES', pl:'pl-PL', it:'it-IT', zh:'zh-CN' };
         return map[lang] || 'en-US';
     }
 
+    /* ══════════════════════════════════════════════
+       TMDB API KEY — витягуємо з Lampa
+    ══════════════════════════════════════════════ */
+    function getTmdbApiKey() {
+        // Lampa зберігає ключ у різних місцях залежно від версії
+        try { if (Lampa.Api.key)     return Lampa.Api.key('tmdb'); } catch(e){}
+        try { if (Lampa.Api.tmdbKey) return Lampa.Api.tmdbKey;      } catch(e){}
+        // Публічний readonly ключ як fallback
+        return '4ef0d7355d9ffb5151e987764708ce96';
+    }
+
     function startPlugin() {
-        var manifest = {
+        Lampa.Manifest.plugins = {
             type: 'other',
-            version: '1.3.0',
+            version: '1.4.0',
             name: Lampa.Lang.translate('photo_search_title'),
             description: Lampa.Lang.translate('photo_search_description'),
             component: 'photo_search'
         };
-        Lampa.Manifest.plugins = manifest;
 
-        /* ══════════════════════════════════════════════
-           HEADER BUTTON
-        ══════════════════════════════════════════════ */
+        injectCSS();
+
+        /* ── HEADER BUTTON ─────────────────────────── */
         function addHeaderButton() {
             if ($('.open--photo-search').length > 0) return;
-
             var searchButton = $('.head .open--search, .head__button.open--search');
-            if (searchButton.length === 0) {
-                setTimeout(addHeaderButton, 1000);
-                return;
-            }
+            if (searchButton.length === 0) { setTimeout(addHeaderButton, 1000); return; }
 
             var svgIcon =
                 '<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" fill="none">' +
-                ' <g><title>Layer 1</title>' +
-                '  <g transform="matrix(0.539435,0,0,0.554343,18.8769,18.1628)">' +
-                '   <svg width="64px" height="64px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" x="-41.22351" y="-38.89616">' +
-                '    <g stroke-width="0"/><g stroke-linecap="round" stroke-linejoin="round"/>' +
-                '    <g><g>' +
-                '      <path fill="none" d="m0,0l24,0l0,24l-24,0l0,-24z"/>' +
-                '      <path d="m3,3l2,0l0,2l-2,0l0,-2zm4,0l2,0l0,2l-2,0l0,-2zm4,0l2,0l0,2l-2,0l0,-2zm4,0l2,0l0,2l-2,0l0,-2zm4,0l2,0l0,2l-2,0l0,-2zm0,4l2,0l0,2l-2,0l0,-2zm-16,12l2,0l0,2l-2,0l0,-2zm0,-4l2,0l0,2l-2,0l0,-2zm0,-4l2,0l0,2l-2,0l0,-2zm0,-4l2,0l0,2l-2,0l0,-2zm7.667,4l1.036,-1.555a1,1 0 0 1 0.832,-0.445l2.93,0a1,1 0 0 1 0.832,0.445l1.036,1.555l2.667,0a1,1 0 0 1 1,1l0,8a1,1 0 0 1 -1,1l-12,0a1,1 0 0 1 -1,-1l0,-8a1,1 0 0 1 1,-1l2.667,0zm-1.667,8l10,0l0,-6l-2.737,0l-1.333,-2l-1.86,0l-1.333,2l-2.737,0l0,6zm5,-1a2,2 0 1 1 0,-4a2,2 0 0 1 0,4z" fill="currentColor"/>' +
-                '    </g></g>' +
-                '   </svg>' +
-                '  </g>' +
-                ' </g>' +
-                '</svg>';
+                '<g><g transform="matrix(0.539435,0,0,0.554343,18.8769,18.1628)">' +
+                '<svg width="64px" height="64px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" x="-41.22351" y="-38.89616">' +
+                '<g stroke-width="0"/><g stroke-linecap="round" stroke-linejoin="round"/><g><g>' +
+                '<path fill="none" d="m0,0l24,0l0,24l-24,0l0,-24z"/>' +
+                '<path d="m3,3l2,0l0,2l-2,0l0,-2zm4,0l2,0l0,2l-2,0l0,-2zm4,0l2,0l0,2l-2,0l0,-2zm4,0l2,0l0,2l-2,0l0,-2zm4,0l2,0l0,2l-2,0l0,-2zm0,4l2,0l0,2l-2,0l0,-2zm-16,12l2,0l0,2l-2,0l0,-2zm0,-4l2,0l0,2l-2,0l0,-2zm0,-4l2,0l0,2l-2,0l0,-2zm0,-4l2,0l0,2l-2,0l0,-2zm7.667,4l1.036,-1.555a1,1 0 0 1 0.832,-0.445l2.93,0a1,1 0 0 1 0.832,0.445l1.036,1.555l2.667,0a1,1 0 0 1 1,1l0,8a1,1 0 0 1 -1,1l-12,0a1,1 0 0 1 -1,-1l0,-8a1,1 0 0 1 1,-1l2.667,0zm-1.667,8l10,0l0,-6l-2.737,0l-1.333,-2l-1.86,0l-1.333,2l-2.737,0l0,6zm5,-1a2,2 0 1 1 0,-4a2,2 0 0 1 0,4z" fill="currentColor"/>' +
+                '</g></g></g></svg></g></g></svg>';
 
             var button = $(
                 '<div class="head__button head__action open--photo-search selector"' +
@@ -132,9 +176,7 @@
             button.on('click', openPhotoSearchWindow);
         }
 
-        /* ══════════════════════════════════════════════
-           MODAL WINDOW
-        ══════════════════════════════════════════════ */
+        /* ── MODAL ─────────────────────────────────── */
         function openPhotoSearchWindow() {
             selectedFile = null;
 
@@ -143,41 +185,37 @@
                 '  <div class="scroll__content">' +
                 '    <div class="scroll__body">' +
 
-                /* Зона прев'ю / лоадер */
-                '      <div id="photo-preview-wrap" class="selector"' +
-                '           style="width:300px;height:169px;margin:0 auto 12px;' +
-                '                  border:2px dashed #555;border-radius:10px;position:relative;' +
-                '                  display:flex;flex-direction:column;align-items:center;justify-content:center;' +
-                '                  background:#1a1a1a;color:#888;font-size:14px;cursor:pointer;' +
-                '                  transition:border-color .2s,background .2s;user-select:none;overflow:hidden;">' +
+                /* Зона прев'ю — клас card + card__view для нативних стилів Lampa */
+                '      <div id="ps-wrap" class="selector">' +
 
-                /* Стан 1: пусто (іконка + підказка) */
-                '          <div id="photo-preview-inner">' +
-                '            <svg width="48" height="48" viewBox="0 0 24 24" fill="none"' +
-                '                 stroke="#555" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"' +
-                '                 style="display:block;margin:0 auto 8px">' +
-                '              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>' +
-                '              <circle cx="12" cy="13" r="4"/>' +
-                '            </svg>' +
-                '            <span>' + Lampa.Lang.translate('photo_search_click_hint') + '</span>' +
-                '          </div>' +
+                /* Стан 1: іконка + підказка */
+                '        <div id="ps-inner"' +
+                '             style="display:flex;flex-direction:column;align-items:center;' +
+                '                    gap:8px;color:rgba(255,255,255,.45);font-size:14px;">' +
+                '          <svg width="48" height="48" viewBox="0 0 24 24" fill="none"' +
+                '               stroke="currentColor" stroke-width="1.5"' +
+                '               stroke-linecap="round" stroke-linejoin="round"' +
+                '               style="opacity:.35">' +
+                '            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>' +
+                '            <circle cx="12" cy="13" r="4"/>' +
+                '          </svg>' +
+                '          <span>' + Lampa.Lang.translate('photo_search_click_hint') + '</span>' +
+                '        </div>' +
 
-                /* Стан 2: лоадер Lampa */
-                '          <div id="photo-loader"' +
-                '               style="display:none;flex-direction:column;align-items:center;gap:12px;pointer-events:none;">' +
-                '            <div style="width:3em;height:3em;' +
-                '                        background:url(./img/loader.svg) no-repeat 50% 50%;' +
-                '                        background-size:contain;"></div>' +
-                '            <div id="photo-loader-text"' +
-                '                 style="color:#aaa;font-size:13px;text-align:center;"></div>' +
-                '          </div>' +
+                /* Стан 2: лоадер Lampa (./img/loader.svg) */
+                '        <div id="ps-loader">' +
+                '          <div style="width:3em;height:3em;' +
+                '                      background:url(./img/loader.svg) no-repeat 50% 50%;' +
+                '                      background-size:contain;"></div>' +
+                '          <div id="ps-loader-text"></div>' +
+                '        </div>' +
 
                 '      </div>' +
 
                 /* Кнопки */
                 '      <div class="modal__footer" style="justify-content:center;gap:12px;">' +
-                '        <div id="btn-search" class="modal__button selector">' + Lampa.Lang.translate('photo_search_send') + '</div>' +
-                '        <div id="btn-close"  class="modal__button selector">' + Lampa.Lang.translate('photo_search_close') + '</div>' +
+                '        <div id="ps-btn-search" class="modal__button selector">' + Lampa.Lang.translate('photo_search_send')  + '</div>' +
+                '        <div id="ps-btn-close"  class="modal__button selector">' + Lampa.Lang.translate('photo_search_close') + '</div>' +
                 '      </div>' +
                 '    </div>' +
                 '  </div>' +
@@ -192,69 +230,58 @@
             });
 
             setTimeout(function() {
-                var wrap = document.getElementById('photo-preview-wrap');
+                var wrap = document.getElementById('ps-wrap');
                 if (wrap) {
+                    /* Hover — стандартний ::after через CSS-клас */
+                    wrap.addEventListener('mouseenter', function() { wrap.classList.add('ps-hover'); });
+                    wrap.addEventListener('mouseleave', function() { wrap.classList.remove('ps-hover'); });
+
+                    /* Клік — відкриваємо файловий діалог */
                     wrap.addEventListener('click', function() {
-                        /* Не відкривати вибір файлу коли лоадер активний */
-                        if (document.getElementById('photo-loader').style.display !== 'none') return;
+                        if (document.getElementById('ps-loader').classList.contains('ps-show')) return;
                         selectImageFromDevice();
                     });
-                    wrap.addEventListener('mouseenter', function() {
-                        if (document.getElementById('photo-loader').style.display !== 'none') return;
-                        wrap.style.borderColor = '#fff';
-                        wrap.style.background  = '#222';
-                    });
-                    wrap.addEventListener('mouseleave', function() {
-                        if (document.getElementById('photo-loader').style.display !== 'none') return;
-                        wrap.style.borderColor = selectedFile ? '#4da6ff' : '#555';
-                        wrap.style.background  = '#1a1a1a';
-                    });
+
+                    /* Focus для TV-пульта */
+                    wrap.addEventListener('focus',  function() { wrap.classList.add('ps-focus'); });
+                    wrap.addEventListener('blur',   function() { wrap.classList.remove('ps-focus'); });
                 }
-                $('#btn-search').on('click', sendImageToIdentifier);
-                $('#btn-close').on('click',  function() { Lampa.Modal.close(); });
+
+                $('#ps-btn-search').on('click', sendImageToIdentifier);
+                $('#ps-btn-close').on('click',  function() { Lampa.Modal.close(); });
             }, 100);
         }
 
-        /* ══════════════════════════════════════════════
-           LOADER HELPERS
-        ══════════════════════════════════════════════ */
+        /* ── LOADER HELPERS ────────────────────────── */
         function showLoader(text) {
-            var inner  = document.getElementById('photo-preview-inner');
-            var loader = document.getElementById('photo-loader');
-            var ltxt   = document.getElementById('photo-loader-text');
-            var wrap   = document.getElementById('photo-preview-wrap');
-            var btnS   = document.getElementById('btn-search');
-
-            if (inner)  inner.style.display  = 'none';
-            if (loader) { loader.style.display = 'flex'; }
+            var inner  = document.getElementById('ps-inner');
+            var loader = document.getElementById('ps-loader');
+            var ltxt   = document.getElementById('ps-loader-text');
+            var btnS   = document.getElementById('ps-btn-search');
+            if (inner)  inner.style.display = 'none';
+            if (loader) loader.classList.add('ps-show');
             if (ltxt)   ltxt.textContent = text || '';
-            if (wrap)   { wrap.style.borderColor = '#4da6ff'; wrap.style.cursor = 'default'; }
-            if (btnS)   { btnS.style.opacity = '0.4'; btnS.style.pointerEvents = 'none'; }
+            if (btnS)   { btnS.style.opacity = '.4'; btnS.style.pointerEvents = 'none'; }
         }
 
         function updateLoaderText(text) {
-            var ltxt = document.getElementById('photo-loader-text');
+            var ltxt = document.getElementById('ps-loader-text');
             if (ltxt) ltxt.textContent = text;
         }
 
         function hideLoader() {
-            var inner  = document.getElementById('photo-preview-inner');
-            var loader = document.getElementById('photo-loader');
-            var wrap   = document.getElementById('photo-preview-wrap');
-            var btnS   = document.getElementById('btn-search');
-
-            if (loader) loader.style.display = 'none';
-            if (inner)  inner.style.display  = '';
-            if (wrap)   { wrap.style.borderColor = selectedFile ? '#4da6ff' : '#555'; wrap.style.cursor = 'pointer'; }
+            var inner  = document.getElementById('ps-inner');
+            var loader = document.getElementById('ps-loader');
+            var btnS   = document.getElementById('ps-btn-search');
+            if (loader) loader.classList.remove('ps-show');
+            if (inner)  inner.style.display = '';
             if (btnS)   { btnS.style.opacity = '1'; btnS.style.pointerEvents = ''; }
         }
 
-        /* ══════════════════════════════════════════════
-           FILE SELECT
-        ══════════════════════════════════════════════ */
+        /* ── FILE SELECT ───────────────────────────── */
         function selectImageFromDevice() {
             var input = document.createElement('input');
-            input.type   = 'file';
+            input.type = 'file';
             input.accept = 'image/*';
             input.style.display = 'none';
 
@@ -265,36 +292,35 @@
 
                 var reader = new FileReader();
                 reader.onload = function(e) {
-                    var inner = document.getElementById('photo-preview-inner');
-                    var wrap  = document.getElementById('photo-preview-wrap');
+                    var inner = document.getElementById('ps-inner');
+                    var wrap  = document.getElementById('ps-wrap');
                     if (inner) {
                         inner.innerHTML =
                             '<img src="' + e.target.result + '"' +
-                            ' style="max-width:100%;max-height:165px;border-radius:6px;display:block;pointer-events:none;">';
+                            ' style="max-width:100%;max-height:165px;border-radius:8px;' +
+                            '        display:block;pointer-events:none;">';
                     }
-                    if (wrap) {
-                        wrap.style.borderColor = '#4da6ff';
-                        wrap.style.borderStyle = 'solid';
-                    }
+                    /* Після вибору — показуємо focus-стан щоб підкреслити готовність */
+                    if (wrap) wrap.classList.add('ps-focus');
                 };
                 reader.readAsDataURL(file);
             };
 
             document.body.appendChild(input);
             input.click();
-            setTimeout(function() {
-                if (input.parentNode) document.body.removeChild(input);
-            }, 60000);
+            setTimeout(function() { if (input.parentNode) document.body.removeChild(input); }, 60000);
         }
 
-        /* ══════════════════════════════════════════════
-           STEP 1: ВІДПРАВКА НА MOVIE-IDENTIFIER
-        ══════════════════════════════════════════════ */
+        /* ── STEP 1: MOVIE-IDENTIFIER ──────────────── */
         function sendImageToIdentifier() {
             if (!selectedFile) {
                 Lampa.Noty.show(Lampa.Lang.translate('photo_search_no_file'));
                 return;
             }
+
+            /* Прибираємо focus-стан і вмикаємо лоадер */
+            var wrap = document.getElementById('ps-wrap');
+            if (wrap) wrap.classList.remove('ps-focus');
 
             showLoader(Lampa.Lang.translate('photo_search_identifying'));
 
@@ -309,7 +335,7 @@
             .then(function(text) {
                 console.log('[Movie-Identifier] Raw:', text.substring(0, 500));
 
-                if (!text || text.toLowerCase().includes('not found')) {
+                if (!text || text.toLowerCase().indexOf('not found') !== -1) {
                     hideLoader();
                     Lampa.Noty.show(Lampa.Lang.translate('photo_search_not_found'));
                     return;
@@ -317,13 +343,9 @@
 
                 var data;
                 try { data = JSON.parse(text); }
-                catch(e) {
-                    hideLoader();
-                    Lampa.Noty.show(Lampa.Lang.translate('photo_search_not_found'));
-                    return;
-                }
+                catch(e) { hideLoader(); Lampa.Noty.show(Lampa.Lang.translate('photo_search_not_found')); return; }
 
-                if (!data.filmData || data.filmData.toLowerCase().includes('not found')) {
+                if (!data.filmData || data.filmData.toLowerCase().indexOf('not found') !== -1) {
                     hideLoader();
                     Lampa.Noty.show(Lampa.Lang.translate('photo_search_not_found'));
                     return;
@@ -331,31 +353,18 @@
 
                 var parsed;
                 try { parsed = JSON.parse(data.filmData); }
-                catch(e) {
-                    hideLoader();
-                    Lampa.Noty.show(Lampa.Lang.translate('photo_search_not_found'));
-                    return;
-                }
+                catch(e) { hideLoader(); Lampa.Noty.show(Lampa.Lang.translate('photo_search_not_found')); return; }
 
                 var results = Array.isArray(parsed) ? parsed : [parsed];
-                if (!results.length) {
-                    hideLoader();
-                    Lampa.Noty.show(Lampa.Lang.translate('photo_search_not_found'));
-                    return;
-                }
+                if (!results.length) { hideLoader(); Lampa.Noty.show(Lampa.Lang.translate('photo_search_not_found')); return; }
 
                 var best  = results[0];
                 var title = (best.name || best.title || '').trim();
 
-                if (!title) {
-                    hideLoader();
-                    Lampa.Noty.show(Lampa.Lang.translate('photo_search_not_found'));
-                    return;
-                }
+                if (!title) { hideLoader(); Lampa.Noty.show(Lampa.Lang.translate('photo_search_not_found')); return; }
 
                 console.log('[Movie-Identifier] Detected:', title, best.confidence ? best.confidence + '%' : '');
 
-                /* Перейти до кроку 2: пошук у TMDB */
                 updateLoaderText(Lampa.Lang.translate('photo_search_searching_tmdb'));
                 searchTmdb(title, best);
             })
@@ -366,25 +375,30 @@
             });
         }
 
-        /* ══════════════════════════════════════════════
-           STEP 2: ПОШУК У TMDB ЗА НАЗВОЮ
-           Використовує Lampa.Api для правильного токена
-           та мови інтерфейсу
-        ══════════════════════════════════════════════ */
+        /* ── STEP 2: TMDB SEARCH ───────────────────────
+           Використовуємо прямий fetch до TMDB API
+           з ключем, витягнутим з Lampa
+        ──────────────────────────────────────────────── */
         function searchTmdb(title, identifierResult) {
-            var lang = getTmdbLang();
+            var lang   = getTmdbLang();
+            var apiKey = getTmdbApiKey();
 
-            /* Будуємо URL пошуку (search/multi шукає і фільми і серіали) */
-            var searchUrl = 'search/multi?query=' + encodeURIComponent(title) +
-                            '&language=' + lang +
-                            '&page=1' +
-                            '&include_adult=false';
+            var url = 'https://api.themoviedb.org/3/search/multi' +
+                      '?api_key=' + apiKey +
+                      '&query='    + encodeURIComponent(title) +
+                      '&language=' + lang +
+                      '&page=1' +
+                      '&include_adult=false';
 
-            /* Використовуємо Lampa.Api.get щоб отримати правильний API ключ/токен */
-            Lampa.Api.get(searchUrl, function(json) {
+            fetch(url)
+            .then(function(r) {
+                if (!r.ok) throw new Error('TMDB HTTP ' + r.status);
+                return r.json();
+            })
+            .then(function(json) {
                 var results = (json && json.results) ? json.results : [];
 
-                /* Фільтруємо тільки фільми і серіали */
+                /* Залишаємо тільки фільми і серіали */
                 results = results.filter(function(r) {
                     return r.media_type === 'movie' || r.media_type === 'tv';
                 });
@@ -395,9 +409,7 @@
                     return;
                 }
 
-                var confidence = identifierResult.confidence
-                    ? ' (' + identifierResult.confidence + '%)'
-                    : '';
+                var confidence = identifierResult.confidence ? ' (' + identifierResult.confidence + '%)' : '';
                 Lampa.Noty.show(Lampa.Lang.translate('photo_search_success') + title + confidence);
 
                 hideLoader();
@@ -405,40 +417,30 @@
 
                 setTimeout(function() {
                     if (results.length === 1) {
-                        /* Один результат — одразу відкриваємо повну картку */
                         openFullCard(results[0]);
                     } else {
-                        /* Кілька результатів — відкриваємо сторінку категорії */
-                        openCategoryPage(title, searchUrl);
+                        openCategoryPage(title, apiKey, lang);
                     }
                 }, 300);
-
-            }, function(err) {
-                /* Fallback: якщо Lampa.Api.get не спрацював */
-                console.warn('[Movie-Identifier] Lampa.Api.get failed, fallback to category_full:', err);
+            })
+            .catch(function(err) {
+                console.error('[Movie-Identifier] TMDB search error:', err);
                 hideLoader();
                 Lampa.Modal.close();
-                setTimeout(function() { openCategoryPage(title, searchUrl); }, 300);
+                /* Fallback — відкриваємо звичайний пошук Lampa */
+                setTimeout(function() { fallbackSearch(title); }, 300);
             });
         }
 
-        /* ══════════════════════════════════════════════
-           ВІДКРИВАЄМО ПОВНУ КАРТКУ ФІЛЬМУ / СЕРІАЛУ
-           Через Lampa Activity component: 'full'
-        ══════════════════════════════════════════════ */
+        /* ── ВІДКРИВАЄМО ПОВНУ КАРТКУ ──────────────── */
         function openFullCard(card) {
-            /* Визначаємо тип медіа */
             var method = card.media_type === 'tv' ? 'tv' : 'movie';
-
-            /* Якщо media_type не вказано — визначаємо за наявністю полів */
             if (!card.media_type) {
                 method = card.original_name ? 'tv' : 'movie';
                 card.media_type = method;
             }
-
-            /* Нормалізуємо картку — Lampa очікує певні поля */
-            if (!card.title && card.name)   card.title = card.name;
-            if (!card.name  && card.title)  card.name  = card.title;
+            if (!card.title && card.name)  card.title = card.name;
+            if (!card.name  && card.title) card.name  = card.title;
 
             Lampa.Activity.push({
                 component : 'full',
@@ -449,22 +451,39 @@
             });
         }
 
-        /* ══════════════════════════════════════════════
-           ВІДКРИВАЄМО СТОРІНКУ РЕЗУЛЬТАТІВ (кілька карток)
-           Через Lampa Activity component: 'category_full'
-        ══════════════════════════════════════════════ */
-        function openCategoryPage(title, searchUrl) {
+        /* ── ВІДКРИВАЄМО СТОРІНКУ РЕЗУЛЬТАТІВ ─────── */
+        function openCategoryPage(title, apiKey, lang) {
             Lampa.Activity.push({
-                url        : searchUrl,
-                title      : title,
-                component  : 'category_full',
-                source     : 'tmdb',
-                card_type  : true,
-                page       : 1
+                url       : 'search/multi?query=' + encodeURIComponent(title) +
+                            '&language=' + lang + '&page=1&include_adult=false',
+                title     : title,
+                component : 'category_full',
+                source    : 'tmdb',
+                card_type : true,
+                page      : 1
             });
         }
 
-        /* ── Ініціалізація ── */
+        /* ── FALLBACK: НАТИВНИЙ ПОШУК LAMPA ───────── */
+        function fallbackSearch(title) {
+            try {
+                Lampa.Activity.push({
+                    component  : 'search',
+                    search     : title,
+                    search_auto: true,
+                    title      : title,
+                    page       : 1
+                });
+            } catch(e) {
+                try {
+                    if (Lampa.Search && typeof Lampa.Search.open === 'function') {
+                        Lampa.Search.open(title);
+                    }
+                } catch(e2) { console.warn('[Movie-Identifier] fallback failed:', e2); }
+            }
+        }
+
+        /* ── INIT ──────────────────────────────────── */
         if (window.appready) {
             addHeaderButton();
         } else {
