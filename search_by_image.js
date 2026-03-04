@@ -443,15 +443,10 @@
                     return;
                 }
 
-                /* Сортуємо за score (рік збігається = вище) */
+                /* Сортуємо за score (рік збігається = вище) і беремо перший */
                 results.sort(function(a, b) { return scoreCard(b) - scoreCard(a); });
 
                 var best = results[0];
-
-                /* Якщо перший результат однозначно відповідає по року — одразу відкриваємо картку */
-                var topScore  = scoreCard(best);
-                var secondScore = results[1] ? scoreCard(results[1]) : -1;
-                var unique = topScore > 0 && (results.length === 1 || topScore > secondScore);
 
                 var confidence = identifierResult.confidence ? ' (' + identifierResult.confidence + '%)' : '';
                 var infoStr    = [title, year, director].filter(Boolean).join(', ');
@@ -460,13 +455,9 @@
                 hideLoader();
                 Lampa.Modal.close();
 
+                /* Завжди відкриваємо лише одну — найкращу — картку */
                 setTimeout(function() {
-                    if (unique || results.length === 1) {
-                        openFullCard(best);
-                    } else {
-                        /* Кілька кандидатів — відкриваємо сторінку з усіма результатами */
-                        openCategoryPage(title, year, apiKey, lang);
-                    }
+                    openFullCard(best);
                 }, 300);
             }
 
