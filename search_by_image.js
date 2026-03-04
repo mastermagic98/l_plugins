@@ -121,6 +121,21 @@
                 'font-size:13px;',
                 'text-align:center;',
             '}',
+
+            /* Кнопки — завжди по центру, на мобільному займають повну ширину */
+            '.modal__footer{',
+                'display:flex !important;',
+                'justify-content:center !important;',
+                'flex-wrap:wrap;',
+                'gap:12px;',
+            '}',
+            '@media(max-width:600px){',
+                '.modal__button{',
+                    'flex:1 1 100%;',
+                    'text-align:center !important;',
+                    'justify-content:center;',
+                '}',
+            '}',
         ].join('');
         document.head.appendChild(s);
     }
@@ -148,7 +163,7 @@
     function startPlugin() {
         Lampa.Manifest.plugins = {
             type: 'other',
-            version: '1.4.0',
+            version: '1.5.0',
             name: Lampa.Lang.translate('photo_search_title'),
             description: Lampa.Lang.translate('photo_search_description'),
             component: 'photo_search'
@@ -165,7 +180,7 @@
             /* Чистий SVG без трансформацій — відповідає стилю нативних іконок Lampa */
             var svgIcon =
                 '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
-                '<path d="M9 3L7.17 5H4C2.9 5 2 5.9 2 7V19C2 20.1 2.9 21 4 21H20C21.1 21 22 20.1 22 19V7C22 5.9 21.1 5 20 5H16.83L15 3H9Z" fill="currentColor" opacity="0.3"/>' +
+                '<path d="M9 3L7.17 5H4C2.9 5 2 5.9 2 7V19C2 20.1 2.9 21 4 21H20C21.1 21 22 20.1 22 19V7C22 5.9 21.1 5 20 5H16.83L15 3H9Z" fill="none" opacity="0.3"/>' +
                 '<path d="M20 5H16.83L15 3H9L7.17 5H4C2.9 5 2 5.9 2 7V19C2 20.1 2.9 21 4 21H20C21.1 21 22 20.1 22 19V7C22 5.9 21.1 5 20 5ZM12 18C9.24 18 7 15.76 7 13C7 10.24 9.24 8 12 8C14.76 8 17 10.24 17 13C17 15.76 14.76 18 12 18Z" fill="currentColor"/>' +
                 '<circle cx="12" cy="13" r="3" fill="currentColor"/>' +
                 '</svg>';
@@ -195,7 +210,7 @@
                 /* Стан 1: іконка + підказка */
                 '        <div id="ps-inner"' +
                 '             style="display:flex;flex-direction:column;align-items:center;' +
-                '                    gap:8px;color:rgba(255,255,255,.55);font-size:16px;font-weight:500;text-align:center;padding:0 16px;">' +
+                '                    gap:8px;color:rgba(255,255,255,.55);font-size:24px;font-weight:500;text-align:center;padding:0 16px;">' +
                 '          <span>' + Lampa.Lang.translate('photo_search_upload_label') + '</span>' +
                 '        </div>' +
 
@@ -210,9 +225,15 @@
                 '      </div>' +
 
                 /* Кнопки */
-                '      <div class="modal__footer" style="justify-content:center;gap:12px;">' +
-                '        <div id="ps-btn-search" class="modal__button selector">' + Lampa.Lang.translate('photo_search_send')  + '</div>' +
-                '        <div id="ps-btn-close"  class="modal__button selector">' + Lampa.Lang.translate('photo_search_close') + '</div>' +
+                '      <div class="modal__footer" style="justify-content:center;gap:12px;flex-wrap:wrap;">' +
+                '        <div id="ps-btn-search" class="modal__button selector" style="text-align:center;">' + Lampa.Lang.translate('photo_search_send')  + '</div>' +
+                '        <div id="ps-btn-close"  class="modal__button selector" style="text-align:center;">' + Lampa.Lang.translate('photo_search_close') + '</div>' +
+                '      </div>' +
+
+                /* Повідомлення про відсутність результату */
+                '      <div id="ps-no-result"' +
+                '           style="display:none;margin-top:12px;text-align:center;' +
+                '                  color:rgba(255,255,255,.55);font-size:15px;padding:0 8px;">' +
                 '      </div>' +
                 '    </div>' +
                 '  </div>' +
@@ -275,17 +296,37 @@
             if (btnS)   { btnS.style.opacity = '1'; btnS.style.pointerEvents = ''; }
         }
 
-        /* ── FILE SELECT ───────────────────────────── */
-        function selectImageFromDevice() {
-            var input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/*';
-            input.style.display = 'none';
+        function showNoResult(text) {
+            hideLoader();
+            var nr = document.getElementById('ps-no-result');
+            if (nr) { nr.textContent = text; nr.style.display = 'block'; }
+            Lampa.Noty.show(text);
+        }
 
-            input.onchange = function(event) {
-                var file = event.target.files[0];
+        /* ── FILE SELECT — Android-сумісний варіант ── */
+        function selectImageFromDevice() {
+            /* Видаляємо попередній input якщо лишився */
+            var old = document.getElementById('ps-file-input');
+            if (old && old.parentNode) old.parentNode.removeChild(old);
+
+            var input = document.createElement('input');
+            input.type     = 'file';
+            input.id       = 'ps-file-input';
+            input.accept   = 'image/*';
+            /* На Android input МАЄ бути у DOM і видимим (хоча б 1×1px)
+               до моменту кліку, інакше системне вікно не відкривається */
+            input.style.cssText =
+                'position:fixed;left:0;top:0;width:1px;height:1px;' +
+                'opacity:0;z-index:-1;overflow:hidden;';
+
+            input.addEventListener('change', function(event) {
+                var file = event.target.files && event.target.files[0];
                 if (!file) return;
                 selectedFile = file;
+
+                /* Ховаємо повідомлення «не знайдено» якщо було */
+                var nr = document.getElementById('ps-no-result');
+                if (nr) nr.style.display = 'none';
 
                 var reader = new FileReader();
                 reader.onload = function(e) {
@@ -295,17 +336,22 @@
                         inner.innerHTML =
                             '<img src="' + e.target.result + '"' +
                             ' style="max-width:100%;max-height:165px;border-radius:8px;' +
-                            '        display:block;pointer-events:none;">';
+                            'display:block;pointer-events:none;">';
                     }
-                    /* Після вибору — показуємо focus-стан щоб підкреслити готовність */
                     if (wrap) wrap.classList.add('ps-focus');
                 };
                 reader.readAsDataURL(file);
-            };
+
+                /* Прибираємо input після використання */
+                setTimeout(function() {
+                    if (input.parentNode) input.parentNode.removeChild(input);
+                }, 500);
+            });
 
             document.body.appendChild(input);
-            input.click();
-            setTimeout(function() { if (input.parentNode) document.body.removeChild(input); }, 60000);
+
+            /* Невелика затримка потрібна на Android щоб DOM встиг оновитись */
+            setTimeout(function() { input.click(); }, 50);
         }
 
         /* ── STEP 1: MOVIE-IDENTIFIER ──────────────── */
@@ -333,32 +379,30 @@
                 console.log('[Movie-Identifier] Raw:', text.substring(0, 500));
 
                 if (!text || text.toLowerCase().indexOf('not found') !== -1) {
-                    hideLoader();
-                    Lampa.Noty.show(Lampa.Lang.translate('photo_search_not_found'));
+                    showNoResult(Lampa.Lang.translate('photo_search_not_found'));
                     return;
                 }
 
                 var data;
                 try { data = JSON.parse(text); }
-                catch(e) { hideLoader(); Lampa.Noty.show(Lampa.Lang.translate('photo_search_not_found')); return; }
+                catch(e) { showNoResult(Lampa.Lang.translate('photo_search_not_found')); return; }
 
                 if (!data.filmData || data.filmData.toLowerCase().indexOf('not found') !== -1) {
-                    hideLoader();
-                    Lampa.Noty.show(Lampa.Lang.translate('photo_search_not_found'));
+                    showNoResult(Lampa.Lang.translate('photo_search_not_found'));
                     return;
                 }
 
                 var parsed;
                 try { parsed = JSON.parse(data.filmData); }
-                catch(e) { hideLoader(); Lampa.Noty.show(Lampa.Lang.translate('photo_search_not_found')); return; }
+                catch(e) { showNoResult(Lampa.Lang.translate('photo_search_not_found')); return; }
 
                 var results = Array.isArray(parsed) ? parsed : [parsed];
-                if (!results.length) { hideLoader(); Lampa.Noty.show(Lampa.Lang.translate('photo_search_not_found')); return; }
+                if (!results.length) { showNoResult(Lampa.Lang.translate('photo_search_not_found')); return; }
 
                 var best  = results[0];
                 var title = (best.name || best.title || '').trim();
 
-                if (!title) { hideLoader(); Lampa.Noty.show(Lampa.Lang.translate('photo_search_not_found')); return; }
+                if (!title) { showNoResult(Lampa.Lang.translate('photo_search_not_found')); return; }
 
                 console.log('[Movie-Identifier] Detected:', title, best.confidence ? best.confidence + '%' : '');
 
@@ -437,8 +481,7 @@
                 }
 
                 if (!results.length) {
-                    hideLoader();
-                    Lampa.Noty.show(Lampa.Lang.translate('photo_search_not_found'));
+                    showNoResult(Lampa.Lang.translate('photo_search_not_found'));
                     return;
                 }
 
