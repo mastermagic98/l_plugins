@@ -81,7 +81,7 @@
         var s = document.createElement('style');
         s.id = 'ps-css';
         s.textContent = [
-            /* Зона прев'ю — структура як у .card / .card__view */
+            /* Зона прев'ю — <label> що імітує картку */
             '#ps-wrap{',
                 'position:relative;',
                 'width:300px;height:169px;',
@@ -91,6 +91,8 @@
                 'cursor:pointer;',
                 'background:#1a1a1a;',
                 'display:flex;align-items:center;justify-content:center;',
+                /* скидаємо стандартні стилі label */
+                'user-select:none;-webkit-user-select:none;',
             '}',
 
             /* ::after — точна копія Lampa card focus/hover overlay */
@@ -204,35 +206,36 @@
                 '  <div class="scroll__content">' +
                 '    <div class="scroll__body">' +
 
-                /* Зона прев'ю — реальний <input type="file"> займає всю площу,
-                   тап/клік по зоні = прямий тап по input → системне вікно відкривається
-                   на будь-якому пристрої без жодного JS .click() */
-                '      <div id="ps-wrap" class="selector" style="position:relative;">' +
+                /* ── Зона прев'ю ─────────────────────────────────────────
+                   Техніка: прихований <input> + <label for="...">
+                   На Android WebView нативний тап по <label> відкриває
+                   системний file-picker без жодного JS .click().
+                   Клас "selector" НЕ ставимо — Lampa Controller перехоплює
+                   touchstart/click на .selector і блокує input.
+                ─────────────────────────────────────────────────────────── */
 
-                '        <input type="file" id="ps-file-input" accept="image/*"' +
-                '               style="position:absolute;inset:0;width:100%;height:100%;' +
-                '                      opacity:0;cursor:pointer;z-index:2;' +
-                '                      -webkit-appearance:none;">' +
+                /* Input за межами екрану — label його активує через for= */
+                '      <input type="file" id="ps-file-input" accept="image/*"' +
+                '             style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;">' +
 
-                /* Стан 1: текст (pointer-events:none — не заважає input зверху) */
+                /* label = вся зона прев'ю; for="ps-file-input" → тап = відкриття picker */
+                '      <label for="ps-file-input" id="ps-wrap" style="display:block;cursor:pointer;">' +
+
                 '        <div id="ps-inner"' +
                 '             style="display:flex;flex-direction:column;align-items:center;' +
                 '                    gap:8px;color:rgba(255,255,255,.55);font-size:24px;' +
-                '                    font-weight:500;text-align:center;padding:0 16px;' +
-                '                    pointer-events:none;position:relative;z-index:1;">' +
+                '                    font-weight:500;text-align:center;padding:0 16px;">' +
                 '          <span>' + Lampa.Lang.translate('photo_search_upload_label') + '</span>' +
                 '        </div>' +
 
-                /* Стан 2: лоадер */
-                '        <div id="ps-loader"' +
-                '             style="pointer-events:none;position:relative;z-index:1;">' +
+                '        <div id="ps-loader">' +
                 '          <div style="width:3em;height:3em;' +
                 '                      background:url(./img/loader.svg) no-repeat 50% 50%;' +
                 '                      background-size:contain;"></div>' +
                 '          <div id="ps-loader-text"></div>' +
                 '        </div>' +
 
-                '      </div>' +
+                '      </label>' +
 
                 /* Кнопки */
                 '      <div class="modal__footer" style="justify-content:center;gap:12px;flex-wrap:wrap;">' +
@@ -258,18 +261,17 @@
             });
 
             setTimeout(function() {
-                var wrap     = document.getElementById('ps-wrap');
+                var wrap      = document.getElementById('ps-wrap');
                 var fileInput = document.getElementById('ps-file-input');
 
-                /* Hover/focus для ::after ефекту */
+                /* Hover/focus для ::after ефекту на label */
                 if (wrap) {
                     wrap.addEventListener('mouseenter', function() { wrap.classList.add('ps-hover'); });
                     wrap.addEventListener('mouseleave', function() { wrap.classList.remove('ps-hover'); });
-                    wrap.addEventListener('focus',  function() { wrap.classList.add('ps-focus'); });
-                    wrap.addEventListener('blur',   function() { wrap.classList.remove('ps-focus'); });
                 }
 
-                /* Обробляємо вибір файлу прямо з вбудованого input */
+                /* Обробляємо вибір файлу — change на прихованому input.
+                   label[for] активує його нативно на Android WebView без JS .click() */
                 if (fileInput) {
                     fileInput.addEventListener('change', function() {
                         var file = fileInput.files && fileInput.files[0];
@@ -286,9 +288,14 @@
                                 inner.innerHTML =
                                     '<img src="' + e.target.result + '"' +
                                     ' style="max-width:100%;max-height:165px;border-radius:8px;' +
-                                    '        display:block;pointer-events:none;">';
+                                    '        display:block;">';
                             }
-                            if (wrap) wrap.classList.add('ps-focus');
+                            /* Показуємо focus-стан після вибору */
+                            if (wrap) {
+                                wrap.classList.add('ps-focus');
+                                /* Блокуємо label під час пошуку щоб не перевідкрити picker */
+                                wrap.style.pointerEvents = '';
+                            }
                         };
                         reader.readAsDataURL(file);
                     });
@@ -301,17 +308,17 @@
 
         /* ── LOADER HELPERS ────────────────────────── */
         function showLoader(text) {
-            var inner     = document.getElementById('ps-inner');
-            var loader    = document.getElementById('ps-loader');
-            var ltxt      = document.getElementById('ps-loader-text');
-            var btnS      = document.getElementById('ps-btn-search');
-            var fileInput = document.getElementById('ps-file-input');
-            if (inner)     inner.style.display = 'none';
-            if (loader)    loader.classList.add('ps-show');
-            if (ltxt)      ltxt.textContent = text || '';
-            if (btnS)      { btnS.style.opacity = '.4'; btnS.style.pointerEvents = 'none'; }
-            /* Ховаємо input під час пошуку щоб не заважав */
-            if (fileInput) fileInput.style.display = 'none';
+            var inner = document.getElementById('ps-inner');
+            var loader = document.getElementById('ps-loader');
+            var ltxt   = document.getElementById('ps-loader-text');
+            var btnS   = document.getElementById('ps-btn-search');
+            var wrap   = document.getElementById('ps-wrap');
+            if (inner)  inner.style.display = 'none';
+            if (loader) loader.classList.add('ps-show');
+            if (ltxt)   ltxt.textContent = text || '';
+            if (btnS)   { btnS.style.opacity = '.4'; btnS.style.pointerEvents = 'none'; }
+            /* Блокуємо label щоб під час пошуку не відкривався picker */
+            if (wrap)   { wrap.style.pointerEvents = 'none'; wrap.classList.remove('ps-hover','ps-focus'); }
         }
 
         function updateLoaderText(text) {
@@ -320,14 +327,14 @@
         }
 
         function hideLoader() {
-            var inner     = document.getElementById('ps-inner');
-            var loader    = document.getElementById('ps-loader');
-            var btnS      = document.getElementById('ps-btn-search');
-            var fileInput = document.getElementById('ps-file-input');
-            if (loader)    loader.classList.remove('ps-show');
-            if (inner)     inner.style.display = '';
-            if (btnS)      { btnS.style.opacity = '1'; btnS.style.pointerEvents = ''; }
-            if (fileInput) fileInput.style.display = '';
+            var inner  = document.getElementById('ps-inner');
+            var loader = document.getElementById('ps-loader');
+            var btnS   = document.getElementById('ps-btn-search');
+            var wrap   = document.getElementById('ps-wrap');
+            if (loader) loader.classList.remove('ps-show');
+            if (inner)  inner.style.display = '';
+            if (btnS)   { btnS.style.opacity = '1'; btnS.style.pointerEvents = ''; }
+            if (wrap)   wrap.style.pointerEvents = '';
         }
 
         function showNoResult(text) {
