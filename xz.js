@@ -33,9 +33,9 @@
     var seasonsCache = {};
 
     Lampa.Lang.add({
-        main: 'Ð“Ð¾Ð»Ð¾Ð²Ð½Ð° UA',
-        title_main: 'Ð“Ð¾Ð»Ð¾Ð²Ð½Ð° UA',
-        title_tmdb: 'Ð“Ð¾Ð»Ð¾Ð²Ð½Ð° UA'
+        main: 'Головна UA',
+    title_main: 'Головна UA',
+    title_tmdb: 'Головна UA'
     });
 
     var safeStorage = (function () {
@@ -510,7 +510,7 @@
 
                         fetchLogo(movie, item);
 
-                        var descText = movie.overview || 'ÐžÐ¿Ð¸Ñ Ð²Ñ–Ð´ÑÑƒÑ‚Ð½Ñ–Ð¹.';
+                        var descText = movie.overview || 'Опис відсутній.';
                         item.append('<div class="custom-title-bottom">' + (movie.title || movie.name) + '</div>');
                         item.append('<div class="custom-overview-bottom">' + descText + '</div>');
                     },
@@ -627,80 +627,115 @@
     function createSettings() {
         if (!window.Lampa || !Lampa.SettingsApi) return;
         Lampa.SettingsApi.addComponent({
-            component: 'ymainpage',
-            name: 'YMainPage',
-            icon: `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>`
-        });
+    component: 'ymainpage',
+    name: 'YMainPage',
+    icon: `<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>`
+});
 
-        Lampa.SettingsApi.addParam({
-            component: 'ymainpage',
-            param: { name: 'uas_support_yarik', type: 'button' },
-            field: { name: "ÐŸÑ–Ð´Ñ‚Ñ€Ð¸Ð¼Ð°Ñ‚Ð¸ Ñ€Ð¾Ð·Ñ€Ð¾Ð±Ð½Ð¸ÐºÑ–Ð²: Yarik's Mod's", description: 'https://lampalampa.free.nf/' }
-        });
-        
-        Lampa.SettingsApi.addParam({
-            component: 'ymainpage',
-            param: { name: 'uas_support_lme', type: 'button' },
-            field: { name: 'ÐŸÑ–Ð´Ñ‚Ñ€Ð¸Ð¼Ð°Ñ‚Ð¸ Ñ€Ð¾Ð·Ñ€Ð¾Ð±Ð½Ð¸ÐºÑ–Ð²: LampaME', description: 'https://lampame.github.io/' }
-        });
+Lampa.SettingsApi.addParam({
+    component: 'ymainpage',
+    param: { name: 'uas_support_yarik', type: 'button' },
+    field: { 
+        name: "Підтримати розробників: Yarik's Mod's",
+        description: 'https://lampalampa.free.nf/' 
+    }
+});
 
-        Lampa.SettingsApi.addParam({
-            component: 'ymainpage',
-            param: { name: 'uas_show_flag', type: 'trigger', default: true },
-            field: { name: 'Ð’Ñ–Ð´Ð¾Ð±Ñ€Ð°Ð¶ÐµÐ½Ð½Ñ Ð£ÐšÐ  Ð¾Ð·Ð²ÑƒÑ‡Ð¾Ðº', description: 'ÐŸÐ¾ÑˆÑƒÐº Ñ‚Ð° Ð²Ñ–Ð´Ð¾Ð±Ñ€Ð°Ð¶ÐµÐ½Ð½Ñ Ð¿Ñ€Ð°Ð¿Ð¾Ñ€Ñ†Ñ Ð½Ð° ÐºÐ°Ñ€Ñ‚ÐºÐ°Ñ…' }
-        });
+Lampa.SettingsApi.addParam({
+    component: 'ymainpage',
+    param: { name: 'uas_support_lme', type: 'button' },
+    field: { 
+        name: 'Підтримати розробників: LampaME',
+        description: 'https://lampame.github.io/' 
+    }
+});
 
-        var langValues = {
-            'uk': 'Ð¢Ñ–Ð»ÑŒÐºÐ¸ ÑƒÐºÑ€Ð°Ñ—Ð½ÑÑŒÐºÐ¾ÑŽ',
-            'uk_en': 'Ð£ÐºÑ€ + ÐÐ½Ð³Ð» (Ð—Ð° Ð·Ð°Ð¼Ð¾Ð²Ñ‡ÑƒÐ²Ð°Ð½Ð½ÑÐ¼)',
-            'en': 'Ð¢Ñ–Ð»ÑŒÐºÐ¸ Ð°Ð½Ð³Ð»Ñ–Ð¹ÑÑŒÐºÐ¾ÑŽ'
-        };
-        Lampa.SettingsApi.addParam({
-            component: 'ymainpage',
-            param: { name: 'ym_logo_lang', type: 'select', values: langValues, default: 'uk_en' },
-            field: { name: 'ÐœÐ¾Ð²Ð° Ð»Ð¾Ð³Ð¾Ñ‚Ð¸Ð¿Ñ–Ð²', description: 'ÐžÐ±ÐµÑ€Ñ–Ñ‚ÑŒ Ð¿Ñ€Ñ–Ð¾Ñ€Ð¸Ñ‚ÐµÑ‚ Ð¼Ð¾Ð²Ð¸ Ð´Ð»Ñ Ð»Ð¾Ð³Ð¾Ñ‚Ð¸Ð¿Ñ–Ð²' }
-        });
+Lampa.SettingsApi.addParam({
+    component: 'ymainpage',
+    param: { name: 'uas_show_flag', type: 'trigger', default: true },
+    field: { 
+        name: 'Відображення UA озвучок',
+        description: 'Пошук та відображення прапорця на картках' 
+    }
+});
 
-        var qualValues = {
-            'w300': 'w300 (Ð—Ð° Ð·Ð°Ð¼Ð¾Ð²Ñ‡ÑƒÐ²Ð°Ð½Ð½ÑÐ¼)',
-            'w500': 'w500',
-            'w780': 'w780',
-            'original': 'ÐžÑ€Ð¸Ð³Ñ–Ð½Ð°Ð»'
-        };
-        Lampa.SettingsApi.addParam({
-            component: 'ymainpage',
-            param: { name: 'ym_img_quality', type: 'select', values: qualValues, default: 'w300' },
-            field: { name: 'Ð¯ÐºÑ–ÑÑ‚ÑŒ Ð·Ð¾Ð±Ñ€Ð°Ð¶ÐµÐ½ÑŒ (Ð¤Ð¾Ð½/Ð›Ð¾Ð³Ð¾)', description: 'Ð’Ð¿Ð»Ð¸Ð²Ð°Ñ” Ð½Ð° ÑˆÐ²Ð¸Ð´ÐºÑ–ÑÑ‚ÑŒ Ð·Ð°Ð²Ð°Ð½Ñ‚Ð°Ð¶ÐµÐ½Ð½Ñ ÑÑ‚Ð¾Ñ€Ñ–Ð½ÐºÐ¸' }
-        });
+var langValues = {
+    'uk': 'Тільки українською',
+    'uk_en': 'Укр + Англ (за замовчуванням)',
+    'en': 'Тільки англійською'
+};
 
-        const rows =[
-            { id: 'ym_row_movies_new', title: 'ÐÐ¾Ð²Ð¸Ð½ÐºÐ¸ Ñ„Ñ–Ð»ÑŒÐ¼Ñ–Ð²', defOrder: '1' },
-            { id: 'ym_row_movies_watch', title: 'ÐŸÐ¾Ð¿ÑƒÐ»ÑÑ€Ð½Ñ– Ñ„Ñ–Ð»ÑŒÐ¼Ð¸', defOrder: '2' },
-            { id: 'ym_row_series_new', title: 'ÐÐ¾Ð²Ð¸Ð½ÐºÐ¸ ÑÐµÑ€Ñ–Ð°Ð»Ñ–Ð²', defOrder: '3' },
-            { id: 'ym_row_series_pop', title: 'ÐŸÐ¾Ð¿ÑƒÐ»ÑÑ€Ð½Ñ– ÑÐµÑ€Ñ–Ð°Ð»Ð¸', defOrder: '4' },
-            { id: 'ym_row_community', title: 'Ð—Ð½Ð°Ñ…Ñ–Ð´ÐºÐ¸ ÑÐ¿Ñ–Ð»ÑŒÐ½Ð¾Ñ‚Ð¸ LME', defOrder: '5' },
-            { id: 'ym_row_random', title: 'Ð’Ð¸Ð¿Ð°Ð´ÐºÐ¾Ð²Ð° Ð¿Ñ–Ð´Ð±Ñ–Ñ€ÐºÐ°', defOrder: '6' }
-        ];
-        let orderValues = { '1': 'ÐŸÐ¾Ð·Ð¸Ñ†Ñ–Ñ 1', '2': 'ÐŸÐ¾Ð·Ð¸Ñ†Ñ–Ñ 2', '3': 'ÐŸÐ¾Ð·Ð¸Ñ†Ñ–Ñ 3', '4': 'ÐŸÐ¾Ð·Ð¸Ñ†Ñ–Ñ 4', '5': 'ÐŸÐ¾Ð·Ð¸Ñ†Ñ–Ñ 5', '6': 'ÐŸÐ¾Ð·Ð¸Ñ†Ñ–Ñ 6' };
+Lampa.SettingsApi.addParam({
+    component: 'ymainpage',
+    param: { name: 'ym_logo_lang', type: 'select', values: langValues, default: 'uk_en' },
+    field: { 
+        name: 'Мова логотипів',
+        description: 'Оберіть пріоритет мови для логотипів' 
+    }
+});
 
-        rows.forEach(r => {
-            Lampa.SettingsApi.addParam({
-                component: 'ymainpage',
-                param: { name: r.id, type: 'trigger', default: true },
-                field: { name: 'Ð’Ð¸Ð¼ÐºÐ½ÑƒÑ‚Ð¸ / Ð£Ð²Ñ–Ð¼ÐºÐ½ÑƒÑ‚Ð¸: ' + r.title, description: 'ÐŸÐ¾ÐºÐ°Ð·ÑƒÐ²Ð°Ñ‚Ð¸ Ñ†ÐµÐ¹ Ñ€ÑÐ´Ð¾Ðº Ð½Ð° Ð³Ð¾Ð»Ð¾Ð²Ð½Ñ–Ð¹' }
-            });
-            Lampa.SettingsApi.addParam({
-                component: 'ymainpage',
-                param: { name: r.id + '_order', type: 'select', values: orderValues, default: r.defOrder },
-                field: { name: 'ÐŸÐ¾Ñ€ÑÐ´Ð¾Ðº: ' + r.title, description: 'Ð¯ÐºÐ¸Ð¼ Ð¿Ð¾ Ñ€Ð°Ñ…ÑƒÐ½ÐºÑƒ Ð²Ð¸Ð²Ð¾Ð´Ð¸Ñ‚Ð¸ Ñ†ÐµÐ¹ Ñ€ÑÐ´Ð¾Ðº' }
-            });
-        });
+var qualValues = {
+    'w300': 'w300 (за замовчуванням)',
+    'w500': 'w500',
+    'w780': 'w780',
+    'original': 'Оригінал'
+};
 
-        Lampa.SettingsApi.addParam({
-            component: 'ymainpage',
-            param: { name: 'uas_pro_tmdb_btn', type: 'button' },
-            field: { name: 'Ð’Ð»Ð°ÑÐ½Ð¸Ð¹ TMDB API ÐºÐ»ÑŽÑ‡', description: 'ÐÐ°Ñ‚Ð¸ÑÐ½Ñ–Ñ‚ÑŒ, Ñ‰Ð¾Ð± Ð²Ð²ÐµÑÑ‚Ð¸ ÐºÐ»ÑŽÑ‡ (Ð¿Ñ€Ð°Ñ†ÑŽÑ” Ð¿ÐµÑ€ÑˆÐ¾Ñ‡ÐµÑ€Ð³Ð¾Ð²Ð¾)' }
-        });
+Lampa.SettingsApi.addParam({
+    component: 'ymainpage',
+    param: { name: 'ym_img_quality', type: 'select', values: qualValues, default: 'w300' },
+    field: { 
+        name: 'Якість зображень (Фон/Лого)',
+        description: 'Впливає на швидкість завантаження сторінки' 
+    }
+});
+
+const rows = [
+    { id: 'ym_row_movies_new', title: 'Новинки фільмів', defOrder: '1' },
+    { id: 'ym_row_movies_watch', title: 'Популярні фільми', defOrder: '2' },
+    { id: 'ym_row_series_new', title: 'Новинки серіалів', defOrder: '3' },
+    { id: 'ym_row_series_pop', title: 'Популярні серіали', defOrder: '4' },
+    { id: 'ym_row_community', title: 'Знахідки спільноти LME', defOrder: '5' },
+    { id: 'ym_row_random', title: 'Випадкова підбірка', defOrder: '6' }
+];
+
+let orderValues = {
+    '1': 'Позиція 1',
+    '2': 'Позиція 2',
+    '3': 'Позиція 3',
+    '4': 'Позиція 4',
+    '5': 'Позиція 5',
+    '6': 'Позиція 6'
+};
+
+rows.forEach(r => {
+    Lampa.SettingsApi.addParam({
+        component: 'ymainpage',
+        param: { name: r.id, type: 'trigger', default: true },
+        field: { 
+            name: 'Увімкнути / Вимкнути: ' + r.title,
+            description: 'Показувати цей рядок на головній' 
+        }
+    });
+
+    Lampa.SettingsApi.addParam({
+        component: 'ymainpage',
+        param: { name: r.id + '_order', type: 'select', values: orderValues, default: r.defOrder },
+        field: { 
+            name: 'Порядок: ' + r.title,
+            description: 'Яким по рахунку виводити цей рядок' 
+        }
+    });
+});
+
+Lampa.SettingsApi.addParam({
+    component: 'ymainpage',
+    param: { name: 'uas_pro_tmdb_btn', type: 'button' },
+    field: { 
+        name: 'Власний TMDB API ключ',
+        description: 'Натисніть, щоб ввести ключ (працює першочергово)' 
+    }
+});
 
         Lampa.Settings.listener.follow('open', function (e) {
             if (e.name === 'ymainpage') {
@@ -715,11 +750,11 @@
                 e.body.find('[data-name="uas_pro_tmdb_btn"]').on('hover:enter', function () {
                     var currentKey = Lampa.Storage.get('uas_pro_tmdb_apikey') || '';
                     Lampa.Input.edit({
-                        title: 'Ð’Ð²ÐµÐ´Ñ–Ñ‚ÑŒ TMDB API ÐšÐ»ÑŽÑ‡', value: currentKey, free: true, nosave: true
+                        title: 'Введіть TMDB API ключ', value: currentKey, free: true, nosave: true
                     }, function (new_val) {
                         if (new_val !== undefined) {
                             Lampa.Storage.set('uas_pro_tmdb_apikey', new_val.trim());
-                            Lampa.Noty.show('TMDB ÐºÐ»ÑŽÑ‡ Ð·Ð±ÐµÑ€ÐµÐ¶ÐµÐ½Ð¾. ÐŸÐµÑ€ÐµÐ·Ð°Ð¿ÑƒÑÑ‚Ñ–Ñ‚ÑŒ Ð·Ð°ÑÑ‚Ð¾ÑÑƒÐ½Ð¾Ðº.');
+                            Lampa.Noty.show('TMDB ключ збережено. Перезапустіть застосунок.');
                         }
                     });
                 });
@@ -729,14 +764,19 @@
 
     function overrideApi() {
         Lampa.Api.sources.tmdb.main = function (params, oncomplite, onerror) {
-            var rowDefs =[
-                { id: 'ym_row_movies_new', defOrder: 1, type: 'uas', url: 'uas_movies_new', loadUrl: 'https://uaserials.com/films/p/', title: 'ÐÐ¾Ð²Ð¸Ð½ÐºÐ¸ Ñ„Ñ–Ð»ÑŒÐ¼Ñ–Ð²', icon: 'https://upload.wikimedia.org/wikipedia/commons/5/51/Ukraine_film_clapperboard.svg' },
-                { id: 'ym_row_movies_watch', defOrder: 2, type: 'uas', url: 'uas_movies_pop', loadUrl: 'https://uaserials.my/filmss/w/', title: 'ÐŸÐ¾Ð¿ÑƒÐ»ÑÑ€Ð½Ñ– Ñ„Ñ–Ð»ÑŒÐ¼Ð¸', icon: 'https://upload.wikimedia.org/wikipedia/commons/7/7e/Filmreel-icon.svg' },
-                { id: 'ym_row_series_new', defOrder: 3, type: 'uas', url: 'uas_series_new', loadUrl: 'https://uaserials.com/series/p/', title: 'ÐÐ¾Ð²Ð¸Ð½ÐºÐ¸ ÑÐµÑ€Ñ–Ð°Ð»Ñ–Ð²', icon: 'https://upload.wikimedia.org/wikipedia/commons/3/3a/Mplayer.svg' },
-                { id: 'ym_row_series_pop', defOrder: 4, type: 'uas', url: 'uas_series_pop', loadUrl: 'https://uaserials.com/series/w/', title: 'ÐŸÐ¾Ð¿ÑƒÐ»ÑÑ€Ð½Ñ– ÑÐµÑ€Ñ–Ð°Ð»Ð¸', icon: 'https://upload.wikimedia.org/wikipedia/commons/f/f6/Tvfilm.svg' },
-                { id: 'ym_row_community', defOrder: 5, type: 'community', url: 'uas_community', title: 'Ð—Ð½Ð°Ñ…Ñ–Ð´ÐºÐ¸ ÑÐ¿Ñ–Ð»ÑŒÐ½Ð¾Ñ‚Ð¸ LME', icon: 'https://upload.wikimedia.org/wikipedia/commons/b/b2/Anime_eye_film.png' },
-                { id: 'ym_row_random', defOrder: 6, type: 'random', url: '', title: 'Ð’Ð¸Ð¿Ð°Ð´ÐºÐ¾Ð²Ð° Ð¿Ñ–Ð´Ð±Ñ–Ñ€ÐºÐ°', icon: 'https://upload.wikimedia.org/wikipedia/commons/a/a3/Magicfilm_icon.svg' }
-            ];
+    var rowDefs =[
+        { id: 'ym_row_movies_new', defOrder: 1, type: 'uas', url: 'uas_movies_new', loadUrl: 'https://uaserials.com/films/p/', title: 'Новинки фільмів', icon: 'https://upload.wikimedia.org/wikipedia/commons/5/51/Ukraine_film_clapperboard.svg' },
+
+        { id: 'ym_row_movies_watch', defOrder: 2, type: 'uas', url: 'uas_movies_pop', loadUrl: 'https://uaserials.my/filmss/w/', title: 'Популярні фільми', icon: 'https://upload.wikimedia.org/wikipedia/commons/7/7e/Filmreel-icon.svg' },
+
+        { id: 'ym_row_series_new', defOrder: 3, type: 'uas', url: 'uas_series_new', loadUrl: 'https://uaserials.com/series/p/', title: 'Новинки серіалів', icon: 'https://upload.wikimedia.org/wikipedia/commons/3/3a/Mplayer.svg' },
+
+        { id: 'ym_row_series_pop', defOrder: 4, type: 'uas', url: 'uas_series_pop', loadUrl: 'https://uaserials.com/series/w/', title: 'Популярні серіали', icon: 'https://upload.wikimedia.org/wikipedia/commons/f/f6/Tvfilm.svg' },
+
+        { id: 'ym_row_community', defOrder: 5, type: 'community', url: 'uas_community', title: 'Знахідки спільноти LME', icon: 'https://upload.wikimedia.org/wikipedia/commons/b/b2/Anime_eye_film.png' },
+
+        { id: 'ym_row_random', defOrder: 6, type: 'random', url: '', title: 'Випадкова підбірка', icon: 'https://upload.wikimedia.org/wikipedia/commons/a/a3/Magicfilm_icon.svg' }
+    ];
 
             let activeRows =[];
             for (let def of rowDefs) {
@@ -766,7 +806,7 @@
             });
 
             if(parts_data.length === 0) {
-                parts_data.push((cb) => loadRow('uas_movies_new', 'https://uaserials.com/films/p/', 'ÐÐ¾Ð²Ð¸Ð½ÐºÐ¸ Ñ„Ñ–Ð»ÑŒÐ¼Ñ–Ð²', cb));
+                parts_data.push((cb) => loadRow('uas_movies_new', 'https://uaserials.com/films/p/', 'Новинки фільмів', cb));
             }
 
             Lampa.Api.partNext(parts_data, 2, oncomplite, onerror);
